@@ -15,7 +15,7 @@ const T = {
 const Q1_TARGET = 778915;
 const Q_TARGETS = { 1: 778915, 2: 798328, 3: 793897, 4: 786954 };
 const FY_TARGET = 3158094;
-const DAYS_LEFT = Math.max(0, Math.ceil((new Date(2026, 2, 31) - new Date()) / 86400000));
+const DAYS_LEFT = Math.max(0, Math.ceil((new Date(2026, 2, 31).getTime() - new Date().getTime()) / 86400000));
 
 // ─── TIER / CHARGEBACK LOGIC ─────────────────────────────────────
 const ACCEL_RATES = { Silver: 0.20, Gold: 0.24, Platinum: 0.30, Diamond: 0.36 };
