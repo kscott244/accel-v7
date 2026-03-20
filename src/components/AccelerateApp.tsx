@@ -318,7 +318,7 @@ export default function App() {
     try {
       const { PRELOADED } = require("@/data/preloaded-data");
       setGroups(PRELOADED.groups);
-      setDataSource(\`Pre-loaded \${PRELOADED.generated}\`);
+      setDataSource(`Pre-loaded ${PRELOADED.generated}`);
     } catch(e) {
       setGroups([]);
       setDataSource("No data — upload CSV");
