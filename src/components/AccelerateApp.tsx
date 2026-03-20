@@ -471,7 +471,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj}) {
       <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color:T.blue}}>Who to Call Today ({scored.filter(a=>a.score>0).length})</span>
     </div>
     <div style={{fontSize:10,color:T.t4,marginBottom:12}}>Scored by gap · retention · recency · Q1 urgency · tier</div>
-    {scored.filter(a=>a.score>0).slice(0,20).map((a,i)=>(
+    {scored.slice(0,15).map((a,i)=>(
       <button key={a.id} className="anim" onClick={()=>goAcct(a)} style={{animationDelay:`${i*30}ms`,width:"100%",textAlign:"left",background:T.s1,border:`1px solid ${a.score>=50?"rgba(248,113,113,.15)":T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:8,cursor:"pointer"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
           <div style={{flex:1,minWidth:0}}>
