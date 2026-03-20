@@ -1,0 +1,933 @@
+"use client";
+
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+
+// ─── DESIGN TOKENS ───────────────────────────────────────────────
+const T = {
+  bg: "#0a0a0f", s1: "#12121a", s2: "#1a1a25", s3: "#222230", s4: "#2a2a3a",
+  b1: "rgba(255,255,255,.06)", b2: "rgba(255,255,255,.08)", b3: "rgba(255,255,255,.04)",
+  t1: "#f0f0f5", t2: "#c8c8d0", t3: "#8888a0", t4: "#555570",
+  blue: "#4f8ef7", cyan: "#22d3ee", green: "#34d399", amber: "#fbbf24",
+  red: "#f87171", purple: "#a78bfa", orange: "#fb923c",
+};
+
+const Q1_TARGET = 778915;
+const Q_TARGETS = { 1: 778915, 2: 798328, 3: 793897, 4: 786954 };
+const FY_TARGET = 3158094;
+const DAYS_LEFT = Math.max(0, Math.ceil((new Date(2026, 2, 31) - new Date()) / 86400000));
+
+// ─── TIER / CHARGEBACK LOGIC ─────────────────────────────────────
+const ACCEL_RATES = { Silver: 0.20, Gold: 0.24, Platinum: 0.30, Diamond: 0.36 };
+const getTierRate = (tier) => {
+  if (!tier) return 0;
+  if (tier.includes("-")) { const sub = tier.split("-")[1]; return ACCEL_RATES[sub] || 0; }
+  return ACCEL_RATES[tier] || 0;
+};
+const isAccelTier = (tier) => {
+  if (!tier) return false;
+  if (tier.includes("-")) return tier.split("-")[1] in ACCEL_RATES;
+  return tier in ACCEL_RATES;
+};
+const getTierLabel = (tier) => {
+  if (!tier || tier === "Standard" || tier === "HOUSE ACCOUNTS") return "Private Practice";
+  if (tier === "Top 100") return "Top 100 (Private)";
+  if (tier.startsWith("Top 100-")) return `Top 100 + ${tier.split("-")[1]}`;
+  if (tier in ACCEL_RATES) return `Accelerate ${tier}`;
+  return tier;
+};
+
+// ─── FORMATTERS ──────────────────────────────────────────────────
+const $$ = n => {
+  if (n == null || isNaN(n)) return "$0";
+  const abs = Math.abs(n);
+  const sign = n < 0 ? "-" : "";
+  if (abs >= 1000000) return sign + "$" + (abs/1000000).toFixed(2) + "M";
+  if (abs >= 1000) return sign + "$" + (abs/1000).toFixed(abs%1000===0?0:1) + "K";
+  return sign + "$" + Math.round(abs).toLocaleString();
+};
+const $f = n => "$" + Math.round(n||0).toLocaleString();
+const pc = n => Math.round((n||0)*100) + "%";
+
+// ─── ICONS ───────────────────────────────────────────────────────
+const Back = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>;
+const Chev = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{opacity:.4,flexShrink:0}}><path d="M9 18l6-6-6-6"/></svg>;
+const UploadIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>;
+
+// ─── SMALL COMPONENTS ────────────────────────────────────────────
+const Pill = ({l,v,c}) => <div><span style={{fontSize:8,textTransform:"uppercase",color:T.t4}}>{l} </span><span className="m" style={{fontSize:12,fontWeight:700,color:c}}>{v}</span></div>;
+const Stat = ({l,v,c}) => <div style={{background:T.s2,borderRadius:8,padding:"8px 10px",textAlign:"center"}}><div style={{fontSize:8,textTransform:"uppercase",color:T.t4,marginBottom:2}}>{l}</div><div className="m" style={{fontSize:14,fontWeight:700,color:c}}>{v}</div></div>;
+const Bar = ({pct, color}) => <div style={{width:"100%",height:6,borderRadius:3,background:T.s3,overflow:"hidden"}}><div className="bar-g" style={{height:"100%",borderRadius:3,width:`${Math.min(Math.max(pct,0),100)}%`,background:color||`linear-gradient(90deg,${T.blue},${T.cyan})`}}/></div>;
+
+// ─── SCORING ENGINE ──────────────────────────────────────────────
+function scoreAccount(a, q) {
+  let s = 0; const r = [];
+  const py = a.pyQ?.[q] || 0;
+  const cy = a.cyQ?.[q] || 0;
+  const gap = py - cy;
+  const ret = py > 0 ? cy / py : 0;
+  const d = a.last || 999;
+
+  if (gap > 8000) { s += 30; r.push(`Large gap: ${$$(gap)}`); }
+  else if (gap > 4000) { s += 20; r.push(`Gap: ${$$(gap)}`); }
+  else if (gap > 2000) { s += 10; r.push(`Gap: ${$$(gap)}`); }
+
+  if (py > 500 && ret < 0.05) { s += 25; r.push("Near-zero retention"); }
+  else if (py > 500 && ret < 0.15) { s += 20; r.push(`Critical ${Math.round(ret*100)}%`); }
+  else if (py > 200 && ret < 0.30) { s += 12; r.push(`Low retention ${Math.round(ret*100)}%`); }
+
+  if (d > 120) { s += 20; r.push(`Gone dark — ${d}d`); }
+  else if (d > 60) { s += 15; r.push(`${d}d since order`); }
+  else if (d > 30) { s += 8; r.push(`${d}d since order`); }
+
+  if (gap > 5000 && d < 60) { s += 15; r.push("Q1 close — act now"); }
+  else if (gap > 3000) { s += 10; r.push("Q1 closing window"); }
+
+  const tier = a.gTier || a.tier;
+  if (tier === "Diamond" || tier?.includes("Diamond")) { s += 10; r.push("Diamond tier"); }
+  else if (tier === "Platinum") { s += 8; r.push("Platinum tier"); }
+  else if (tier === "Top 100") { s += 5; r.push("Top 100"); }
+
+  // Products at $0
+  const dead = (a.products||[]).filter(p => (p[`py${q}`]||0) > 200 && (p[`cy${q}`]||0) === 0);
+  if (dead.length) { s += dead.length * 3; r.push(`${dead.length} products at $0`); }
+
+  return { score: s, reasons: r, gap, ret, d, py, cy };
+}
+
+// ─── CSV PROCESSOR ───────────────────────────────────────────────
+function parseCSV(text) {
+  const lines = text.split("\n");
+  const headers = parseCSVLine(lines[0]);
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const vals = parseCSVLine(lines[i]);
+    const row = {};
+    headers.forEach((h, j) => row[h.trim()] = (vals[j]||"").trim());
+    rows.push(row);
+  }
+  return rows;
+}
+
+function parseCSVLine(line) {
+  const result = []; let current = ""; let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    if (line[i] === '"') { inQuotes = !inQuotes; }
+    else if (line[i] === ',' && !inQuotes) { result.push(current); current = ""; }
+    else { current += line[i]; }
+  }
+  result.push(current);
+  return result;
+}
+
+function processCSVData(rows) {
+  const childInfo = {};
+  const childPyQ = {};
+  const childCyQ = {};
+  const childProds = {};
+  const parentInfo = {};
+  const parentChildren = {};
+  const childLastDate = {};
+  const ref = new Date();
+
+  for (const row of rows) {
+    if ((row["Parent Name"]||"").startsWith("Grand Total")) continue;
+    const inv = row["Invoice Date"];
+    if (!inv) continue;
+    const parts = inv.split("/");
+    if (parts.length < 3) continue;
+    const month = parseInt(parts[0]);
+    const year = parseInt(parts[2]);
+    const dt = new Date(year, month - 1, parseInt(parts[1]));
+    const q = Math.ceil(month / 3);
+
+    const py = parseFloat((row["PY"]||"0").replace(/,/g,"")) || 0;
+    const cy = parseFloat((row["CY"]||"0").replace(/,/g,"")) || 0;
+    const childId = (row["Child Mdm Id"]||"").trim();
+    const parentId = (row["Parent MDM ID"]||"").trim();
+    const l3 = (row["L3"]||"").trim();
+
+    if (!childId) continue;
+
+    if (!childPyQ[childId]) childPyQ[childId] = {};
+    if (!childCyQ[childId]) childCyQ[childId] = {};
+    if (py !== 0) {
+      childPyQ[childId][q] = (childPyQ[childId][q]||0) + py;
+      childPyQ[childId]["FY"] = (childPyQ[childId]["FY"]||0) + py;
+    }
+    if (cy !== 0) {
+      childCyQ[childId][q] = (childCyQ[childId][q]||0) + cy;
+      childCyQ[childId]["FY"] = (childCyQ[childId]["FY"]||0) + cy;
+    }
+
+    if (l3) {
+      if (!childProds[childId]) childProds[childId] = {};
+      if (!childProds[childId][l3]) childProds[childId][l3] = {};
+      if (py !== 0) {
+        childProds[childId][l3][`py${q}`] = (childProds[childId][l3][`py${q}`]||0) + py;
+        childProds[childId][l3]["pyFY"] = (childProds[childId][l3]["pyFY"]||0) + py;
+      }
+      if (cy !== 0) {
+        childProds[childId][l3][`cy${q}`] = (childProds[childId][l3][`cy${q}`]||0) + cy;
+        childProds[childId][l3]["cyFY"] = (childProds[childId][l3]["cyFY"]||0) + cy;
+      }
+    }
+
+    if ((py !== 0 || cy !== 0) && (!childLastDate[childId] || dt > childLastDate[childId])) {
+      childLastDate[childId] = dt;
+    }
+
+    if (!childInfo[childId]) {
+      childInfo[childId] = {
+        name: row["Child Name"]||"", city: row["City"]||"", st: row["State"]||"",
+        tier: row["Acct Type"]||"Standard", parentId,
+      };
+    }
+    if (parentId && !parentInfo[parentId]) {
+      parentInfo[parentId] = {
+        name: (row["Class 4"]||row["Parent Name"]||"").trim(),
+        tier: row["Acct Type"]||"Standard",
+        class2: row["Sds Cust Class2"]||"",
+      };
+    }
+    if (parentId) {
+      if (!parentChildren[parentId]) parentChildren[parentId] = new Set();
+      parentChildren[parentId].add(childId);
+    }
+  }
+
+  const groups = [];
+  for (const [pid, childIds] of Object.entries(parentChildren)) {
+    const pi = parentInfo[pid] || {};
+    const children = [];
+    const gPy = {}; const gCy = {};
+
+    for (const cid of childIds) {
+      const ci = childInfo[cid] || {};
+      const pyQ = {}; const cyQ = {};
+      for (const [k,v] of Object.entries(childPyQ[cid]||{})) { pyQ[String(k)] = Math.round(v); }
+      for (const [k,v] of Object.entries(childCyQ[cid]||{})) { cyQ[String(k)] = Math.round(v); }
+
+      const products = [];
+      for (const [l3, vals] of Object.entries(childProds[cid]||{})) {
+        const p = { n: l3 };
+        for (const [k,v] of Object.entries(vals)) p[k] = Math.round(v);
+        if (Math.abs(p.pyFY||0) >= 50 || Math.abs(p.cyFY||0) >= 25) products.push(p);
+      }
+      products.sort((a,b) => Math.abs(b.pyFY||0) - Math.abs(a.pyFY||0));
+
+      const last = childLastDate[cid];
+      const daysSince = last ? Math.round((ref - last) / 86400000) : 999;
+
+      const hasMoney = Object.values(pyQ).some(v=>v!==0) || Object.values(cyQ).some(v=>v!==0);
+      if (!hasMoney) continue;
+
+      children.push({ id: cid, name: ci.name, city: ci.city, st: ci.st, tier: ci.tier, last: daysSince, pyQ, cyQ, products: products.slice(0,10) });
+
+      for (const [k,v] of Object.entries(pyQ)) gPy[k] = (gPy[k]||0) + v;
+      for (const [k,v] of Object.entries(cyQ)) gCy[k] = (gCy[k]||0) + v;
+    }
+
+    if (children.length === 0) continue;
+    children.sort((a,b) => ((b.pyQ["1"]||0)-(b.cyQ["1"]||0)) - ((a.pyQ["1"]||0)-(a.cyQ["1"]||0)));
+    groups.push({ id: pid, name: pi.name||pid, tier: pi.tier||"Standard", class2: pi.class2||"", locs: children.length, pyQ: gPy, cyQ: gCy, children });
+  }
+
+  groups.sort((a,b) => ((b.pyQ["1"]||0)-(b.cyQ["1"]||0)) - ((a.pyQ["1"]||0)-(a.cyQ["1"]||0)));
+  return { groups, generated: new Date().toISOString().slice(0,10) };
+}
+
+// ─── SKU PRICING (2025 Kerr Accelerate Formulary +3% for 2026) ──
+// [sku, desc, cat, stdWS, stdMSRP, diaWS, diaMSRP, platWS, platMSRP, goldWS, goldMSRP, silvWS, silvMSRP]
+const SKU = [
+["37007","SimpliShade Unidose 20pk Medium","SIMPLISHADE",73.67,122.22,51.69,64.62,55.18,70.74,58.85,77.44,62.53,84.5],
+["37001","SimpliShade Syringe Light","SIMPLISHADE",73.67,122.22,51.69,64.62,55.18,70.74,58.85,77.44,62.53,84.5],
+["37002","SimpliShade Syringe Medium","SIMPLISHADE",73.67,122.22,51.69,64.62,55.18,70.74,58.85,77.44,62.53,84.5],
+["37106","SS SE Flow Syringe Intro Kit","SIMPLISHADE",225.0,375.0,135.0,168.75,149.17,191.25,165.3,217.5,177.6,240.0],
+["37107","SS SE Flow Syringe Light","SIMPLISHADE",81.0,135.0,48.6,60.75,53.7,68.85,59.51,78.3,63.94,86.4],
+["36440","Harmonize A1 ENAMEL Uni 20pk","HARMONIZE",100.03,165.04,70.18,87.73,74.91,96.04,79.9,105.14,84.9,114.72],
+["36441","Harmonize A2 ENAMEL Uni 20pk","HARMONIZE",100.03,165.04,70.18,87.73,74.91,96.04,79.9,105.14,84.9,114.72],
+["36439","Harmonize XL ENAMEL Uni 20pk","HARMONIZE",100.03,165.04,70.18,87.73,74.91,96.04,79.9,105.14,84.9,114.72],
+["34337","Herculite Ultra Syringe A1","HERCULITE ULTRA",107.94,179.89,82.12,102.65,87.22,111.81,92.6,121.84,97.98,132.4],
+["35392","Herculite Ultra Flow Syr A1","HERCULITE ULTRA FLOW",72.59,120.41,37.21,46.51,43.44,55.69,50.68,66.68,54.3,73.37],
+["36887","OptiBond Univ 360 Bottle Ref","OPTIBOND 360",107.66,178.56,68.9,86.13,75.36,96.62,81.82,107.66,86.13,116.39],
+["36886","OptiBond Univ 360 Unidose Kit","OPTIBOND 360",219.49,364.03,140.47,175.59,153.64,196.98,166.81,219.49,175.59,237.29],
+["36519","OptiBond Universal Bottle Ref","OPTIBOND UNIVERSAL",107.66,178.56,72.13,90.17,77.52,99.38,86.13,113.33,91.51,123.66],
+["36518","OptiBond Universal Uni 100pk","OPTIBOND UNIVERSAL",219.49,364.03,147.06,183.82,158.03,202.61,175.59,231.04,186.57,252.12],
+["29669","OptiBond Solo Plus Uni Ref","OPTIBOND SOLO PLUS",275.52,456.94,184.6,230.75,198.37,254.32,220.41,290.02,234.19,316.47],
+["36659","OptiBond eXTRa Unidose Kit","OPTIBOND eXTRa",244.77,406.01,164.0,204.99,176.23,225.94,195.82,257.65,208.05,281.15],
+["N01I","BOND 1 Primer/Adhesive Kit","BOND-1",100.53,160.77,65.34,81.68,70.37,90.22,75.4,99.21,80.42,108.68],
+["N01IAB","BOND 1 Refill 6mL","BOND-1",94.88,158.13,61.67,77.09,66.42,85.15,71.16,93.63,75.9,102.57],
+["36711","SonicFill 3 A1 Refill 20 tips","SONICFILL 3",105.55,175.07,74.05,92.57,79.05,101.34,84.31,110.94,89.58,121.05],
+["36710","SonicFill 3 Intro Kit","SONICFILL 3",409.12,678.53,287.04,358.8,306.39,392.81,326.81,430.01,347.22,469.22],
+["34418","MaxCem Elite Bulk Pack","MAXCEM ELITE",194.04,321.84,122.25,152.81,133.89,171.65,145.53,191.49,153.29,207.15],
+["33872","MaxCem Elite Ref CLR pk2","MAXCEM ELITE",126.25,209.39,79.54,99.42,87.11,111.68,94.69,124.59,99.74,134.78],
+["36299","MaxCem Elite Chroma Bulk Kit","MAXCEM ELITE CHROMA",214.06,355.07,134.86,168.57,147.7,189.36,160.55,211.24,169.11,228.52],
+["N56A","Simile 10 Syringe Kit","SIMILE",443.64,739.39,227.59,284.49,265.7,340.64,309.98,407.87,332.12,448.81],
+["N56BA","Simile A1 Syringe","SIMILE",60.21,100.34,30.89,38.61,36.06,46.23,42.07,55.36,45.07,60.91],
+["32611","Premise Master Syringe Kit","PREMISE",659.73,1099.54,435.42,544.28,476.98,611.52,524.29,689.85,560.31,757.17],
+["32617","Premise Syr Ref Body A1 4gm","PREMISE",109.33,182.22,72.16,90.2,79.05,101.34,86.88,114.32,92.86,125.49],
+["33682","NX3 Light-Cure Kit","NX3",164.77,274.59,107.1,133.88,115.34,147.87,123.58,162.6,131.82,178.13],
+["13-1100","CaviWipes Towelettes CN160","CAVIWIPES",8.4,13.99,5.94,7.42,6.28,8.05,6.64,8.74,7.01,9.47],
+["13-1150","CaviWipes XL Towelettes CN65","CAVIWIPES XL",10.06,16.75,7.11,8.89,7.52,9.64,7.95,10.46,8.38,11.32],
+["14-1100","CaviWipes 2.0 Towelettes CN160","CAVIWIPES 2.0",8.24,13.73,6.12,7.65,6.48,8.31,6.85,9.01,7.23,9.77],
+["13-5100","CaviWipes 1 Towelettes CN160","CAVIWIPES1",9.37,15.6,6.51,8.14,6.88,8.82,7.28,9.58,7.67,10.36],
+["13-1000","CaviCide Gallon","CAVICIDE",22.86,38.07,16.59,20.74,17.55,22.5,18.56,24.42,19.57,26.45],
+["13-5000","CaviCide 1 Gallon","CAVICIDE1",25.11,41.81,17.9,22.37,18.93,24.27,20.02,26.34,21.11,28.53],
+["33215","TempBond Automix","TEMPBOND",89.92,149.12,62.87,78.59,67.11,86.03,71.59,94.19,76.05,102.78],
+["33217","TempBond NE Automix","TEMPBOND NE",89.92,149.12,62.87,78.59,67.11,86.03,71.59,94.19,76.05,102.78],
+["N11VA","Flow-It ALC Value Pk A1 pk6","FLOW-IT ALC",93.61,156.0,48.02,60.03,56.06,71.88,65.41,86.06,70.08,94.7],
+["29684","Point 4 Syringe Kit","POINT 4",411.92,686.51,271.87,339.83,297.82,381.82,327.35,430.73,349.84,472.76],
+["N32","Build-It FR Intro Kit","BUILD IT F.R.",199.18,330.37,139.47,174.33,148.87,190.86,158.79,208.93,168.73,228.01],
+["910860-1","Demi Plus LED Curing System","DEMI PLUS",1343.12,2238.54,886.46,1108.07,971.08,1244.97,1067.38,1404.44,1140.71,1541.5],
+["N56CA","Simile A2 Syringe","SIMILE",60.21,100.34,30.89,38.61,36.06,46.23,42.07,55.36,45.07,60.91],
+["34338","Herculite Ultra Syringe A2","HERCULITE ULTRA",107.94,179.89,82.12,102.65,87.22,111.81,92.6,121.84,97.98,132.4],
+];
+
+// ═════════════════════════════════════════════════════════════════
+// MAIN APP
+// ═════════════════════════════════════════════════════════════════
+export default function App() {
+  const [tab, setTab] = useState("today");
+  const [view, setView] = useState(null);
+  const [adjs, setAdjs] = useState([]);
+  const [estPct, setEstPct] = useState(90);
+  const [gFilt, setGFilt] = useState("All");
+  const [gSearch, setGSearch] = useState("");
+  const [dataSource, setDataSource] = useState("preloaded");
+  const [groups, setGroups] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [uploadMsg, setUploadMsg] = useState(null);
+  const fileRef = useRef(null);
+
+  // Load pre-loaded data on mount
+  useEffect(() => {
+    // Check localStorage first
+    try {
+      const saved = localStorage.getItem("accel_data");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setGroups(parsed.groups);
+        setDataSource(`CSV uploaded ${parsed.generated}`);
+        setLoading(false);
+        return;
+      }
+    } catch(e) {}
+
+    // Load pre-loaded data
+    try {
+      const { PRELOADED } = require("@/data/preloaded-data");
+      setGroups(PRELOADED.groups);
+      setDataSource(\`Pre-loaded \${PRELOADED.generated}\`);
+    } catch(e) {
+      setGroups([]);
+      setDataSource("No data — upload CSV");
+    }
+    setLoading(false);
+  }, []);
+
+  // Handle CSV upload
+  const handleUpload = useCallback((e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadMsg("Processing CSV...");
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const text = ev.target.result;
+        const rows = parseCSV(text);
+        const result = processCSVData(rows);
+        setGroups(result.groups);
+        setDataSource(`CSV uploaded ${result.generated}`);
+        localStorage.setItem("accel_data", JSON.stringify(result));
+        setUploadMsg(`✅ Loaded ${result.groups.length} groups from CSV`);
+        setTimeout(() => setUploadMsg(null), 4000);
+      } catch(err) {
+        setUploadMsg(`❌ Error: ${err.message}`);
+        setTimeout(() => setUploadMsg(null), 5000);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  }, []);
+
+  // Flatten all children for "Today" scoring
+  const allChildren = useMemo(() => {
+    if (!groups) return [];
+    return groups.flatMap(g =>
+      g.children.map(c => ({ ...c, gName: g.name, gId: g.id, gTier: g.tier }))
+    );
+  }, [groups]);
+
+  const totalAdjQ1 = adjs.reduce((s,a) => s + a.credited, 0);
+
+  // Compute Q1 totals from data
+  const q1CYFromData = useMemo(() => {
+    if (!groups) return 0;
+    return groups.reduce((s,g) => s + (g.cyQ?.["1"]||0), 0);
+  }, [groups]);
+
+  const q1CY = q1CYFromData + totalAdjQ1;
+  const q1Gap = Q1_TARGET - q1CY;
+  const q1Att = q1CY / Q1_TARGET;
+
+  // Score all accounts
+  const scored = useMemo(() => {
+    return allChildren.map(a => {
+      const myAdj = adjs.filter(m => m.acctId === a.id);
+      const adjCY = (a.cyQ?.["1"]||0) + myAdj.reduce((s,m) => s + m.credited, 0);
+      const adjusted = { ...a, cyQ: { ...a.cyQ, "1": adjCY }, adjCount: myAdj.length };
+      return { ...adjusted, ...scoreAccount(adjusted, "1") };
+    }).sort((a,b) => b.score - a.score);
+  }, [allChildren, adjs]);
+
+  if (loading) return <div style={{background:T.bg,color:T.t1,minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'DM Sans',sans-serif"}}><div style={{textAlign:"center"}}><div style={{fontSize:20,marginBottom:8}}>⚡</div><div style={{color:T.t3}}>Loading Accelerate...</div></div></div>;
+
+  return (
+    <div style={{background:T.bg,color:T.t1,minHeight:"100vh",fontFamily:"'DM Sans',-apple-system,sans-serif",maxWidth:430,margin:"0 auto",position:"relative"}}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap');
+        *{box-sizing:border-box;margin:0;padding:0}
+        .m{font-family:'JetBrains Mono',monospace}
+        .hide-sb::-webkit-scrollbar{display:none}
+        input[type=range]{-webkit-appearance:none;width:100%;height:6px;border-radius:3px;background:${T.s3};outline:none}
+        input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:${T.blue};cursor:pointer;border:2px solid ${T.bg};box-shadow:0 0 8px rgba(79,142,247,.4)}
+        input[type=number]{-moz-appearance:textfield}
+        input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+        .anim{animation:su .3s cubic-bezier(.16,1,.3,1) both}
+        @keyframes su{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+        .bar-g{animation:bg .8s cubic-bezier(.16,1,.3,1) both}
+        @keyframes bg{from{width:0}}
+      `}</style>
+
+      {/* HEADER */}
+      <header style={{position:"sticky",top:0,zIndex:50,borderBottom:`1px solid ${T.b1}`,background:"rgba(10,10,15,.85)",backdropFilter:"blur(32px)",padding:"0 18px",height:52,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div style={{fontSize:15,fontWeight:700}}>Ken <span style={{color:T.blue}}>Scott</span></div>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <button onClick={()=>fileRef.current?.click()} style={{background:"rgba(79,142,247,.08)",border:`1px solid rgba(79,142,247,.15)`,borderRadius:8,padding:"4px 10px",display:"flex",alignItems:"center",gap:5,cursor:"pointer",color:T.blue,fontSize:10,fontWeight:600,fontFamily:"inherit"}}><UploadIcon/> CSV</button>
+          <input ref={fileRef} type="file" accept=".csv" onChange={handleUpload} style={{display:"none"}}/>
+          <div className="m" style={{border:`1px solid ${T.b1}`,background:T.s2,borderRadius:999,padding:"3px 10px",fontSize:10,fontWeight:500,color:T.t4}}>{dataSource}</div>
+        </div>
+      </header>
+
+      {/* UPLOAD MESSAGE */}
+      {uploadMsg && <div className="anim" style={{margin:"8px 16px",padding:"10px 14px",borderRadius:10,background:uploadMsg.startsWith("✅")?"rgba(52,211,153,.08)":"rgba(248,113,113,.08)",border:`1px solid ${uploadMsg.startsWith("✅")?"rgba(52,211,153,.15)":"rgba(248,113,113,.15)"}`,fontSize:12,color:uploadMsg.startsWith("✅")?T.green:uploadMsg.startsWith("❌")?T.red:T.t3}}>{uploadMsg}</div>}
+
+      {/* TAB CONTENT */}
+      {!view && tab==="today" && <TodayTab scored={scored} goAcct={a=>setView({type:"acct",data:a})} q1CY={q1CY} q1Gap={q1Gap} q1Att={q1Att} adjCount={adjs.length} totalAdj={totalAdjQ1}/>}
+      {!view && tab==="groups" && <GroupsTab groups={groups||[]} goGroup={g=>setView({type:"group",data:g})} filt={gFilt} setFilt={setGFilt} search={gSearch} setSearch={setGSearch}/>}
+      {!view && tab==="calc" && <CalcTab/>}
+      {!view && tab==="est" && <EstTab pct={estPct} setPct={setEstPct} q1CY={q1CY} groups={groups||[]}/>}
+      {view?.type==="group" && <GroupDetail group={view.data} goMain={()=>setView(null)} goAcct={a=>setView({type:"acct",data:{...a,gName:view.data.name,gId:view.data.id,gTier:view.data.tier},from:view.data})}/>}
+      {view?.type==="acct" && <AcctDetail acct={view.data} goBack={()=>view?.from?setView({type:"group",data:view.from}):setView(null)} adjs={adjs} setAdjs={setAdjs}/>}
+
+      {/* NAV BAR */}
+      <nav style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,zIndex:50,borderTop:`1px solid ${T.b1}`,background:"rgba(10,10,15,.92)",backdropFilter:"blur(32px)"}}>
+        <div style={{display:"flex",height:56,alignItems:"center",justifyContent:"space-around",padding:"0 4px"}}>
+          {[{k:"today",l:"Today",i:"⚡"},{k:"groups",l:"Groups",i:"👥"},{k:"calc",l:"Calculator",i:"🧮"},{k:"est",l:"Estimator",i:"📊"}].map(t=>(
+            <button key={t.k} onClick={()=>{setTab(t.k);setView(null)}} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 8px",cursor:"pointer",color:tab===t.k&&!view?T.blue:T.t4}}>
+              <span style={{fontSize:18}}>{t.i}</span>
+              <span style={{fontSize:9,fontWeight:600,letterSpacing:".5px"}}>{t.l}</span>
+            </button>
+          ))}
+        </div>
+      </nav>
+    </div>
+  );
+}
+
+// ─── TODAY TAB ────────────────────────────────────────────────────
+function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj}) {
+  return <div style={{padding:"16px 16px 80px"}}>
+    {/* Q1 HERO */}
+    <div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(79,142,247,.06))`,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12,boxShadow:"0 4px 24px rgba(0,0,0,.4)"}}>
+      <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+        <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color:T.t3}}>Q1 Pace</span>
+        <span className="m" style={{fontSize:11,fontWeight:700,color:T.amber}}>{DAYS_LEFT}d left</span>
+      </div>
+      <div style={{display:"flex",alignItems:"baseline",gap:12,marginBottom:6}}>
+        <span className="m" style={{fontSize:28,fontWeight:800}}>{pc(q1Att)}</span>
+        <span style={{fontSize:12,color:T.t3}}>{$$(q1CY)} / {$$(Q1_TARGET)}</span>
+      </div>
+      <Bar pct={q1Att*100}/>
+      {adjCount>0&&<div style={{marginTop:8,padding:"6px 10px",borderRadius:8,background:"rgba(52,211,153,.06)",border:"1px solid rgba(52,211,153,.12)",fontSize:10,color:T.green}}>✅ {adjCount} adjustment{adjCount>1?"s":""}: +{$f(totalAdj)}</div>}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:12}}>
+        <div style={{borderRadius:8,background:"rgba(248,113,113,.06)",border:"1px solid rgba(248,113,113,.12)",padding:10}}>
+          <div style={{fontSize:9,color:T.t3}}>Gap to close</div>
+          <div className="m" style={{fontSize:16,fontWeight:700,color:T.red}}>{$$(q1Gap)}</div>
+        </div>
+        <div style={{borderRadius:8,background:"rgba(79,142,247,.06)",border:"1px solid rgba(79,142,247,.12)",padding:10}}>
+          <div style={{fontSize:9,color:T.t3}}>Need per day</div>
+          <div className="m" style={{fontSize:16,fontWeight:700,color:T.blue}}>{$f(DAYS_LEFT>0?q1Gap/DAYS_LEFT:0)}</div>
+        </div>
+      </div>
+    </div>
+
+    {/* CALL LIST */}
+    <div style={{marginBottom:8,display:"flex",alignItems:"center",gap:8}}>
+      <div style={{width:8,height:8,borderRadius:4,background:T.blue,animation:"pulse 2s infinite"}}/>
+      <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color:T.blue}}>Who to Call Today ({scored.filter(a=>a.score>0).length})</span>
+    </div>
+    <div style={{fontSize:10,color:T.t4,marginBottom:12}}>Scored by gap · retention · recency · Q1 urgency · tier</div>
+    {scored.filter(a=>a.score>0).slice(0,20).map((a,i)=>(
+      <button key={a.id} className="anim" onClick={()=>goAcct(a)} style={{animationDelay:`${i*30}ms`,width:"100%",textAlign:"left",background:T.s1,border:`1px solid ${a.score>=50?"rgba(248,113,113,.15)":T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:8,cursor:"pointer"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+              <span className="m" style={{fontSize:10,fontWeight:700,color:a.score>=60?T.red:a.score>=40?T.amber:T.t3,background:a.score>=60?"rgba(248,113,113,.08)":a.score>=40?"rgba(251,191,36,.08)":T.s2,borderRadius:4,padding:"2px 6px"}}>#{i+1} · {a.score}pt</span>
+              {a.score>=50&&<span style={{fontSize:10}}>🔥</span>}
+              {a.adjCount>0&&<span style={{fontSize:9,color:T.green,background:"rgba(52,211,153,.08)",borderRadius:4,padding:"2px 5px"}}>+adj</span>}
+            </div>
+            <div style={{fontSize:13,fontWeight:600,marginTop:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
+            <div style={{fontSize:10,color:T.t3,marginTop:2}}>{a.city}, {a.st} · {isAccelTier(a.gTier||a.tier)?<span style={{color:T.amber}}>{a.gTier||a.tier}</span>:(a.gTier||a.tier)==="Top 100"?"Top 100":"Private"}</div>
+          </div>
+          <div style={{textAlign:"right",flexShrink:0,marginLeft:12}}>
+            <div className="m" style={{fontSize:12,fontWeight:700,color:T.red}}>{a.gap>0?`-${$$(a.gap)}`:$$(a.gap)}</div>
+            <div className="m" style={{fontSize:10,color:T.t4}}>{pc(a.ret)} ret</div>
+          </div>
+        </div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+          {a.reasons.slice(0,3).map((r,j)=><span key={j} style={{fontSize:9,color:T.t3,background:T.s2,borderRadius:4,padding:"2px 6px",border:`1px solid ${T.b2}`}}>{r}</span>)}
+        </div>
+      </button>
+    ))}
+  </div>;
+}
+
+// ─── GROUPS TAB ──────────────────────────────────────────────────
+function GroupsTab({groups,goGroup,filt,setFilt,search,setSearch}) {
+  const fs=["All","Top 100","Diamond","Platinum","Gold","DSO","Urgent"];
+  const list=useMemo(()=>{
+    let l=[...groups];
+    if(search){const q=search.toLowerCase();l=l.filter(g=>g.name.toLowerCase().includes(q)||g.children?.some(c=>c.name.toLowerCase().includes(q)));}
+    if(filt==="Urgent")l=l.filter(g=>{const gap=(g.pyQ?.["1"]||0)-(g.cyQ?.["1"]||0);const ret=(g.pyQ?.["1"]||0)>0?(g.cyQ?.["1"]||0)/(g.pyQ?.["1"]||0):1;return gap>2000&&ret<0.3;});
+    else if(filt==="Top 100")l=l.filter(g=>g.tier==="Top 100"||g.tier?.startsWith("Top 100"));
+    else if(filt==="DSO")l=l.filter(g=>g.locs>=3||g.class2==="DSO"||g.class2==="EMERGING DSO");
+    else if(filt!=="All")l=l.filter(g=>g.tier===filt||g.tier?.includes(filt));
+    l.sort((a,b)=>((b.pyQ?.["1"]||0)-(b.cyQ?.["1"]||0))-((a.pyQ?.["1"]||0)-(a.cyQ?.["1"]||0)));
+    return l;
+  },[groups,filt,search]);
+
+  return <div style={{padding:"12px 16px 80px"}}>
+    <div className="hide-sb" style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:4,marginBottom:12}}>
+      {fs.map(f=><button key={f} onClick={()=>setFilt(f)} style={{flexShrink:0,whiteSpace:"nowrap",padding:"6px 14px",borderRadius:8,fontSize:12,fontWeight:600,cursor:"pointer",border:`1px solid ${filt===f?"rgba(79,142,247,.25)":T.b2}`,background:filt===f?"rgba(79,142,247,.12)":T.s2,color:filt===f?T.blue:T.t3,fontFamily:"inherit"}}>{f}</button>)}
+    </div>
+    <div style={{position:"relative",marginBottom:12}}>
+      <svg style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",width:14,height:14,color:T.t4}} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search groups…" style={{width:"100%",height:40,borderRadius:10,border:`1px solid ${T.b1}`,background:T.s1,color:T.t1,fontSize:13,paddingLeft:36,paddingRight:12,outline:"none",fontFamily:"inherit"}}/>
+    </div>
+    <div style={{marginBottom:8,fontSize:10,color:T.t4}}>{list.length} groups</div>
+    {list.slice(0,50).map((g,i)=>{
+      const py1=g.pyQ?.["1"]||0;const cy1=g.cyQ?.["1"]||0;const gap=py1-cy1;const ret=py1>0?Math.round(cy1/py1*100):0;
+      const isUrgent=gap>5000&&ret<20;
+      return <button key={g.id} className="anim" onClick={()=>goGroup(g)} style={{animationDelay:`${i*20}ms`,width:"100%",textAlign:"left",background:T.s1,border:`1px solid ${isUrgent?"rgba(248,113,113,.15)":T.b1}`,borderRadius:14,padding:"14px 16px",marginBottom:8,cursor:"pointer"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:13,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{g.name}</div>
+            <div style={{fontSize:10,color:T.t3,marginTop:2}}>{g.locs} loc{g.locs>1?"s":""} · {getTierLabel(g.tier)}</div>
+          </div>
+          {isUrgent&&<span style={{flexShrink:0,borderRadius:999,background:"rgba(248,113,113,.09)",border:"1px solid rgba(248,113,113,.22)",padding:"2px 8px",fontSize:9,fontWeight:700,color:T.red,marginRight:4}}>Urgent</span>}
+          <Chev/>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:16}}>
+          <Pill l="PY" v={$$(py1)} c={T.t2}/>
+          <Pill l="CY" v={$$(cy1)} c={T.blue}/>
+          <Pill l="Gap" v={$$(gap)} c={T.red}/>
+          <div style={{marginLeft:"auto"}}><Pill l="Ret" v={ret+"%"} c={ret>50?T.green:ret>25?T.amber:T.red}/></div>
+        </div>
+      </button>;
+    })}
+    {list.length>50&&<div style={{textAlign:"center",padding:16,fontSize:11,color:T.t4}}>Showing top 50 of {list.length} groups. Use search to find more.</div>}
+  </div>;
+}
+
+// ─── GROUP DETAIL ────────────────────────────────────────────────
+function GroupDetail({group,goMain,goAcct}) {
+  const [q,setQ]=useState("1");
+  const qk=q;
+  const py=group.pyQ?.[qk]||0;const cy=group.cyQ?.[qk]||0;
+  const gap=py-cy;const ret=py>0?Math.round(cy/py*100):0;
+
+  return <div style={{paddingBottom:80}}>
+    <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"10px 16px"}}>
+      <button onClick={goMain} style={{background:"none",border:"none",color:T.blue,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:13,fontWeight:600,fontFamily:"inherit"}}><Back/> Groups</button>
+    </div>
+    <div style={{padding:"16px 16px 0"}}>
+      <div className="anim" style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
+        <div style={{fontSize:16,fontWeight:700,marginBottom:4}}>{group.name}</div>
+        <div style={{fontSize:11,color:T.t3,marginBottom:12}}>{group.locs} locations · {getTierLabel(group.tier)}</div>
+        {/* Quarter selector */}
+        <div style={{display:"flex",gap:4,marginBottom:12}}>
+          {["1","2","3","4","FY"].map(qr=>(
+            <button key={qr} onClick={()=>setQ(qr)} style={{flex:1,padding:"6px 0",borderRadius:8,fontSize:11,fontWeight:600,cursor:"pointer",border:`1px solid ${q===qr?"rgba(79,142,247,.25)":T.b2}`,background:q===qr?"rgba(79,142,247,.12)":T.s2,color:q===qr?T.blue:T.t3,fontFamily:"inherit"}}>{qr==="FY"?"FY":`Q${qr}`}</button>
+          ))}
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}>
+          <Stat l="PY" v={$$(py)} c={T.t2}/><Stat l="CY" v={$$(cy)} c={T.blue}/><Stat l="Gap" v={$$(gap)} c={T.red}/><Stat l="Ret" v={ret+"%"} c={ret>30?T.green:ret>15?T.amber:T.red}/>
+        </div>
+      </div>
+      <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3,marginBottom:8}}>Locations ({group.children.length})</div>
+      {group.children.map((c,i)=>{
+        const cPy=c.pyQ?.[qk]||0;const cCy=c.cyQ?.[qk]||0;const cGap=cPy-cCy;const cRet=cPy>0?Math.round(cCy/cPy*100):0;
+        return <button key={c.id} className="anim" onClick={()=>goAcct(c)} style={{animationDelay:`${i*30}ms`,width:"100%",textAlign:"left",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:"12px 14px",marginBottom:8,cursor:"pointer"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+            <div style={{fontSize:12,fontWeight:600,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.name}</div><Chev/>
+          </div>
+          <div style={{fontSize:10,color:T.t3,marginBottom:6}}>{c.city}, {c.st} · Last {c.last}d ago</div>
+          <div style={{display:"flex",gap:12}}>
+            <Pill l="PY" v={$$(cPy)} c={T.t2}/><Pill l="CY" v={$$(cCy)} c={T.blue}/><Pill l="Gap" v={$$(cGap)} c={T.red}/><div style={{marginLeft:"auto"}}><Pill l="Ret" v={cRet+"%"} c={T.t3}/></div>
+          </div>
+          {(c.products||[]).length>0&&<div style={{marginTop:8,display:"flex",gap:4,flexWrap:"wrap"}}>
+            {c.products.slice(0,4).map((p,j)=>{
+              const pCy=p[`cy${qk}`]||0;const pPy=p[`py${qk}`]||0;
+              return <span key={j} style={{fontSize:8,color:pPy>200&&pCy===0?T.red:T.t3,background:pPy>200&&pCy===0?"rgba(248,113,113,.06)":T.s2,borderRadius:4,padding:"2px 5px",border:`1px solid ${pPy>200&&pCy===0?"rgba(248,113,113,.12)":T.b2}`}}>{p.n.split(" ")[0]} {pPy>200&&pCy===0?"⚠️$0":$$(pCy)}</span>;
+            })}
+          </div>}
+        </button>;
+      })}
+    </div>
+  </div>;
+}
+
+// ─── ACCOUNT DETAIL ──────────────────────────────────────────────
+function AcctDetail({acct,goBack,adjs,setAdjs}) {
+  const [q,setQ]=useState("1");
+  const [showForm,setShowForm]=useState(false);
+  const [toast,setToast]=useState(null);
+  const qk=q;
+
+  const myAdj=adjs.filter(m=>m.acctId===acct.id);
+  const adjTotal=myAdj.reduce((s,m)=>s+m.credited,0);
+  const acctTier=acct.gTier||acct.tier||"Standard";
+  const tierRate=getTierRate(acctTier);
+  const isAccel=isAccelTier(acctTier);
+  const acctType=getTierLabel(acctTier);
+
+  const pyVal=acct.pyQ?.[qk]||0;
+  const cyBase=acct.cyQ?.[qk]||0;
+  const cyVal=qk==="1"?cyBase+adjTotal:cyBase;
+  const gap=pyVal-cyVal;
+  const ret=pyVal>0?cyVal/pyVal:0;
+
+  const products=acct.products||[];
+  const buying=products.filter(p=>(p[`cy${qk}`]||0)>0).sort((a,b)=>(b[`cy${qk}`]||0)-(a[`cy${qk}`]||0));
+  const stopped=products.filter(p=>(p[`py${qk}`]||0)>100&&(p[`cy${qk}`]||0)===0);
+  const allProdNames=products.map(p=>p.n);
+  const xsell=["KERR CLEANSE","MAXCEM ELITE","DEMI PLUS","SONICFILL 3","PREMISE"].filter(n=>!allProdNames.some(an=>an.includes(n.split(" ")[0])));
+
+  return <div style={{paddingBottom:80}}>
+    <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"10px 16px"}}>
+      <button onClick={goBack} style={{background:"none",border:"none",color:T.blue,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:13,fontWeight:600,fontFamily:"inherit"}}><Back/> Back</button>
+    </div>
+    <div style={{padding:"16px 16px 0"}}>
+      {toast&&<div className="anim" style={{background:"rgba(52,211,153,.12)",border:"1px solid rgba(52,211,153,.25)",borderRadius:12,padding:"12px 16px",marginBottom:12,display:"flex",alignItems:"center",gap:10}}>
+        <span style={{fontSize:20}}>✅</span>
+        <div><div style={{fontSize:13,fontWeight:700,color:T.green}}>Sale recorded!</div><div style={{fontSize:11,color:T.t3}}>+{$f(toast)} credited → Q1 updated</div></div>
+      </div>}
+
+      {/* ACCOUNT HEADER */}
+      <div className="anim" style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12}}>
+        <div style={{fontSize:16,fontWeight:700}}>{acct.name}</div>
+        <div style={{fontSize:11,color:T.t3,marginTop:2}}>{acct.city}, {acct.st} · <span style={{color:isAccel?T.amber:T.t3}}>{acctType}</span> · Last {acct.last}d ago</div>
+        {acct.gName&&<div style={{fontSize:10,color:T.t4,marginTop:2}}>Group: {acct.gName}</div>}
+
+        {/* QUARTER SELECTOR */}
+        <div style={{display:"flex",gap:4,marginTop:12,marginBottom:12}}>
+          {["1","2","3","4","FY"].map(qr=>(
+            <button key={qr} onClick={()=>setQ(qr)} style={{flex:1,padding:"6px 0",borderRadius:8,fontSize:11,fontWeight:600,cursor:"pointer",border:`1px solid ${q===qr?"rgba(79,142,247,.25)":T.b2}`,background:q===qr?"rgba(79,142,247,.12)":T.s2,color:q===qr?T.blue:T.t3,fontFamily:"inherit"}}>{qr==="FY"?"FY":`Q${qr}`}</button>
+          ))}
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}>
+          <Stat l="PY" v={$$(pyVal)} c={T.t2}/>
+          <Stat l="CY" v={$$(cyVal)} c={T.blue}/>
+          <Stat l="Gap" v={$$(gap)} c={T.red}/>
+          <Stat l="Ret" v={pc(ret)} c={ret>.3?T.green:ret>.15?T.amber:T.red}/>
+        </div>
+        {qk!=="1"&&<div style={{marginTop:6,fontSize:10,color:T.t4,textAlign:"center"}}>Showing {qk==="FY"?"Full Year":`Q${qk}`}. Manual adjustments apply to Q1.</div>}
+        {myAdj.length>0&&qk==="1"&&<div style={{marginTop:8,borderRadius:8,background:"rgba(52,211,153,.06)",border:"1px solid rgba(52,211,153,.12)",padding:"8px 10px"}}>
+          <div style={{fontSize:10,fontWeight:600,color:T.green,marginBottom:4}}>Adjustments ({myAdj.length})</div>
+          {myAdj.map(a=><div key={a.id} style={{fontSize:10,color:T.t3,display:"flex",justifyContent:"space-between",marginBottom:2}}><span>{a.desc||"Manual"}</span><span className="m" style={{color:T.green,fontWeight:600}}>+{$f(a.credited)}</span></div>)}
+        </div>}
+      </div>
+
+      {/* VISIT PREP */}
+      <div className="anim" style={{animationDelay:"80ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12}}>
+        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue,marginBottom:10}}>📋 Visit Prep Briefing</div>
+        {buying.length>0&&<div style={{marginBottom:12}}>
+          <div style={{fontSize:10,fontWeight:600,color:T.green,marginBottom:6}}>✅ Currently Buying ({buying.length})</div>
+          {buying.slice(0,8).map((p,i)=>{
+            const pPy=p[`py${qk}`]||0;const pCy=p[`cy${qk}`]||0;
+            return <div key={i} style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+              <span style={{fontSize:11,color:T.t2,flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.n}</span>
+              <span className="m" style={{fontSize:10,color:T.t4,width:50,textAlign:"right"}}>{$$(pPy)}</span>
+              <span style={{fontSize:8,color:T.t4}}>→</span>
+              <span className="m" style={{fontSize:10,color:T.blue,width:50,textAlign:"right"}}>{$$(pCy)}</span>
+              <div style={{width:50,height:4,borderRadius:2,background:T.s3,overflow:"hidden"}}><div className="bar-g" style={{height:"100%",borderRadius:2,width:`${Math.min(pPy>0?pCy/pPy*100:0,100)}%`,background:pPy>0&&pCy/pPy>.3?T.green:T.amber}}/></div>
+            </div>;
+          })}
+        </div>}
+        {stopped.length>0&&<div style={{marginBottom:12}}>
+          <div style={{fontSize:10,fontWeight:600,color:T.red,marginBottom:6}}>⚠️ Stopped Buying ({stopped.length})</div>
+          {stopped.slice(0,6).map((p,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"6px 8px",borderRadius:6,background:"rgba(248,113,113,.04)",border:"1px solid rgba(248,113,113,.08)",marginBottom:4}}>
+            <span style={{fontSize:11}}>{p.n}</span>
+            <span className="m" style={{fontSize:10,color:T.red}}>Was {$$(p[`py${qk}`]||0)} → $0</span>
+          </div>)}
+          {stopped.length>0&&<div style={{marginTop:6,fontSize:10,color:T.t3,fontStyle:"italic"}}>💬 "I noticed {stopped[0]?.n} dropped off. Supply issue or switch? We have new promos…"</div>}
+        </div>}
+        {xsell.length>0&&<div>
+          <div style={{fontSize:10,fontWeight:600,color:T.purple,marginBottom:6}}>💡 Cross-Sell White Space</div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+            {xsell.map((n,i)=><span key={i} style={{fontSize:10,color:T.purple,background:"rgba(167,139,250,.06)",border:"1px solid rgba(167,139,250,.12)",borderRadius:6,padding:"3px 8px"}}>{n}</span>)}
+          </div>
+        </div>}
+      </div>
+
+      {/* PRODUCT BREAKDOWN BARS */}
+      <div className="anim" style={{animationDelay:"160ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12}}>
+        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3,marginBottom:10}}>Product Breakdown — {qk==="FY"?"Full Year":`Q${qk}`}</div>
+        {products.sort((a,b)=>Math.abs(b[`py${qk}`]||0)-Math.abs(a[`py${qk}`]||0)).slice(0,10).map((p,i)=>{
+          const pPy=Math.abs(p[`py${qk}`]||0);const pCy=Math.abs(p[`cy${qk}`]||0);
+          const mx=Math.max(...products.map(x=>Math.abs(x[`py${qk}`]||0)),1);
+          return <div key={i} style={{marginBottom:10}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:11,color:T.t2}}>{p.n}</span><span className="m" style={{fontSize:10,color:pCy===0&&pPy>100?T.red:T.t3}}>{$$(pCy)} / {$$(pPy)}</span></div>
+            <div style={{position:"relative",height:12,borderRadius:3,background:T.s3,overflow:"hidden"}}>
+              <div style={{position:"absolute",top:0,left:0,height:"50%",width:`${pPy/mx*100}%`,background:"rgba(255,255,255,.08)"}}/>
+              <div className="bar-g" style={{animationDelay:`${i*60}ms`,position:"absolute",bottom:0,left:0,height:"50%",width:`${pCy/mx*100}%`,background:pCy===0?T.red:`linear-gradient(90deg,${T.blue},${T.cyan})`}}/>
+            </div>
+          </div>;
+        })}
+        <div style={{display:"flex",gap:12,marginTop:8,fontSize:9,color:T.t4}}><span>▬ PY (top)</span><span style={{color:T.blue}}>▬ CY (bottom)</span></div>
+      </div>
+
+      {/* MANUAL SALE */}
+      <div className="anim" style={{animationDelay:"240ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.amber}}>💰 Add Manual Sale</div>
+          <button onClick={()=>setShowForm(!showForm)} style={{background:"rgba(251,191,36,.08)",border:"1px solid rgba(251,191,36,.15)",borderRadius:8,color:T.amber,cursor:"pointer",fontSize:11,fontWeight:600,padding:"4px 10px",fontFamily:"inherit"}}>{showForm?"Cancel":"+ Add"}</button>
+        </div>
+        {showForm&&<SaleCalculator acctTier={acctTier} tierRate={tierRate} isAccel={isAccel} acctType={acctType} onAdd={(credited,detail)=>{
+          setAdjs(prev=>[...prev,{id:Date.now(),acctId:acct.id,acctName:acct.name,...detail,credited}]);
+          setToast(credited);setShowForm(false);
+          setTimeout(()=>setToast(null),4000);
+        }}/>}
+        {!showForm&&myAdj.length===0&&<div style={{fontSize:11,color:T.t4,textAlign:"center",padding:8}}>Search product by name or SKU#, enter doctor spend → auto-calculates credited revenue.</div>}
+      </div>
+    </div>
+  </div>;
+}
+
+// ─── SALE CALCULATOR ─────────────────────────────────────────────
+function SaleCalculator({acctTier,tierRate,isAccel,acctType,onAdd}) {
+  const [search,setSearch]=useState("");
+  const [selSku,setSelSku]=useState(null);
+  const [docSpend,setDocSpend]=useState("");
+
+  const results=search.length>=2?SKU.filter(p=>{
+    const q=search.toLowerCase();
+    return p[0].toLowerCase().includes(q)||p[1].toLowerCase().includes(q)||p[2].toLowerCase().includes(q);
+  }).slice(0,8):[];
+
+  const calc=useMemo(()=>{
+    if(!selSku||!docSpend||parseFloat(docSpend)<=0)return null;
+    const spend=parseFloat(docSpend);
+    const [sku,desc,cat,stdWS,stdMSRP,diaWS,diaMSRP,platWS,platMSRP,goldWS,goldMSRP,silvWS,silvMSRP]=selSku;
+    let tierMSRP,tierWS;
+    if(isAccel){
+      const t=acctTier.includes("-")?acctTier.split("-")[1]:acctTier;
+      if(t==="Diamond"){tierMSRP=diaMSRP;tierWS=diaWS;}
+      else if(t==="Platinum"){tierMSRP=platMSRP;tierWS=platWS;}
+      else if(t==="Gold"){tierMSRP=goldMSRP;tierWS=goldWS;}
+      else if(t==="Silver"){tierMSRP=silvMSRP;tierWS=silvWS;}
+      else{tierMSRP=stdMSRP;tierWS=stdWS;}
+    }else{tierMSRP=stdMSRP;tierWS=stdWS;}
+    const units=spend/tierMSRP;
+    const totalWS=stdWS*units;
+    const totalCredited=tierWS*units;
+    const totalCB=totalWS-totalCredited;
+    return{units,totalWS,totalCredited,totalCB,tierMSRP,tierWS,stdMSRP,stdWS,desc,sku};
+  },[selSku,docSpend,acctTier,isAccel]);
+
+  return <div style={{background:T.s2,borderRadius:12,padding:14,border:`1px solid ${T.b2}`}}>
+    <div style={{fontSize:10,color:T.t3,marginBottom:10}}>
+      {isAccel?<>Account: <strong style={{color:T.amber}}>Accelerate {acctTier}</strong></>:<>Account: <strong style={{color:T.green}}>{acctType}</strong> — full wholesale credit</>}
+    </div>
+    <div style={{marginBottom:10}}>
+      <label style={{fontSize:11,color:T.t1,display:"block",marginBottom:4,fontWeight:600}}>1. Search Product</label>
+      {selSku?<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 12px",borderRadius:8,background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.2)"}}>
+        <div><div style={{fontSize:12,fontWeight:600,color:T.t1}}>#{selSku[0]} — {selSku[1]}</div><div style={{fontSize:10,color:T.t3}}>{selSku[2]} · Std MSRP ${selSku[4]}</div></div>
+        <button onClick={()=>{setSelSku(null);setDocSpend("");setSearch("")}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:16,fontFamily:"inherit"}}>✕</button>
+      </div>:<div>
+        <input type="text" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Type SKU# or product name..." style={{width:"100%",height:40,borderRadius:8,border:`1px solid ${T.b1}`,background:T.s1,color:T.t1,fontSize:13,padding:"0 12px",outline:"none",fontFamily:"inherit"}}/>
+        {results.length>0&&<div style={{marginTop:4,borderRadius:8,border:`1px solid ${T.b1}`,background:T.s1,maxHeight:200,overflowY:"auto"}}>
+          {results.map(p=><button key={p[0]} onClick={()=>{setSelSku(p);setSearch("")}} style={{width:"100%",textAlign:"left",padding:"8px 12px",background:"none",border:"none",borderBottom:`1px solid ${T.b1}`,color:T.t1,cursor:"pointer",fontFamily:"inherit",fontSize:11}}>
+            <div style={{fontWeight:600}}>#{p[0]} — {p[1]}</div>
+            <div style={{fontSize:9,color:T.t4}}>{p[2]} · MSRP ${p[4]}</div>
+          </button>)}
+        </div>}
+      </div>}
+    </div>
+    {selSku&&<div style={{marginBottom:10}}>
+      <label style={{fontSize:11,color:T.t1,display:"block",marginBottom:4,fontWeight:600}}>2. Doctor Spend ($)</label>
+      <div style={{position:"relative"}}>
+        <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:16,color:T.t4,fontFamily:"'JetBrains Mono',monospace"}}>$</span>
+        <input type="number" value={docSpend} onChange={e=>setDocSpend(e.target.value)} placeholder="e.g. 5000" style={{width:"100%",height:42,borderRadius:8,border:`1px solid ${T.b1}`,background:T.s1,color:T.t1,fontSize:16,padding:"0 12px 0 30px",outline:"none",fontFamily:"'JetBrains Mono',monospace"}}/>
+      </div>
+    </div>}
+    {calc&&<div style={{background:"rgba(79,142,247,.06)",border:"1px solid rgba(79,142,247,.12)",borderRadius:8,padding:12,marginBottom:10}}>
+      <div style={{fontSize:10,fontWeight:700,color:T.blue,marginBottom:8}}>📊 Calculation Breakdown</div>
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:3}}><span>Doctor spent</span><span className="m" style={{color:T.t1}}>{$f(parseFloat(docSpend))}</span></div>
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:3}}><span>÷ ${calc.tierMSRP.toFixed(2)}/unit MSRP</span><span className="m" style={{color:T.t1}}>{calc.units.toFixed(1)} units</span></div>
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:3}}><span>× ${calc.stdWS.toFixed(2)} std wholesale/unit</span><span className="m" style={{color:T.t1}}>{$f(calc.totalWS)}</span></div>
+      {isAccel&&calc.totalCB>0&&<div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:3}}><span>{acctTier} chargeback</span><span className="m" style={{color:T.red}}>-{$f(calc.totalCB)}</span></div>}
+      <div style={{borderTop:`1px solid ${T.b2}`,marginTop:6,paddingTop:6,display:"flex",justifyContent:"space-between",fontSize:14,fontWeight:700}}>
+        <span style={{color:T.t1}}>→ Your Q1 Credit</span>
+        <span className="m" style={{color:T.green,fontSize:16}}>{$f(calc.totalCredited)}</span>
+      </div>
+    </div>}
+    {calc?<button onClick={()=>onAdd(calc.totalCredited,{desc:`${calc.desc} (${calc.units.toFixed(1)} units)`,ws:calc.totalWS,tierRate,sku:calc.sku})} style={{width:"100%",height:42,borderRadius:10,border:"none",background:`linear-gradient(90deg,${T.blue},${T.cyan})`,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+      Apply +{$f(calc.totalCredited)} → Updates Q1
+    </button>:<div style={{padding:8,textAlign:"center",fontSize:11,color:T.t4}}>Search a product, enter doctor spend → see credited amount</div>}
+  </div>;
+}
+
+// ─── STANDALONE CALCULATOR TAB ───────────────────────────────────
+function CalcTab() {
+  const [tier,setTier]=useState("Standard");
+  const [search,setSearch]=useState("");
+  const [selSku,setSelSku]=useState(null);
+  const [docSpend,setDocSpend]=useState("");
+
+  const isAccel=isAccelTier(tier);
+  const tierRate=getTierRate(tier);
+  const results=search.length>=2?SKU.filter(p=>{
+    const q=search.toLowerCase();
+    return p[0].toLowerCase().includes(q)||p[1].toLowerCase().includes(q)||p[2].toLowerCase().includes(q);
+  }).slice(0,8):[];
+
+  const calc=useMemo(()=>{
+    if(!selSku||!docSpend||parseFloat(docSpend)<=0)return null;
+    const spend=parseFloat(docSpend);
+    const [sku,desc,cat,stdWS,stdMSRP,diaWS,diaMSRP,platWS,platMSRP,goldWS,goldMSRP,silvWS,silvMSRP]=selSku;
+    let tierMSRP,tierWS;
+    if(isAccel){
+      const t=tier.includes("-")?tier.split("-")[1]:tier;
+      if(t==="Diamond"){tierMSRP=diaMSRP;tierWS=diaWS;}
+      else if(t==="Platinum"){tierMSRP=platMSRP;tierWS=platWS;}
+      else if(t==="Gold"){tierMSRP=goldMSRP;tierWS=goldWS;}
+      else if(t==="Silver"){tierMSRP=silvMSRP;tierWS=silvWS;}
+      else{tierMSRP=stdMSRP;tierWS=stdWS;}
+    }else{tierMSRP=stdMSRP;tierWS=stdWS;}
+    const units=spend/tierMSRP;
+    const totalWS=stdWS*units;
+    const totalCredited=tierWS*units;
+    const totalCB=totalWS-totalCredited;
+    return{units,totalWS,totalCredited,totalCB,tierMSRP,tierWS,stdMSRP,stdWS,desc,sku,cat};
+  },[selSku,docSpend,tier,isAccel]);
+
+  return <div style={{padding:"16px 16px 80px"}}>
+    <div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(251,191,36,.04))`,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
+      <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.amber,marginBottom:12}}>🧮 Product Sale Calculator</div>
+      <div style={{fontSize:11,color:T.t3,marginBottom:16}}>Search any Kerr product, enter doctor spend, see your credited revenue instantly.</div>
+
+      {/* Tier selector */}
+      <div style={{marginBottom:14}}>
+        <label style={{fontSize:11,color:T.t1,display:"block",marginBottom:6,fontWeight:600}}>Account Tier</label>
+        <div className="hide-sb" style={{display:"flex",gap:4,overflowX:"auto"}}>
+          {["Standard","Top 100","Silver","Gold","Platinum","Diamond"].map(t=>(
+            <button key={t} onClick={()=>setTier(t)} style={{flexShrink:0,padding:"6px 12px",borderRadius:8,fontSize:11,fontWeight:600,cursor:"pointer",border:`1px solid ${tier===t?"rgba(251,191,36,.25)":T.b2}`,background:tier===t?"rgba(251,191,36,.08)":T.s2,color:tier===t?T.amber:T.t3,fontFamily:"inherit"}}>{t}{ACCEL_RATES[t]?` (${ACCEL_RATES[t]*100}%)`:""}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Product search */}
+      <div style={{marginBottom:12}}>
+        <label style={{fontSize:11,color:T.t1,display:"block",marginBottom:4,fontWeight:600}}>Search Product</label>
+        {selSku?<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 12px",borderRadius:8,background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.2)"}}>
+          <div><div style={{fontSize:12,fontWeight:600,color:T.t1}}>#{selSku[0]} — {selSku[1]}</div><div style={{fontSize:10,color:T.t3}}>{selSku[2]} · Std MSRP ${selSku[4]}</div></div>
+          <button onClick={()=>{setSelSku(null);setDocSpend("");setSearch("")}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:16}}>✕</button>
+        </div>:<div>
+          <input type="text" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Type SKU# or product name..." style={{width:"100%",height:40,borderRadius:8,border:`1px solid ${T.b1}`,background:T.s1,color:T.t1,fontSize:13,padding:"0 12px",outline:"none",fontFamily:"inherit"}}/>
+          {results.length>0&&<div style={{marginTop:4,borderRadius:8,border:`1px solid ${T.b1}`,background:T.s1,maxHeight:200,overflowY:"auto"}}>
+            {results.map(p=><button key={p[0]} onClick={()=>{setSelSku(p);setSearch("")}} style={{width:"100%",textAlign:"left",padding:"8px 12px",background:"none",border:"none",borderBottom:`1px solid ${T.b1}`,color:T.t1,cursor:"pointer",fontFamily:"inherit",fontSize:11}}>
+              <div style={{fontWeight:600}}>#{p[0]} — {p[1]}</div>
+              <div style={{fontSize:9,color:T.t4}}>{p[2]} · MSRP ${p[4]}</div>
+            </button>)}
+          </div>}
+        </div>}
+      </div>
+
+      {selSku&&<div style={{marginBottom:12}}>
+        <label style={{fontSize:11,color:T.t1,display:"block",marginBottom:4,fontWeight:600}}>Doctor Spend ($)</label>
+        <div style={{position:"relative"}}>
+          <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:16,color:T.t4,fontFamily:"'JetBrains Mono',monospace"}}>$</span>
+          <input type="number" value={docSpend} onChange={e=>setDocSpend(e.target.value)} placeholder="e.g. 5000" style={{width:"100%",height:42,borderRadius:8,border:`1px solid ${T.b1}`,background:T.s1,color:T.t1,fontSize:16,padding:"0 12px 0 30px",outline:"none",fontFamily:"'JetBrains Mono',monospace"}}/>
+        </div>
+      </div>}
+
+      {calc&&<div style={{background:"rgba(79,142,247,.06)",border:"1px solid rgba(79,142,247,.12)",borderRadius:8,padding:12}}>
+        <div style={{fontSize:10,fontWeight:700,color:T.blue,marginBottom:8}}>📊 Calculation Breakdown</div>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:3}}><span>Doctor spent</span><span className="m" style={{color:T.t1}}>{$f(parseFloat(docSpend))}</span></div>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:3}}><span>÷ ${calc.tierMSRP.toFixed(2)}/unit ({isAccel?tier:"std"} MSRP)</span><span className="m" style={{color:T.t1}}>{calc.units.toFixed(1)} units</span></div>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:3}}><span>× ${calc.stdWS.toFixed(2)} std wholesale/unit</span><span className="m" style={{color:T.t1}}>{$f(calc.totalWS)}</span></div>
+        {isAccel&&calc.totalCB>0&&<div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:3}}><span>{tier} chargeback ({getTierRate(tier)*100}%)</span><span className="m" style={{color:T.red}}>-{$f(calc.totalCB)}</span></div>}
+        <div style={{borderTop:`1px solid ${T.b2}`,marginTop:6,paddingTop:6,display:"flex",justifyContent:"space-between",fontSize:14,fontWeight:700}}>
+          <span style={{color:T.t1}}>→ Your Credit</span>
+          <span className="m" style={{color:T.green,fontSize:18}}>{$f(calc.totalCredited)}</span>
+        </div>
+      </div>}
+    </div>
+
+    <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:12,fontSize:10,color:T.t3}}>
+      <strong>📌 How it works:</strong> Doctor spend ÷ tier MSRP = units. Units × std wholesale = raw wholesale. For Accelerate tiers, subtract chargeback (Silver 20%, Gold 24%, Platinum 30%, Diamond 36%). Standard / Top 100 / Private = 0% chargeback.
+    </div>
+  </div>;
+}
+
+// ─── ESTIMATOR TAB ───────────────────────────────────────────────
+function EstTab({pct,setPct,q1CY,groups}) {
+  // Calculate PY base from actual data: sum of all Q1 PY spending that happened Mar 20-31
+  // We approximate: Q1 PY total * (12/90) ≈ last ~12 days of Q1
+  const q1PyTotal=groups.reduce((s,g)=>s+(g.pyQ?.["1"]||0),0);
+  // ~13% of Q1 = last 12 days of March
+  const pyBase=Math.round(q1PyTotal*12/90);
+  const pyAccts=groups.reduce((s,g)=>s+g.children.filter(c=>(c.pyQ?.["1"]||0)>0).length,0);
+
+  const est=pyBase*(pct/100);
+  const proj=q1CY+est;
+  const projAtt=proj/Q1_TARGET;
+  const projGap=Q1_TARGET-proj;
+
+  return <div style={{padding:"16px 16px 80px"}}>
+    <div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(79,142,247,.04))`,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
+      <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue,marginBottom:12}}>📊 Q1 Completion Estimator</div>
+      <div style={{fontSize:11,color:T.t3,marginBottom:16}}>Last year, <strong style={{color:T.t1}}>{pyAccts.toLocaleString()} accounts</strong> bought <strong style={{color:T.t1}}>{$f(pyBase)}</strong> credited in Mar 20-31. How much repeats?</div>
+      <div style={{marginBottom:16}}>
+        <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+          <span style={{fontSize:10,color:T.t4}}>50%</span>
+          <span className="m" style={{fontSize:14,fontWeight:800,color:pct>=100?T.green:T.amber}}>{pct}%</span>
+          <span style={{fontSize:10,color:T.t4}}>130%</span>
+        </div>
+        <input type="range" min="50" max="130" value={pct} onChange={e=>setPct(parseInt(e.target.value))}/>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
+        <div style={{background:T.s2,borderRadius:10,padding:12}}><div style={{fontSize:9,color:T.t4,marginBottom:2}}>Expected Mar 20-31</div><div className="m" style={{fontSize:18,fontWeight:800}}>{$f(est)}</div></div>
+        <div style={{background:T.s2,borderRadius:10,padding:12}}><div style={{fontSize:9,color:T.t4,marginBottom:2}}>Projected Q1</div><div className="m" style={{fontSize:18,fontWeight:800,color:projAtt>=1?T.green:T.blue}}>{$f(proj)}</div></div>
+      </div>
+      <div style={{background:T.s2,borderRadius:10,padding:12}}>
+        <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><span style={{fontSize:10,color:T.t3}}>Projected Attainment</span><span className="m" style={{fontSize:14,fontWeight:800,color:projAtt>=1?T.green:projAtt>=.9?T.amber:T.red}}>{(projAtt*100).toFixed(1)}%</span></div>
+        <Bar pct={projAtt*100} color={projAtt>=1?`linear-gradient(90deg,${T.green},${T.cyan})`:`linear-gradient(90deg,${T.blue},${T.cyan})`}/>
+        <div style={{display:"flex",justifyContent:"space-between",marginTop:6,fontSize:10,color:T.t4}}><span>CY: {$f(q1CY)}</span><span>Target: {$f(Q1_TARGET)}</span></div>
+      </div>
+      {projGap>0?<div style={{marginTop:12,borderRadius:10,background:"rgba(248,113,113,.06)",border:"1px solid rgba(248,113,113,.12)",padding:12}}>
+        <div style={{fontSize:11,color:T.red,fontWeight:600}}>Still {$f(projGap)} short</div>
+        <div style={{fontSize:10,color:T.t3,marginTop:4}}>{$f(DAYS_LEFT>0?projGap/DAYS_LEFT:0)}/day beyond projections needed.</div>
+      </div>:<div style={{marginTop:12,borderRadius:10,background:"rgba(52,211,153,.06)",border:"1px solid rgba(52,211,153,.12)",padding:12}}>
+        <div style={{fontSize:11,color:T.green,fontWeight:600}}>🎯 On track! {$f(Math.abs(projGap))} over target.</div>
+      </div>}
+    </div>
+    <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:12,fontSize:10,color:T.t3}}>
+      <strong>📌</strong> PY base ({$f(pyBase)}) is calculated from your actual Q1 2025 data — the last ~12 days of March spending. Slider models what percentage of that repeats this year.
+    </div>
+  </div>;
+}
