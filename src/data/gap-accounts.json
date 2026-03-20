@@ -1,0 +1,137 @@
+[
+  {
+    "name": "ALL ABOUT KIDS PEDIATRIC DENTISTRY",
+    "city": "Stamford",
+    "state": "CT",
+    "gap": 3692,
+    "pct": 0,
+    "py": 5201,
+    "days": 211
+  },
+  {
+    "name": "BLUE BACK DENTAL LLC.",
+    "city": "West Hartford",
+    "state": "CT",
+    "gap": 3104,
+    "pct": 10.4,
+    "py": 9126,
+    "days": 44
+  },
+  {
+    "name": "GEDC MONROE NY 414 MERCH",
+    "city": "Monroe",
+    "state": "NY",
+    "gap": 2768,
+    "pct": 0,
+    "py": 6727,
+    "days": 211
+  },
+  {
+    "name": "SULAKSHANA SUNDARESAN",
+    "city": "Yalesville",
+    "state": "CT",
+    "gap": 2637,
+    "pct": 0,
+    "py": 6316,
+    "days": 162
+  },
+  {
+    "name": "HELENE STRAZZA",
+    "city": "Norwalk",
+    "state": "CT",
+    "gap": 2611,
+    "pct": 0.3,
+    "py": 3820,
+    "days": 15
+  },
+  {
+    "name": "ALPHA DENTAL CENTER PC",
+    "city": "Fall River",
+    "state": "MA",
+    "gap": 2414,
+    "pct": 28.6,
+    "py": 4919,
+    "days": 23
+  },
+  {
+    "name": "ATWILL CONROY DENTAL ASSOCIATES",
+    "city": "Smithfield",
+    "state": "RI",
+    "gap": 2357,
+    "pct": 45.7,
+    "py": 7100,
+    "days": 14
+  },
+  {
+    "name": "COSMETIC AND PREVENTIVE DENTISTRY",
+    "city": "Trumbull",
+    "state": "CT",
+    "gap": 1864,
+    "pct": 0,
+    "py": 4200,
+    "days": 98
+  },
+  {
+    "name": "JUSTIN C RIVERS DDS",
+    "city": "Chatham",
+    "state": "MA",
+    "gap": 1808,
+    "pct": 38.5,
+    "py": 5300,
+    "days": 16
+  },
+  {
+    "name": "BLUE BACK DENTAL- AVON",
+    "city": "Avon",
+    "state": "CT",
+    "gap": 1752,
+    "pct": 0,
+    "py": 4100,
+    "days": 77
+  },
+  {
+    "name": "KIDS DENTAL CARE WINDSOR",
+    "city": "Windsor",
+    "state": "CT",
+    "gap": 1733,
+    "pct": 28.5,
+    "py": 3900,
+    "days": 56
+  },
+  {
+    "name": "TOURO COLLEGE OF DENTAL MEDICINE",
+    "city": "Valhalla",
+    "state": "NY",
+    "gap": 1633,
+    "pct": 26.9,
+    "py": 4800,
+    "days": 22
+  },
+  {
+    "name": "GREENE DENTAL GROUP",
+    "city": "Norwich",
+    "state": "CT",
+    "gap": 1497,
+    "pct": 0,
+    "py": 3700,
+    "days": 97
+  },
+  {
+    "name": "SUMMIT DENTAL",
+    "city": "Glastonbury",
+    "state": "CT",
+    "gap": 1420,
+    "pct": 0,
+    "py": 3300,
+    "days": 120
+  },
+  {
+    "name": "COASTAL DENTAL CARE",
+    "city": "Westbrook",
+    "state": "CT",
+    "gap": 1380,
+    "pct": 15,
+    "py": 3100,
+    "days": 65
+  }
+]

@@ -1,0 +1,443 @@
+[
+  {
+    "name": "CAVIWIPES",
+    "py": 560053.98,
+    "cy": 118729.85,
+    "growth": -441324.13,
+    "growthPct": -78.8,
+    "q1py": 143879.05,
+    "q1cy": 118729.85
+  },
+  {
+    "name": "CAVIWIPES 2.0",
+    "py": 218499.4,
+    "cy": 62658.2,
+    "growth": -155841.2,
+    "growthPct": -71.3,
+    "q1py": 41977.27,
+    "q1cy": 62658.2
+  },
+  {
+    "name": "CAVIWIPES XL",
+    "py": 244949.63,
+    "cy": 61608.18,
+    "growth": -183341.45,
+    "growthPct": -74.8,
+    "q1py": 61889.85,
+    "q1cy": 61608.18
+  },
+  {
+    "name": "OPTIBOND SOLO PLUS",
+    "py": 249499.89,
+    "cy": 52781.09,
+    "growth": -196718.8,
+    "growthPct": -78.8,
+    "q1py": 62460.73,
+    "q1cy": 52781.09
+  },
+  {
+    "name": "CAVICIDE",
+    "py": 141249.45,
+    "cy": 30405.97,
+    "growth": -110843.48,
+    "growthPct": -78.5,
+    "q1py": 34143.59,
+    "q1cy": 30405.97
+  },
+  {
+    "name": "TEMPBOND CLEAR",
+    "py": 112775.69,
+    "cy": 28577.2,
+    "growth": -84198.49,
+    "growthPct": -74.7,
+    "q1py": 27125.73,
+    "q1cy": 28577.2
+  },
+  {
+    "name": "TEMPBOND",
+    "py": 116802.14,
+    "cy": 27203.2,
+    "growth": -89598.94,
+    "growthPct": -76.7,
+    "q1py": 31486.31,
+    "q1cy": 27203.2
+  },
+  {
+    "name": "MAXCEM ELITE",
+    "py": 93886.33,
+    "cy": 21089.38,
+    "growth": -72796.95,
+    "growthPct": -77.5,
+    "q1py": 22995.2,
+    "q1cy": 21089.38
+  },
+  {
+    "name": "CAVIWIPES HP",
+    "py": 58177.92,
+    "cy": 16534.67,
+    "growth": -41643.25,
+    "growthPct": -71.6,
+    "q1py": 12845.48,
+    "q1cy": 16534.67
+  },
+  {
+    "name": "TEMPBOND NE",
+    "py": 64702.82,
+    "cy": 16187.25,
+    "growth": -48515.57,
+    "growthPct": -75.0,
+    "q1py": 17205.6,
+    "q1cy": 16187.25
+  },
+  {
+    "name": "SIMPLISHADE",
+    "py": 65630.77,
+    "cy": 14878.32,
+    "growth": -50752.45,
+    "growthPct": -77.3,
+    "q1py": 14190.22,
+    "q1cy": 14878.32
+  },
+  {
+    "name": "CAVIWIPES1",
+    "py": 82263.65,
+    "cy": 14702.58,
+    "growth": -67561.07,
+    "growthPct": -82.1,
+    "q1py": 21854.73,
+    "q1cy": 14702.58
+  },
+  {
+    "name": "HARMONIZE",
+    "py": 55525.28,
+    "cy": 13857.16,
+    "growth": -41668.12,
+    "growthPct": -75.0,
+    "q1py": 14808.12,
+    "q1cy": 13857.16
+  },
+  {
+    "name": "SONICFILL 3",
+    "py": 90258.23,
+    "cy": 13829.93,
+    "growth": -76428.3,
+    "growthPct": -84.7,
+    "q1py": 22977.05,
+    "q1cy": 13829.93
+  },
+  {
+    "name": "OPTIBOND UNIVERSAL",
+    "py": 66995.15,
+    "cy": 11362.21,
+    "growth": -55632.94,
+    "growthPct": -83.0,
+    "q1py": 16382.08,
+    "q1cy": 11362.21
+  },
+  {
+    "name": "MAXCEM ELITE CHROMA",
+    "py": 54122.34,
+    "cy": 10659.05,
+    "growth": -43463.29,
+    "growthPct": -80.3,
+    "q1py": 13767.77,
+    "q1cy": 10659.05
+  },
+  {
+    "name": "HERCULITE XRV",
+    "py": 40391.15,
+    "cy": 10065.3,
+    "growth": -30325.85,
+    "growthPct": -75.1,
+    "q1py": 10176.41,
+    "q1cy": 10065.3
+  },
+  {
+    "name": "EMPOWER",
+    "py": 38654.25,
+    "cy": 8907.67,
+    "growth": -29746.58,
+    "growthPct": -77.0,
+    "q1py": 8784.84,
+    "q1cy": 8907.67
+  },
+  {
+    "name": "PREMISE",
+    "py": 33781.56,
+    "cy": 8315.48,
+    "growth": -25466.08,
+    "growthPct": -75.4,
+    "q1py": 7456.18,
+    "q1cy": 8315.48
+  },
+  {
+    "name": "OPTIBOND FL",
+    "py": 37866.1,
+    "cy": 8293.55,
+    "growth": -29572.55,
+    "growthPct": -78.1,
+    "q1py": 10664.26,
+    "q1cy": 8293.55
+  },
+  {
+    "name": "NX3",
+    "py": 35231.4,
+    "cy": 7857.28,
+    "growth": -27374.12,
+    "growthPct": -77.7,
+    "q1py": 8290.56,
+    "q1cy": 7857.28
+  },
+  {
+    "name": "FLOW-IT ALC",
+    "py": 23910.73,
+    "cy": 6162.84,
+    "growth": -17747.89,
+    "growthPct": -74.2,
+    "q1py": 6844.05,
+    "q1cy": 6162.84
+  },
+  {
+    "name": "BOND-1",
+    "py": 18995.95,
+    "cy": 5834.82,
+    "growth": -13161.13,
+    "growthPct": -69.3,
+    "q1py": 4968.18,
+    "q1cy": 5834.82
+  },
+  {
+    "name": "CAVICIDE1",
+    "py": 25744.48,
+    "cy": 5566.89,
+    "growth": -20177.59,
+    "growthPct": -78.4,
+    "q1py": 6651.09,
+    "q1cy": 5566.89
+  },
+  {
+    "name": "HERCULITE ULTRA FLOW",
+    "py": 19831.62,
+    "cy": 5520.74,
+    "growth": -14310.88,
+    "growthPct": -72.2,
+    "q1py": 5236.66,
+    "q1cy": 5520.74
+  },
+  {
+    "name": "HERCULITE ULTRA",
+    "py": 31718.67,
+    "cy": 5439.63,
+    "growth": -26279.04,
+    "growthPct": -82.9,
+    "q1py": 6003.54,
+    "q1cy": 5439.63
+  },
+  {
+    "name": "OPTIBOND eXTRa",
+    "py": 38388.51,
+    "cy": 5053.91,
+    "growth": -33334.6,
+    "growthPct": -86.8,
+    "q1py": 12110.72,
+    "q1cy": 5053.91
+  },
+  {
+    "name": "OPTIBOND UNIVERSAL 360",
+    "py": 25371.5,
+    "cy": 4910.33,
+    "growth": -20461.17,
+    "growthPct": -80.6,
+    "q1py": 5611.57,
+    "q1cy": 4910.33
+  },
+  {
+    "name": "REVOLUTION 2",
+    "py": 23975.43,
+    "cy": 4653.4,
+    "growth": -19322.03,
+    "growthPct": -80.6,
+    "q1py": 6178.81,
+    "q1cy": 4653.4
+  },
+  {
+    "name": "POINT 4",
+    "py": 20238.86,
+    "cy": 3607.94,
+    "growth": -16630.92,
+    "growthPct": -82.2,
+    "q1py": 7507.24,
+    "q1cy": 3607.94
+  },
+  {
+    "name": "GEL ETCHANT",
+    "py": 14435.54,
+    "cy": 3258.33,
+    "growth": -11177.21,
+    "growthPct": -77.4,
+    "q1py": 3631.83,
+    "q1cy": 3258.33
+  },
+  {
+    "name": "SIMILE",
+    "py": 6410.85,
+    "cy": 2939.58,
+    "growth": -3471.27,
+    "growthPct": -54.1,
+    "q1py": 1763.31,
+    "q1cy": 2939.58
+  },
+  {
+    "name": "DEMI PLUS",
+    "py": 21022.35,
+    "cy": 2766.82,
+    "growth": -18255.53,
+    "growthPct": -86.8,
+    "q1py": 1295.99,
+    "q1cy": 2766.82
+  },
+  {
+    "name": "NEXUS RMGI",
+    "py": 11421.09,
+    "cy": 2303.85,
+    "growth": -9117.24,
+    "growthPct": -79.8,
+    "q1py": 4500.57,
+    "q1cy": 2303.85
+  },
+  {
+    "name": "BREEZE",
+    "py": 10792.31,
+    "cy": 2288.87,
+    "growth": -8503.44,
+    "growthPct": -78.8,
+    "q1py": 3871.27,
+    "q1cy": 2288.87
+  },
+  {
+    "name": "ACCESSORIES",
+    "py": 9174.12,
+    "cy": 1859.08,
+    "growth": -7315.04,
+    "growthPct": -79.7,
+    "q1py": 2102.08,
+    "q1cy": 1859.08
+  },
+  {
+    "name": "PREMISE FLOWABLE",
+    "py": 9653.1,
+    "cy": 1452.08,
+    "growth": -8201.02,
+    "growthPct": -85.0,
+    "q1py": 2745.6,
+    "q1cy": 1452.08
+  },
+  {
+    "name": "SIMPLISHADE BULK",
+    "py": 2507.23,
+    "cy": 1378.18,
+    "growth": -1129.05,
+    "growthPct": -45.0,
+    "q1py": 0.0,
+    "q1cy": 1378.18
+  },
+  {
+    "name": "SIMPLISHADE BULK FLOW",
+    "py": 7394.44,
+    "cy": 939.59,
+    "growth": -6454.85,
+    "growthPct": -87.3,
+    "q1py": 1098.93,
+    "q1cy": 939.59
+  },
+  {
+    "name": "EMPOWER FOAM",
+    "py": 2205.93,
+    "cy": 924.94,
+    "growth": -1280.99,
+    "growthPct": -58.1,
+    "q1py": 392.59,
+    "q1cy": 924.94
+  },
+  {
+    "name": "BREEZE RMGI",
+    "py": 2107.63,
+    "cy": 805.37,
+    "growth": -1302.26,
+    "growthPct": -61.8,
+    "q1py": 569.24,
+    "q1cy": 805.37
+  },
+  {
+    "name": "MOJO",
+    "py": 1833.65,
+    "cy": 479.37,
+    "growth": -1354.28,
+    "growthPct": -73.9,
+    "q1py": 199.43,
+    "q1cy": 479.37
+  },
+  {
+    "name": "CEMENT IT",
+    "py": 2782.38,
+    "cy": 415.38,
+    "growth": -2367.0,
+    "growthPct": -85.1,
+    "q1py": 678.36,
+    "q1cy": 415.38
+  },
+  {
+    "name": "REPAIR / SPARE PARTS",
+    "py": 1554.39,
+    "cy": 414.56,
+    "growth": -1139.83,
+    "growthPct": -73.3,
+    "q1py": 565.57,
+    "q1cy": 414.56
+  },
+  {
+    "name": "CAVICIDE HP",
+    "py": 878.39,
+    "cy": 369.59,
+    "growth": -508.8,
+    "growthPct": -57.9,
+    "q1py": 0.0,
+    "q1cy": 369.59
+  },
+  {
+    "name": "SONICFILL",
+    "py": 983.61,
+    "cy": 283.67,
+    "growth": -699.94,
+    "growthPct": -71.2,
+    "q1py": 0.0,
+    "q1cy": 283.67
+  },
+  {
+    "name": "VERTISE FLOW",
+    "py": 3403.7,
+    "cy": 279.56,
+    "growth": -3124.14,
+    "growthPct": -91.8,
+    "q1py": 248.22,
+    "q1cy": 279.56
+  },
+  {
+    "name": "BOND-1 SF",
+    "py": 1315.53,
+    "cy": 196.64,
+    "growth": -1118.89,
+    "growthPct": -85.1,
+    "q1py": 357.71,
+    "q1cy": 196.64
+  },
+  {
+    "name": "SIMPLISHADE SELF-ADHESIVE",
+    "py": 222.94,
+    "cy": 0.0,
+    "growth": -222.94,
+    "growthPct": -100.0,
+    "q1py": 0.0,
+    "q1cy": 0
+  }
+]

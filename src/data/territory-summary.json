@@ -1,0 +1,42 @@
+{
+  "grandTotalPY": 2799592,
+  "grandTotalCY": 628609,
+  "q1PY": 690494,
+  "q1CY": 628609,
+  "q1Target": 778915,
+  "fyTarget": 3158094,
+  "q2PY": 707702,
+  "q3PY": 703775,
+  "q4PY": 697621,
+  "totalAccounts": 5691,
+  "visibleAccounts": 1707,
+  "hiddenAccounts": 3984,
+  "hiddenPY": 219700,
+  "hiddenCY": 53784,
+  "expansionOpps": 167,
+  "accelAccounts": 295,
+  "qTargets": {
+    "1": 778915,
+    "2": 798328,
+    "3": 793897,
+    "4": 786954
+  },
+  "qPYCredited": {
+    "1": 690494,
+    "2": 707702,
+    "3": 703775,
+    "4": 697621
+  },
+  "qCY": {
+    "1": 628609,
+    "2": 0,
+    "3": 0,
+    "4": 0
+  },
+  "estimator": {
+    "last12PyCredited": 82645,
+    "last12Accounts": 627,
+    "cyDailyRate": 7957,
+    "daysLeft": 12
+  }
+}
