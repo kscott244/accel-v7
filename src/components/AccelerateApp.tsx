@@ -1476,17 +1476,32 @@ function MapTab() {
     return T.green;
   };
 
+  // Ken's home base — used as route origin
+  const HOME_BASE = "Thomaston, CT";
+
   const openGoogleMaps = (accts) => {
     const withGps = accts.filter(a=>a.lat&&a.lng);
     if (!withGps.length) return;
+
+    // Build address string: prefer full address, fall back to "City, State"
+    const addrOf = (a) => {
+      const addr = (a.address||"").trim();
+      // Use full address if it has a street number, otherwise city+state
+      if (addr && /^\d/.test(addr)) return addr;
+      return `${a.city||""}, ${a.state||"CT"}`;
+    };
+
     if (withGps.length === 1) {
-      window.open(`https://maps.google.com/?q=${withGps[0].lat},${withGps[0].lng}`,"_blank");
+      const dest = encodeURIComponent(addrOf(withGps[0]));
+      window.open(`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(HOME_BASE)}&destination=${dest}&travelmode=driving`,"_blank");
       return;
     }
-    const origin = `${withGps[0].lat},${withGps[0].lng}`;
-    const dest = `${withGps[withGps.length-1].lat},${withGps[withGps.length-1].lng}`;
-    const waypoints = withGps.slice(1,-1).map(a=>`${a.lat},${a.lng}`).join("|");
-    const url = `https://maps.google.com/maps/dir/${origin}/${waypoints?waypoints+"/":""}${dest}`;
+
+    // Multi-stop: origin=home, destination=last stop, waypoints=everything in between
+    const origin = encodeURIComponent(HOME_BASE);
+    const destination = encodeURIComponent(addrOf(withGps[withGps.length-1]));
+    const waypointList = withGps.slice(0,-1).map(a=>encodeURIComponent(addrOf(a))).join("|");
+    const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&waypoints=${waypointList}&travelmode=driving`;
     window.open(url,"_blank");
   };
 
@@ -1597,7 +1612,7 @@ function MapTab() {
       {selAcct.intel&&<div style={{fontSize:10,color:T.t3,lineHeight:1.5,marginBottom:8,maxHeight:56,overflow:"hidden"}}>{selAcct.intel}</div>}
       <div style={{display:"flex",gap:6}}>
         {selAcct.phone&&<a href={`tel:${selAcct.phone}`} style={{flex:1,padding:"7px 0",borderRadius:8,border:`1px solid ${T.b2}`,background:T.s2,color:T.t1,fontSize:11,fontWeight:600,textAlign:"center",textDecoration:"none",display:"block"}}>{selAcct.phone}</a>}
-        {selAcct.lat&&selAcct.lng&&<a href={`https://maps.google.com/?q=${selAcct.lat},${selAcct.lng}`} target="_blank" rel="noreferrer" style={{flex:1,padding:"7px 0",borderRadius:8,border:"none",background:`linear-gradient(90deg,${T.blue},${T.cyan})`,color:"#fff",fontSize:11,fontWeight:600,textAlign:"center",textDecoration:"none",display:"block"}}>Navigate →</a>}
+        {selAcct.lat&&selAcct.lng&&<a href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(HOME_BASE)}&destination=${encodeURIComponent(((selAcct.address||"").trim()&&/^\d/.test((selAcct.address||"").trim()))?selAcct.address:`${selAcct.city}, ${selAcct.state||"CT"}`)}&travelmode=driving`} target="_blank" rel="noreferrer" style={{flex:1,padding:"7px 0",borderRadius:8,border:"none",background:`linear-gradient(90deg,${T.blue},${T.cyan})`,color:"#fff",fontSize:11,fontWeight:600,textAlign:"center",textDecoration:"none",display:"block"}}>Navigate →</a>}
       </div>
     </div>}
 
