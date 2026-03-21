@@ -1454,16 +1454,21 @@ function DashTab({groups, q1CY, q1Att, q1Gap, scored}) {
 function MapTab() {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
-  const onPinClickRef = useRef<(a:any)=>void>(()=>{});  // stable ref — escapes stale closure
+  const onPinClickRef = useRef<(a:any)=>void>(()=>{});
   const [selDay, setSelDay] = useState<string|null>(null);
   const [selAcct, setSelAcct] = useState<any>(null);
 
-  // Keep ref in sync with latest setter — Leaflet always calls the ref, never a stale closure
-  useEffect(()=>{ onPinClickRef.current = (a) => setSelAcct(a); });
+  // Always-fresh callback ref — update only when selAcct setter identity changes (never)
+  onPinClickRef.current = (a) => setSelAcct(a);
 
   const days = Object.keys(WEEK_ROUTES.routes||{});
-  const allRouted = days.flatMap(d=>(WEEK_ROUTES.routes[d]||[]).map(a=>({...a,day:d})));
-  const displayed = selDay ? (WEEK_ROUTES.routes[selDay]||[]).map(a=>({...a,day:selDay})) : allRouted;
+
+  // Memoized — only recomputes when selDay changes, NOT on every render
+  const displayed = useMemo(()=>
+    selDay
+      ? (WEEK_ROUTES.routes[selDay]||[]).map(a=>({...a,day:selDay}))
+      : days.flatMap(d=>(WEEK_ROUTES.routes[d]||[]).map(a=>({...a,day:d})))
+  , [selDay]);
 
   const vpColor = (vp) => {
     if (vp==="NOW") return T.red;
@@ -1485,7 +1490,7 @@ function MapTab() {
     window.open(url,"_blank");
   };
 
-  // Init Leaflet map
+  // Map only rebuilds when selDay changes — NOT when selAcct changes
   useEffect(()=>{
     if (!mapRef.current) return;
     if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current=null; }
@@ -1493,7 +1498,6 @@ function MapTab() {
     const pts = displayed.filter(a=>a.lat&&a.lng);
     if (!pts.length) return;
 
-    // Load Leaflet from CDN
     const loadLeaflet = () => new Promise<void>((res) => {
       if ((window as any).L) { res(); return; }
       const css = document.createElement("link");
@@ -1517,7 +1521,6 @@ function MapTab() {
         attribution:'© OpenStreetMap',maxZoom:18
       }).addTo(map);
 
-      // Draw route line if single day selected
       if (selDay) {
         const coords = pts.map(a=>[a.lat,a.lng]);
         L.polyline(coords,{color:"rgba(79,142,247,.5)",weight:2,dashArray:"6,4"}).addTo(map);
@@ -1531,15 +1534,15 @@ function MapTab() {
           iconSize:[28,28], iconAnchor:[14,14]
         });
         const marker = L.marker([a.lat,a.lng],{icon:svgIcon}).addTo(map);
-        // Call through ref — always fresh, never a stale closure
-        marker.on("click", () => { onPinClickRef.current(a); });
+        // Always route through ref — never captures stale state
+        marker.on("click", () => onPinClickRef.current(a));
       });
 
       if (pts.length>1) map.fitBounds(L.latLngBounds(pts.map(a=>[a.lat,a.lng])),{padding:[24,24]});
     });
 
     return ()=>{ if(mapInstanceRef.current){mapInstanceRef.current.remove();mapInstanceRef.current=null;} };
-  },[displayed,selDay]);
+  },[selDay]); // ← only selDay, NOT displayed or selAcct — prevents popover from triggering rebuild
 
   const dayColors = ["#4f8ef7","#22d3ee","#34d399","#fbbf24","#a78bfa"];
 
