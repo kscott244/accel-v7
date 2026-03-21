@@ -906,22 +906,18 @@ Write a concise, plain-English sales rep briefing in 3-4 short paragraphs. Cover
 Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot. No bullet lists — prose only. Keep it under 180 words.`;
 
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("/api/ai-briefing", {
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({
-          model:"claude-sonnet-4-20250514",
-          max_tokens:300,
-          messages:[{role:"user",content:prompt}]
-        })
+        body: JSON.stringify({prompt})
       });
       const data = await res.json();
-      if (data?.content?.[0]?.text) {
-        setAiText(data.content[0].text);
+      if (data?.text) {
+        setAiText(data.text);
         setAiState("done");
       } else {
         setAiState("error");
-        setAiText("No response received. Try again.");
+        setAiText(data?.error || "No response received. Try again.");
       }
     } catch(e) {
       setAiState("error");
