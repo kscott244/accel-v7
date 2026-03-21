@@ -997,22 +997,53 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup}) {
   const [q,setQ]=useState("1");
   const [showForm,setShowForm]=useState(false);
   const [toast,setToast]=useState(null);
-  const [aiState,setAiState]=useState("idle"); // idle | loading | done | error
+  const [aiState,setAiState]=useState("idle");
   const [aiText,setAiText]=useState("");
-  const [drState,setDrState]=useState("idle"); // idle | loading | done | error
+  const [drState,setDrState]=useState("idle");
   const [drIntel,setDrIntel]=useState<any>(null);
-  const [savedContacts,setSavedContacts]=useState<any>(null); // persisted contact intel
+  const [savedContacts,setSavedContacts]=useState<any>(null);
+  const [showMoveModal,setShowMoveModal]=useState(false);
+  const [moveSearch,setMoveSearch]=useState("");
+  const [groupOverride,setGroupOverride]=useState<any>(null); // persisted override
   const storageKey = `contact:${acct.id}`;
-  const qk=q;
+  const overrideKey = `group-override:${acct.id}`;
 
-  // Load saved contacts from storage on mount
+  // Load saved contacts + group override from storage on mount
   useEffect(() => {
     window.storage?.get(storageKey).then((result:any) => {
-      if (result?.value) {
-        try { setSavedContacts(JSON.parse(result.value)); } catch {}
-      }
+      if (result?.value) { try { setSavedContacts(JSON.parse(result.value)); } catch {} }
+    }).catch(()=>{});
+    window.storage?.get(overrideKey).then((result:any) => {
+      if (result?.value) { try { setGroupOverride(JSON.parse(result.value)); } catch {} }
     }).catch(()=>{});
   }, [acct.id]);
+
+  // Group search for move modal
+  const moveResults = useMemo(() => {
+    if (!moveSearch.trim()) return [];
+    const q = moveSearch.trim().toLowerCase();
+    return (groups||[]).filter(g =>
+      g.id !== acct.gId &&
+      (g.name?.toLowerCase().includes(q) ||
+       fixGroupName(g).toLowerCase().includes(q))
+    ).slice(0, 8);
+  }, [moveSearch, groups, acct.gId]);
+
+  const applyGroupOverride = (targetGroup) => {
+    const override = {
+      childId: acct.id,
+      childName: acct.name,
+      targetGroupId: targetGroup.id,
+      targetGroupName: fixGroupName(targetGroup),
+      savedAt: new Date().toISOString(),
+    };
+    window.storage?.set(overrideKey, JSON.stringify(override)).catch(()=>{});
+    setGroupOverride(override);
+    setShowMoveModal(false);
+    setMoveSearch("");
+    setToast({msg:`Moved to ${fixGroupName(targetGroup)}`, color:T.green});
+    setTimeout(()=>setToast(null), 3000);
+  };
 
   const myAdj=adjs.filter(m=>m.acctId===acct.id);
   const adjTotal=myAdj.reduce((s,m)=>s+m.credited,0);
@@ -1251,11 +1282,18 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
 
       {/* ACCOUNT HEADER */}
       <div className="anim" style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12}}>
-        <div style={{fontSize:16,fontWeight:700}}>{acct.name}</div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+          <div style={{fontSize:16,fontWeight:700,flex:1,minWidth:0,paddingRight:8}}>{acct.name}</div>
+          <button onClick={()=>setShowMoveModal(true)} style={{flexShrink:0,background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.18)",borderRadius:8,padding:"4px 9px",fontSize:10,fontWeight:600,color:T.blue,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>Move →</button>
+        </div>
         <div style={{fontSize:11,color:T.t3,marginTop:2}}>{acct.city}, {acct.st} · <span style={{color:isAccel?T.amber:T.t3}}>{acctType}</span> · Last {acct.last}d ago</div>
+        {groupOverride&&<div style={{marginTop:4,fontSize:10,color:T.amber,display:"flex",alignItems:"center",gap:4}}>
+          <span>⚠ Overridden → {groupOverride.targetGroupName}</span>
+          <button onClick={()=>{window.storage?.delete(overrideKey).catch(()=>{}); setGroupOverride(null);}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:11,padding:"0 2px"}}>✕</button>
+        </div>}
         {(()=>{const h=getHealthStatus(ret,gap,cyVal,pyVal);return <div style={{display:"inline-flex",alignItems:"center",marginTop:6,fontSize:10,fontWeight:700,color:h.color,background:h.bg,border:`1px solid ${h.border}`,borderRadius:999,padding:"3px 10px",letterSpacing:".2px"}}>{h.label}</div>;})()}
         <div style={{fontSize:10,color:T.t4,marginTop:2,display:"flex",gap:8,flexWrap:"wrap"}}>
-          {acct.gName&&<span>Group: {acct.gName}</span>}
+          {acct.gName&&<span>Group: {groupOverride?groupOverride.targetGroupName:acct.gName}</span>}
           {acct.dealer&&acct.dealer!=="Unknown"&&<span style={{color:T.cyan}}>Dealer: {acct.dealer}</span>}
         </div>
 
@@ -1265,6 +1303,34 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
             <button key={qr} onClick={()=>setQ(qr)} style={{flex:1,padding:"6px 0",borderRadius:8,fontSize:11,fontWeight:600,cursor:"pointer",border:`1px solid ${q===qr?"rgba(79,142,247,.25)":T.b2}`,background:q===qr?"rgba(79,142,247,.12)":T.s2,color:q===qr?T.blue:T.t3,fontFamily:"inherit"}}>{qr==="FY"?"FY":`Q${qr}`}</button>
           ))}
         </div>
+
+      {/* MOVE TO GROUP MODAL */}
+      {showMoveModal&&<div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.7)",backdropFilter:"blur(8px)",display:"flex",flexDirection:"column",justifyContent:"flex-end"}} onClick={()=>{setShowMoveModal(false);setMoveSearch("");}}>
+        <div style={{background:T.s1,borderRadius:"20px 20px 0 0",padding:20,maxHeight:"70vh",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+            <div style={{fontSize:13,fontWeight:700}}>Move to Group</div>
+            <button onClick={()=>{setShowMoveModal(false);setMoveSearch("");}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:18}}>✕</button>
+          </div>
+          <div style={{fontSize:11,color:T.t3,marginBottom:12}}>Moving: <strong style={{color:T.t1}}>{acct.name}</strong></div>
+          <input autoFocus type="search" value={moveSearch} onChange={e=>setMoveSearch(e.target.value)}
+            placeholder="Search groups…"
+            style={{width:"100%",height:40,borderRadius:10,border:`1px solid ${T.b1}`,background:T.s2,color:T.t1,fontSize:13,padding:"0 12px",outline:"none",fontFamily:"inherit",marginBottom:12}}/>
+          <div style={{overflowY:"auto",flex:1}}>
+            {moveSearch.trim()&&moveResults.length===0&&<div style={{padding:"20px 0",textAlign:"center",color:T.t4,fontSize:12}}>No groups found</div>}
+            {moveResults.map(g=>(
+              <button key={g.id} onClick={()=>applyGroupOverride(g)}
+                style={{width:"100%",textAlign:"left",background:T.s2,border:`1px solid ${T.b1}`,borderRadius:12,padding:"10px 14px",marginBottom:8,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div>
+                  <div style={{fontSize:13,fontWeight:600}}>{fixGroupName(g)}</div>
+                  <div style={{fontSize:10,color:T.t3,marginTop:2}}>{g.locs} location{g.locs!==1?"s":""} · {getTierLabel(g.tier,g.class2)}</div>
+                </div>
+                <Chev/>
+              </button>
+            ))}
+            {!moveSearch.trim()&&<div style={{padding:"20px 0",textAlign:"center",color:T.t4,fontSize:12}}>Type a group name to search</div>}
+          </div>
+        </div>
+      </div>}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}>
           <Stat l="PY" v={$$(pyVal)} c={T.t2}/>
           <Stat l="CY" v={$$(cyVal)} c={T.blue}/>
