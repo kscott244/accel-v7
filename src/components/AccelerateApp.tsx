@@ -1070,7 +1070,7 @@ function SaleCalculator({acctTier,tierRate,isAccel,acctType,onAdd}) {
     const totalWS=stdWS*units;
     const totalCredited=tierWS*units;
     const totalCB=totalWS-totalCredited;
-    return{units,totalWS,totalCredited,totalCB,tierMSRP,tierWS,stdMSRP,stdWS,desc,sku};
+    return {units,totalWS,totalCredited,totalCB,tierMSRP,tierWS,stdMSRP,stdWS,desc,sku};
   },[selSku,docSpend,acctTier,isAccel]);
 
   return <div style={{background:T.s2,borderRadius:12,padding:14,border:`1px solid ${T.b2}`}}>
@@ -1147,7 +1147,7 @@ function CalcTab({groups,q1CY,q1Gap,q1Att}) {
     const totalWS=stdWS*units;
     const totalCredited=tierWS*units;
     const totalCB=totalWS-totalCredited;
-    return{units,totalWS,totalCredited,totalCB,tierMSRP,tierWS,stdMSRP,stdWS,desc,sku,cat};
+    return {units,totalWS,totalCredited,totalCB,tierMSRP,tierWS,stdMSRP,stdWS,desc,sku,cat};
   },[selSku,docSpend,tier,isAccel]);
 
   // Territory stats for dashboard
@@ -1284,7 +1284,7 @@ function CalcTab({groups,q1CY,q1Gap,q1Att}) {
     const totalWS=stdWS*units;
     const totalCredited=tierWS*units;
     const totalCB=totalWS-totalCredited;
-    return{units,totalWS,totalCredited,totalCB,tierMSRP,tierWS,stdMSRP,stdWS,desc,sku,cat};
+    return {units,totalWS,totalCredited,totalCB,tierMSRP,tierWS,stdMSRP,stdWS,desc,sku,cat};
   },[selSku,docSpend,tier,isAccel]);
 
   return <div style={{padding:"16px 16px 80px"}}>
