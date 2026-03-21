@@ -999,6 +999,8 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup}) {
   const [toast,setToast]=useState(null);
   const [aiState,setAiState]=useState("idle"); // idle | loading | done | error
   const [aiText,setAiText]=useState("");
+  const [drState,setDrState]=useState("idle"); // idle | loading | done | error
+  const [drIntel,setDrIntel]=useState<any>(null);
   const qk=q;
 
   const myAdj=adjs.filter(m=>m.acctId===acct.id);
@@ -1097,17 +1099,111 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
     }
   };
 
+  const runDeepResearch = async () => {
+    setDrState("loading"); setDrIntel(null);
+    try {
+      const res = await fetch("/api/deep-research", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({
+          name: acct.name,
+          city: acct.city,
+          state: acct.st,
+          address: acct.addr || badger?.address || "",
+          dealer: acct.dealer||"Unknown",
+          products: buying.slice(0,5).map(p=>p.n),
+          doctor: badger?.doctor || "",
+          gName: acct.gName || "",
+        })
+      });
+      const data = await res.json();
+      if (data?.intel) {
+        setDrIntel(data.intel);
+        setDrState("done");
+      } else {
+        setDrState("error");
+        setDrIntel({error: data?.error || "Research failed. Try again."});
+      }
+    } catch(e) {
+      setDrState("error");
+      setDrIntel({error:"Connection error. Check network and try again."});
+    }
+  };
+
   return <div style={{paddingBottom:80}}>
     <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"10px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
       <button onClick={goBack} style={{background:"none",border:"none",color:T.blue,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:13,fontWeight:600,fontFamily:"inherit"}}><Back/> Back</button>
-      <button onClick={()=>aiState==="idle"||aiState==="error"?runAI():setAiState("idle")} style={{background:aiState==="done"?"rgba(167,139,250,.12)":"rgba(167,139,250,.08)",border:`1px solid ${aiState==="done"?"rgba(167,139,250,.3)":"rgba(167,139,250,.18)"}`,borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:700,color:T.purple,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:5}}>
-        {aiState==="loading"?<><span style={{animation:"pulse 1s infinite"}}>●</span> Thinking...</>:aiState==="done"?"✦ AI Briefing":"✦ AI Briefing"}
-      </button>
+      <div style={{display:"flex",gap:6}}>
+        <button onClick={()=>drState==="idle"||drState==="error"?runDeepResearch():setDrState("idle")} style={{background:drState==="done"?"rgba(34,211,238,.12)":"rgba(34,211,238,.06)",border:`1px solid ${drState==="done"?"rgba(34,211,238,.35)":"rgba(34,211,238,.18)"}`,borderRadius:8,padding:"5px 10px",fontSize:11,fontWeight:700,color:T.cyan,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:4}}>
+          {drState==="loading"?<><span style={{animation:"pulse 1s infinite"}}>●</span> Searching...</>:"🔍 Research"}
+        </button>
+        <button onClick={()=>aiState==="idle"||aiState==="error"?runAI():setAiState("idle")} style={{background:aiState==="done"?"rgba(167,139,250,.12)":"rgba(167,139,250,.08)",border:`1px solid ${aiState==="done"?"rgba(167,139,250,.3)":"rgba(167,139,250,.18)"}`,borderRadius:8,padding:"5px 10px",fontSize:11,fontWeight:700,color:T.purple,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:5}}>
+          {aiState==="loading"?<><span style={{animation:"pulse 1s infinite"}}>●</span> Thinking...</>:"✦ Briefing"}
+        </button>
+      </div>
     </div>
     <div style={{padding:"16px 16px 0"}}>
       {toast&&<div className="anim" style={{background:"rgba(52,211,153,.12)",border:"1px solid rgba(52,211,153,.25)",borderRadius:12,padding:"12px 16px",marginBottom:12,display:"flex",alignItems:"center",gap:10}}>
         <span style={{fontSize:16,color:T.green,fontWeight:700}}>+</span>
         <div><div style={{fontSize:13,fontWeight:700,color:T.green}}>Sale recorded!</div><div style={{fontSize:11,color:T.t3}}>+{$f(toast)} credited → Q1 updated</div></div>
+      </div>}
+
+      {/* DEEP RESEARCH CARD */}
+      {(drState==="loading"||drState==="done"||drState==="error")&&<div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(34,211,238,.05))`,border:`1px solid rgba(34,211,238,.25)`,borderRadius:16,padding:16,marginBottom:12}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+          <div style={{display:"flex",alignItems:"center",gap:7}}>
+            <span style={{fontSize:13}}>🔍</span>
+            <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan}}>Live Practice Intel</span>
+          </div>
+          <button onClick={()=>{setDrState("idle");setDrIntel(null);}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:16,lineHeight:1}}>✕</button>
+        </div>
+        {drState==="loading"&&<div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {[90,70,80,50,85].map((w,i)=><div key={i} style={{height:10,borderRadius:5,background:T.s3,width:`${w}%`,animation:"pulse 1.5s infinite",animationDelay:`${i*200}ms`}}/>)}
+          <div style={{fontSize:11,color:T.t4,marginTop:4}}>Searching the web for practice intel...</div>
+        </div>}
+        {drState==="error"&&<div style={{fontSize:12,color:T.red}}>{drIntel?.error||"Research failed."}</div>}
+        {drState==="done"&&drIntel&&!drIntel.parseError&&<div>
+          {/* Status */}
+          {drIntel.statusNote&&<div style={{marginBottom:10,padding:"8px 10px",borderRadius:8,background:drIntel.status==="changed"?"rgba(248,113,113,.08)":drIntel.status==="closed"?"rgba(248,113,113,.12)":"rgba(52,211,153,.06)",border:`1px solid ${drIntel.status==="open"?"rgba(52,211,153,.15)":"rgba(248,113,113,.15)"}`}}>
+            <div style={{fontSize:9,textTransform:"uppercase",color:T.t4,marginBottom:2}}>Practice Status</div>
+            <div style={{fontSize:11,fontWeight:600,color:drIntel.status==="open"?T.green:drIntel.status==="closed"?T.red:T.amber}}>{drIntel.statusNote}</div>
+          </div>}
+          {/* Contact info */}
+          {(drIntel.phone||drIntel.email||drIntel.contactName||drIntel.website)&&<div style={{marginBottom:10,display:"flex",flexWrap:"wrap",gap:8}}>
+            {drIntel.contactName&&<div><div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:1}}>Contact</div><div style={{fontSize:11,fontWeight:600}}>{drIntel.contactName}</div></div>}
+            {drIntel.phone&&<div><div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:1}}>Phone</div><a href={`tel:${drIntel.phone}`} style={{fontSize:11,fontWeight:600,color:T.cyan,textDecoration:"none"}}>{drIntel.phone}</a></div>}
+            {drIntel.email&&<div><div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:1}}>Email</div><div style={{fontSize:11,fontWeight:600,color:T.cyan}}>{drIntel.email}</div></div>}
+            {drIntel.website&&<div><div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:1}}>Website</div><a href={drIntel.website} target="_blank" rel="noreferrer" style={{fontSize:11,fontWeight:600,color:T.blue,textDecoration:"none"}}>Visit →</a></div>}
+          </div>}
+          {/* Ownership */}
+          {drIntel.ownershipNote&&<div style={{marginBottom:10}}>
+            <div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:3}}>Ownership</div>
+            <div style={{fontSize:11,color:T.t2}}>{drIntel.ownershipNote}</div>
+          </div>}
+          {/* Hooks */}
+          {drIntel.hooks?.length>0&&<div style={{marginBottom:10}}>
+            <div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:6}}>Relationship Hooks</div>
+            {drIntel.hooks.map((h,i)=><div key={i} style={{display:"flex",gap:6,alignItems:"flex-start",marginBottom:5}}>
+              <span style={{color:T.amber,marginTop:1,fontSize:10}}>◆</span>
+              <span style={{fontSize:11,color:T.t2,lineHeight:1.5}}>{h}</span>
+            </div>)}
+          </div>}
+          {/* Competitive */}
+          {drIntel.competitive&&<div style={{marginBottom:10,padding:"8px 10px",borderRadius:8,background:"rgba(248,113,113,.05)",border:"1px solid rgba(248,113,113,.1)"}}>
+            <div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:2}}>Competitive Signal</div>
+            <div style={{fontSize:11,color:T.t2}}>{drIntel.competitive}</div>
+          </div>}
+          {/* Talking points */}
+          {drIntel.talkingPoints?.length>0&&<div>
+            <div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:6}}>Talking Points for Your Visit</div>
+            {drIntel.talkingPoints.map((p,i)=><div key={i} style={{display:"flex",gap:6,alignItems:"flex-start",marginBottom:6,padding:"6px 8px",borderRadius:7,background:"rgba(79,142,247,.05)",border:"1px solid rgba(79,142,247,.1)"}}>
+              <span style={{color:T.blue,fontWeight:700,fontSize:10,marginTop:1,flexShrink:0}}>{i+1}.</span>
+              <span style={{fontSize:11,color:T.t1,lineHeight:1.5}}>{p}</span>
+            </div>)}
+          </div>}
+          {drIntel.searchedAt&&<div style={{fontSize:9,color:T.t4,marginTop:8,textAlign:"right"}}>Researched {new Date(drIntel.searchedAt).toLocaleTimeString()}</div>}
+        </div>}
+        {drState==="done"&&drIntel?.parseError&&<div style={{fontSize:11,color:T.t2,lineHeight:1.6,whiteSpace:"pre-wrap"}}>{drIntel.rawText}</div>}
       </div>}
 
       {/* AI BRIEFING CARD */}
