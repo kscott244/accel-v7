@@ -6,8 +6,10 @@ import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 // Dealer data — loads if available, gracefully degrades if not
 let DEALER_LOOKUP: Record<string, any> = {};
 let DEALERS: Record<string, string> = {};
+let WEEK_ROUTES: any = { routes: {}, unplaced: [] };
 try { DEALER_LOOKUP = require("@/data/dealer-lookup").DEALER_LOOKUP; } catch(e) {}
 try { DEALERS = require("@/data/dealers").DEALERS; } catch(e) {}
+try { WEEK_ROUTES = require("@/data/week-routes.json"); } catch(e) {}
 
 // ─── DESIGN TOKENS ───────────────────────────────────────────────
 const T = {
@@ -67,13 +69,12 @@ const pc = n => Math.round((n||0)*100) + "%";
 const Back = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>;
 const Chev = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{opacity:.4,flexShrink:0}}><path d="M9 18l6-6-6-6"/></svg>;
 const UploadIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>;
-// SVG nav icons (avoid emoji corruption)
-const IconBolt = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>;
-const IconGroup = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
-const IconCalc = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg>;
-const IconChart = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>;
-const IconCheck = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>;
-const IconAlert = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>;
+// SVG nav icons
+const IconBolt    = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>;
+const IconGroup   = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
+const IconChart   = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>;
+const IconMap     = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>;
+const IconSliders = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>;
 
 // ─── DISPLAY NAME FIXER (catches bad names in preloaded data too) ──
 const BAD_GROUP_NAMES = new Set(["STANDARD","Standard","HOUSE ACCOUNTS","House Accounts","SILVER","GOLD","PLATINUM","DIAMOND","TOP 100","Silver","Gold","Platinum","Diamond","Top 100",""]);
@@ -508,7 +509,14 @@ export default function App() {
 
       {/* HEADER */}
       <header style={{position:"sticky",top:0,zIndex:50,borderBottom:`1px solid ${T.b1}`,background:"rgba(10,10,15,.85)",backdropFilter:"blur(32px)",padding:"0 18px",height:52,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-        <div style={{fontSize:15,fontWeight:700}}>Ken <span style={{color:T.blue}}>Scott</span></div>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <div style={{fontSize:15,fontWeight:700}}>Ken <span style={{color:T.blue}}>Scott</span></div>
+          {q1CY>0&&<div className="m" style={{fontSize:10,fontWeight:700,
+            color:q1Att>=1?T.green:q1Att>=.85?T.amber:T.red,
+            background:q1Att>=1?"rgba(52,211,153,.1)":q1Att>=.85?"rgba(251,191,36,.1)":"rgba(248,113,113,.1)",
+            border:`1px solid ${q1Att>=1?"rgba(52,211,153,.2)":q1Att>=.85?"rgba(251,191,36,.2)":"rgba(248,113,113,.2)"}`,
+            borderRadius:999,padding:"2px 8px"}}>{pc(q1Att)} · {DAYS_LEFT}d left</div>}
+        </div>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           <button onClick={()=>fileRef.current?.click()} style={{background:"rgba(79,142,247,.08)",border:`1px solid rgba(79,142,247,.15)`,borderRadius:8,padding:"4px 10px",display:"flex",alignItems:"center",gap:5,cursor:"pointer",color:T.blue,fontSize:10,fontWeight:600,fontFamily:"inherit"}}><UploadIcon/> CSV</button>
           <input ref={fileRef} type="file" accept=".csv" onChange={handleUpload} style={{display:"none"}}/>
@@ -522,6 +530,7 @@ export default function App() {
       {/* TAB CONTENT */}
       {!view && tab==="today" && <TodayTab scored={scored} goAcct={a=>setView({type:"acct",data:a})} q1CY={q1CY} q1Gap={q1Gap} q1Att={q1Att} adjCount={adjs.length} totalAdj={totalAdjQ1} groups={groups||[]} goGroup={g=>setView({type:"group",data:g})}/>}
       {!view && tab==="groups" && <GroupsTab groups={groups||[]} goGroup={g=>setView({type:"group",data:g})} filt={gFilt} setFilt={setGFilt} search={gSearch} setSearch={setGSearch}/>}
+      {!view && tab==="map" && <MapTab/>}
       {!view && tab==="calc" && <DashTab groups={groups||[]} q1CY={q1CY} q1Att={q1Att} q1Gap={q1Gap} scored={scored}/>}
       {!view && tab==="est" && <EstTab pct={estPct} setPct={setEstPct} q1CY={q1CY} groups={groups||[]}/>}
       {view?.type==="group" && <GroupDetail group={view.data} goMain={()=>setView(null)} goAcct={a=>setView({type:"acct",data:{...a,gName:fixGroupName(view.data),gId:view.data.id,gTier:view.data.tier},from:view.data})}/>}
@@ -530,7 +539,7 @@ export default function App() {
       {/* NAV BAR */}
       <nav style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:960,zIndex:50,borderTop:`1px solid ${T.b1}`,background:"rgba(10,10,15,.92)",backdropFilter:"blur(32px)"}}>
         <div style={{display:"flex",height:56,alignItems:"center",justifyContent:"space-around",padding:"0 4px"}}>
-          {[{k:"today",l:"Today",I:IconBolt},{k:"groups",l:"Groups",I:IconGroup},{k:"calc",l:"Dash",I:IconChart},{k:"est",l:"Estimator",I:IconChart}].map(t=>(
+          {[{k:"today",l:"Today",I:IconBolt},{k:"groups",l:"Groups",I:IconGroup},{k:"map",l:"Route",I:IconMap},{k:"calc",l:"Dash",I:IconChart},{k:"est",l:"Close",I:IconSliders}].map(t=>(
             <button key={t.k} onClick={()=>{setTab(t.k);setView(null)}} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 8px",cursor:"pointer",color:tab===t.k&&!view?T.blue:T.t4}}>
               <t.I c={tab===t.k&&!view?T.blue:T.t4}/>
               <span style={{fontSize:9,fontWeight:600,letterSpacing:".5px"}}>{t.l}</span>
@@ -1052,7 +1061,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
 
       {/* VISIT PREP */}
       <div className="anim" style={{animationDelay:"80ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12}}>
-        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue,marginBottom:10}}>Visit Prep Briefing</div>
+        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue,marginBottom:10}}>Account Intel</div>
         {buying.length>0&&<div style={{marginBottom:12}}>
           <div style={{fontSize:10,fontWeight:600,color:T.green,marginBottom:6}}>Currently Buying ({buying.length})</div>
           {buying.slice(0,8).map((p,i)=>{
@@ -1339,7 +1348,7 @@ function DashTab({groups, q1CY, q1Att, q1Gap, scored}) {
     </div>
 
     {/* ── TOP 5 GROUPS ── */}
-    <div className="anim" style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:14,padding:14,marginBottom:16}}>
+    <div className="anim" style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:14,padding:14,marginBottom:12}}>
       <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3,marginBottom:10}}>Top 5 Groups by CY Revenue</div>
       {top5.length===0&&<div style={{fontSize:11,color:T.t4}}>No data — upload a CSV.</div>}
       {top5.map((g,i)=>{
@@ -1358,6 +1367,36 @@ function DashTab({groups, q1CY, q1Att, q1Gap, scored}) {
         </div>;
       })}
     </div>
+
+    {/* ── GAP LEADERBOARD ── */}
+    {(()=>{
+      const topGap = scored.filter(a=>(a.pyQ?.["1"]||0)>0&&a.gap>0).slice(0,10);
+      if (!topGap.length) return null;
+      const maxGap = topGap[0]?.gap||1;
+      return <div className="anim" style={{background:T.s1,border:`1px solid rgba(248,113,113,.15)`,borderRadius:14,padding:14,marginBottom:12}}>
+        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.red,marginBottom:4}}>Gap Leaderboard — Top 10 Recovery Targets</div>
+        <div style={{fontSize:10,color:T.t4,marginBottom:12}}>Accounts with the largest Q1 CY vs PY shortfall</div>
+        {topGap.map((a,i)=>{
+          const barPct = (a.gap/maxGap)*100;
+          return <div key={a.id} style={{marginBottom:10}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:3}}>
+              <div style={{flex:1,minWidth:0}}>
+                <span className="m" style={{fontSize:9,color:T.t4,marginRight:5}}>#{i+1}</span>
+                <span style={{fontSize:11,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</span>
+                <span style={{fontSize:9,color:T.t3,marginLeft:5}}>{a.city}, {a.st}</span>
+              </div>
+              <div style={{textAlign:"right",flexShrink:0,marginLeft:8}}>
+                <span className="m" style={{fontSize:11,fontWeight:700,color:T.red}}>-{$$(a.gap)}</span>
+                <span style={{fontSize:9,color:T.t4,marginLeft:5}}>{Math.round(a.ret*100)}% ret</span>
+              </div>
+            </div>
+            <div style={{height:4,borderRadius:2,background:T.s3,overflow:"hidden"}}>
+              <div style={{height:"100%",borderRadius:2,width:`${barPct}%`,background:`linear-gradient(90deg,${T.red},${T.orange})`}}/>
+            </div>
+          </div>;
+        })}
+      </div>;
+    })()}
 
     {/* ── QUICK SALE CALCULATOR ── */}
     <div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(251,191,36,.04))`,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
@@ -1411,94 +1450,158 @@ function DashTab({groups, q1CY, q1Att, q1Gap, scored}) {
   </div>;
 }
 
-function CalcTab() {
-  const [tier,setTier]=useState("Standard");
-  const [search,setSearch]=useState("");
-  const [selSku,setSelSku]=useState(null);
-  const [docSpend,setDocSpend]=useState("");
+// ─── MAP / ROUTE TAB ─────────────────────────────────────────────
+function MapTab() {
+  const mapRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const [selDay, setSelDay] = useState<string|null>(null);
+  const [selAcct, setSelAcct] = useState<any>(null);
 
-  const isAccel=isAccelTier(tier);
-  const tierRate=getTierRate(tier);
-  const results=search.length>=2?SKU.filter(p=>{
-    const q=search.toLowerCase();
-    return p[0].toLowerCase().includes(q)||p[1].toLowerCase().includes(q)||p[2].toLowerCase().includes(q);
-  }).slice(0,8):[];
+  const days = Object.keys(WEEK_ROUTES.routes||{});
+  const allRouted = days.flatMap(d=>(WEEK_ROUTES.routes[d]||[]).map(a=>({...a,day:d})));
+  const displayed = selDay ? (WEEK_ROUTES.routes[selDay]||[]).map(a=>({...a,day:selDay})) : allRouted;
 
-  const calc=useMemo(()=>{
-    if(!selSku||!docSpend||parseFloat(docSpend)<=0)return null;
-    const spend=parseFloat(docSpend);
-    const [sku,desc,cat,stdWS,stdMSRP,diaWS,diaMSRP,platWS,platMSRP,goldWS,goldMSRP,silvWS,silvMSRP]=selSku;
-    let tierMSRP,tierWS;
-    if(isAccel){
-      const t=tier.includes("-")?tier.split("-")[1]:tier;
-      if(t==="Diamond"){tierMSRP=diaMSRP;tierWS=diaWS;}
-      else if(t==="Platinum"){tierMSRP=platMSRP;tierWS=platWS;}
-      else if(t==="Gold"){tierMSRP=goldMSRP;tierWS=goldWS;}
-      else if(t==="Silver"){tierMSRP=silvMSRP;tierWS=silvWS;}
-      else{tierMSRP=stdMSRP;tierWS=stdWS;}
-    }else{tierMSRP=stdMSRP;tierWS=stdWS;}
-    const units=spend/tierMSRP;
-    const totalWS=stdWS*units;
-    const totalCredited=tierWS*units;
-    const totalCB=totalWS-totalCredited;
-    return{units,totalWS,totalCredited,totalCB,tierMSRP,tierWS,stdMSRP,stdWS,desc,sku,cat};
-  },[selSku,docSpend,tier,isAccel]);
+  const vpColor = (vp) => {
+    if (vp==="NOW") return T.red;
+    if (vp==="SOON") return T.amber;
+    return T.green;
+  };
 
-  return <div style={{padding:"16px 16px 80px"}}>
-    <div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(251,191,36,.04))`,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
-      <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.amber,marginBottom:12}}>Product Sale Calculator</div>
-      <div style={{fontSize:11,color:T.t3,marginBottom:16}}>Search any Kerr product, enter doctor spend, see your credited revenue instantly.</div>
+  const openGoogleMaps = (accts) => {
+    const withGps = accts.filter(a=>a.lat&&a.lng);
+    if (!withGps.length) return;
+    if (withGps.length === 1) {
+      window.open(`https://maps.google.com/?q=${withGps[0].lat},${withGps[0].lng}`,"_blank");
+      return;
+    }
+    const origin = `${withGps[0].lat},${withGps[0].lng}`;
+    const dest = `${withGps[withGps.length-1].lat},${withGps[withGps.length-1].lng}`;
+    const waypoints = withGps.slice(1,-1).map(a=>`${a.lat},${a.lng}`).join("|");
+    const url = `https://maps.google.com/maps/dir/${origin}/${waypoints?waypoints+"/":""}${dest}`;
+    window.open(url,"_blank");
+  };
 
-      {/* Tier selector */}
-      <div style={{marginBottom:14}}>
-        <label style={{fontSize:11,color:T.t1,display:"block",marginBottom:6,fontWeight:600}}>Account Tier</label>
-        <div className="hide-sb" style={{display:"flex",gap:4,overflowX:"auto"}}>
-          {["Standard","Top 100","Silver","Gold","Platinum","Diamond"].map(t=>(
-            <button key={t} onClick={()=>setTier(t)} style={{flexShrink:0,padding:"6px 12px",borderRadius:8,fontSize:11,fontWeight:600,cursor:"pointer",border:`1px solid ${tier===t?"rgba(251,191,36,.25)":T.b2}`,background:tier===t?"rgba(251,191,36,.08)":T.s2,color:tier===t?T.amber:T.t3,fontFamily:"inherit"}}>{t}{ACCEL_RATES[t]?` (${ACCEL_RATES[t]*100}%)`:""}</button>
-          ))}
-        </div>
+  // Init Leaflet map
+  useEffect(()=>{
+    if (!mapRef.current) return;
+    if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current=null; }
+
+    const pts = displayed.filter(a=>a.lat&&a.lng);
+    if (!pts.length) return;
+
+    // Load Leaflet from CDN
+    const loadLeaflet = () => new Promise<void>((res) => {
+      if ((window as any).L) { res(); return; }
+      const css = document.createElement("link");
+      css.rel="stylesheet"; css.href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css";
+      document.head.appendChild(css);
+      const js = document.createElement("script");
+      js.src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js";
+      js.onload=()=>res();
+      document.head.appendChild(js);
+    });
+
+    loadLeaflet().then(()=>{
+      const L = (window as any).L;
+      if (!mapRef.current || mapInstanceRef.current) return;
+      const avgLat = pts.reduce((s,a)=>s+a.lat,0)/pts.length;
+      const avgLng = pts.reduce((s,a)=>s+a.lng,0)/pts.length;
+      const map = L.map(mapRef.current, {zoomControl:true}).setView([avgLat,avgLng],10);
+      mapInstanceRef.current = map;
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+        attribution:'© OpenStreetMap',maxZoom:18
+      }).addTo(map);
+
+      // Draw route line if single day selected
+      if (selDay) {
+        const coords = pts.map(a=>[a.lat,a.lng]);
+        L.polyline(coords,{color:"rgba(79,142,247,.5)",weight:2,dashArray:"6,4"}).addTo(map);
+      }
+
+      pts.forEach((a,i)=>{
+        const col = vpColor(a.vp||"");
+        const svgIcon = L.divIcon({
+          className:"",
+          html:`<div style="width:28px;height:28px;border-radius:50%;background:${T.s1};border:2.5px solid ${col};display:flex;align-items:center;justify-content:center;font-family:monospace;font-size:10px;font-weight:800;color:${col};box-shadow:0 2px 8px rgba(0,0,0,.5)">${selDay?i+1:""}</div>`,
+          iconSize:[28,28], iconAnchor:[14,14]
+        });
+        const marker = L.marker([a.lat,a.lng],{icon:svgIcon}).addTo(map);
+        marker.on("click",()=>setSelAcct(a));
+      });
+
+      if (pts.length>1) map.fitBounds(L.latLngBounds(pts.map(a=>[a.lat,a.lng])),{padding:[24,24]});
+    });
+
+    return ()=>{ if(mapInstanceRef.current){mapInstanceRef.current.remove();mapInstanceRef.current=null;} };
+  },[displayed,selDay]);
+
+  const dayColors = ["#4f8ef7","#22d3ee","#34d399","#fbbf24","#a78bfa"];
+
+  return <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 112px)"}}>
+
+    {/* Day filter pills */}
+    <div style={{padding:"10px 16px 0",flexShrink:0}}>
+      <div className="hide-sb" style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:8}}>
+        <button onClick={()=>{setSelDay(null);setSelAcct(null)}} style={{flexShrink:0,padding:"5px 14px",borderRadius:8,fontSize:11,fontWeight:600,cursor:"pointer",border:`1px solid ${!selDay?"rgba(79,142,247,.3)":T.b2}`,background:!selDay?"rgba(79,142,247,.12)":T.s2,color:!selDay?T.blue:T.t3,fontFamily:"inherit"}}>All Days</button>
+        {days.map((d,i)=>{
+          const col=dayColors[i%dayColors.length];
+          const cnt=(WEEK_ROUTES.routes[d]||[]).length;
+          return <button key={d} onClick={()=>{setSelDay(d===selDay?null:d);setSelAcct(null)}} style={{flexShrink:0,padding:"5px 14px",borderRadius:8,fontSize:11,fontWeight:600,cursor:"pointer",border:`1px solid ${selDay===d?col+"55":T.b2}`,background:selDay===d?col+"18":T.s2,color:selDay===d?col:T.t3,fontFamily:"inherit"}}>{d} <span style={{opacity:.7,fontSize:9}}>({cnt})</span></button>;
+        })}
       </div>
 
-      {/* Product search */}
-      <div style={{marginBottom:12}}>
-        <label style={{fontSize:11,color:T.t1,display:"block",marginBottom:4,fontWeight:600}}>Search Product</label>
-        {selSku?<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 12px",borderRadius:8,background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.2)"}}>
-          <div><div style={{fontSize:12,fontWeight:600,color:T.t1}}>#{selSku[0]} — {selSku[1]}</div><div style={{fontSize:10,color:T.t3}}>{selSku[2]} · Std MSRP ${selSku[4]}</div></div>
-          <button onClick={()=>{setSelSku(null);setDocSpend("");setSearch("")}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:16}}>✕</button>
-        </div>:<div>
-          <input type="text" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Type SKU# or product name..." style={{width:"100%",height:40,borderRadius:8,border:`1px solid ${T.b1}`,background:T.s1,color:T.t1,fontSize:13,padding:"0 12px",outline:"none",fontFamily:"inherit"}}/>
-          {results.length>0&&<div style={{marginTop:4,borderRadius:8,border:`1px solid ${T.b1}`,background:T.s1,maxHeight:200,overflowY:"auto"}}>
-            {results.map(p=><button key={p[0]} onClick={()=>{setSelSku(p);setSearch("")}} style={{width:"100%",textAlign:"left",padding:"8px 12px",background:"none",border:"none",borderBottom:`1px solid ${T.b1}`,color:T.t1,cursor:"pointer",fontFamily:"inherit",fontSize:11}}>
-              <div style={{fontWeight:600}}>#{p[0]} — {p[1]}</div>
-              <div style={{fontSize:9,color:T.t4}}>{p[2]} · MSRP ${p[4]}</div>
-            </button>)}
-          </div>}
-        </div>}
-      </div>
-
-      {selSku&&<div style={{marginBottom:12}}>
-        <label style={{fontSize:11,color:T.t1,display:"block",marginBottom:4,fontWeight:600}}>Doctor Spend ($)</label>
-        <div style={{position:"relative"}}>
-          <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:16,color:T.t4,fontFamily:"'JetBrains Mono',monospace"}}>$</span>
-          <input type="number" value={docSpend} onChange={e=>setDocSpend(e.target.value)} placeholder="e.g. 5000" style={{width:"100%",height:42,borderRadius:8,border:`1px solid ${T.b1}`,background:T.s1,color:T.t1,fontSize:16,padding:"0 12px 0 30px",outline:"none",fontFamily:"'JetBrains Mono',monospace"}}/>
-        </div>
-      </div>}
-
-      {calc&&<div style={{background:"rgba(79,142,247,.06)",border:"1px solid rgba(79,142,247,.12)",borderRadius:8,padding:12}}>
-        <div style={{fontSize:10,fontWeight:700,color:T.blue,marginBottom:8}}>Calculation Breakdown</div>
-        <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:3}}><span>Doctor spent</span><span className="m" style={{color:T.t1}}>{$f(parseFloat(docSpend))}</span></div>
-        <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:3}}><span>÷ ${calc.tierMSRP.toFixed(2)}/unit ({isAccel?tier:"std"} MSRP)</span><span className="m" style={{color:T.t1}}>{calc.units.toFixed(1)} units</span></div>
-        <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:3}}><span>× ${calc.stdWS.toFixed(2)} std wholesale/unit</span><span className="m" style={{color:T.t1}}>{$f(calc.totalWS)}</span></div>
-        {isAccel&&calc.totalCB>0&&<div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:3}}><span>{tier} chargeback ({getTierRate(tier)*100}%)</span><span className="m" style={{color:T.red}}>-{$f(calc.totalCB)}</span></div>}
-        <div style={{borderTop:`1px solid ${T.b2}`,marginTop:6,paddingTop:6,display:"flex",justifyContent:"space-between",fontSize:14,fontWeight:700}}>
-          <span style={{color:T.t1}}>→ Your Credit</span>
-          <span className="m" style={{color:T.green,fontSize:18}}>{$f(calc.totalCredited)}</span>
-        </div>
-      </div>}
+      {/* Route button */}
+      {selDay&&(WEEK_ROUTES.routes[selDay]||[]).filter(a=>a.lat).length>0&&(
+        <button onClick={()=>openGoogleMaps((WEEK_ROUTES.routes[selDay]||[]))} style={{width:"100%",marginBottom:8,padding:"8px 0",borderRadius:10,border:"none",background:`linear-gradient(90deg,${T.blue},${T.cyan})`,color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+          <IconMap c="#fff"/> Open {selDay} Route in Google Maps
+        </button>
+      )}
     </div>
 
-    <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:12,fontSize:10,color:T.t3}}>
-      <strong>How it works:</strong> Doctor spend ÷ tier MSRP = units. Units × std wholesale = raw wholesale. For Accelerate tiers, subtract chargeback (Silver 20%, Gold 24%, Platinum 30%, Diamond 36%). Standard / Top 100 / Private = 0% chargeback.
+    {/* Map */}
+    <div ref={mapRef} style={{flex:1,minHeight:0,background:T.s2}}/>
+
+    {/* Account popover */}
+    {selAcct&&<div className="anim" style={{position:"absolute",bottom:72,left:16,right:16,zIndex:100,background:T.s1,border:`1px solid rgba(79,142,247,.25)`,borderRadius:16,padding:14,boxShadow:"0 8px 32px rgba(0,0,0,.6)"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:13,fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{selAcct.name}</div>
+          <div style={{fontSize:10,color:T.t3,marginTop:1}}>{selAcct.city}, {selAcct.state} · <span style={{color:vpColor(selAcct.vp),fontWeight:700}}>{selAcct.vp||"—"}</span>{selAcct.zone?` · ${selAcct.zone}`:""}</div>
+        </div>
+        <button onClick={()=>setSelAcct(null)} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:18,lineHeight:1,paddingLeft:8}}>✕</button>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:10}}>
+        <div style={{background:T.s2,borderRadius:8,padding:"6px 8px",textAlign:"center"}}>
+          <div style={{fontSize:8,color:T.t4}}>Q1 2025</div>
+          <div className="m" style={{fontSize:12,fontWeight:700,color:T.t2}}>{$$(selAcct.q1_2025||selAcct.py||0)}</div>
+        </div>
+        <div style={{background:T.s2,borderRadius:8,padding:"6px 8px",textAlign:"center"}}>
+          <div style={{fontSize:8,color:T.t4}}>Q1 2026</div>
+          <div className="m" style={{fontSize:12,fontWeight:700,color:T.blue}}>{$$(selAcct.q1_2026||selAcct.cy||0)}</div>
+        </div>
+        <div style={{background:T.s2,borderRadius:8,padding:"6px 8px",textAlign:"center"}}>
+          <div style={{fontSize:8,color:T.t4}}>Gap</div>
+          {(()=>{const g=(selAcct.q1_2025||selAcct.py||0)-(selAcct.q1_2026||selAcct.cy||0);return <div className="m" style={{fontSize:12,fontWeight:700,color:g>0?T.red:T.green}}>{g>0?$$(g):"+"+$$(Math.abs(g))}</div>;})()} 
+        </div>
+      </div>
+      {selAcct.flag&&<div style={{fontSize:10,color:T.amber,background:"rgba(251,191,36,.06)",border:"1px solid rgba(251,191,36,.15)",borderRadius:8,padding:"5px 8px",marginBottom:8}}>{selAcct.flag}</div>}
+      {selAcct.intel&&<div style={{fontSize:10,color:T.t3,lineHeight:1.5,marginBottom:8,maxHeight:60,overflow:"hidden"}}>{selAcct.intel}</div>}
+      <div style={{display:"flex",gap:6}}>
+        {selAcct.phone&&<a href={`tel:${selAcct.phone}`} style={{flex:1,padding:"7px 0",borderRadius:8,border:`1px solid ${T.b2}`,background:T.s2,color:T.t1,fontSize:11,fontWeight:600,textAlign:"center",textDecoration:"none",display:"block"}}>{selAcct.phone}</a>}
+        {selAcct.lat&&selAcct.lng&&<a href={`https://maps.google.com/?q=${selAcct.lat},${selAcct.lng}`} target="_blank" rel="noreferrer" style={{flex:1,padding:"7px 0",borderRadius:8,border:"none",background:`linear-gradient(90deg,${T.blue},${T.cyan})`,color:"#fff",fontSize:11,fontWeight:600,textAlign:"center",textDecoration:"none",display:"block"}}>Navigate →</a>}
+      </div>
+    </div>}
+
+    {/* Legend */}
+    <div style={{padding:"6px 16px",flexShrink:0,display:"flex",gap:12,alignItems:"center",borderTop:`1px solid ${T.b1}`}}>
+      {[["NOW",T.red],["SOON",T.amber],["ON TRACK",T.green]].map(([l,c])=>(
+        <div key={l} style={{display:"flex",alignItems:"center",gap:4}}>
+          <div style={{width:8,height:8,borderRadius:"50%",background:c}}/>
+          <span style={{fontSize:9,color:T.t4}}>{l}</span>
+        </div>
+      ))}
+      <span style={{marginLeft:"auto",fontSize:9,color:T.t4}}>{displayed.filter(a=>a.lat).length} mapped · {displayed.filter(a=>!a.lat).length} no GPS</span>
     </div>
   </div>;
 }
@@ -1523,9 +1626,9 @@ function EstTab({pct,setPct,q1CY,groups}) {
       <div style={{fontSize:11,color:T.t3,marginBottom:16}}>Last year, <strong style={{color:T.t1}}>{pyAccts.toLocaleString()} accounts</strong> bought <strong style={{color:T.t1}}>{$f(pyBase)}</strong> credited in Mar 20-31. How much repeats?</div>
       <div style={{marginBottom:16}}>
         <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
-          <span style={{fontSize:10,color:T.t4}}>50%</span>
-          <span className="m" style={{fontSize:14,fontWeight:800,color:pct>=100?T.green:T.amber}}>{pct}%</span>
-          <span style={{fontSize:10,color:T.t4}}>130%</span>
+          <span style={{fontSize:10,color:T.t4}}>50% of PY</span>
+          <span className="m" style={{fontSize:14,fontWeight:800,color:pct>=100?T.green:T.amber}}>{pct}% repeat</span>
+          <span style={{fontSize:10,color:T.t4}}>130% of PY</span>
         </div>
         <input type="range" min="50" max="130" value={pct} onChange={e=>setPct(parseInt(e.target.value))}/>
       </div>
