@@ -1010,12 +1010,8 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup}) {
 
   // Load saved contacts + group override from storage on mount
   useEffect(() => {
-    window.storage?.get(storageKey).then((result:any) => {
-      if (result?.value) { try { setSavedContacts(JSON.parse(result.value)); } catch {} }
-    }).catch(()=>{});
-    window.storage?.get(overrideKey).then((result:any) => {
-      if (result?.value) { try { setGroupOverride(JSON.parse(result.value)); } catch {} }
-    }).catch(()=>{});
+    try { const v=localStorage.getItem(storageKey); if(v) setSavedContacts(JSON.parse(v)); } catch {}
+    try { const v=localStorage.getItem(overrideKey); if(v) setGroupOverride(JSON.parse(v)); } catch {}
   }, [acct.id]);
 
   // Group search for move modal
@@ -1037,7 +1033,7 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup}) {
       targetGroupName: fixGroupName(targetGroup),
       savedAt: new Date().toISOString(),
     };
-    window.storage?.set(overrideKey, JSON.stringify(override)).catch(()=>{});
+    try { localStorage.setItem(overrideKey, JSON.stringify(override)); } catch {}
     setGroupOverride(override);
     setShowMoveModal(false);
     setMoveSearch("");
@@ -1180,7 +1176,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
         // Only save if we actually found something
         const hasContact = contacts.contactName || contacts.phone || contacts.email || contacts.website;
         if (hasContact) {
-          window.storage?.set(storageKey, JSON.stringify(contacts)).catch(()=>{});
+          try { localStorage.setItem(storageKey, JSON.stringify(contacts)); } catch {}
           setSavedContacts(contacts);
         }
       } else {
@@ -1295,7 +1291,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
         <div style={{fontSize:11,color:T.t3,marginTop:2}}>{acct.city}, {acct.st} · <span style={{color:isAccel?T.amber:T.t3}}>{acctType}</span> · Last {acct.last}d ago</div>
         {groupOverride&&<div style={{marginTop:4,fontSize:10,color:T.amber,display:"flex",alignItems:"center",gap:4}}>
           <span>⚠ Overridden → {groupOverride.targetGroupName}</span>
-          <button onClick={()=>{window.storage?.delete(overrideKey).catch(()=>{}); setGroupOverride(null);}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:11,padding:"0 2px"}}>✕</button>
+          <button onClick={()=>{try { localStorage.removeItem(overrideKey); } catch {} setGroupOverride(null);}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:11,padding:"0 2px"}}>✕</button>
         </div>}
         {(()=>{const h=getHealthStatus(ret,gap,cyVal,pyVal);return <div style={{display:"inline-flex",alignItems:"center",marginTop:6,fontSize:10,fontWeight:700,color:h.color,background:h.bg,border:`1px solid ${h.border}`,borderRadius:999,padding:"3px 10px",letterSpacing:".2px"}}>{h.label}</div>;})()}
         <div style={{fontSize:10,color:T.t4,marginTop:2,display:"flex",gap:8,flexWrap:"wrap"}}>
@@ -1412,7 +1408,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
           </div>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <div style={{fontSize:9,color:T.t4}}>{savedContacts.savedAt?new Date(savedContacts.savedAt).toLocaleDateString():""}</div>
-            <button onClick={()=>{window.storage?.delete(storageKey).catch(()=>{}); setSavedContacts(null);}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:13,lineHeight:1,padding:2}}>✕</button>
+            <button onClick={()=>{try { localStorage.removeItem(storageKey); } catch {} setSavedContacts(null);}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:13,lineHeight:1,padding:2}}>✕</button>
           </div>
         </div>
         <div style={{display:"flex",flexWrap:"wrap",gap:10}}>
