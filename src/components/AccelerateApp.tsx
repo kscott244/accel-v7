@@ -8,10 +8,12 @@ let DEALER_LOOKUP: Record<string, any> = {};
 let DEALERS: Record<string, string> = {};
 let WEEK_ROUTES: any = { routes: {}, unplaced: [] };
 let BADGER: Record<string, any> = {};
+let PARENT_NAMES: Record<string, string> = {};
 try { DEALER_LOOKUP = require("@/data/dealer-lookup").DEALER_LOOKUP; } catch(e) {}
 try { DEALERS = require("@/data/dealers").DEALERS; } catch(e) {}
 try { WEEK_ROUTES = require("@/data/week-routes.json"); } catch(e) {}
 try { BADGER = require("@/data/badger-lookup.json"); } catch(e) {}
+try { PARENT_NAMES = require("@/data/parent-names.json"); } catch(e) {}
 
 // ─── DESIGN TOKENS ───────────────────────────────────────────────
 const T = {
@@ -48,9 +50,12 @@ const isAccelTier = (tier) => {
   const n = normalizeTier(tier);
   return n in ACCEL_RATES;
 };
-const getTierLabel = (tier) => {
+const getTierLabel = (tier, class2?) => {
   const n = normalizeTier(tier);
-  if (n === "Standard") return "Private Practice";
+  if (n === "Standard") {
+    if (class2 === "DSO" || class2 === "EMERGING DSO") return class2;
+    return "Private Practice";
+  }
   if (n in ACCEL_RATES) return `Accelerate ${n}`;
   return n;
 };
@@ -78,7 +83,7 @@ const IconChart   = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0
 const IconMap     = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>;
 const IconSliders = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>;
 
-// ─── DISPLAY NAME FIXER (catches bad names in preloaded data too) ──
+// ─── DISPLAY NAME FIXER ──────────────────────────────────────────
 const BAD_GROUP_NAMES = new Set(["STANDARD","Standard","HOUSE ACCOUNTS","House Accounts","SILVER","GOLD","PLATINUM","DIAMOND","TOP 100","Silver","Gold","Platinum","Diamond","Top 100",""]);
 // Strip " : Master-CMxxxxxx" suffix from Tableau parent names
 const cleanParentName = (name) => {
@@ -87,13 +92,16 @@ const cleanParentName = (name) => {
 };
 const fixGroupName = (g) => {
   if (!g) return "Unknown";
+  // 1. Try authoritative name from offices.json parent names (highest priority)
+  const authName = PARENT_NAMES[g.id];
+  if (authName && !BAD_GROUP_NAMES.has(authName)) return authName;
+  // 2. Try cleaned stored name
   const cleaned = cleanParentName(g.name);
-  if (!cleaned || BAD_GROUP_NAMES.has(cleaned)) {
-    if (g.children?.length === 1) return g.children[0].name;
-    if (g.children?.length > 1) return `${g.children[0].name} (+${g.children.length-1})`;
-    return cleaned || g.id || "Unknown";
-  }
-  return cleaned;
+  if (cleaned && !BAD_GROUP_NAMES.has(cleaned)) return cleaned;
+  // 3. Fall back to child names
+  if (g.children?.length === 1) return g.children[0].name;
+  if (g.children?.length > 1) return `${g.children[0].name} (+${g.children.length-1})`;
+  return cleaned || g.id || "Unknown";
 };
 
 // ─── SMALL COMPONENTS ────────────────────────────────────────────
@@ -752,7 +760,7 @@ function GroupsTab({groups,goGroup,filt,setFilt,search,setSearch}) {
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
         <div style={{flex:1,minWidth:0}}>
           <div style={{fontSize:13,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fixGroupName(g)}</div>
-          <div style={{fontSize:10,color:T.t3,marginTop:2}}>{g._locs} loc{g._locs>1?"s":""} · {getTierLabel(g.tier)}{isDealerFilt?<span style={{color:T.cyan}}> · {filt}</span>:""}</div>
+          <div style={{fontSize:10,color:T.t3,marginTop:2}}>{g._locs} loc{g._locs>1?"s":""} · {getTierLabel(g.tier,g.class2)}{isDealerFilt?<span style={{color:T.cyan}}> · {filt}</span>:""}</div>
         </div>
         <div style={{display:"flex",gap:4,alignItems:"center"}}>
           {isGrowing&&<span style={{flexShrink:0,borderRadius:999,background:"rgba(52,211,153,.09)",border:"1px solid rgba(52,211,153,.22)",padding:"2px 8px",fontSize:9,fontWeight:700,color:T.green}}>Growing</span>}
@@ -827,7 +835,7 @@ function GroupDetail({group,goMain,goAcct}) {
     <div style={{padding:"16px 16px 0"}}>
       <div className="anim" style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
         <div style={{fontSize:16,fontWeight:700,marginBottom:4}}>{fixGroupName(group)}</div>
-        <div style={{fontSize:11,color:T.t3,marginBottom:12}}>{group.locs} locations · {getTierLabel(group.tier)}</div>
+        <div style={{fontSize:11,color:T.t3,marginBottom:12}}>{group.locs} locations · {getTierLabel(group.tier,group.class2)}</div>
         {/* Quarter selector */}
         <div style={{display:"flex",gap:4,marginBottom:12}}>
           {["1","2","3","4","FY"].map(qr=>(
@@ -1072,7 +1080,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
           <button onClick={()=>goGroup(parentGroup)} style={{background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.15)",borderRadius:8,padding:"3px 10px",fontSize:10,fontWeight:600,color:T.blue,cursor:"pointer",fontFamily:"inherit"}}>View Group →</button>
         </div>
         <div style={{fontSize:14,fontWeight:700,marginBottom:2}}>{fixGroupName(parentGroup)}</div>
-        <div style={{fontSize:10,color:T.t3,marginBottom:10}}>{parentGroup.locs} location{parentGroup.locs>1?"s":""} · {getTierLabel(parentGroup.tier)}</div>
+        <div style={{fontSize:10,color:T.t3,marginBottom:10}}>{parentGroup.locs} location{parentGroup.locs>1?"s":""} · {getTierLabel(parentGroup.tier,parentGroup.class2)}</div>
         {(()=>{
           const gPy=parentGroup.pyQ?.["1"]||0;
           const gCy=parentGroup.cyQ?.["1"]||0;
@@ -1412,7 +1420,7 @@ function DashTab({groups, q1CY, q1Att, q1Gap, scored}) {
           <span className="m" style={{fontSize:11,color:T.t4,minWidth:16}}>#{i+1}</span>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fixGroupName(g)}</div>
-            <div style={{fontSize:9,color:T.t3}}>{g.locs} loc · {getTierLabel(g.tier)}</div>
+            <div style={{fontSize:9,color:T.t3}}>{g.locs} loc · {getTierLabel(g.tier,g.class2)}</div>
           </div>
           <div style={{textAlign:"right",flexShrink:0}}>
             <div className="m" style={{fontSize:12,fontWeight:700,color:T.blue}}>{$$(cy)}</div>
