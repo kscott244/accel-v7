@@ -1454,8 +1454,12 @@ function DashTab({groups, q1CY, q1Att, q1Gap, scored}) {
 function MapTab() {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
+  const onPinClickRef = useRef<(a:any)=>void>(()=>{});  // stable ref — escapes stale closure
   const [selDay, setSelDay] = useState<string|null>(null);
   const [selAcct, setSelAcct] = useState<any>(null);
+
+  // Keep ref in sync with latest setter — Leaflet always calls the ref, never a stale closure
+  useEffect(()=>{ onPinClickRef.current = (a) => setSelAcct(a); });
 
   const days = Object.keys(WEEK_ROUTES.routes||{});
   const allRouted = days.flatMap(d=>(WEEK_ROUTES.routes[d]||[]).map(a=>({...a,day:d})));
@@ -1523,11 +1527,12 @@ function MapTab() {
         const col = vpColor(a.vp||"");
         const svgIcon = L.divIcon({
           className:"",
-          html:`<div style="width:28px;height:28px;border-radius:50%;background:${T.s1};border:2.5px solid ${col};display:flex;align-items:center;justify-content:center;font-family:monospace;font-size:10px;font-weight:800;color:${col};box-shadow:0 2px 8px rgba(0,0,0,.5)">${selDay?i+1:""}</div>`,
+          html:`<div style="width:28px;height:28px;border-radius:50%;background:${T.s1};border:2.5px solid ${col};display:flex;align-items:center;justify-content:center;font-family:monospace;font-size:10px;font-weight:800;color:${col};box-shadow:0 2px 8px rgba(0,0,0,.5);cursor:pointer">${selDay?i+1:""}</div>`,
           iconSize:[28,28], iconAnchor:[14,14]
         });
         const marker = L.marker([a.lat,a.lng],{icon:svgIcon}).addTo(map);
-        marker.on("click",()=>setSelAcct(a));
+        // Call through ref — always fresh, never a stale closure
+        marker.on("click", () => { onPinClickRef.current(a); });
       });
 
       if (pts.length>1) map.fitBounds(L.latLngBounds(pts.map(a=>[a.lat,a.lng])),{padding:[24,24]});
@@ -1538,7 +1543,7 @@ function MapTab() {
 
   const dayColors = ["#4f8ef7","#22d3ee","#34d399","#fbbf24","#a78bfa"];
 
-  return <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 112px)"}}>
+  return <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 112px)",position:"relative"}}>
 
     {/* Day filter pills */}
     <div style={{padding:"10px 16px 0",flexShrink:0}}>
@@ -1562,14 +1567,14 @@ function MapTab() {
     {/* Map */}
     <div ref={mapRef} style={{flex:1,minHeight:0,background:T.s2}}/>
 
-    {/* Account popover */}
-    {selAcct&&<div className="anim" style={{position:"absolute",bottom:72,left:16,right:16,zIndex:100,background:T.s1,border:`1px solid rgba(79,142,247,.25)`,borderRadius:16,padding:14,boxShadow:"0 8px 32px rgba(0,0,0,.6)"}}>
+    {/* Account popover — fixed so it's always visible above nav bar */}
+    {selAcct&&<div className="anim" style={{position:"fixed",bottom:64,left:0,right:0,margin:"0 12px",zIndex:200,background:T.s1,border:`1px solid rgba(79,142,247,.3)`,borderRadius:16,padding:14,boxShadow:"0 8px 40px rgba(0,0,0,.7)"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
         <div style={{flex:1,minWidth:0}}>
           <div style={{fontSize:13,fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{selAcct.name}</div>
           <div style={{fontSize:10,color:T.t3,marginTop:1}}>{selAcct.city}, {selAcct.state} · <span style={{color:vpColor(selAcct.vp),fontWeight:700}}>{selAcct.vp||"—"}</span>{selAcct.zone?` · ${selAcct.zone}`:""}</div>
         </div>
-        <button onClick={()=>setSelAcct(null)} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:18,lineHeight:1,paddingLeft:8}}>✕</button>
+        <button onClick={()=>setSelAcct(null)} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:18,lineHeight:1,paddingLeft:8,flexShrink:0}}>✕</button>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:10}}>
         <div style={{background:T.s2,borderRadius:8,padding:"6px 8px",textAlign:"center"}}>
@@ -1586,7 +1591,7 @@ function MapTab() {
         </div>
       </div>
       {selAcct.flag&&<div style={{fontSize:10,color:T.amber,background:"rgba(251,191,36,.06)",border:"1px solid rgba(251,191,36,.15)",borderRadius:8,padding:"5px 8px",marginBottom:8}}>{selAcct.flag}</div>}
-      {selAcct.intel&&<div style={{fontSize:10,color:T.t3,lineHeight:1.5,marginBottom:8,maxHeight:60,overflow:"hidden"}}>{selAcct.intel}</div>}
+      {selAcct.intel&&<div style={{fontSize:10,color:T.t3,lineHeight:1.5,marginBottom:8,maxHeight:56,overflow:"hidden"}}>{selAcct.intel}</div>}
       <div style={{display:"flex",gap:6}}>
         {selAcct.phone&&<a href={`tel:${selAcct.phone}`} style={{flex:1,padding:"7px 0",borderRadius:8,border:`1px solid ${T.b2}`,background:T.s2,color:T.t1,fontSize:11,fontWeight:600,textAlign:"center",textDecoration:"none",display:"block"}}>{selAcct.phone}</a>}
         {selAcct.lat&&selAcct.lng&&<a href={`https://maps.google.com/?q=${selAcct.lat},${selAcct.lng}`} target="_blank" rel="noreferrer" style={{flex:1,padding:"7px 0",borderRadius:8,border:"none",background:`linear-gradient(90deg,${T.blue},${T.cyan})`,color:"#fff",fontSize:11,fontWeight:600,textAlign:"center",textDecoration:"none",display:"block"}}>Navigate →</a>}
