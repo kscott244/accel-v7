@@ -464,6 +464,58 @@ export default function App() {
     }));
   };
 
+  // Apply group overrides from localStorage — moves misparented accounts into correct groups
+  const applyGroupOverrides = (grps) => {
+    if (!grps) return grps;
+    // Collect all overrides from localStorage
+    const overrides: {childId:string, targetGroupId:string}[] = [];
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key?.startsWith("group-override:")) {
+          const val = JSON.parse(localStorage.getItem(key) || "{}");
+          if (val.childId && val.targetGroupId) overrides.push(val);
+        }
+      }
+    } catch {}
+    if (overrides.length === 0) return grps;
+
+    // Build lookup: childId → target group id
+    const overrideMap: Record<string, string> = {};
+    overrides.forEach(o => { overrideMap[o.childId] = o.targetGroupId; });
+
+    // 1. Remove overridden children from their current groups and collect them
+    const displaced: Record<string, any[]> = {}; // targetGroupId → children[]
+    const cleaned = grps.map(g => {
+      const kept: any[] = [];
+      const moved: any[] = [];
+      (g.children || []).forEach(c => {
+        if (overrideMap[c.id]) {
+          moved.push(c);
+          const tgt = overrideMap[c.id];
+          displaced[tgt] = displaced[tgt] || [];
+          displaced[tgt].push(c);
+        } else {
+          kept.push(c);
+        }
+      });
+      if (moved.length === 0) return g;
+      const newPY = kept.reduce((s,c) => s + (c.pyQ?.["1"]||0), 0);
+      const newCY = kept.reduce((s,c) => s + (c.cyQ?.["1"]||0), 0);
+      return {...g, children: kept, locs: kept.length, pyQ: {...g.pyQ, "1": newPY}, cyQ: {...g.cyQ, "1": newCY}};
+    });
+
+    // 2. Add displaced children to their target groups
+    return cleaned.map(g => {
+      const incoming = displaced[g.id];
+      if (!incoming || incoming.length === 0) return g;
+      const newChildren = [...(g.children || []), ...incoming];
+      const newPY = newChildren.reduce((s,c) => s + (c.pyQ?.["1"]||0), 0);
+      const newCY = newChildren.reduce((s,c) => s + (c.cyQ?.["1"]||0), 0);
+      return {...g, children: newChildren, locs: newChildren.length, pyQ: {...g.pyQ, "1": newPY}, cyQ: {...g.cyQ, "1": newCY}};
+    });
+  };
+
   // Load pre-loaded data on mount
   useEffect(() => {
     // Check localStorage first
@@ -471,7 +523,7 @@ export default function App() {
       const saved = localStorage.getItem("accel_data");
       if (saved) {
         const parsed = JSON.parse(saved);
-        setGroups(hydrateDealer(parsed.groups));
+        setGroups(applyGroupOverrides(hydrateDealer(parsed.groups)));
         setDataSource(`CSV uploaded ${parsed.generated}`);
         setLoading(false);
         return;
@@ -481,7 +533,7 @@ export default function App() {
     // Load pre-loaded data
     try {
       const { PRELOADED } = require("@/data/preloaded-data");
-      setGroups(hydrateDealer(PRELOADED.groups));
+      setGroups(applyGroupOverrides(hydrateDealer(PRELOADED.groups)));
       setDataSource(`Pre-loaded ${PRELOADED.generated}`);
     } catch(e) {
       setGroups([]);
@@ -501,7 +553,7 @@ export default function App() {
         const text = ev.target.result;
         const rows = parseCSV(text);
         const result = processCSVData(rows);
-        setGroups(result.groups);
+        setGroups(applyGroupOverrides(result.groups));
         setDataSource(`CSV uploaded ${result.generated}`);
         localStorage.setItem("accel_data", JSON.stringify(result));
         setUploadMsg(`OK Loaded ${result.groups.length} groups from CSV`);
