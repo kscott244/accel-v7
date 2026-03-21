@@ -29,35 +29,77 @@ const Q_TARGETS = { 1: 778915, 2: 798328, 3: 793897, 4: 786954 };
 const FY_TARGET = 3158094;
 const DAYS_LEFT = Math.max(0, Math.ceil((new Date(2026, 2, 31).getTime() - new Date().getTime()) / 86400000));
 
-// ─── TIER / CHARGEBACK LOGIC ─────────────────────────────────────
-const ACCEL_RATES = { Silver: 0.20, Gold: 0.24, Platinum: 0.30, Diamond: 0.36 };
+// ─── TIER / CHARGEBACK RULES ─────────────────────────────────────
+// The Tableau export uses a single "Acct Type" field that conflates two
+// separate things: (1) pricing tier and (2) Top 100 spend ranking.
+// These rules untangle that permanently so no future upload can break it.
+//
+// PRICING TIER → chargeback rate:
+//   Standard, Top 100, HOUSE ACCOUNTS = 0%  (Top 100 is a ranking, NOT a tier)
+//   Top 100-Gold = Gold rate (24%)           (strip the ranking prefix)
+//   Top 100-Diamond = Diamond rate (36%)     (strip the ranking prefix)
+//   Silver=20%, Gold=24%, Platinum=30%, Diamond=36%
+//
+// PRACTICE TYPE → comes from Sds Cust Class2, NOT Acct Type:
+//   DSO, EMERGING DSO, COMMUNITY HEALTHCARE, GOVERNMENT, SCHOOLS, STANDARD(=Private Practice)
 
-// Normalize Acct Type: strip "Top 100" ranking, treat HOUSE ACCOUNTS as Standard
+const ACCEL_RATES: Record<string,number> = { Silver: 0.20, Gold: 0.24, Platinum: 0.30, Diamond: 0.36 };
+
+// Clean pricing tier — strips Top 100 ranking, normalizes everything to 5 values
 const normalizeTier = (raw) => {
   if (!raw) return "Standard";
   const t = raw.trim();
+  // These are rankings or account categories, not pricing tiers — all = 0% chargeback
   if (t === "HOUSE ACCOUNTS") return "Standard";
-  if (t === "Top 100") return "Standard";           // just a ranking, no chargeback
-  if (t.startsWith("Top 100-")) return t.split("-")[1]; // "Top 100-Gold" → "Gold"
-  return t;
+  if (t === "Top 100") return "Standard";
+  // "Top 100-Gold" → "Gold", "Top 100-Diamond" → "Diamond" (strip ranking prefix)
+  if (t.startsWith("Top 100-")) return t.split("-")[1];
+  // Valid tiers
+  if (t in ACCEL_RATES) return t;
+  return "Standard";
 };
 
-const getTierRate = (tier) => {
-  const n = normalizeTier(tier);
-  return ACCEL_RATES[n] || 0;
+// Is this account in the Top 100 spend ranking? Separate from tier.
+const isTop100 = (raw) => {
+  if (!raw) return false;
+  return raw.trim().startsWith("Top 100");
 };
-const isAccelTier = (tier) => {
-  const n = normalizeTier(tier);
-  return n in ACCEL_RATES;
+
+// Practice type from Sds Cust Class2 — this is the RIGHT place for account type
+const normalizePracticeType = (class2) => {
+  const c = (class2||"").trim().toUpperCase();
+  if (c === "DSO") return "DSO";
+  if (c === "EMERGING DSO") return "Emerging DSO";
+  if (c === "COMMUNITY HEALTHCARE") return "Community Health";
+  if (c === "GOVERNMENT") return "Government";
+  if (c === "SCHOOLS") return "School";
+  return "Private Practice"; // STANDARD → Private Practice
 };
+
+const getTierRate = (tier) => ACCEL_RATES[normalizeTier(tier)] || 0;
+const isAccelTier = (tier) => normalizeTier(tier) in ACCEL_RATES;
+
 const getTierLabel = (tier, class2?) => {
   const n = normalizeTier(tier);
-  if (n === "Standard") {
-    if (class2 === "DSO" || class2 === "EMERGING DSO") return class2;
-    return "Private Practice";
-  }
-  if (n in ACCEL_RATES) return `Accelerate ${n}`;
-  return n;
+  if (n === "Standard") return normalizePracticeType(class2);
+  return `Accelerate ${n}`;
+};
+
+// ─── GROUP NAME RULES ─────────────────────────────────────────────
+// Parent Name field always comes as "Real Name : Master-CMxxxxxx"
+// Strip the suffix → always gives a real group name, never a tier
+// Class 4 is unreliable — often contains the tier name instead of group name
+const extractGroupName = (parentName, class4?, fallbackChildName?) => {
+  // Rule 1: Strip " : Master-CMxxxxxx" from Parent Name → most reliable source
+  const fromParent = (parentName||"").replace(/\s*:\s*Master-CM\d+$/i, "").trim();
+  const BAD = new Set(["STANDARD","HOUSE ACCOUNTS","SILVER","GOLD","PLATINUM","DIAMOND",
+                       "TOP 100","GRAND TOTAL","TOTAL",""]);
+  if (fromParent && !BAD.has(fromParent.toUpperCase())) return fromParent;
+  // Rule 2: Class 4 if it's not a generic tier name
+  const c4 = (class4||"").trim();
+  if (c4 && !BAD.has(c4.toUpperCase())) return c4;
+  // Rule 3: Fall back to child name
+  return fallbackChildName || "";
 };
 
 // ─── FORMATTERS ──────────────────────────────────────────────────
@@ -155,6 +197,9 @@ const getHealthStatus = (ret, gap, cy, py) => {
 };
 
 // ─── CSV PROCESSOR ───────────────────────────────────────────────
+// Rules are permanent — future uploads with the same Tableau headers
+// will always produce clean, consistent output regardless of what
+// values Tableau puts in Acct Type or Class 4.
 function parseCSV(text) {
   const lines = text.split("\n");
   const headers = parseCSVLine(lines[0]);
@@ -191,7 +236,10 @@ function processCSVData(rows) {
   const ref = new Date();
 
   for (const row of rows) {
+    // Skip grand total rows
     if ((row["Parent Name"]||"").startsWith("Grand Total")) continue;
+    if ((row["Parent MDM ID"]||"") === "Total") continue;
+
     const inv = row["Invoice Date"];
     if (!inv) continue;
     const parts = inv.split("/");
@@ -207,8 +255,10 @@ function processCSVData(rows) {
     const parentId = (row["Parent MDM ID"]||"").trim();
     const l3 = (row["L3"]||"").trim();
 
-    if (!childId) continue;
+    if (!childId || !parentId) continue;
 
+    // ── RULE: PY and CY from this Tableau export are already credited wholesale ──
+    // Do NOT apply chargeback to them — they come in post-chargeback
     if (!childPyQ[childId]) childPyQ[childId] = {};
     if (!childCyQ[childId]) childCyQ[childId] = {};
     if (py !== 0) {
@@ -237,33 +287,30 @@ function processCSVData(rows) {
       childLastDate[childId] = dt;
     }
 
+    // ── RULE: Pricing tier comes from Acct Type, normalized through clean rules ──
+    // ── RULE: Practice type comes from Sds Cust Class2, not Acct Type ──
     if (!childInfo[childId]) {
       childInfo[childId] = {
-        name: row["Child Name"]||"", city: row["City"]||"", st: row["State"]||"",
-        tier: row["Acct Type"]||"Standard", parentId,
+        name: row["Child Name"]||"",
+        city: row["City"]||"",
+        st: row["State"]||"",
+        tier: normalizeTier(row["Acct Type"]),         // clean tier: Standard/Silver/Gold/Platinum/Diamond
+        top100: isTop100(row["Acct Type"]),             // ranking flag, separate from tier
+        class2: row["Sds Cust Class2"]||"",            // practice type source
+        parentId,
       };
     }
+
+    // ── RULE: Group name always comes from Parent Name field (strip suffix) ──
+    // ── NEVER use Class 4 as primary source — it's often a tier name ──
     if (parentId && !parentInfo[parentId]) {
-      const rawName = (row["Class 4"]||row["Parent Name"]||"").trim();
-      // Avoid tier names / generic labels as group names
-      const BAD_NAMES = ["STANDARD","HOUSE ACCOUNTS","SILVER","GOLD","PLATINUM","DIAMOND","TOP 100",""];
-      const isBadName = BAD_NAMES.includes(rawName.toUpperCase());
       parentInfo[parentId] = {
-        name: isBadName ? (row["Parent Name"]||row["Child Name"]||"").trim() : rawName,
-        tier: row["Acct Type"]||"Standard",
-        class2: row["Sds Cust Class2"]||"",
+        name: extractGroupName(row["Parent Name"], row["Class 4"], row["Child Name"]),
+        tier: normalizeTier(row["Acct Type"]),
+        class2: normalizePracticeType(row["Sds Cust Class2"]),
       };
-    } else if (parentId && parentInfo[parentId]) {
-      // If current name is a bad generic and this row has a better one, upgrade
-      const cur = parentInfo[parentId].name.toUpperCase();
-      const BAD_NAMES = ["STANDARD","HOUSE ACCOUNTS","SILVER","GOLD","PLATINUM","DIAMOND","TOP 100",""];
-      if (BAD_NAMES.includes(cur)) {
-        const better = (row["Class 4"]||row["Parent Name"]||"").trim();
-        if (better && !BAD_NAMES.includes(better.toUpperCase())) {
-          parentInfo[parentId].name = better;
-        }
-      }
     }
+
     if (parentId) {
       if (!parentChildren[parentId]) parentChildren[parentId] = new Set();
       parentChildren[parentId].add(childId);
@@ -279,56 +326,59 @@ function processCSVData(rows) {
     for (const cid of childIds) {
       const ci = childInfo[cid] || {};
       const pyQ = {}; const cyQ = {};
-      for (const [k,v] of Object.entries(childPyQ[cid]||{})) { pyQ[String(k)] = Math.round(v); }
-      for (const [k,v] of Object.entries(childCyQ[cid]||{})) { cyQ[String(k)] = Math.round(v); }
+      for (const [k,v] of Object.entries(childPyQ[cid]||{})) { pyQ[String(k)] = Math.round(v as number); }
+      for (const [k,v] of Object.entries(childCyQ[cid]||{})) { cyQ[String(k)] = Math.round(v as number); }
 
-      // Apply PY chargeback for Accelerate tier accounts
-      // PY data comes in as full wholesale — need to deduct tier chargeback to match CY treatment
-      // Use the CHILD's own tier (not parent) — same DSO can have mixed tiers
-      const acctTier = ci.tier || ci.acctType || "Standard";
-      const cbRate = getTierRate(acctTier);
-      if (cbRate > 0) {
-        for (const k of Object.keys(pyQ)) {
-          pyQ[k] = Math.round(pyQ[k] * (1 - cbRate));
-        }
-      }
-
+      // ── RULE: PY/CY already credited — no chargeback adjustment needed ──
       const products = [];
       for (const [l3, vals] of Object.entries(childProds[cid]||{})) {
-        const p = { n: l3 };
-        for (const [k,v] of Object.entries(vals)) {
-          // Also adjust PY product values for chargeback
-          if (k.startsWith("py") && cbRate > 0) {
-            p[k] = Math.round(v * (1 - cbRate));
-          } else {
-            p[k] = Math.round(v);
-          }
-        }
+        const p: any = { n: l3 };
+        for (const [k,v] of Object.entries(vals as any)) { p[k] = Math.round(v as number); }
         if (Math.abs(p.pyFY||0) >= 50 || Math.abs(p.cyFY||0) >= 25) products.push(p);
       }
       products.sort((a,b) => Math.abs(b.pyFY||0) - Math.abs(a.pyFY||0));
 
       const last = childLastDate[cid];
-      const daysSince = last ? Math.round((ref - last) / 86400000) : 999;
+      const daysSince = last ? Math.round((ref.getTime() - last.getTime()) / 86400000) : 999;
 
       const hasMoney = Object.values(pyQ).some(v=>v!==0) || Object.values(cyQ).some(v=>v!==0);
       if (!hasMoney) continue;
 
-      children.push({ id: cid, name: ci.name, city: ci.city, st: ci.st, tier: ci.tier||ci.acctType||"Standard", last: daysSince, pyQ, cyQ, products: products.slice(0,10), dealer: DEALERS[cid] || "Unknown" });
+      children.push({
+        id: cid,
+        name: ci.name,
+        city: ci.city,
+        st: ci.st,
+        tier: ci.tier||"Standard",
+        top100: ci.top100||false,
+        class2: ci.class2||"",
+        last: daysSince,
+        pyQ, cyQ,
+        products: products.slice(0,10),
+        dealer: DEALERS[cid] || "Unknown"
+      });
 
-      for (const [k,v] of Object.entries(pyQ)) gPy[k] = (gPy[k]||0) + v;
-      for (const [k,v] of Object.entries(cyQ)) gCy[k] = (gCy[k]||0) + v;
+      for (const [k,v] of Object.entries(pyQ)) gPy[k] = (gPy[k]||0) + (v as number);
+      for (const [k,v] of Object.entries(cyQ)) gCy[k] = (gCy[k]||0) + (v as number);
     }
 
     if (children.length === 0) continue;
     children.sort((a,b) => ((b.pyQ["1"]||0)-(b.cyQ["1"]||0)) - ((a.pyQ["1"]||0)-(a.cyQ["1"]||0)));
-    // Final name cleanup: if group name is still a tier/generic label, use first child
-    let gName = pi.name||pid;
-    const BAD_UPPER = ["STANDARD","HOUSE ACCOUNTS","SILVER","GOLD","PLATINUM","DIAMOND","TOP 100",""];
-    if (BAD_UPPER.includes(gName.toUpperCase())) {
-      gName = children.length === 1 ? children[0].name : `${children[0].name} (+${children.length-1})`;
-    }
-    groups.push({ id: pid, name: gName, tier: pi.tier||pi.acctType||"Standard", class2: pi.class2||"", locs: children.length, pyQ: gPy, cyQ: gCy, children });
+
+    // ── RULE: Group name is set during processing via extractGroupName ──
+    // Final fallback only if extractGroupName returned empty
+    let gName = pi.name || (children.length === 1 ? children[0].name : `${children[0].name} (+${children.length-1})`);
+
+    groups.push({
+      id: pid,
+      name: gName,
+      tier: pi.tier||"Standard",
+      class2: pi.class2||"Private Practice",
+      locs: children.length,
+      pyQ: gPy,
+      cyQ: gCy,
+      children
+    });
   }
 
   groups.sort((a,b) => ((b.pyQ["1"]||0)-(b.cyQ["1"]||0)) - ((a.pyQ["1"]||0)-(a.cyQ["1"]||0)));
