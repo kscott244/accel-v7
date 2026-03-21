@@ -11,14 +11,14 @@ export async function POST(req: NextRequest) {
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ error: "API key not configured" }, { status: 500 });
+      return NextResponse.json({ error: "API key not configured on server" }, { status: 500 });
     }
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": apiKey,
+        "x-api-key": apiKey.trim(),
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
@@ -28,15 +28,17 @@ export async function POST(req: NextRequest) {
       }),
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      const err = await response.text();
-      return NextResponse.json({ error: `Anthropic error: ${response.status}` }, { status: 502 });
+      console.error("Anthropic error:", response.status, JSON.stringify(data));
+      return NextResponse.json({ error: `Anthropic ${response.status}: ${data?.error?.message || JSON.stringify(data)}` }, { status: 502 });
     }
 
-    const data = await response.json();
     const text = data?.content?.[0]?.text || "";
     return NextResponse.json({ text });
   } catch (e: any) {
+    console.error("Route error:", e.message);
     return NextResponse.json({ error: e.message || "Unknown error" }, { status: 500 });
   }
 }
