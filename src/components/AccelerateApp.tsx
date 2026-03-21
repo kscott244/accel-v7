@@ -853,6 +853,8 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup}) {
   const [q,setQ]=useState("1");
   const [showForm,setShowForm]=useState(false);
   const [toast,setToast]=useState(null);
+  const [aiState,setAiState]=useState("idle"); // idle | loading | done | error
+  const [aiText,setAiText]=useState("");
   const qk=q;
 
   const myAdj=adjs.filter(m=>m.acctId===acct.id);
@@ -878,14 +880,83 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup}) {
   const allProdNames=products.map(p=>p.n);
   const xsell=["KERR CLEANSE","MAXCEM ELITE","DEMI PLUS","SONICFILL 3","PREMISE"].filter(n=>!allProdNames.some(an=>an.includes(n.split(" ")[0])));
 
+  const runAI = async () => {
+    setAiState("loading"); setAiText("");
+    const payload = {
+      name: acct.name, city: acct.city, state: acct.st,
+      tier: acctType, dealer: acct.dealer||"Unknown",
+      group: acct.gName||"None", lastOrderDays: acct.last,
+      Q1_PY: pyVal, Q1_CY: cyVal, gap, retentionPct: Math.round(ret*100),
+      buying: buying.slice(0,6).map(p=>({name:p.n, py:p[`py1`]||0, cy:p[`cy1`]||0})),
+      stopped: stopped.slice(0,5).map(p=>({name:p.n, py:p[`py1`]||0})),
+      crossSellOpportunities: xsell,
+      groupLocations: (parentGroup?.locs||1),
+    };
+    const prompt = `You are an AI assistant for Ken Scott, a dental territory sales manager for Kerr dental products covering CT/MA/RI/NY.
+
+Here is the account data for one of Ken's accounts:
+${JSON.stringify(payload, null, 2)}
+
+Write a concise, plain-English sales rep briefing in 3-4 short paragraphs. Cover:
+1. Account health snapshot — what the retention and gap numbers mean in plain English
+2. What stopped or declined and why it might matter
+3. The single best action Ken should take on his next visit, specific and direct
+4. Any upsell or cross-sell angle worth mentioning
+
+Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot. No bullet lists — prose only. Keep it under 180 words.`;
+
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({
+          model:"claude-sonnet-4-20250514",
+          max_tokens:300,
+          messages:[{role:"user",content:prompt}]
+        })
+      });
+      const data = await res.json();
+      if (data?.content?.[0]?.text) {
+        setAiText(data.content[0].text);
+        setAiState("done");
+      } else {
+        setAiState("error");
+        setAiText("No response received. Try again.");
+      }
+    } catch(e) {
+      setAiState("error");
+      setAiText("Connection error. Check network and try again.");
+    }
+  };
+
   return <div style={{paddingBottom:80}}>
-    <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"10px 16px"}}>
+    <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"10px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
       <button onClick={goBack} style={{background:"none",border:"none",color:T.blue,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:13,fontWeight:600,fontFamily:"inherit"}}><Back/> Back</button>
+      <button onClick={()=>aiState==="idle"||aiState==="error"?runAI():setAiState("idle")} style={{background:aiState==="done"?"rgba(167,139,250,.12)":"rgba(167,139,250,.08)",border:`1px solid ${aiState==="done"?"rgba(167,139,250,.3)":"rgba(167,139,250,.18)"}`,borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:700,color:T.purple,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:5}}>
+        {aiState==="loading"?<><span style={{animation:"pulse 1s infinite"}}>●</span> Thinking...</>:aiState==="done"?"✦ AI Briefing":"✦ AI Briefing"}
+      </button>
     </div>
     <div style={{padding:"16px 16px 0"}}>
       {toast&&<div className="anim" style={{background:"rgba(52,211,153,.12)",border:"1px solid rgba(52,211,153,.25)",borderRadius:12,padding:"12px 16px",marginBottom:12,display:"flex",alignItems:"center",gap:10}}>
         <span style={{fontSize:16,color:T.green,fontWeight:700}}>+</span>
         <div><div style={{fontSize:13,fontWeight:700,color:T.green}}>Sale recorded!</div><div style={{fontSize:11,color:T.t3}}>+{$f(toast)} credited → Q1 updated</div></div>
+      </div>}
+
+      {/* AI BRIEFING CARD */}
+      {(aiState==="loading"||aiState==="done"||aiState==="error")&&<div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(167,139,250,.06))`,border:`1px solid rgba(167,139,250,.2)`,borderRadius:16,padding:16,marginBottom:12}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+          <div style={{display:"flex",alignItems:"center",gap:7}}>
+            <span style={{fontSize:14,color:T.purple}}>✦</span>
+            <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.purple}}>AI Account Briefing</span>
+          </div>
+          <button onClick={()=>{setAiState("idle");setAiText("");}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:16,lineHeight:1}}>✕</button>
+        </div>
+        {aiState==="loading"&&<div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {[100,80,90,60].map((w,i)=><div key={i} style={{height:10,borderRadius:5,background:T.s3,width:`${w}%`,animation:"pulse 1.5s infinite",animationDelay:`${i*150}ms`}}/>)}
+          <div style={{fontSize:11,color:T.t4,marginTop:4}}>Analyzing account data...</div>
+        </div>}
+        {aiState==="done"&&<div style={{fontSize:12,color:T.t2,lineHeight:1.7,whiteSpace:"pre-wrap"}}>{aiText}</div>}
+        {aiState==="error"&&<div style={{fontSize:12,color:T.red}}>{aiText}</div>}
       </div>}
 
       {/* ACCOUNT HEADER */}
