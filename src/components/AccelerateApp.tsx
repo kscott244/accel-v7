@@ -53,6 +53,13 @@ const pc = n => Math.round((n||0)*100) + "%";
 const Back = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>;
 const Chev = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{opacity:.4,flexShrink:0}}><path d="M9 18l6-6-6-6"/></svg>;
 const UploadIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>;
+// SVG nav icons (avoid emoji corruption)
+const IconBolt = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>;
+const IconGroup = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
+const IconCalc = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg>;
+const IconChart = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>;
+const IconCheck = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>;
+const IconAlert = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>;
 
 // ─── SMALL COMPONENTS ────────────────────────────────────────────
 const Pill = ({l,v,c}) => <div><span style={{fontSize:8,textTransform:"uppercase",color:T.t4}}>{l} </span><span className="m" style={{fontSize:12,fontWeight:700,color:c}}>{v}</span></div>;
@@ -185,11 +192,25 @@ function processCSVData(rows) {
       };
     }
     if (parentId && !parentInfo[parentId]) {
+      const rawName = (row["Class 4"]||row["Parent Name"]||"").trim();
+      // Avoid tier names / generic labels as group names
+      const BAD_NAMES = ["STANDARD","HOUSE ACCOUNTS","SILVER","GOLD","PLATINUM","DIAMOND","TOP 100",""];
+      const isBadName = BAD_NAMES.includes(rawName.toUpperCase());
       parentInfo[parentId] = {
-        name: (row["Class 4"]||row["Parent Name"]||"").trim(),
+        name: isBadName ? (row["Parent Name"]||row["Child Name"]||"").trim() : rawName,
         tier: row["Acct Type"]||"Standard",
         class2: row["Sds Cust Class2"]||"",
       };
+    } else if (parentId && parentInfo[parentId]) {
+      // If current name is a bad generic and this row has a better one, upgrade
+      const cur = parentInfo[parentId].name.toUpperCase();
+      const BAD_NAMES = ["STANDARD","HOUSE ACCOUNTS","SILVER","GOLD","PLATINUM","DIAMOND","TOP 100",""];
+      if (BAD_NAMES.includes(cur)) {
+        const better = (row["Class 4"]||row["Parent Name"]||"").trim();
+        if (better && !BAD_NAMES.includes(better.toUpperCase())) {
+          parentInfo[parentId].name = better;
+        }
+      }
     }
     if (parentId) {
       if (!parentChildren[parentId]) parentChildren[parentId] = new Set();
@@ -209,10 +230,27 @@ function processCSVData(rows) {
       for (const [k,v] of Object.entries(childPyQ[cid]||{})) { pyQ[String(k)] = Math.round(v); }
       for (const [k,v] of Object.entries(childCyQ[cid]||{})) { cyQ[String(k)] = Math.round(v); }
 
+      // Apply PY chargeback for Accelerate tier accounts
+      // PY data comes in as full wholesale — need to deduct tier chargeback to match CY treatment
+      const acctTier = pi.tier || ci.tier || "Standard";
+      const cbRate = getTierRate(acctTier);
+      if (cbRate > 0) {
+        for (const k of Object.keys(pyQ)) {
+          pyQ[k] = Math.round(pyQ[k] * (1 - cbRate));
+        }
+      }
+
       const products = [];
       for (const [l3, vals] of Object.entries(childProds[cid]||{})) {
         const p = { n: l3 };
-        for (const [k,v] of Object.entries(vals)) p[k] = Math.round(v);
+        for (const [k,v] of Object.entries(vals)) {
+          // Also adjust PY product values for chargeback
+          if (k.startsWith("py") && cbRate > 0) {
+            p[k] = Math.round(v * (1 - cbRate));
+          } else {
+            p[k] = Math.round(v);
+          }
+        }
         if (Math.abs(p.pyFY||0) >= 50 || Math.abs(p.cyFY||0) >= 25) products.push(p);
       }
       products.sort((a,b) => Math.abs(b.pyFY||0) - Math.abs(a.pyFY||0));
@@ -231,7 +269,13 @@ function processCSVData(rows) {
 
     if (children.length === 0) continue;
     children.sort((a,b) => ((b.pyQ["1"]||0)-(b.cyQ["1"]||0)) - ((a.pyQ["1"]||0)-(a.cyQ["1"]||0)));
-    groups.push({ id: pid, name: pi.name||pid, tier: pi.tier||"Standard", class2: pi.class2||"", locs: children.length, pyQ: gPy, cyQ: gCy, children });
+    // Final name cleanup: if group name is still a tier/generic label, use first child
+    let gName = pi.name||pid;
+    const BAD_UPPER = ["STANDARD","HOUSE ACCOUNTS","SILVER","GOLD","PLATINUM","DIAMOND","TOP 100",""];
+    if (BAD_UPPER.includes(gName.toUpperCase())) {
+      gName = children.length === 1 ? children[0].name : `${children[0].name} (+${children.length-1})`;
+    }
+    groups.push({ id: pid, name: gName, tier: pi.tier||"Standard", class2: pi.class2||"", locs: children.length, pyQ: gPy, cyQ: gCy, children });
   }
 
   groups.sort((a,b) => ((b.pyQ["1"]||0)-(b.cyQ["1"]||0)) - ((a.pyQ["1"]||0)-(a.cyQ["1"]||0)));
@@ -298,6 +342,7 @@ export default function App() {
   const [dataSource, setDataSource] = useState("preloaded");
   const [groups, setGroups] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [todayMode, setTodayMode] = useState("today"); // "today" | "territory"
   const [uploadMsg, setUploadMsg] = useState(null);
   const fileRef = useRef(null);
 
@@ -328,7 +373,7 @@ export default function App() {
   }, []);
 
   // Handle CSV upload
-  const handleUpload = useCallback((e) => {
+  const handleUpload = useCallback((e: any) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadMsg("Processing CSV...");
@@ -341,10 +386,10 @@ export default function App() {
         setGroups(result.groups);
         setDataSource(`CSV uploaded ${result.generated}`);
         localStorage.setItem("accel_data", JSON.stringify(result));
-        setUploadMsg(`✅ Loaded ${result.groups.length} groups from CSV`);
+        setUploadMsg(`OK Loaded ${result.groups.length} groups from CSV`);
         setTimeout(() => setUploadMsg(null), 4000);
       } catch(err) {
-        setUploadMsg(`❌ Error: ${err.message}`);
+        setUploadMsg(`ERR Error: ${err.message}`);
         setTimeout(() => setUploadMsg(null), 5000);
       }
     };
@@ -382,10 +427,10 @@ export default function App() {
     }).sort((a,b) => b.score - a.score);
   }, [allChildren, adjs]);
 
-  if (loading) return <div style={{background:T.bg,color:T.t1,minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'DM Sans',sans-serif"}}><div style={{textAlign:"center"}}><div style={{fontSize:20,marginBottom:8}}>⚡</div><div style={{color:T.t3}}>Loading Accelerate...</div></div></div>;
+  if (loading) return <div style={{background:T.bg,color:T.t1,minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'DM Sans',sans-serif"}}><div style={{textAlign:"center"}}><div style={{fontSize:20,marginBottom:8,color:T.blue}}><IconBolt c={T.blue}/></div><div style={{color:T.t3}}>Loading Accelerate...</div></div></div>;
 
   return (
-    <div style={{background:T.bg,color:T.t1,minHeight:"100vh",fontFamily:"'DM Sans',-apple-system,sans-serif",maxWidth:430,margin:"0 auto",position:"relative"}}>
+    <div style={{background:T.bg,color:T.t1,minHeight:"100vh",fontFamily:"'DM Sans',-apple-system,sans-serif",maxWidth:960,margin:"0 auto",position:"relative"}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
@@ -400,6 +445,10 @@ export default function App() {
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
         .bar-g{animation:bg .8s cubic-bezier(.16,1,.3,1) both}
         @keyframes bg{from{width:0}}
+        @media(min-width:640px){
+          .today-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+          .group-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+        }
       `}</style>
 
       {/* HEADER */}
@@ -413,10 +462,10 @@ export default function App() {
       </header>
 
       {/* UPLOAD MESSAGE */}
-      {uploadMsg && <div className="anim" style={{margin:"8px 16px",padding:"10px 14px",borderRadius:10,background:uploadMsg.startsWith("✅")?"rgba(52,211,153,.08)":"rgba(248,113,113,.08)",border:`1px solid ${uploadMsg.startsWith("✅")?"rgba(52,211,153,.15)":"rgba(248,113,113,.15)"}`,fontSize:12,color:uploadMsg.startsWith("✅")?T.green:uploadMsg.startsWith("❌")?T.red:T.t3}}>{uploadMsg}</div>}
+      {uploadMsg && <div className="anim" style={{margin:"8px 16px",padding:"10px 14px",borderRadius:10,background:uploadMsg.startsWith("OK")?"rgba(52,211,153,.08)":"rgba(248,113,113,.08)",border:`1px solid ${uploadMsg.startsWith("OK")?"rgba(52,211,153,.15)":"rgba(248,113,113,.15)"}`,fontSize:12,color:uploadMsg.startsWith("OK")?T.green:uploadMsg.startsWith("ERR")?T.red:T.t3}}>{uploadMsg}</div>}
 
       {/* TAB CONTENT */}
-      {!view && tab==="today" && <TodayTab scored={scored} goAcct={a=>setView({type:"acct",data:a})} q1CY={q1CY} q1Gap={q1Gap} q1Att={q1Att} adjCount={adjs.length} totalAdj={totalAdjQ1}/>}
+      {!view && tab==="today" && <TodayTab scored={scored} goAcct={a=>setView({type:"acct",data:a})} q1CY={q1CY} q1Gap={q1Gap} q1Att={q1Att} adjCount={adjs.length} totalAdj={totalAdjQ1} mode={todayMode} setMode={setTodayMode} groups={groups||[]} goGroup={g=>setView({type:"group",data:g})}/>}
       {!view && tab==="groups" && <GroupsTab groups={groups||[]} goGroup={g=>setView({type:"group",data:g})} filt={gFilt} setFilt={setGFilt} search={gSearch} setSearch={setGSearch}/>}
       {!view && tab==="calc" && <CalcTab/>}
       {!view && tab==="est" && <EstTab pct={estPct} setPct={setEstPct} q1CY={q1CY} groups={groups||[]}/>}
@@ -424,11 +473,11 @@ export default function App() {
       {view?.type==="acct" && <AcctDetail acct={view.data} goBack={()=>view?.from?setView({type:"group",data:view.from}):setView(null)} adjs={adjs} setAdjs={setAdjs}/>}
 
       {/* NAV BAR */}
-      <nav style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,zIndex:50,borderTop:`1px solid ${T.b1}`,background:"rgba(10,10,15,.92)",backdropFilter:"blur(32px)"}}>
+      <nav style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:960,zIndex:50,borderTop:`1px solid ${T.b1}`,background:"rgba(10,10,15,.92)",backdropFilter:"blur(32px)"}}>
         <div style={{display:"flex",height:56,alignItems:"center",justifyContent:"space-around",padding:"0 4px"}}>
-          {[{k:"today",l:"Today",i:"⚡"},{k:"groups",l:"Groups",i:"👥"},{k:"calc",l:"Calculator",i:"🧮"},{k:"est",l:"Estimator",i:"📊"}].map(t=>(
+          {[{k:"today",l:"Today",I:IconBolt},{k:"groups",l:"Groups",I:IconGroup},{k:"calc",l:"Calculator",I:IconCalc},{k:"est",l:"Estimator",I:IconChart}].map(t=>(
             <button key={t.k} onClick={()=>{setTab(t.k);setView(null)}} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 8px",cursor:"pointer",color:tab===t.k&&!view?T.blue:T.t4}}>
-              <span style={{fontSize:18}}>{t.i}</span>
+              <t.I c={tab===t.k&&!view?T.blue:T.t4}/>
               <span style={{fontSize:9,fontWeight:600,letterSpacing:".5px"}}>{t.l}</span>
             </button>
           ))}
@@ -439,7 +488,16 @@ export default function App() {
 }
 
 // ─── TODAY TAB ────────────────────────────────────────────────────
-function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj}) {
+function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,mode,setMode,groups,goGroup}) {
+  // Territory summary stats
+  const totalPY = groups.reduce((s,g) => s + (g.pyQ?.["1"]||0), 0);
+  const totalCY = groups.reduce((s,g) => s + (g.cyQ?.["1"]||0), 0);
+  const totalLocs = groups.reduce((s,g) => s + g.locs, 0);
+  const activeAccts = groups.reduce((s,g) => s + g.children.filter(c => (c.cyQ?.["1"]||0) > 0).length, 0);
+
+  // Top gap groups for territory view
+  const topGapGroups = [...groups].sort((a,b) => ((b.pyQ?.["1"]||0)-(b.cyQ?.["1"]||0)) - ((a.pyQ?.["1"]||0)-(a.cyQ?.["1"]||0))).slice(0,15);
+
   return <div style={{padding:"16px 16px 80px"}}>
     {/* Q1 HERO */}
     <div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(79,142,247,.06))`,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12,boxShadow:"0 4px 24px rgba(0,0,0,.4)"}}>
@@ -452,7 +510,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj}) {
         <span style={{fontSize:12,color:T.t3}}>{$$(q1CY)} / {$$(Q1_TARGET)}</span>
       </div>
       <Bar pct={q1Att*100}/>
-      {adjCount>0&&<div style={{marginTop:8,padding:"6px 10px",borderRadius:8,background:"rgba(52,211,153,.06)",border:"1px solid rgba(52,211,153,.12)",fontSize:10,color:T.green}}>✅ {adjCount} adjustment{adjCount>1?"s":""}: +{$f(totalAdj)}</div>}
+      {adjCount>0&&<div style={{marginTop:8,padding:"6px 10px",borderRadius:8,background:"rgba(52,211,153,.06)",border:"1px solid rgba(52,211,153,.12)",fontSize:10,color:T.green}}>+{adjCount} adjustment{adjCount>1?"s":""}: +{$f(totalAdj)}</div>}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:12}}>
         <div style={{borderRadius:8,background:"rgba(248,113,113,.06)",border:"1px solid rgba(248,113,113,.12)",padding:10}}>
           <div style={{fontSize:9,color:T.t3}}>Gap to close</div>
@@ -465,34 +523,81 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj}) {
       </div>
     </div>
 
-    {/* CALL LIST */}
-    <div style={{marginBottom:8,display:"flex",alignItems:"center",gap:8}}>
-      <div style={{width:8,height:8,borderRadius:4,background:T.blue,animation:"pulse 2s infinite"}}/>
-      <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color:T.blue}}>Who to Call Today ({scored.filter(a=>a.score>0).length})</span>
+    {/* TODAY / TERRITORY TOGGLE */}
+    <div style={{display:"flex",background:T.s2,borderRadius:10,padding:3,marginBottom:12,border:`1px solid ${T.b1}`}}>
+      <button onClick={()=>setMode("today")} style={{flex:1,padding:"8px 0",borderRadius:8,fontSize:12,fontWeight:700,cursor:"pointer",border:"none",background:mode==="today"?"rgba(79,142,247,.15)":"transparent",color:mode==="today"?T.blue:T.t4,fontFamily:"inherit",letterSpacing:".3px"}}>Today</button>
+      <button onClick={()=>setMode("territory")} style={{flex:1,padding:"8px 0",borderRadius:8,fontSize:12,fontWeight:700,cursor:"pointer",border:"none",background:mode==="territory"?"rgba(79,142,247,.15)":"transparent",color:mode==="territory"?T.blue:T.t4,fontFamily:"inherit",letterSpacing:".3px"}}>Territory</button>
     </div>
-    <div style={{fontSize:10,color:T.t4,marginBottom:12}}>Scored by gap · retention · recency · Q1 urgency · tier</div>
-    {scored.slice(0,15).map((a,i)=>(
-      <button key={a.id} className="anim" onClick={()=>goAcct(a)} style={{animationDelay:`${i*30}ms`,width:"100%",textAlign:"left",background:T.s1,border:`1px solid ${a.score>=50?"rgba(248,113,113,.15)":T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:8,cursor:"pointer"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-              <span className="m" style={{fontSize:10,fontWeight:700,color:a.score>=60?T.red:a.score>=40?T.amber:T.t3,background:a.score>=60?"rgba(248,113,113,.08)":a.score>=40?"rgba(251,191,36,.08)":T.s2,borderRadius:4,padding:"2px 6px"}}>#{i+1} · {a.score}pt</span>
-              {a.score>=50&&<span style={{fontSize:10}}>🔥</span>}
-              {a.adjCount>0&&<span style={{fontSize:9,color:T.green,background:"rgba(52,211,153,.08)",borderRadius:4,padding:"2px 5px"}}>+adj</span>}
+
+    {mode==="today" && <>
+      {/* CALL LIST */}
+      <div style={{marginBottom:8,display:"flex",alignItems:"center",gap:8}}>
+        <div style={{width:8,height:8,borderRadius:4,background:T.blue,animation:"pulse 2s infinite"}}/>
+        <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color:T.blue}}>Who to Call Today ({scored.filter(a=>a.score>0).length})</span>
+      </div>
+      <div style={{fontSize:10,color:T.t4,marginBottom:12}}>Scored by gap, retention, recency, Q1 urgency, tier</div>
+      <div className="today-grid">
+      {scored.filter(a=>a.score>0).slice(0,20).map((a,i)=>(
+        <button key={a.id} className="anim" onClick={()=>goAcct(a)} style={{animationDelay:`${i*30}ms`,width:"100%",textAlign:"left",background:T.s1,border:`1px solid ${a.score>=50?"rgba(248,113,113,.15)":T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:8,cursor:"pointer"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                <span className="m" style={{fontSize:10,fontWeight:700,color:a.score>=60?T.red:a.score>=40?T.amber:T.t3,background:a.score>=60?"rgba(248,113,113,.08)":a.score>=40?"rgba(251,191,36,.08)":T.s2,borderRadius:4,padding:"2px 6px"}}>#{i+1} {a.score}pt</span>
+                {a.score>=50&&<span style={{fontSize:8,color:T.red,fontWeight:700,background:"rgba(248,113,113,.08)",borderRadius:4,padding:"1px 4px"}}>HOT</span>}
+                {a.adjCount>0&&<span style={{fontSize:9,color:T.green,background:"rgba(52,211,153,.08)",borderRadius:4,padding:"2px 5px"}}>+adj</span>}
+              </div>
+              <div style={{fontSize:13,fontWeight:600,marginTop:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
+              <div style={{fontSize:10,color:T.t3,marginTop:2}}>{a.city}, {a.st} {isAccelTier(a.gTier||a.tier)?<span style={{color:T.amber}}>{a.gTier||a.tier}</span>:(a.gTier||a.tier)==="Top 100"?"Top 100":"Private"}</div>
             </div>
-            <div style={{fontSize:13,fontWeight:600,marginTop:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
-            <div style={{fontSize:10,color:T.t3,marginTop:2}}>{a.city}, {a.st} · {isAccelTier(a.gTier||a.tier)?<span style={{color:T.amber}}>{a.gTier||a.tier}</span>:(a.gTier||a.tier)==="Top 100"?"Top 100":"Private"}</div>
+            <div style={{textAlign:"right",flexShrink:0,marginLeft:12}}>
+              <div className="m" style={{fontSize:12,fontWeight:700,color:T.red}}>{a.gap>0?`-${$$(a.gap)}`:$$(a.gap)}</div>
+              <div className="m" style={{fontSize:10,color:T.t4}}>{pc(a.ret)} ret</div>
+            </div>
           </div>
-          <div style={{textAlign:"right",flexShrink:0,marginLeft:12}}>
-            <div className="m" style={{fontSize:12,fontWeight:700,color:T.red}}>{a.gap>0?`-${$$(a.gap)}`:$$(a.gap)}</div>
-            <div className="m" style={{fontSize:10,color:T.t4}}>{pc(a.ret)} ret</div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+            {a.reasons.slice(0,3).map((r,j)=><span key={j} style={{fontSize:9,color:T.t3,background:T.s2,borderRadius:4,padding:"2px 6px",border:`1px solid ${T.b2}`}}>{r}</span>)}
           </div>
+        </button>
+      ))}
+      </div>
+    </>}
+
+    {mode==="territory" && <>
+      {/* TERRITORY SUMMARY */}
+      <div className="anim" style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:14,padding:14,marginBottom:12}}>
+        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan,marginBottom:10}}>Territory Overview</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}>
+          <Stat l="Groups" v={groups.length.toString()} c={T.t1}/>
+          <Stat l="Locations" v={totalLocs.toString()} c={T.t1}/>
+          <Stat l="Active CY" v={activeAccts.toString()} c={T.green}/>
+          <Stat l="Q1 Gap" v={$$(totalPY - totalCY)} c={T.red}/>
         </div>
-        <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
-          {a.reasons.slice(0,3).map((r,j)=><span key={j} style={{fontSize:9,color:T.t3,background:T.s2,borderRadius:4,padding:"2px 6px",border:`1px solid ${T.b2}`}}>{r}</span>)}
-        </div>
-      </button>
-    ))}
+      </div>
+
+      <div style={{marginBottom:8,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3}}>Top Gap Groups</div>
+      <div className="group-grid">
+      {topGapGroups.map((g,i)=>{
+        const py1=g.pyQ?.["1"]||0;const cy1=g.cyQ?.["1"]||0;const gap=py1-cy1;const ret=py1>0?Math.round(cy1/py1*100):0;
+        const isUrgent=gap>5000&&ret<20;
+        return <button key={g.id} className="anim" onClick={()=>goGroup(g)} style={{animationDelay:`${i*20}ms`,width:"100%",textAlign:"left",background:T.s1,border:`1px solid ${isUrgent?"rgba(248,113,113,.15)":T.b1}`,borderRadius:14,padding:"14px 16px",marginBottom:8,cursor:"pointer"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:13,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{g.name}</div>
+              <div style={{fontSize:10,color:T.t3,marginTop:2}}>{g.locs} loc{g.locs>1?"s":""} {getTierLabel(g.tier)}</div>
+            </div>
+            {isUrgent&&<span style={{flexShrink:0,borderRadius:999,background:"rgba(248,113,113,.09)",border:"1px solid rgba(248,113,113,.22)",padding:"2px 8px",fontSize:9,fontWeight:700,color:T.red,marginRight:4}}>Urgent</span>}
+            <Chev/>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:16}}>
+            <Pill l="PY" v={$$(py1)} c={T.t2}/>
+            <Pill l="CY" v={$$(cy1)} c={T.blue}/>
+            <Pill l="Gap" v={$$(gap)} c={T.red}/>
+            <div style={{marginLeft:"auto"}}><Pill l="Ret" v={ret+"%"} c={ret>50?T.green:ret>25?T.amber:T.red}/></div>
+          </div>
+        </button>;
+      })}
+      </div>
+    </>}
   </div>;
 }
 
@@ -582,7 +687,7 @@ function GroupDetail({group,goMain,goAcct}) {
           {(c.products||[]).length>0&&<div style={{marginTop:8,display:"flex",gap:4,flexWrap:"wrap"}}>
             {c.products.slice(0,4).map((p,j)=>{
               const pCy=p[`cy${qk}`]||0;const pPy=p[`py${qk}`]||0;
-              return <span key={j} style={{fontSize:8,color:pPy>200&&pCy===0?T.red:T.t3,background:pPy>200&&pCy===0?"rgba(248,113,113,.06)":T.s2,borderRadius:4,padding:"2px 5px",border:`1px solid ${pPy>200&&pCy===0?"rgba(248,113,113,.12)":T.b2}`}}>{p.n.split(" ")[0]} {pPy>200&&pCy===0?"⚠️$0":$$(pCy)}</span>;
+              return <span key={j} style={{fontSize:8,color:pPy>200&&pCy===0?T.red:T.t3,background:pPy>200&&pCy===0?"rgba(248,113,113,.06)":T.s2,borderRadius:4,padding:"2px 5px",border:`1px solid ${pPy>200&&pCy===0?"rgba(248,113,113,.12)":T.b2}`}}>{p.n.split(" ")[0]} {pPy>200&&pCy===0?"!$0":$$(pCy)}</span>;
             })}
           </div>}
         </button>;
@@ -623,7 +728,7 @@ function AcctDetail({acct,goBack,adjs,setAdjs}) {
     </div>
     <div style={{padding:"16px 16px 0"}}>
       {toast&&<div className="anim" style={{background:"rgba(52,211,153,.12)",border:"1px solid rgba(52,211,153,.25)",borderRadius:12,padding:"12px 16px",marginBottom:12,display:"flex",alignItems:"center",gap:10}}>
-        <span style={{fontSize:20}}>✅</span>
+        <span style={{fontSize:16,color:T.green,fontWeight:700}}>+</span>
         <div><div style={{fontSize:13,fontWeight:700,color:T.green}}>Sale recorded!</div><div style={{fontSize:11,color:T.t3}}>+{$f(toast)} credited → Q1 updated</div></div>
       </div>}
 
@@ -654,9 +759,9 @@ function AcctDetail({acct,goBack,adjs,setAdjs}) {
 
       {/* VISIT PREP */}
       <div className="anim" style={{animationDelay:"80ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12}}>
-        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue,marginBottom:10}}>📋 Visit Prep Briefing</div>
+        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue,marginBottom:10}}>Visit Prep Briefing</div>
         {buying.length>0&&<div style={{marginBottom:12}}>
-          <div style={{fontSize:10,fontWeight:600,color:T.green,marginBottom:6}}>✅ Currently Buying ({buying.length})</div>
+          <div style={{fontSize:10,fontWeight:600,color:T.green,marginBottom:6}}>Currently Buying ({buying.length})</div>
           {buying.slice(0,8).map((p,i)=>{
             const pPy=p[`py${qk}`]||0;const pCy=p[`cy${qk}`]||0;
             return <div key={i} style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
@@ -669,15 +774,15 @@ function AcctDetail({acct,goBack,adjs,setAdjs}) {
           })}
         </div>}
         {stopped.length>0&&<div style={{marginBottom:12}}>
-          <div style={{fontSize:10,fontWeight:600,color:T.red,marginBottom:6}}>⚠️ Stopped Buying ({stopped.length})</div>
+          <div style={{fontSize:10,fontWeight:600,color:T.red,marginBottom:6}}>Stopped Buying ({stopped.length})</div>
           {stopped.slice(0,6).map((p,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"6px 8px",borderRadius:6,background:"rgba(248,113,113,.04)",border:"1px solid rgba(248,113,113,.08)",marginBottom:4}}>
             <span style={{fontSize:11}}>{p.n}</span>
             <span className="m" style={{fontSize:10,color:T.red}}>Was {$$(p[`py${qk}`]||0)} → $0</span>
           </div>)}
-          {stopped.length>0&&<div style={{marginTop:6,fontSize:10,color:T.t3,fontStyle:"italic"}}>💬 "I noticed {stopped[0]?.n} dropped off. Supply issue or switch? We have new promos…"</div>}
+          {stopped.length>0&&<div style={{marginTop:6,fontSize:10,color:T.t3,fontStyle:"italic"}}>"I noticed {stopped[0]?.n} dropped off. Supply issue or switch? We have new promos..."</div>}
         </div>}
         {xsell.length>0&&<div>
-          <div style={{fontSize:10,fontWeight:600,color:T.purple,marginBottom:6}}>💡 Cross-Sell White Space</div>
+          <div style={{fontSize:10,fontWeight:600,color:T.purple,marginBottom:6}}>Cross-Sell White Space</div>
           <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
             {xsell.map((n,i)=><span key={i} style={{fontSize:10,color:T.purple,background:"rgba(167,139,250,.06)",border:"1px solid rgba(167,139,250,.12)",borderRadius:6,padding:"3px 8px"}}>{n}</span>)}
           </div>
@@ -704,7 +809,7 @@ function AcctDetail({acct,goBack,adjs,setAdjs}) {
       {/* MANUAL SALE */}
       <div className="anim" style={{animationDelay:"240ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.amber}}>💰 Add Manual Sale</div>
+          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.amber}}>Add Manual Sale</div>
           <button onClick={()=>setShowForm(!showForm)} style={{background:"rgba(251,191,36,.08)",border:"1px solid rgba(251,191,36,.15)",borderRadius:8,color:T.amber,cursor:"pointer",fontSize:11,fontWeight:600,padding:"4px 10px",fontFamily:"inherit"}}>{showForm?"Cancel":"+ Add"}</button>
         </div>
         {showForm&&<SaleCalculator acctTier={acctTier} tierRate={tierRate} isAccel={isAccel} acctType={acctType} onAdd={(credited,detail)=>{
@@ -776,7 +881,7 @@ function SaleCalculator({acctTier,tierRate,isAccel,acctType,onAdd}) {
       </div>
     </div>}
     {calc&&<div style={{background:"rgba(79,142,247,.06)",border:"1px solid rgba(79,142,247,.12)",borderRadius:8,padding:12,marginBottom:10}}>
-      <div style={{fontSize:10,fontWeight:700,color:T.blue,marginBottom:8}}>📊 Calculation Breakdown</div>
+      <div style={{fontSize:10,fontWeight:700,color:T.blue,marginBottom:8}}>Calculation Breakdown</div>
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:3}}><span>Doctor spent</span><span className="m" style={{color:T.t1}}>{$f(parseFloat(docSpend))}</span></div>
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:3}}><span>÷ ${calc.tierMSRP.toFixed(2)}/unit MSRP</span><span className="m" style={{color:T.t1}}>{calc.units.toFixed(1)} units</span></div>
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:3}}><span>× ${calc.stdWS.toFixed(2)} std wholesale/unit</span><span className="m" style={{color:T.t1}}>{$f(calc.totalWS)}</span></div>
@@ -828,7 +933,7 @@ function CalcTab() {
 
   return <div style={{padding:"16px 16px 80px"}}>
     <div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(251,191,36,.04))`,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
-      <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.amber,marginBottom:12}}>🧮 Product Sale Calculator</div>
+      <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.amber,marginBottom:12}}>Product Sale Calculator</div>
       <div style={{fontSize:11,color:T.t3,marginBottom:16}}>Search any Kerr product, enter doctor spend, see your credited revenue instantly.</div>
 
       {/* Tier selector */}
@@ -867,7 +972,7 @@ function CalcTab() {
       </div>}
 
       {calc&&<div style={{background:"rgba(79,142,247,.06)",border:"1px solid rgba(79,142,247,.12)",borderRadius:8,padding:12}}>
-        <div style={{fontSize:10,fontWeight:700,color:T.blue,marginBottom:8}}>📊 Calculation Breakdown</div>
+        <div style={{fontSize:10,fontWeight:700,color:T.blue,marginBottom:8}}>Calculation Breakdown</div>
         <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:3}}><span>Doctor spent</span><span className="m" style={{color:T.t1}}>{$f(parseFloat(docSpend))}</span></div>
         <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:3}}><span>÷ ${calc.tierMSRP.toFixed(2)}/unit ({isAccel?tier:"std"} MSRP)</span><span className="m" style={{color:T.t1}}>{calc.units.toFixed(1)} units</span></div>
         <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:3}}><span>× ${calc.stdWS.toFixed(2)} std wholesale/unit</span><span className="m" style={{color:T.t1}}>{$f(calc.totalWS)}</span></div>
@@ -880,7 +985,7 @@ function CalcTab() {
     </div>
 
     <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:12,fontSize:10,color:T.t3}}>
-      <strong>📌 How it works:</strong> Doctor spend ÷ tier MSRP = units. Units × std wholesale = raw wholesale. For Accelerate tiers, subtract chargeback (Silver 20%, Gold 24%, Platinum 30%, Diamond 36%). Standard / Top 100 / Private = 0% chargeback.
+      <strong>How it works:</strong> Doctor spend ÷ tier MSRP = units. Units × std wholesale = raw wholesale. For Accelerate tiers, subtract chargeback (Silver 20%, Gold 24%, Platinum 30%, Diamond 36%). Standard / Top 100 / Private = 0% chargeback.
     </div>
   </div>;
 }
@@ -901,7 +1006,7 @@ function EstTab({pct,setPct,q1CY,groups}) {
 
   return <div style={{padding:"16px 16px 80px"}}>
     <div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(79,142,247,.04))`,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
-      <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue,marginBottom:12}}>📊 Q1 Completion Estimator</div>
+      <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue,marginBottom:12}}>Q1 Completion Estimator</div>
       <div style={{fontSize:11,color:T.t3,marginBottom:16}}>Last year, <strong style={{color:T.t1}}>{pyAccts.toLocaleString()} accounts</strong> bought <strong style={{color:T.t1}}>{$f(pyBase)}</strong> credited in Mar 20-31. How much repeats?</div>
       <div style={{marginBottom:16}}>
         <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
@@ -924,11 +1029,11 @@ function EstTab({pct,setPct,q1CY,groups}) {
         <div style={{fontSize:11,color:T.red,fontWeight:600}}>Still {$f(projGap)} short</div>
         <div style={{fontSize:10,color:T.t3,marginTop:4}}>{$f(DAYS_LEFT>0?projGap/DAYS_LEFT:0)}/day beyond projections needed.</div>
       </div>:<div style={{marginTop:12,borderRadius:10,background:"rgba(52,211,153,.06)",border:"1px solid rgba(52,211,153,.12)",padding:12}}>
-        <div style={{fontSize:11,color:T.green,fontWeight:600}}>🎯 On track! {$f(Math.abs(projGap))} over target.</div>
+        <div style={{fontSize:11,color:T.green,fontWeight:600}}>On track! {$f(Math.abs(projGap))} over target.</div>
       </div>}
     </div>
     <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:12,fontSize:10,color:T.t3}}>
-      <strong>📌</strong> PY base ({$f(pyBase)}) is calculated from your actual Q1 2025 data — the last ~12 days of March spending. Slider models what percentage of that repeats this year.
+      <strong></strong> PY base ({$f(pyBase)}) is calculated from your actual Q1 2025 data — the last ~12 days of March spending. Slider models what percentage of that repeats this year.
     </div>
   </div>;
 }
