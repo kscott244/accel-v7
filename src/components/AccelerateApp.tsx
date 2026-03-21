@@ -596,7 +596,7 @@ export default function App() {
       {!view && tab==="today" && <TodayTab scored={scored} goAcct={a=>setView({type:"acct",data:a})} q1CY={q1CY} q1Gap={q1Gap} q1Att={q1Att} adjCount={adjs.length} totalAdj={totalAdjQ1} groups={groups||[]} goGroup={g=>setView({type:"group",data:g})}/>}
       {!view && tab==="groups" && <GroupsTab groups={groups||[]} goGroup={g=>setView({type:"group",data:g})} filt={gFilt} setFilt={setGFilt} search={gSearch} setSearch={setGSearch}/>}
       {!view && tab==="map" && <MapTab/>}
-      {!view && tab==="calc" && <DashTab groups={groups||[]} q1CY={q1CY} q1Att={q1Att} q1Gap={q1Gap} scored={scored}/>}
+      {!view && tab==="calc" && <DashTab groups={groups||[]} q1CY={q1CY} q1Att={q1Att} q1Gap={q1Gap} scored={scored} goAcct={a=>setView({type:"acct",data:a})}/>}
       {!view && tab==="est" && <EstTab pct={estPct} setPct={setEstPct} q1CY={q1CY} groups={groups||[]}/>}
       {view?.type==="group" && <GroupDetail group={view.data} goMain={()=>setView(null)} goAcct={a=>setView({type:"acct",data:{...a,gName:fixGroupName(view.data),gId:view.data.id,gTier:view.data.tier},from:view.data})}/>}
       {view?.type==="acct" && <AcctDetail acct={view.data} goBack={()=>view?.from?setView({type:"group",data:view.from}):setView(null)} adjs={adjs} setAdjs={setAdjs} groups={groups||[]} goGroup={g=>setView({type:"group",data:g})}/>}
@@ -678,6 +678,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
           <div className="m" style={{fontSize:12,fontWeight:700,color:T.red}}>{a.gap>0?`-${$$(a.gap)}`:$$(a.gap)}</div>
           <div className="m" style={{fontSize:10,color:T.t4}}>{pc(a.ret)} ret</div>
         </div>
+        <Chev/>
       </div>
       <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
         {a.reasons.slice(0,4).map((r,j)=><span key={j} style={{display:"inline-flex",alignItems:"center",gap:4,fontSize:9,color:T.t3,background:T.s2,borderRadius:4,padding:"2px 6px",border:`1px solid ${T.b2}`}}>{r.label}<span style={{color:T.amber,fontWeight:700,fontFamily:"'JetBrains Mono',monospace"}}>+{r.pts}</span></span>)}
@@ -727,6 +728,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
               <div className="m" style={{fontSize:12,fontWeight:700,color:gap>0?T.red:gap<0?T.green:T.t4}}>{gap>0?`-${$$(gap)}`:gap<0?`+${$$(-gap)}`:"Even"}</div>
               <div className="m" style={{fontSize:10,color:T.t4}}>{Math.round(ret*100)}% ret</div>
             </div>
+            <Chev/>
           </div>
           <div style={{display:"flex",gap:12,alignItems:"center"}}>
             <Pill l="PY" v={$$(py)} c={T.t2}/>
@@ -775,38 +777,44 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
         <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t4,marginBottom:6}}>Growing vs Last Year</div>
         {growing.map((a,i)=>{
           const py=a.pyQ?.["1"]||0; const cy=a.cyQ?.["1"]||0; const lift=py>0?((cy-py)/py*100):0;
-          return <div key={a.id} className="anim" onClick={()=>goAcct(a)}
+          return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
             style={{animationDelay:`${i*20}ms`,display:"flex",alignItems:"center",justifyContent:"space-between",
-              padding:"9px 12px",marginBottom:6,borderRadius:10,background:T.s2,
-              border:"1px solid rgba(52,211,153,.1)",cursor:"pointer"}}>
+              width:"100%",textAlign:"left",padding:"9px 12px",marginBottom:6,borderRadius:10,background:T.s2,
+              border:"1px solid rgba(52,211,153,.15)",cursor:"pointer"}}>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
               <div style={{fontSize:10,color:T.t3}}>{a.city}, {a.st}</div>
             </div>
-            <div style={{textAlign:"right",flexShrink:0,marginLeft:12}}>
-              <div className="m" style={{fontSize:12,fontWeight:700,color:T.green}}>+{$$(cy-py)}</div>
-              <div style={{fontSize:9,color:T.green}}>+{lift.toFixed(0)}% vs PY</div>
+            <div style={{display:"flex",alignItems:"center",gap:10,flexShrink:0,marginLeft:12}}>
+              <div style={{textAlign:"right"}}>
+                <div className="m" style={{fontSize:12,fontWeight:700,color:T.green}}>+{$$(cy-py)}</div>
+                <div style={{fontSize:9,color:T.green}}>+{lift.toFixed(0)}% vs PY</div>
+              </div>
+              <Chev/>
             </div>
-          </div>;
+          </button>;
         })}
       </>}
       {healthyAccel.length>0&&<>
         <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t4,marginTop:growing.length>0?10:0,marginBottom:6}}>Healthy Accelerate Accounts</div>
         {healthyAccel.map((a,i)=>{
           const tier=normalizeTier(a.gTier||a.tier);
-          return <div key={a.id} className="anim" onClick={()=>goAcct(a)}
+          return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
             style={{animationDelay:`${i*20}ms`,display:"flex",alignItems:"center",justifyContent:"space-between",
-              padding:"9px 12px",marginBottom:6,borderRadius:10,background:T.s2,
-              border:"1px solid rgba(251,191,36,.1)",cursor:"pointer"}}>
+              width:"100%",textAlign:"left",padding:"9px 12px",marginBottom:6,borderRadius:10,background:T.s2,
+              border:"1px solid rgba(251,191,36,.15)",cursor:"pointer"}}>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
               <div style={{fontSize:10,color:T.t3}}>{a.city}, {a.st} · <span style={{color:T.amber}}>{tier}</span></div>
             </div>
-            <div style={{textAlign:"right",flexShrink:0,marginLeft:12}}>
-              <div className="m" style={{fontSize:12,fontWeight:700,color:T.blue}}>{$$(a.cyQ?.["1"]||0)}</div>
-              <div style={{fontSize:9,color:T.green}}>{pc(a.ret)} ret</div>
+            <div style={{display:"flex",alignItems:"center",gap:10,flexShrink:0,marginLeft:12}}>
+              <div style={{textAlign:"right"}}>
+                <div className="m" style={{fontSize:12,fontWeight:700,color:T.blue}}>{$$(a.cyQ?.["1"]||0)}</div>
+                <div style={{fontSize:9,color:T.green}}>{pc(a.ret)} ret</div>
+              </div>
+              <Chev/>
             </div>
-          </div>;
+          </button>;
         })}
       </>}
     </div>
@@ -1220,17 +1228,23 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
             const sPy=s.pyQ?.["1"]||0;const sCy=s.cyQ?.["1"]||0;
             const sGap=sPy-sCy;const sRet=sPy>0?Math.round(sCy/sPy*100):0;
             const isDown=sGap>0&&sRet<50;
-            return <div key={s.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",borderRadius:10,background:isDown?"rgba(248,113,113,.04)":T.s2,border:`1px solid ${isDown?"rgba(248,113,113,.1)":T.b2}`,marginBottom:6}}>
+            return <button key={s.id} className="anim" onClick={()=>goAcct(s)}
+              style={{animationDelay:`${i*20}ms`,display:"flex",alignItems:"center",justifyContent:"space-between",
+                width:"100%",textAlign:"left",padding:"8px 10px",borderRadius:10,
+                background:isDown?"rgba(248,113,113,.04)":T.s2,
+                border:`1px solid ${isDown?"rgba(248,113,113,.15)":T.b2}`,
+                marginBottom:6,cursor:"pointer"}}>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:11,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.name}</div>
                 <div style={{fontSize:9,color:T.t4,marginTop:1}}>{s.city}, {s.st}{s.dealer&&s.dealer!=="Unknown"?<span style={{color:T.cyan}}> · {s.dealer}</span>:""}</div>
               </div>
-              <div style={{display:"flex",gap:8,flexShrink:0,marginLeft:8}}>
+              <div style={{display:"flex",gap:6,alignItems:"center",flexShrink:0,marginLeft:8}}>
                 <Pill l="CY" v={$$(sCy)} c={T.blue}/>
                 <Pill l="Gap" v={sGap<=0?`+${$$(Math.abs(sGap))}`:$$(sGap)} c={sGap<=0?T.green:T.red}/>
                 <Pill l="Ret" v={sRet+"%"} c={sRet>50?T.green:sRet>25?T.amber:T.red}/>
+                <Chev/>
               </div>
-            </div>;
+            </button>;
           })}
           {siblings.length>6&&<div style={{fontSize:10,color:T.t4,textAlign:"center",padding:"4px 0"}}>+{siblings.length-6} more locations — tap View Group</div>}
         </>}
@@ -1408,7 +1422,7 @@ function SaleCalculator({acctTier,tierRate,isAccel,acctType,onAdd}) {
 
 // ─── STANDALONE CALCULATOR TAB ───────────────────────────────────
 // ─── DASHBOARD TAB ───────────────────────────────────────────────
-function DashTab({groups, q1CY, q1Att, q1Gap, scored}) {
+function DashTab({groups, q1CY, q1Att, q1Gap, scored, goAcct}) {
   const totalPY = groups.reduce((s,g) => s+(g.pyQ?.["1"]||0), 0);
   const totalLocs = groups.reduce((s,g) => s+g.locs, 0);
   const activeAccts = groups.reduce((s,g) => s+g.children.filter(c=>(c.cyQ?.["1"]||0)>0).length, 0);
@@ -1555,22 +1569,23 @@ function DashTab({groups, q1CY, q1Att, q1Gap, scored}) {
         <div style={{fontSize:10,color:T.t4,marginBottom:12}}>Accounts with the largest Q1 CY vs PY shortfall</div>
         {topGap.map((a,i)=>{
           const barPct = (a.gap/maxGap)*100;
-          return <div key={a.id} style={{marginBottom:10}}>
+          return <button key={a.id} onClick={()=>goAcct&&goAcct(a)} style={{display:"block",width:"100%",textAlign:"left",background:"none",border:"none",padding:0,marginBottom:10,cursor:"pointer"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:3}}>
-              <div style={{flex:1,minWidth:0}}>
-                <span className="m" style={{fontSize:9,color:T.t4,marginRight:5}}>#{i+1}</span>
+              <div style={{flex:1,minWidth:0,display:"flex",alignItems:"center",gap:5}}>
+                <span className="m" style={{fontSize:9,color:T.t4}}>#{i+1}</span>
                 <span style={{fontSize:11,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</span>
-                <span style={{fontSize:9,color:T.t3,marginLeft:5}}>{a.city}, {a.st}</span>
+                <span style={{fontSize:9,color:T.t3}}>{a.city}, {a.st}</span>
               </div>
-              <div style={{textAlign:"right",flexShrink:0,marginLeft:8}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0,marginLeft:8}}>
                 <span className="m" style={{fontSize:11,fontWeight:700,color:T.red}}>-{$$(a.gap)}</span>
-                <span style={{fontSize:9,color:T.t4,marginLeft:5}}>{Math.round(a.ret*100)}% ret</span>
+                <span style={{fontSize:9,color:T.t4}}>{Math.round(a.ret*100)}% ret</span>
+                <Chev/>
               </div>
             </div>
             <div style={{height:4,borderRadius:2,background:T.s3,overflow:"hidden"}}>
               <div style={{height:"100%",borderRadius:2,width:`${barPct}%`,background:`linear-gradient(90deg,${T.red},${T.orange})`}}/>
             </div>
-          </div>;
+          </button>;
         })}
       </div>;
     })()}
