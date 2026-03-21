@@ -70,7 +70,7 @@ const UploadIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="n
 // SVG nav icons (avoid emoji corruption)
 const IconBolt = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>;
 const IconGroup = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
-const IconCalc = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><circle cx="17.5" cy="17.5" r="3.5"/></svg>;
+const IconCalc = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg>;
 const IconChart = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>;
 const IconCheck = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>;
 const IconAlert = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>;
@@ -534,26 +534,19 @@ export default function App() {
 
 // ─── TODAY TAB ────────────────────────────────────────────────────
 function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,mode,setMode,groups,goGroup}) {
-  const totalPY = groups.reduce((s,g) => s + (g.pyQ?.["1"]||0), 0);
-  const totalCY = groups.reduce((s,g) => s + (g.cyQ?.["1"]||0), 0);
-  const totalLocs = groups.reduce((s,g) => s + g.locs, 0);
-  const activeAccts = groups.reduce((s,g) => s + g.children.filter(c => (c.cyQ?.["1"]||0) > 0).length, 0);
-  const topGapGroups = [...groups].sort((a,b) => ((b.pyQ?.["1"]||0)-(b.cyQ?.["1"]||0)) - ((a.pyQ?.["1"]||0)-(a.cyQ?.["1"]||0))).slice(0,15);
-
-  // Wins: accounts growing vs PY
-  const wins = useMemo(()=>[...scored].filter(a=>(a.cyQ?.["1"]||0)>(a.pyQ?.["1"]||0)&&(a.pyQ?.["1"]||0)>0).sort((a,b)=>((b.cyQ?.["1"]||0)-(b.pyQ?.["1"]||0))-((a.cyQ?.["1"]||0)-(a.pyQ?.["1"]||0))).slice(0,5),[scored]);
-  // Protected: top Accel tier accounts that are healthy (ret > 70%)
-  const protected_ = useMemo(()=>[...scored].filter(a=>isAccelTier(a.gTier||a.tier)&&a.ret>0.7&&(a.cyQ?.["1"]||0)>0).sort((a,b)=>(b.cyQ?.["1"]||0)-(a.cyQ?.["1"]||0)).slice(0,4),[scored]);
-  // Hot: score >= 50
-  const hot = scored.filter(a=>a.score>=50);
-  // Follow up: score 20-49
-  const followUp = scored.filter(a=>a.score>=20&&a.score<50);
-
-  const status = q1Att>=1?"ahead":q1Att>=0.85?"on-track":"behind";
-  const statusColor = status==="ahead"?T.green:status==="on-track"?T.blue:T.red;
-  const statusLabel = status==="ahead"?"Ahead of Pace":status==="on-track"?"On Track":"Behind Pace";
-
-  const CallCard = ({a,i}:{a:any,i:number}) => (
+  const totalPY=groups.reduce((s,g)=>s+(g.pyQ?.["1"]||0),0);
+  const totalCY=groups.reduce((s,g)=>s+(g.cyQ?.["1"]||0),0);
+  const totalLocs=groups.reduce((s,g)=>s+g.locs,0);
+  const activeAccts=groups.reduce((s,g)=>s+g.children.filter(c=>(c.cyQ?.["1"]||0)>0).length,0);
+  const topGapGroups=[...groups].sort((a,b)=>((b.pyQ?.["1"]||0)-(b.cyQ?.["1"]||0))-((a.pyQ?.["1"]||0)-(a.cyQ?.["1"]||0))).slice(0,15);
+  const wins=useMemo(()=>[...scored].filter(a=>(a.cyQ?.["1"]||0)>(a.pyQ?.["1"]||0)&&(a.pyQ?.["1"]||0)>0).sort((a,b)=>((b.cyQ?.["1"]||0)-(b.pyQ?.["1"]||0))-((a.cyQ?.["1"]||0)-(a.pyQ?.["1"]||0))).slice(0,5),[scored]);
+  const protected_=useMemo(()=>[...scored].filter(a=>isAccelTier(a.gTier||a.tier)&&a.ret>0.7&&(a.cyQ?.["1"]||0)>0).sort((a,b)=>(b.cyQ?.["1"]||0)-(a.cyQ?.["1"]||0)).slice(0,4),[scored]);
+  const hot=scored.filter(a=>a.score>=50);
+  const followUp=scored.filter(a=>a.score>=20&&a.score<50);
+  const status=q1Att>=1?"ahead":q1Att>=0.85?"on-track":"behind";
+  const statusColor=status==="ahead"?T.green:status==="on-track"?T.blue:T.red;
+  const statusLabel=status==="ahead"?"Ahead of Pace":status==="on-track"?"On Track":"Behind Pace";
+  const CallCard=({a,i})=>(
     <button key={a.id} className="anim" onClick={()=>goAcct(a)} style={{animationDelay:`${i*30}ms`,width:"100%",textAlign:"left",background:T.s1,border:`1px solid ${a.score>=50?"rgba(248,113,113,.15)":T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:8,cursor:"pointer"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
         <div style={{flex:1,minWidth:0}}>
@@ -575,10 +568,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,mode,setMode
       </div>
     </button>
   );
-
   return <div style={{padding:"16px 16px 80px"}}>
-
-    {/* ── SECTION 1: DAY AT A GLANCE ── */}
     <div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(79,142,247,.06))`,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12,boxShadow:"0 4px 24px rgba(0,0,0,.4)"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
         <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color:T.t3}}>Q1 Progress</span>
@@ -605,22 +595,16 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,mode,setMode
         </div>
       </div>
     </div>
-
-    {/* TODAY / TERRITORY TOGGLE */}
     <div style={{display:"flex",background:T.s2,borderRadius:10,padding:3,marginBottom:16,border:`1px solid ${T.b1}`}}>
       <button onClick={()=>setMode("today")} style={{flex:1,padding:"8px 0",borderRadius:8,fontSize:12,fontWeight:700,cursor:"pointer",border:"none",background:mode==="today"?"rgba(79,142,247,.15)":"transparent",color:mode==="today"?T.blue:T.t4,fontFamily:"inherit",letterSpacing:".3px"}}>Today</button>
       <button onClick={()=>setMode("territory")} style={{flex:1,padding:"8px 0",borderRadius:8,fontSize:12,fontWeight:700,cursor:"pointer",border:"none",background:mode==="territory"?"rgba(79,142,247,.15)":"transparent",color:mode==="territory"?T.blue:T.t4,fontFamily:"inherit",letterSpacing:".3px"}}>Territory</button>
     </div>
-
-    {mode==="today" && <>
-
-      {/* ── SECTION 2: WINS & MOMENTUM ── */}
+    {mode==="today"&&<>
       {(wins.length>0||protected_.length>0)&&<div className="anim" style={{animationDelay:"60ms",background:T.s1,border:"1px solid rgba(52,211,153,.15)",borderRadius:16,padding:14,marginBottom:16}}>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T.green} strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.green}}>Wins & Momentum</span>
+          <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.green}}>Wins &amp; Momentum</span>
         </div>
-
         {wins.length>0&&<>
           <div style={{fontSize:9,fontWeight:600,color:T.t4,textTransform:"uppercase",letterSpacing:".8px",marginBottom:6}}>Growing vs Last Year</div>
           {wins.map((a,i)=>{
@@ -637,11 +621,10 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,mode,setMode
             </button>;
           })}
         </>}
-
         {protected_.length>0&&<>
           <div style={{fontSize:9,fontWeight:600,color:T.t4,textTransform:"uppercase",letterSpacing:".8px",marginTop:wins.length>0?10:0,marginBottom:6}}>Protected — Top Tier Healthy</div>
           <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-            {protected_.map((a,i)=>(
+            {protected_.map((a)=>(
               <button key={a.id} onClick={()=>goAcct(a)} style={{display:"flex",flexDirection:"column",padding:"6px 10px",borderRadius:8,background:"rgba(167,139,250,.06)",border:"1px solid rgba(167,139,250,.15)",cursor:"pointer",textAlign:"left"}}>
                 <span style={{fontSize:10,fontWeight:600,color:T.t1,maxWidth:130,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</span>
                 <span style={{fontSize:9,color:T.amber}}>{normalizeTier(a.gTier||a.tier)}</span>
@@ -650,8 +633,6 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,mode,setMode
           </div>
         </>}
       </div>}
-
-      {/* ── SECTION 3: WHO TO CALL ── */}
       {hot.length>0&&<>
         <div style={{marginBottom:8,display:"flex",alignItems:"center",gap:8}}>
           <div style={{width:8,height:8,borderRadius:4,background:T.red,animation:"pulse 2s infinite"}}/>
@@ -661,7 +642,6 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,mode,setMode
           {hot.slice(0,10).map((a,i)=><CallCard key={a.id} a={a} i={i}/>)}
         </div>
       </>}
-
       {followUp.length>0&&<>
         <div style={{marginBottom:8,display:"flex",alignItems:"center",gap:8}}>
           <div style={{width:8,height:8,borderRadius:4,background:T.amber,animation:"pulse 2s infinite"}}/>
@@ -671,11 +651,9 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,mode,setMode
           {followUp.slice(0,10).map((a,i)=><CallCard key={a.id} a={a} i={i+hot.length}/>)}
         </div>
       </>}
-
-      {hot.length===0&&followUp.length===0&&<div style={{textAlign:"center",padding:32,color:T.t4,fontSize:12}}>No urgent accounts right now — upload your latest CSV to refresh.</div>}
+      {hot.length===0&&followUp.length===0&&<div style={{textAlign:"center",padding:32,color:T.t4,fontSize:12}}>No urgent accounts — upload your latest CSV to refresh.</div>}
     </>}
-
-    {mode==="territory" && <>
+    {mode==="territory"&&<>
       <div className="anim" style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:14,padding:14,marginBottom:12}}>
         <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan,marginBottom:10}}>Territory Overview</div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}>
@@ -1039,6 +1017,7 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup}) {
         {!showForm&&myAdj.length===0&&<div style={{fontSize:11,color:T.t4,textAlign:"center",padding:8}}>Search product by name or SKU#, enter doctor spend → auto-calculates credited revenue.</div>}
       </div>
     </div>
+  </div>
   </div>;
 }
 
@@ -1070,7 +1049,7 @@ function SaleCalculator({acctTier,tierRate,isAccel,acctType,onAdd}) {
     const totalWS=stdWS*units;
     const totalCredited=tierWS*units;
     const totalCB=totalWS-totalCredited;
-    return {units,totalWS,totalCredited,totalCB,tierMSRP,tierWS,stdMSRP,stdWS,desc,sku};
+    return{units,totalWS,totalCredited,totalCB,tierMSRP,tierWS,stdMSRP,stdWS,desc,sku};
   },[selSku,docSpend,acctTier,isAccel]);
 
   return <div style={{background:T.s2,borderRadius:12,padding:14,border:`1px solid ${T.b2}`}}>
@@ -1117,7 +1096,7 @@ function SaleCalculator({acctTier,tierRate,isAccel,acctType,onAdd}) {
 }
 
 // ─── STANDALONE CALCULATOR TAB ───────────────────────────────────
-function CalcTab({groups,q1CY,q1Gap,q1Att}) {
+function CalcTab() {
   const [tier,setTier]=useState("Standard");
   const [search,setSearch]=useState("");
   const [selSku,setSelSku]=useState(null);
@@ -1147,144 +1126,7 @@ function CalcTab({groups,q1CY,q1Gap,q1Att}) {
     const totalWS=stdWS*units;
     const totalCredited=tierWS*units;
     const totalCB=totalWS-totalCredited;
-    return {units,totalWS,totalCredited,totalCB,tierMSRP,tierWS,stdMSRP,stdWS,desc,sku,cat};
-  },[selSku,docSpend,tier,isAccel]);
-
-  // Territory stats for dashboard
-  const totalPY=groups.reduce((s,g)=>s+(g.pyQ?.["1"]||0),0);
-  const totalCY=groups.reduce((s,g)=>s+(g.cyQ?.["1"]||0),0);
-  const tierBreakdown=useMemo(()=>{
-    const map={Diamond:0,Platinum:0,Gold:0,Silver:0,"Top 100":0,Standard:0};
-    groups.forEach(g=>{const t=normalizeTier(g.tier);if(t in map)map[t]+=g.cyQ?.["1"]||0;else map["Standard"]+=g.cyQ?.["1"]||0;});
-    return map;
-  },[groups]);
-  const accelCY=["Diamond","Platinum","Gold","Silver"].reduce((s,t)=>s+(tierBreakdown[t]||0),0);
-  const accelPct=totalCY>0?accelCY/totalCY:0;
-  const topGroups=[...groups].sort((a,b)=>(b.cyQ?.["1"]||0)-(a.cyQ?.["1"]||0)).slice(0,5);
-
-  return <div style={{padding:"16px 16px 80px"}}>
-
-    {/* ── TERRITORY DASHBOARD ── */}
-    <div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(34,211,238,.04))`,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12}}>
-      <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan,marginBottom:12}}>Territory Dashboard — Q1</div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
-        <div style={{borderRadius:10,background:T.s2,padding:12}}>
-          <div style={{fontSize:9,color:T.t4,marginBottom:2}}>CY Revenue</div>
-          <div className="m" style={{fontSize:18,fontWeight:800,color:T.blue}}>{$$(totalCY)}</div>
-          <div style={{fontSize:9,color:T.t4,marginTop:2}}>vs {$$(totalPY)} PY</div>
-        </div>
-        <div style={{borderRadius:10,background:T.s2,padding:12}}>
-          <div style={{fontSize:9,color:T.t4,marginBottom:2}}>Attainment</div>
-          <div className="m" style={{fontSize:18,fontWeight:800,color:q1Att>=1?T.green:q1Att>=.85?T.blue:T.red}}>{pc(q1Att)}</div>
-          <div style={{fontSize:9,color:T.t4,marginTop:2}}>{$$(q1Gap)} gap remaining</div>
-        </div>
-      </div>
-      <Bar pct={q1Att*100} color={q1Att>=1?T.green:q1Att>=.85?T.blue:T.red}/>
-
-      {/* Accelerate mix */}
-      <div style={{marginTop:14,marginBottom:6,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:".8px",color:T.t4}}>Revenue by Tier</div>
-      {[["Diamond",T.purple],["Platinum",T.cyan],["Gold",T.amber],["Silver",T.t2],["Top 100",T.blue],["Standard",T.t4]].map(([t,c])=>{
-        const v=tierBreakdown[t]||0;if(!v)return null;
-        const pct=totalCY>0?v/totalCY:0;
-        return <div key={t} style={{marginBottom:5}}>
-          <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}>
-            <span style={{fontSize:10,color:c}}>{t}</span>
-            <span className="m" style={{fontSize:10,color:T.t3}}>{$$(v)} · {Math.round(pct*100)}%</span>
-          </div>
-          <div style={{height:4,borderRadius:2,background:T.s3,overflow:"hidden"}}>
-            <div className="bar-g" style={{height:"100%",borderRadius:2,width:`${pct*100}%`,background:c}}/>
-          </div>
-        </div>;
-      })}
-
-      {/* Top 5 groups */}
-      <div style={{marginTop:14,marginBottom:8,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:".8px",color:T.t4}}>Top 5 Groups by CY Spend</div>
-      {topGroups.map((g,i)=>{
-        const cy=g.cyQ?.["1"]||0;const py=g.pyQ?.["1"]||0;const up=cy>py;
-        return <div key={g.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:`1px solid ${T.b1}`}}>
-          <div style={{flex:1,minWidth:0}}>
-            <span style={{fontSize:11,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",display:"block"}}>{fixGroupName(g)}</span>
-            <span style={{fontSize:9,color:T.t4}}>{getTierLabel(g.tier)}</span>
-          </div>
-          <div style={{textAlign:"right",flexShrink:0,marginLeft:10}}>
-            <span className="m" style={{fontSize:11,fontWeight:700,color:T.blue}}>{$$(cy)}</span>
-            <span className="m" style={{fontSize:9,color:up?T.green:T.red,display:"block"}}>{up?"+":"-"}{$$(Math.abs(cy-py))}</span>
-          </div>
-        </div>;
-      })}
-    </div>
-
-    {/* ── QUICK CALCULATOR ── */}
-    <div className="anim" style={{animationDelay:"80ms",background:`linear-gradient(135deg,${T.s1},rgba(251,191,36,.04))`,border:`1px solid ${T.b1}`,borderRadius:16,padding:16}}>
-      <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.amber,marginBottom:4}}>Quick Sale Calculator</div>
-      <div style={{fontSize:11,color:T.t3,marginBottom:14}}>Search any Kerr product, enter doctor spend, see your credited revenue.</div>
-
-      <div style={{marginBottom:14}}>
-        <label style={{fontSize:11,color:T.t1,display:"block",marginBottom:6,fontWeight:600}}>Account Tier</label>
-        <div className="hide-sb" style={{display:"flex",gap:4,overflowX:"auto"}}>
-          {["Standard","Top 100","Silver","Gold","Platinum","Diamond"].map(t=>(
-            <button key={t} onClick={()=>setTier(t)} style={{flexShrink:0,padding:"6px 12px",borderRadius:8,fontSize:11,fontWeight:600,cursor:"pointer",border:`1px solid ${tier===t?"rgba(251,191,36,.25)":T.b2}`,background:tier===t?"rgba(251,191,36,.08)":T.s2,color:tier===t?T.amber:T.t3,fontFamily:"inherit"}}>{t}{ACCEL_RATES[t]?` (${ACCEL_RATES[t]*100}%)`:""}</button>
-          ))}
-        </div>
-      </div>
-
-      <div style={{marginBottom:12}}>
-        <label style={{fontSize:11,color:T.t1,display:"block",marginBottom:4,fontWeight:600}}>Search Product</label>
-        {selSku?<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 12px",borderRadius:8,background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.2)"}}>
-          <div><div style={{fontSize:12,fontWeight:600,color:T.t1}}>#{selSku[0]} — {selSku[1]}</div><div style={{fontSize:10,color:T.t3}}>{selSku[2]} · Std MSRP ${selSku[4]}</div></div>
-          <button onClick={()=>{setSelSku(null);setDocSpend("");setSearch("")}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:16}}>✕</button>
-        </div>:<div>
-          <input type="text" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Type SKU# or product name..." style={{width:"100%",height:40,borderRadius:8,border:`1px solid ${T.b1}`,background:T.s1,color:T.t1,fontSize:13,padding:"0 12px",outline:"none",fontFamily:"inherit"}}/>
-          {results.length>0&&<div style={{marginTop:4,borderRadius:8,border:`1px solid ${T.b1}`,background:T.s1,maxHeight:200,overflowY:"auto"}}>
-            {results.map(p=><button key={p[0]} onClick={()=>{setSelSku(p);setSearch("")}} style={{width:"100%",textAlign:"left",padding:"8px 12px",background:"none",border:"none",borderBottom:`1px solid ${T.b1}`,color:T.t1,cursor:"pointer",fontFamily:"inherit",fontSize:11}}>
-              <div style={{fontWeight:600}}>#{p[0]} — {p[1]}</div>
-              <div style={{fontSize:9,color:T.t4}}>{p[2]} · MSRP ${p[4]}</div>
-            </button>)}
-          </div>}
-        </div>}
-      </div>
-
-      {selSku&&<div style={{marginBottom:12}}>
-        <label style={{fontSize:11,color:T.t1,display:"block",marginBottom:4,fontWeight:600}}>Doctor Spend ($)</label>
-        <div style={{position:"relative"}}>
-          <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:16,color:T.t4,fontFamily:"'JetBrains Mono',monospace"}}>$</span>
-          <input type="number" value={docSpend} onChange={e=>setDocSpend(e.target.value)} placeholder="e.g. 5000" style={{width:"100%",height:42,borderRadius:8,border:`1px solid ${T.b1}`,background:T.s1,color:T.t1,fontSize:16,padding:"0 12px 0 30px",outline:"none",fontFamily:"'JetBrains Mono',monospace"}}/>
-        </div>
-      </div>}
-
-      {calc&&<div style={{background:"rgba(79,142,247,.06)",border:"1px solid rgba(79,142,247,.12)",borderRadius:8,padding:12}}>
-        <div style={{fontSize:10,fontWeight:700,color:T.blue,marginBottom:8}}>Calculation Breakdown</div>
-        <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:3}}><span>Doctor spent</span><span className="m" style={{color:T.t1}}>{$f(parseFloat(docSpend))}</span></div>
-        <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:3}}><span>÷ ${calc.tierMSRP.toFixed(2)}/unit ({isAccel?tier:"std"} MSRP)</span><span className="m" style={{color:T.t1}}>{calc.units.toFixed(1)} units</span></div>
-        <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:3}}><span>× ${calc.stdWS.toFixed(2)} std wholesale/unit</span><span className="m" style={{color:T.t1}}>{$f(calc.totalWS)}</span></div>
-        {isAccel&&calc.totalCB>0&&<div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:3}}><span>{tier} chargeback ({getTierRate(tier)*100}%)</span><span className="m" style={{color:T.red}}>-{$f(calc.totalCB)}</span></div>}
-        <div style={{borderTop:`1px solid ${T.b2}`,marginTop:6,paddingTop:6,display:"flex",justifyContent:"space-between",fontSize:14,fontWeight:700}}>
-          <span style={{color:T.t1}}>Your Credit</span>
-          <span className="m" style={{color:T.green,fontSize:18}}>{$f(calc.totalCredited)}</span>
-        </div>
-      </div>}
-    </div>
-  </div>;
-}
-
-  const calc=useMemo(()=>{
-    if(!selSku||!docSpend||parseFloat(docSpend)<=0)return null;
-    const spend=parseFloat(docSpend);
-    const [sku,desc,cat,stdWS,stdMSRP,diaWS,diaMSRP,platWS,platMSRP,goldWS,goldMSRP,silvWS,silvMSRP]=selSku;
-    let tierMSRP,tierWS;
-    if(isAccel){
-      const t=tier.includes("-")?tier.split("-")[1]:tier;
-      if(t==="Diamond"){tierMSRP=diaMSRP;tierWS=diaWS;}
-      else if(t==="Platinum"){tierMSRP=platMSRP;tierWS=platWS;}
-      else if(t==="Gold"){tierMSRP=goldMSRP;tierWS=goldWS;}
-      else if(t==="Silver"){tierMSRP=silvMSRP;tierWS=silvWS;}
-      else{tierMSRP=stdMSRP;tierWS=stdWS;}
-    }else{tierMSRP=stdMSRP;tierWS=stdWS;}
-    const units=spend/tierMSRP;
-    const totalWS=stdWS*units;
-    const totalCredited=tierWS*units;
-    const totalCB=totalWS-totalCredited;
-    return {units,totalWS,totalCredited,totalCB,tierMSRP,tierWS,stdMSRP,stdWS,desc,sku,cat};
+    return{units,totalWS,totalCredited,totalCB,tierMSRP,tierWS,stdMSRP,stdWS,desc,sku,cat};
   },[selSku,docSpend,tier,isAccel]);
 
   return <div style={{padding:"16px 16px 80px"}}>
@@ -1340,7 +1182,11 @@ function CalcTab({groups,q1CY,q1Gap,q1Att}) {
       </div>}
     </div>
 
-
+    <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:12,fontSize:10,color:T.t3}}>
+      <strong>How it works:</strong> Doctor spend ÷ tier MSRP = units. Units × std wholesale = raw wholesale. For Accelerate tiers, subtract chargeback (Silver 20%, Gold 24%, Platinum 30%, Diamond 36%). Standard / Top 100 / Private = 0% chargeback.
+    </div>
+  </div>;
+}
 
 // ─── ESTIMATOR TAB ───────────────────────────────────────────────
 function EstTab({pct,setPct,q1CY,groups}) {
