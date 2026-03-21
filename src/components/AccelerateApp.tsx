@@ -837,22 +837,79 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
       .filter((a: any) => (a.cyQ?.["1"]||0) === 0 && (a.pyQ?.["1"]||0) > 200 && (a.pyQ?.["1"]||0) <= darkMaxPY)
       .map((a: any) => scoreAccount(a, "dark"));
 
-    // ── VISIT LIST — sort by visitScore (includes distance) ──
-    const visitList = upliftRaw
-      .sort((a: any, b: any) => b.visitScore - a.visitScore)
+    const allCandidates = [...new Map([...upliftRaw, ...darkRaw].map((a: any) => [a.id, a])).values()];
+
+    // ── VISIT LIST — cluster-aware routing ──
+    // Step 1: Hard distance gate. >75 miles = call/dealer only, NOT a visit
+    // unless the account has enough cluster value to justify the drive
+    const VISIT_MAX_SOLO = 75;    // won't visit solo if farther than this
+    const VISIT_MAX_CLUSTERED = 120; // will visit if 2+ accounts within 20mi of each other
+
+    // Find accounts with GPS coords
+    const withCoords = allCandidates.filter((a: any) => {
+      const badger = BADGER[a.id] || BADGER[a.gId];
+      return (badger?.lat && badger?.lng) || (a.lat && a.lng);
+    }).map((a: any) => {
+      const badger = BADGER[a.id] || BADGER[a.gId];
+      return {...a, _lat: badger?.lat || a.lat, _lng: badger?.lng || a.lng};
+    });
+
+    // For each candidate, find how many other accounts are within 20 miles
+    const clustered = allCandidates.map((a: any) => {
+      const badger = BADGER[a.id] || BADGER[a.gId];
+      const aLat = badger?.lat || a.lat;
+      const aLng = badger?.lng || a.lng;
+
+      // Count nearby accounts with gaps
+      const nearbyAccounts = withCoords.filter((b: any) => {
+        if (b.id === a.id) return false;
+        const d = distMiles(aLat, aLng);
+        const dB = distMiles(b._lat, b._lng);
+        // Both within 20 miles of each other AND both have meaningful gaps
+        return Math.abs(d - dB) < 20 && b.ask > 200;
+      });
+
+      const clusterValue = nearbyAccounts.reduce((s: number, b: any) => s + b.ask * b.prob, 0);
+      const clusterCount = nearbyAccounts.length;
+
+      // Determine if this account qualifies for a visit
+      const solo = a.miles < VISIT_MAX_SOLO;
+      const clusteredVisit = a.miles < VISIT_MAX_CLUSTERED && clusterCount >= 2;
+      const visitEligible = solo || clusteredVisit;
+
+      // Visit score: heavily penalize far solo accounts
+      let adjustedVisitScore = a.visitScore;
+      if (!visitEligible) adjustedVisitScore = 0; // force to call list
+      else if (a.miles > 60 && clusterCount >= 2) adjustedVisitScore *= 1.2; // bonus for clusters worth driving to
+
+      return {
+        ...a, clusterCount, clusterValue, visitEligible, adjustedVisitScore,
+        nearbyNames: nearbyAccounts.slice(0,3).map((b: any) => b.name),
+        signals: [
+          ...a.signals,
+          clusterCount >= 2 ? `${clusterCount} nearby accts` : null,
+          !visitEligible && a.miles > 75 ? `${Math.round(a.miles)}mi — call instead` : null,
+        ].filter(Boolean),
+      };
+    });
+
+    // Visit list: only visit-eligible, sorted by adjustedVisitScore
+    const visitList = clustered
+      .filter((a: any) => a.visitEligible && a.track === "uplift")
+      .sort((a: any, b: any) => b.adjustedVisitScore - a.adjustedVisitScore)
       .slice(0, 5);
 
-    // ── CALL LIST — sort by callScore (distance irrelevant) ──
+    // ── CALL LIST — far accounts + dark + remaining uplift ──
+    // Far accounts that got blocked from visit list go here
     const visitIds = new Set(visitList.map((a: any) => a.id));
-    const callCandidates = [
-      ...darkRaw.sort((a: any, b: any) => b.callScore - a.callScore),
-      ...upliftRaw.filter((a: any) => !visitIds.has(a.id)).sort((a: any, b: any) => b.callScore - a.callScore),
-    ];
+    const callCandidates = clustered
+      .filter((a: any) => !visitIds.has(a.id))
+      .sort((a: any, b: any) => b.callScore - a.callScore);
     const callList = callCandidates.slice(0, 10);
 
     // ── DEALER PUSH ──
     const dealerGroups: Record<string, any[]> = {};
-    [...upliftRaw, ...darkRaw].forEach((a: any) => {
+    clustered.forEach((a: any) => {
       if (a.dealer && a.dealer !== "Unknown") {
         dealerGroups[a.dealer] = dealerGroups[a.dealer] || [];
         dealerGroups[a.dealer].push(a);
@@ -860,14 +917,14 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
     });
     const dealerActions = Object.entries(dealerGroups)
       .map(([dealer, accts]) => {
-        const top = accts.sort((a: any, b: any) => b.callScore - a.callScore).slice(0, 3);
+        const top = (accts as any[]).sort((a: any, b: any) => b.callScore - a.callScore).slice(0, 3);
         return { dealer, accts: top, totalAsk: top.reduce((s: number, a: any) => s + a.ask, 0) };
       })
       .sort((a, b) => b.totalAsk - a.totalAsk)
       .slice(0, 3);
 
     // ── PROJECTIONS ──
-    const allTargets = [...new Map([...upliftRaw, ...darkRaw].map((a: any) => [a.id, a])).values()];
+    const allTargets = clustered;
     const doneTotal = Object.values(odDone).reduce((s, v: any) => s + (v.amt || 0), 0);
     const pending = allTargets.filter((a: any) => !odDone[a.id]);
     const conservative = doneTotal + pending.reduce((s: number, a: any) => s + a.ask * Math.min(a.prob * 0.65, 1), 0);
@@ -1108,6 +1165,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
                 <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
                   textDecoration:done?"line-through":"none",color:done?T.t3:T.t1}}>{a.name}</div>
                 <div style={{fontSize:10,color:T.t3,marginTop:1}}>{a.city}, {a.st} · Ask <span style={{color:T.amber,fontWeight:700}}>{$f(a.ask)}</span> · {Math.round(a.prob*100)}% likely</div>
+              {a.clusterCount>=2&&<div style={{fontSize:9,color:T.cyan,marginTop:2}}>📍 {a.clusterCount} other accounts nearby — worth the drive</div>}
               {a.signals?.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:3,marginTop:4}}>
                 {a.signals.slice(0,4).map((s:string,si:number)=>(
                   <span key={si} style={{fontSize:8,color:T.t4,background:T.s2,borderRadius:4,padding:"1px 5px",border:`1px solid ${T.b2}`}}>{s}</span>
