@@ -29,7 +29,7 @@ const Q_TARGETS = { 1: 778915, 2: 798328, 3: 793897, 4: 786954 };
 const FY_TARGET = 3158094;
 const DAYS_LEFT = Math.max(0, Math.ceil((new Date(2026, 2, 31).getTime() - new Date().getTime()) / 86400000));
 
-// ─── TIER / CHARGEBACK RULES ─────────────────────────────────────
+// ─── TIER / CHARGEBACK RULES ──────────────────────────────────────
 // The Tableau export uses a single "Acct Type" field that conflates two
 // separate things: (1) pricing tier and (2) Top 100 spend ranking.
 // These rules untangle that permanently so no future upload can break it.
