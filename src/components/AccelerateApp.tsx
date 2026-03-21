@@ -294,9 +294,10 @@ function processCSVData(rows) {
         name: row["Child Name"]||"",
         city: row["City"]||"",
         st: row["State"]||"",
-        tier: normalizeTier(row["Acct Type"]),         // clean tier: Standard/Silver/Gold/Platinum/Diamond
-        top100: isTop100(row["Acct Type"]),             // ranking flag, separate from tier
-        class2: row["Sds Cust Class2"]||"",            // practice type source
+        addr: row["Addr"]||"",
+        tier: normalizeTier(row["Acct Type"]),
+        top100: isTop100(row["Acct Type"]),
+        class2: row["Sds Cust Class2"]||"",
         parentId,
       };
     }
@@ -349,6 +350,7 @@ function processCSVData(rows) {
         name: ci.name,
         city: ci.city,
         st: ci.st,
+        addr: ci.addr||"",
         tier: ci.tier||"Standard",
         top100: ci.top100||false,
         class2: ci.class2||"",
@@ -539,7 +541,10 @@ export default function App() {
       const myAdj = adjs.filter(m => m.acctId === a.id);
       const adjCY = (a.cyQ?.["1"]||0) + myAdj.reduce((s,m) => s + m.credited, 0);
       const adjusted = { ...a, cyQ: { ...a.cyQ, "1": adjCY }, adjCount: myAdj.length };
-      return { ...adjusted, ...scoreAccount(adjusted, "1") };
+      // Enrich addr from Badger if not already set
+      const b = BADGER[a.id] || BADGER[a.gId] || null;
+      const addr = a.addr || (b?.address ? b.address.split(',')[0].trim() : "");
+      return { ...adjusted, addr, ...scoreAccount(adjusted, "1") };
     }).sort((a,b) => b.score - a.score);
   }, [allChildren, adjs]);
 
@@ -631,6 +636,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
       a.name?.toLowerCase().includes(q) ||
       a.city?.toLowerCase().includes(q) ||
       a.st?.toLowerCase().includes(q) ||
+      a.addr?.toLowerCase().includes(q) ||
       a.gName?.toLowerCase().includes(q) ||
       (a.city && a.st && `${a.city} ${a.st}`.toLowerCase().includes(q))
     ).slice(0, 30);
@@ -711,7 +717,8 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:13,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
-              <div style={{fontSize:10,color:T.t3,marginTop:2}}>{a.city}, {a.st}
+              <div style={{fontSize:10,color:T.t3,marginTop:2}}>
+                {a.addr ? a.addr + ', ' : ''}{a.city}, {a.st}
                 {a.gName&&a.gName!==a.name&&<span style={{color:T.t4}}> · {a.gName}</span>}
                 {isAccelTier(a.gTier||a.tier)&&<span style={{color:T.amber}}> · {normalizeTier(a.gTier||a.tier)}</span>}
               </div>
