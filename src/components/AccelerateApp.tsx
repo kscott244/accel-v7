@@ -613,6 +613,8 @@ export default function App() {
 
 // ─── TODAY TAB ────────────────────────────────────────────────────
 function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGroup}) {
+  const [search, setSearch] = useState("");
+
   // ── Section 1: Q1 status
   const ahead = q1Att >= 1.0;
   const onTrack = !ahead && q1Att >= 0.85;
@@ -620,6 +622,19 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
   const statusLabel = ahead ? "Ahead of Target" : onTrack ? "On Track" : "Behind Target";
   const statusBg = ahead ? "rgba(52,211,153,.08)" : onTrack ? "rgba(251,191,36,.08)" : "rgba(248,113,113,.08)";
   const statusBorder = ahead ? "rgba(52,211,153,.18)" : onTrack ? "rgba(251,191,36,.18)" : "rgba(248,113,113,.18)";
+
+  // ── Search filter — matches office name, city, state, group name
+  const q = search.trim().toLowerCase();
+  const searchResults = useMemo(() => {
+    if (!q) return [];
+    return scored.filter(a =>
+      a.name?.toLowerCase().includes(q) ||
+      a.city?.toLowerCase().includes(q) ||
+      a.st?.toLowerCase().includes(q) ||
+      a.gName?.toLowerCase().includes(q) ||
+      (a.city && a.st && `${a.city} ${a.st}`.toLowerCase().includes(q))
+    ).slice(0, 30);
+  }, [q, scored]);
 
   // ── Section 2: Wins & Momentum
   const growing = scored
@@ -674,7 +689,49 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
 
   return <div style={{padding:"16px 16px 80px"}}>
 
-    {/* ── SECTION 1: Q1 PROGRESS ── */}
+    {/* ── SEARCH BAR ── */}
+    <div style={{position:"relative",marginBottom:16}}>
+      <svg style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",width:15,height:15,color:T.t4}} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="search" value={search} onChange={e=>setSearch(e.target.value)}
+        placeholder="Search by office name or city…"
+        style={{width:"100%",height:42,borderRadius:12,border:`1px solid ${search?T.blue+"44":T.b1}`,background:T.s1,color:T.t1,fontSize:13,paddingLeft:38,paddingRight:search?36:12,outline:"none",fontFamily:"inherit"}}/>
+      {search&&<button onClick={()=>setSearch("")} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:16,lineHeight:1}}>✕</button>}
+    </div>
+
+    {/* ── SEARCH RESULTS ── */}
+    {q ? <>
+      <div style={{fontSize:10,color:T.t4,marginBottom:10}}>{searchResults.length} result{searchResults.length!==1?"s":""} for "{search}"</div>
+      {searchResults.length===0&&<div style={{padding:"24px 0",textAlign:"center",color:T.t4,fontSize:12}}>No accounts found.</div>}
+      {searchResults.map((a,i)=>{
+        const py=a.pyQ?.["1"]||0; const cy=a.cyQ?.["1"]||0; const gap=py-cy;
+        const ret=py>0?cy/py:0;
+        return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
+          style={{animationDelay:`${i*15}ms`,width:"100%",textAlign:"left",background:T.s1,
+            border:`1px solid ${T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:8,cursor:"pointer"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:13,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
+              <div style={{fontSize:10,color:T.t3,marginTop:2}}>{a.city}, {a.st}
+                {a.gName&&a.gName!==a.name&&<span style={{color:T.t4}}> · {a.gName}</span>}
+                {isAccelTier(a.gTier||a.tier)&&<span style={{color:T.amber}}> · {normalizeTier(a.gTier||a.tier)}</span>}
+              </div>
+            </div>
+            <div style={{textAlign:"right",flexShrink:0,marginLeft:12}}>
+              <div className="m" style={{fontSize:12,fontWeight:700,color:gap>0?T.red:gap<0?T.green:T.t4}}>{gap>0?`-${$$(gap)}`:gap<0?`+${$$(-gap)}`:"Even"}</div>
+              <div className="m" style={{fontSize:10,color:T.t4}}>{Math.round(ret*100)}% ret</div>
+            </div>
+          </div>
+          <div style={{display:"flex",gap:12,alignItems:"center"}}>
+            <Pill l="PY" v={$$(py)} c={T.t2}/>
+            <Pill l="CY" v={$$(cy)} c={T.blue}/>
+            {a.score>0&&<span className="m" style={{fontSize:9,fontWeight:700,color:a.score>=50?T.red:T.amber,background:a.score>=50?"rgba(248,113,113,.08)":"rgba(251,191,36,.08)",borderRadius:4,padding:"2px 6px"}}>{a.score}pt</span>}
+          </div>
+        </button>;
+      })}
+    </> :
+
+    /* ── NORMAL TODAY CONTENT ── */
+    <>
     <div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(79,142,247,.06))`,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16,boxShadow:"0 4px 24px rgba(0,0,0,.4)"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
         <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color:T.t3}}>Q1 Progress</span>
@@ -769,6 +826,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
         <div style={{padding:"24px 0",textAlign:"center",color:T.t4,fontSize:12}}>No scored accounts — upload a CSV to get started.</div>
       )}
     </div>
+    </>}
   </div>;
 }
 // ─── GROUPS TAB ──────────────────────────────────────────────────
