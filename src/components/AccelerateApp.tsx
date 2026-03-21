@@ -2,6 +2,8 @@
 // @ts-nocheck
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { DEALER_LOOKUP } from "@/data/dealer-lookup";
+import { DEALERS } from "@/data/dealers";
 
 // ─── DESIGN TOKENS ───────────────────────────────────────────────
 const T = {
@@ -19,22 +21,30 @@ const DAYS_LEFT = Math.max(0, Math.ceil((new Date(2026, 2, 31).getTime() - new D
 
 // ─── TIER / CHARGEBACK LOGIC ─────────────────────────────────────
 const ACCEL_RATES = { Silver: 0.20, Gold: 0.24, Platinum: 0.30, Diamond: 0.36 };
+
+// Normalize Acct Type: strip "Top 100" ranking, treat HOUSE ACCOUNTS as Standard
+const normalizeTier = (raw) => {
+  if (!raw) return "Standard";
+  const t = raw.trim();
+  if (t === "HOUSE ACCOUNTS") return "Standard";
+  if (t === "Top 100") return "Standard";           // just a ranking, no chargeback
+  if (t.startsWith("Top 100-")) return t.split("-")[1]; // "Top 100-Gold" → "Gold"
+  return t;
+};
+
 const getTierRate = (tier) => {
-  if (!tier) return 0;
-  if (tier.includes("-")) { const sub = tier.split("-")[1]; return ACCEL_RATES[sub] || 0; }
-  return ACCEL_RATES[tier] || 0;
+  const n = normalizeTier(tier);
+  return ACCEL_RATES[n] || 0;
 };
 const isAccelTier = (tier) => {
-  if (!tier) return false;
-  if (tier.includes("-")) return tier.split("-")[1] in ACCEL_RATES;
-  return tier in ACCEL_RATES;
+  const n = normalizeTier(tier);
+  return n in ACCEL_RATES;
 };
 const getTierLabel = (tier) => {
-  if (!tier || tier === "Standard" || tier === "HOUSE ACCOUNTS") return "Private Practice";
-  if (tier === "Top 100") return "Top 100 (Private)";
-  if (tier.startsWith("Top 100-")) return `Top 100 + ${tier.split("-")[1]}`;
-  if (tier in ACCEL_RATES) return `Accelerate ${tier}`;
-  return tier;
+  const n = normalizeTier(tier);
+  if (n === "Standard") return "Private Practice";
+  if (n in ACCEL_RATES) return `Accelerate ${n}`;
+  return n;
 };
 
 // ─── FORMATTERS ──────────────────────────────────────────────────
@@ -60,6 +70,24 @@ const IconCalc = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24
 const IconChart = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>;
 const IconCheck = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>;
 const IconAlert = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>;
+
+// ─── DISPLAY NAME FIXER (catches bad names in preloaded data too) ──
+const BAD_GROUP_NAMES = new Set(["STANDARD","Standard","HOUSE ACCOUNTS","House Accounts","SILVER","GOLD","PLATINUM","DIAMOND","TOP 100","Silver","Gold","Platinum","Diamond","Top 100",""]);
+// Strip " : Master-CMxxxxxx" suffix from Tableau parent names
+const cleanParentName = (name) => {
+  if (!name) return "";
+  return name.replace(/\s*:\s*Master-CM\d+$/i, "").trim();
+};
+const fixGroupName = (g) => {
+  if (!g) return "Unknown";
+  const cleaned = cleanParentName(g.name);
+  if (!cleaned || BAD_GROUP_NAMES.has(cleaned)) {
+    if (g.children?.length === 1) return g.children[0].name;
+    if (g.children?.length > 1) return `${g.children[0].name} (+${g.children.length-1})`;
+    return cleaned || g.id || "Unknown";
+  }
+  return cleaned;
+};
 
 // ─── SMALL COMPONENTS ────────────────────────────────────────────
 const Pill = ({l,v,c}) => <div><span style={{fontSize:8,textTransform:"uppercase",color:T.t4}}>{l} </span><span className="m" style={{fontSize:12,fontWeight:700,color:c}}>{v}</span></div>;
@@ -232,7 +260,8 @@ function processCSVData(rows) {
 
       // Apply PY chargeback for Accelerate tier accounts
       // PY data comes in as full wholesale — need to deduct tier chargeback to match CY treatment
-      const acctTier = pi.tier || ci.tier || "Standard";
+      // Use the CHILD's own tier (not parent) — same DSO can have mixed tiers
+      const acctTier = ci.tier || "Standard";
       const cbRate = getTierRate(acctTier);
       if (cbRate > 0) {
         for (const k of Object.keys(pyQ)) {
@@ -261,7 +290,7 @@ function processCSVData(rows) {
       const hasMoney = Object.values(pyQ).some(v=>v!==0) || Object.values(cyQ).some(v=>v!==0);
       if (!hasMoney) continue;
 
-      children.push({ id: cid, name: ci.name, city: ci.city, st: ci.st, tier: ci.tier, last: daysSince, pyQ, cyQ, products: products.slice(0,10) });
+      children.push({ id: cid, name: ci.name, city: ci.city, st: ci.st, tier: ci.tier, last: daysSince, pyQ, cyQ, products: products.slice(0,10), dealer: DEALERS[cid] || "Unknown" });
 
       for (const [k,v] of Object.entries(pyQ)) gPy[k] = (gPy[k]||0) + v;
       for (const [k,v] of Object.entries(cyQ)) gCy[k] = (gCy[k]||0) + v;
@@ -346,6 +375,18 @@ export default function App() {
   const [uploadMsg, setUploadMsg] = useState(null);
   const fileRef = useRef(null);
 
+  // Hydrate dealer info onto groups (handles preloaded data that was built without dealer field)
+  const hydrateDealer = (grps) => {
+    if (!grps) return grps;
+    return grps.map(g => ({
+      ...g,
+      children: g.children?.map(c => ({
+        ...c,
+        dealer: c.dealer || DEALERS[c.id] || "Unknown"
+      }))
+    }));
+  };
+
   // Load pre-loaded data on mount
   useEffect(() => {
     // Check localStorage first
@@ -353,7 +394,7 @@ export default function App() {
       const saved = localStorage.getItem("accel_data");
       if (saved) {
         const parsed = JSON.parse(saved);
-        setGroups(parsed.groups);
+        setGroups(hydrateDealer(parsed.groups));
         setDataSource(`CSV uploaded ${parsed.generated}`);
         setLoading(false);
         return;
@@ -363,7 +404,7 @@ export default function App() {
     // Load pre-loaded data
     try {
       const { PRELOADED } = require("@/data/preloaded-data");
-      setGroups(PRELOADED.groups);
+      setGroups(hydrateDealer(PRELOADED.groups));
       setDataSource(`Pre-loaded ${PRELOADED.generated}`);
     } catch(e) {
       setGroups([]);
@@ -401,7 +442,7 @@ export default function App() {
   const allChildren = useMemo(() => {
     if (!groups) return [];
     return groups.flatMap(g =>
-      g.children.map(c => ({ ...c, gName: g.name, gId: g.id, gTier: g.tier }))
+      g.children.map(c => ({ ...c, gName: fixGroupName(g), gId: g.id, gTier: g.tier }))
     );
   }, [groups]);
 
@@ -469,7 +510,7 @@ export default function App() {
       {!view && tab==="groups" && <GroupsTab groups={groups||[]} goGroup={g=>setView({type:"group",data:g})} filt={gFilt} setFilt={setGFilt} search={gSearch} setSearch={setGSearch}/>}
       {!view && tab==="calc" && <CalcTab/>}
       {!view && tab==="est" && <EstTab pct={estPct} setPct={setEstPct} q1CY={q1CY} groups={groups||[]}/>}
-      {view?.type==="group" && <GroupDetail group={view.data} goMain={()=>setView(null)} goAcct={a=>setView({type:"acct",data:{...a,gName:view.data.name,gId:view.data.id,gTier:view.data.tier},from:view.data})}/>}
+      {view?.type==="group" && <GroupDetail group={view.data} goMain={()=>setView(null)} goAcct={a=>setView({type:"acct",data:{...a,gName:fixGroupName(view.data),gId:view.data.id,gTier:view.data.tier},from:view.data})}/>}
       {view?.type==="acct" && <AcctDetail acct={view.data} goBack={()=>view?.from?setView({type:"group",data:view.from}):setView(null)} adjs={adjs} setAdjs={setAdjs}/>}
 
       {/* NAV BAR */}
@@ -582,7 +623,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,mode,setMode
         return <button key={g.id} className="anim" onClick={()=>goGroup(g)} style={{animationDelay:`${i*20}ms`,width:"100%",textAlign:"left",background:T.s1,border:`1px solid ${isUrgent?"rgba(248,113,113,.15)":T.b1}`,borderRadius:14,padding:"14px 16px",marginBottom:8,cursor:"pointer"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
             <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:13,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{g.name}</div>
+              <div style={{fontSize:13,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fixGroupName(g)}</div>
               <div style={{fontSize:10,color:T.t3,marginTop:2}}>{g.locs} loc{g.locs>1?"s":""} {getTierLabel(g.tier)}</div>
             </div>
             {isUrgent&&<span style={{flexShrink:0,borderRadius:999,background:"rgba(248,113,113,.09)",border:"1px solid rgba(248,113,113,.22)",padding:"2px 8px",fontSize:9,fontWeight:700,color:T.red,marginRight:4}}>Urgent</span>}
@@ -603,13 +644,14 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,mode,setMode
 
 // ─── GROUPS TAB ──────────────────────────────────────────────────
 function GroupsTab({groups,goGroup,filt,setFilt,search,setSearch}) {
-  const fs=["All","Top 100","Diamond","Platinum","Gold","DSO","Urgent"];
+  const fs=["All","Schein","Patterson","Benco","Darby","Top 100","Diamond","Platinum","Gold","DSO","Urgent"];
   const list=useMemo(()=>{
     let l=[...groups];
-    if(search){const q=search.toLowerCase();l=l.filter(g=>g.name.toLowerCase().includes(q)||g.children?.some(c=>c.name.toLowerCase().includes(q)));}
+    if(search){const q=search.toLowerCase();l=l.filter(g=>fixGroupName(g).toLowerCase().includes(q)||g.name.toLowerCase().includes(q)||g.children?.some(c=>c.name.toLowerCase().includes(q)));}
     if(filt==="Urgent")l=l.filter(g=>{const gap=(g.pyQ?.["1"]||0)-(g.cyQ?.["1"]||0);const ret=(g.pyQ?.["1"]||0)>0?(g.cyQ?.["1"]||0)/(g.pyQ?.["1"]||0):1;return gap>2000&&ret<0.3;});
     else if(filt==="Top 100")l=l.filter(g=>g.tier==="Top 100"||g.tier?.startsWith("Top 100"));
     else if(filt==="DSO")l=l.filter(g=>g.locs>=3||g.class2==="DSO"||g.class2==="EMERGING DSO");
+    else if(["Schein","Patterson","Benco","Darby"].includes(filt))l=l.filter(g=>g.children?.some(c=>c.dealer===filt));
     else if(filt!=="All")l=l.filter(g=>g.tier===filt||g.tier?.includes(filt));
     l.sort((a,b)=>((b.pyQ?.["1"]||0)-(b.cyQ?.["1"]||0))-((a.pyQ?.["1"]||0)-(a.cyQ?.["1"]||0)));
     return l;
@@ -630,7 +672,7 @@ function GroupsTab({groups,goGroup,filt,setFilt,search,setSearch}) {
       return <button key={g.id} className="anim" onClick={()=>goGroup(g)} style={{animationDelay:`${i*20}ms`,width:"100%",textAlign:"left",background:T.s1,border:`1px solid ${isUrgent?"rgba(248,113,113,.15)":T.b1}`,borderRadius:14,padding:"14px 16px",marginBottom:8,cursor:"pointer"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
           <div style={{flex:1,minWidth:0}}>
-            <div style={{fontSize:13,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{g.name}</div>
+            <div style={{fontSize:13,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fixGroupName(g)}</div>
             <div style={{fontSize:10,color:T.t3,marginTop:2}}>{g.locs} loc{g.locs>1?"s":""} · {getTierLabel(g.tier)}</div>
           </div>
           {isUrgent&&<span style={{flexShrink:0,borderRadius:999,background:"rgba(248,113,113,.09)",border:"1px solid rgba(248,113,113,.22)",padding:"2px 8px",fontSize:9,fontWeight:700,color:T.red,marginRight:4}}>Urgent</span>}
@@ -661,7 +703,7 @@ function GroupDetail({group,goMain,goAcct}) {
     </div>
     <div style={{padding:"16px 16px 0"}}>
       <div className="anim" style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
-        <div style={{fontSize:16,fontWeight:700,marginBottom:4}}>{group.name}</div>
+        <div style={{fontSize:16,fontWeight:700,marginBottom:4}}>{fixGroupName(group)}</div>
         <div style={{fontSize:11,color:T.t3,marginBottom:12}}>{group.locs} locations · {getTierLabel(group.tier)}</div>
         {/* Quarter selector */}
         <div style={{display:"flex",gap:4,marginBottom:12}}>
@@ -705,7 +747,7 @@ function AcctDetail({acct,goBack,adjs,setAdjs}) {
 
   const myAdj=adjs.filter(m=>m.acctId===acct.id);
   const adjTotal=myAdj.reduce((s,m)=>s+m.credited,0);
-  const acctTier=acct.gTier||acct.tier||"Standard";
+  const acctTier=acct.tier||acct.gTier||"Standard";
   const tierRate=getTierRate(acctTier);
   const isAccel=isAccelTier(acctTier);
   const acctType=getTierLabel(acctTier);
@@ -736,7 +778,10 @@ function AcctDetail({acct,goBack,adjs,setAdjs}) {
       <div className="anim" style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12}}>
         <div style={{fontSize:16,fontWeight:700}}>{acct.name}</div>
         <div style={{fontSize:11,color:T.t3,marginTop:2}}>{acct.city}, {acct.st} · <span style={{color:isAccel?T.amber:T.t3}}>{acctType}</span> · Last {acct.last}d ago</div>
-        {acct.gName&&<div style={{fontSize:10,color:T.t4,marginTop:2}}>Group: {acct.gName}</div>}
+        <div style={{fontSize:10,color:T.t4,marginTop:2,display:"flex",gap:8,flexWrap:"wrap"}}>
+          {acct.gName&&<span>Group: {acct.gName}</span>}
+          {acct.dealer&&acct.dealer!=="Unknown"&&<span style={{color:T.cyan}}>Dealer: {acct.dealer}</span>}
+        </div>
 
         {/* QUARTER SELECTOR */}
         <div style={{display:"flex",gap:4,marginTop:12,marginBottom:12}}>
