@@ -680,6 +680,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
   const [odOpen, setOdOpen] = useState<boolean>(() => {
     try { return localStorage.getItem("overdrive_open") !== "false"; } catch { return true; }
   });
+  const [tripAnchor, setTripAnchor] = useState<any>(null); // account to plan a trip around
   const toggleOd = () => {
     const next = !odOpen;
     setOdOpen(next);
@@ -884,6 +885,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
 
       return {
         ...a, clusterCount, clusterValue, visitEligible, adjustedVisitScore,
+        nearbyAccounts: nearbyAccounts.slice(0,8), // full objects for trip planner
         nearbyNames: nearbyAccounts.slice(0,3).map((b: any) => b.name),
         signals: [
           ...a.signals,
@@ -1165,7 +1167,10 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
                 <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
                   textDecoration:done?"line-through":"none",color:done?T.t3:T.t1}}>{a.name}</div>
                 <div style={{fontSize:10,color:T.t3,marginTop:1}}>{a.city}, {a.st} · Ask <span style={{color:T.amber,fontWeight:700}}>{$f(a.ask)}</span> · {Math.round(a.prob*100)}% likely</div>
-              {a.clusterCount>=2&&<div style={{fontSize:9,color:T.cyan,marginTop:2}}>📍 {a.clusterCount} other accounts nearby — worth the drive</div>}
+              {a.clusterCount>=2&&<div style={{display:"flex",alignItems:"center",gap:8,marginTop:4}}>
+                <div style={{fontSize:9,color:T.cyan}}>📍 {a.clusterCount} other accounts nearby</div>
+                <button onClick={e=>{e.stopPropagation();setTripAnchor(a);}} style={{background:"rgba(34,211,238,.1)",border:"1px solid rgba(34,211,238,.25)",borderRadius:6,padding:"2px 8px",fontSize:9,fontWeight:700,color:T.cyan,cursor:"pointer",fontFamily:"inherit"}}>Plan Trip →</button>
+              </div>}
               {a.signals?.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:3,marginTop:4}}>
                 {a.signals.slice(0,4).map((s:string,si:number)=>(
                   <span key={si} style={{fontSize:8,color:T.t4,background:T.s2,borderRadius:4,padding:"1px 5px",border:`1px solid ${T.b2}`}}>{s}</span>
@@ -1251,6 +1256,83 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
       </div>}
       </div>}  {/* close odOpen content */}
     </div>}  {/* close overdrive outer */}
+
+    {/* ── TRIP PLANNER MODAL ── */}
+    {tripAnchor&&(()=>{
+      const anchor = tripAnchor;
+      const nearby = anchor.nearbyAccounts || [];
+      const allStops = [anchor, ...nearby].filter(Boolean);
+      const totalAsk = allStops.reduce((s:number,a:any)=>s+(a.ask||0),0);
+      const totalExpected = allStops.reduce((s:number,a:any)=>s+(a.ask||0)*(a.prob||0),0);
+
+      // Build Google Maps multi-stop route from Thomaston
+      const buildRoute = () => {
+        const stops = allStops
+          .map((a:any) => {
+            const b = BADGER[a.id] || BADGER[a.gId];
+            if (b?.address) return b.address;
+            if (a.addr) return a.addr;
+            return `${a.name}, ${a.city}, ${a.st}`;
+          });
+        const origin = encodeURIComponent("Thomaston, CT");
+        const dest = encodeURIComponent(stops[stops.length-1]);
+        const waypoints = stops.slice(0,-1).map((s:string)=>encodeURIComponent(s)).join("|");
+        const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}${waypoints?`&waypoints=${waypoints}`:""}&travelmode=driving`;
+        window.open(url,"_blank");
+      };
+
+      return <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.75)",backdropFilter:"blur(8px)",display:"flex",flexDirection:"column",justifyContent:"flex-end"}} onClick={()=>setTripAnchor(null)}>
+        <div style={{background:T.s1,borderRadius:"20px 20px 0 0",padding:20,maxHeight:"80vh",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
+          {/* Header */}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+            <div>
+              <div style={{fontSize:13,fontWeight:700}}>Trip Plan</div>
+              <div style={{fontSize:10,color:T.t3,marginTop:1}}>{allStops.length} stops · {$f(totalAsk)} ask · {$f(totalExpected)} expected</div>
+            </div>
+            <button onClick={()=>setTripAnchor(null)} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:18}}>✕</button>
+          </div>
+
+          {/* Route button */}
+          <button onClick={buildRoute} style={{width:"100%",background:`linear-gradient(90deg,${T.blue},${T.cyan})`,border:"none",borderRadius:10,padding:"10px 0",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer",fontFamily:"inherit",marginBottom:14,marginTop:8}}>
+            🗺 Open Full Route in Google Maps
+          </button>
+
+          {/* Stop list */}
+          <div style={{overflowY:"auto",flex:1}}>
+            {allStops.map((a:any,i:number)=>{
+              const done = odDone[a.id];
+              const isAnchor = i===0;
+              return <div key={a.id} style={{background:isAnchor?`rgba(251,191,36,.06)`:T.s2,
+                border:`1px solid ${isAnchor?"rgba(251,191,36,.25)":T.b1}`,
+                borderRadius:12,padding:"10px 12px",marginBottom:8,
+              }}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+                      <span style={{fontSize:9,fontWeight:700,color:isAnchor?T.amber:T.t4,background:isAnchor?"rgba(251,191,36,.1)":T.s1,borderRadius:4,padding:"1px 5px"}}>{isAnchor?"ANCHOR":`STOP ${i+1}`}</span>
+                      {done&&<span style={{fontSize:9,fontWeight:700,color:T.green}}>✓ {done.outcome}</span>}
+                    </div>
+                    <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
+                    <div style={{fontSize:10,color:T.t3,marginTop:1}}>{a.city}, {a.st} · {Math.round(a.miles||0)}mi from home</div>
+                    <div style={{fontSize:10,color:T.t3,marginTop:1}}>Ask <span style={{color:T.amber,fontWeight:600}}>{$f(a.ask)}</span> · {Math.round((a.prob||0)*100)}% likely</div>
+                  </div>
+                  <div style={{display:"flex",gap:4,flexShrink:0,marginLeft:8}}>
+                    {done
+                      ? <button onClick={()=>clearDone(a.id)} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:12}}>↩</button>
+                      : <>
+                          <button onClick={()=>saveDone(a.id,"won",a.ask)} style={{background:"rgba(52,211,153,.12)",border:"1px solid rgba(52,211,153,.25)",borderRadius:6,padding:"4px 8px",fontSize:9,fontWeight:700,color:T.green,cursor:"pointer",fontFamily:"inherit"}}>✓ Win</button>
+                          <button onClick={()=>saveDone(a.id,"partial",a.ask*0.5)} style={{background:"rgba(251,191,36,.08)",border:"1px solid rgba(251,191,36,.2)",borderRadius:6,padding:"4px 8px",fontSize:9,fontWeight:700,color:T.amber,cursor:"pointer",fontFamily:"inherit"}}>½</button>
+                          <button onClick={()=>saveDone(a.id,"lost",0)} style={{background:"rgba(248,113,113,.08)",border:"1px solid rgba(248,113,113,.2)",borderRadius:6,padding:"4px 8px",fontSize:9,fontWeight:700,color:T.red,cursor:"pointer",fontFamily:"inherit"}}>✗</button>
+                        </>
+                    }
+                  </div>
+                </div>
+              </div>;
+            })}
+          </div>
+        </div>
+      </div>;
+    })()}
 
     {/* ── SECTION 2: WINS & MOMENTUM ── */}
     <div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(52,211,153,.04))`,border:"1px solid rgba(52,211,153,.1)",borderRadius:16,padding:14,marginBottom:16}}>
