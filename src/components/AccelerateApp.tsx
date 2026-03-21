@@ -7,9 +7,11 @@ import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 let DEALER_LOOKUP: Record<string, any> = {};
 let DEALERS: Record<string, string> = {};
 let WEEK_ROUTES: any = { routes: {}, unplaced: [] };
+let BADGER: Record<string, any> = {};
 try { DEALER_LOOKUP = require("@/data/dealer-lookup").DEALER_LOOKUP; } catch(e) {}
 try { DEALERS = require("@/data/dealers").DEALERS; } catch(e) {}
 try { WEEK_ROUTES = require("@/data/week-routes.json"); } catch(e) {}
+try { BADGER = require("@/data/badger-lookup.json"); } catch(e) {}
 
 // ─── DESIGN TOKENS ───────────────────────────────────────────────
 const T = {
@@ -879,6 +881,9 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup}) {
   const parentGroup=useMemo(()=>acct.gId?(groups||[]).find(g=>g.id===acct.gId):null,[groups,acct.gId]);
   const siblings=useMemo(()=>parentGroup?( parentGroup.children?.filter(c=>c.id!==acct.id)||[]).sort((a,b)=>((b.pyQ?.["1"]||0)-(b.cyQ?.["1"]||0))-((a.pyQ?.["1"]||0)-(a.cyQ?.["1"]||0))):[]  ,[parentGroup,acct.id]);
 
+  // Badger Maps intel — keyed by Master-CM id
+  const badger = useMemo(()=> BADGER[acct.id] || BADGER[acct.gId] || null, [acct.id, acct.gId]);
+
   const pyVal=acct.pyQ?.[qk]||0;
   const cyBase=acct.cyQ?.[qk]||0;
   const cyVal=qk==="1"?cyBase+adjTotal:cyBase;
@@ -918,6 +923,15 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup}) {
       stopped: stopped.slice(0,5).map(p=>({name:p.n, py:p[`py1`]||0})),
       crossSellOpportunities: xsell.map(o=>o.label),
       groupLocations: (parentGroup?.locs||1),
+      fieldIntel: badger ? {
+        doctor: badger.doctor||null,
+        orders: badger.orders||null,
+        dealerRep: badger.dealerRep||null,
+        feel: badger.feel||null,
+        notes: badger.notes||null,
+        lastVisit: badger.lastVisit||null,
+        visitNotes: badger.visitNotes||null,
+      } : null,
     };
     const prompt = `You are an AI assistant for Ken Scott, a dental territory sales manager for Kerr dental products covering CT/MA/RI/NY.
 
@@ -1010,6 +1024,46 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
           {myAdj.map(a=><div key={a.id} style={{fontSize:10,color:T.t3,display:"flex",justifyContent:"space-between",marginBottom:2}}><span>{a.desc||"Manual"}</span><span className="m" style={{color:T.green,fontWeight:600}}>+{$f(a.credited)}</span></div>)}
         </div>}
       </div>
+
+      {/* BADGER INTEL CARD */}
+      {badger&&(badger.doctor||badger.orders||badger.dealerRep||badger.notes||badger.visitNotes||badger.feel)&&<div className="anim" style={{animationDelay:"50ms",background:T.s1,border:`1px solid rgba(34,211,238,.15)`,borderRadius:16,padding:16,marginBottom:12}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={T.cyan} strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan}}>Field Intel</span>
+          </div>
+          {badger.feel&&<div style={{display:"flex",gap:2}}>{[1,2,3,4,5].map(i=><div key={i} style={{width:8,height:8,borderRadius:"50%",background:i<=parseFloat(badger.feel)?T.amber:"rgba(255,255,255,.1)"}}/>)}</div>}
+        </div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:badger.notes||badger.visitNotes?10:0}}>
+          {badger.doctor&&<div style={{minWidth:0}}>
+            <div style={{fontSize:8,textTransform:"uppercase",color:T.t4,marginBottom:1}}>Doctor</div>
+            <div style={{fontSize:11,fontWeight:600,color:T.t1}}>{badger.doctor}</div>
+          </div>}
+          {badger.orders&&<div style={{minWidth:0}}>
+            <div style={{fontSize:8,textTransform:"uppercase",color:T.t4,marginBottom:1}}>Orders</div>
+            <div style={{fontSize:11,fontWeight:600,color:T.t1}}>{badger.orders}</div>
+          </div>}
+          {badger.dealerRep&&<div style={{minWidth:0}}>
+            <div style={{fontSize:8,textTransform:"uppercase",color:T.t4,marginBottom:1}}>Dealer Rep</div>
+            <div style={{fontSize:11,fontWeight:600,color:T.cyan}}>{badger.dealerRep}</div>
+          </div>}
+          {badger.accelLevel&&<div style={{minWidth:0}}>
+            <div style={{fontSize:8,textTransform:"uppercase",color:T.t4,marginBottom:1}}>Accel Level</div>
+            <div style={{fontSize:11,fontWeight:600,color:T.amber}}>{badger.accelLevel}</div>
+          </div>}
+        </div>
+        {badger.notes&&<div style={{fontSize:11,color:T.t2,lineHeight:1.5,background:T.s2,borderRadius:8,padding:"8px 10px",marginBottom:badger.visitNotes?8:0,whiteSpace:"pre-wrap"}}>{badger.notes.replace(/\\n/g,'\n')}</div>}
+        {badger.visitNotes&&<div>
+          <div style={{fontSize:8,textTransform:"uppercase",color:T.t4,marginBottom:3}}>Last Visit{badger.lastVisit?` · ${badger.lastVisit}`:""}</div>
+          <div style={{fontSize:11,color:T.t3,lineHeight:1.5,fontStyle:"italic"}}>"{badger.visitNotes}"</div>
+        </div>}
+        {badger.phone&&<div style={{marginTop:10}}>
+          <a href={`tel:${badger.phone}`} style={{display:"inline-flex",alignItems:"center",gap:5,fontSize:10,color:T.cyan,textDecoration:"none",background:"rgba(34,211,238,.06)",border:"1px solid rgba(34,211,238,.12)",borderRadius:8,padding:"4px 10px"}}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.5 19.79 19.79 0 0 1 1.58 4.92 2 2 0 0 1 3.55 2.73h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10a16 16 0 0 0 6 6l.87-.87a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 17.5z"/></svg>
+            {badger.phone}
+          </a>
+        </div>}
+      </div>}
 
       {/* PARENT GROUP SUMMARY */}
       {parentGroup&&<div className="anim" style={{animationDelay:"60ms",background:T.s1,border:`1px solid rgba(79,142,247,.18)`,borderRadius:16,padding:16,marginBottom:12}}>
