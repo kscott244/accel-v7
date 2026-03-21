@@ -597,7 +597,7 @@ export default function App() {
       {!view && tab==="groups" && <GroupsTab groups={groups||[]} goGroup={g=>setView({type:"group",data:g})} filt={gFilt} setFilt={setGFilt} search={gSearch} setSearch={setGSearch}/>}
       {!view && tab==="map" && <MapTab/>}
       {!view && tab==="calc" && <DashTab groups={groups||[]} q1CY={q1CY} q1Att={q1Att} q1Gap={q1Gap} scored={scored} goAcct={a=>setView({type:"acct",data:a})}/>}
-      {!view && tab==="est" && <EstTab pct={estPct} setPct={setEstPct} q1CY={q1CY} groups={groups||[]}/>}
+      {!view && tab==="est" && <EstTab pct={estPct} setPct={setEstPct} q1CY={q1CY} groups={groups||[]} goAcct={a=>setView({type:"acct",data:a})}/>}
       {view?.type==="group" && <GroupDetail group={view.data} goMain={()=>setView(null)} goAcct={a=>setView({type:"acct",data:{...a,gName:fixGroupName(view.data),gId:view.data.id,gTier:view.data.tier},from:view.data})}/>}
       {view?.type==="acct" && <AcctDetail acct={view.data} goBack={()=>view?.from?setView({type:"group",data:view.from}):setView(null)} adjs={adjs} setAdjs={setAdjs} groups={groups||[]} goGroup={g=>setView({type:"group",data:g})}/>}
 
@@ -1822,7 +1822,7 @@ function MapTab() {
 }
 
 // ─── ESTIMATOR TAB ───────────────────────────────────────────────
-function EstTab({pct,setPct,q1CY,groups}) {
+function EstTab({pct,setPct,q1CY,groups,goAcct}) {
   // Calculate PY base from actual data: sum of all Q1 PY spending that happened Mar 20-31
   // We approximate: Q1 PY total * (12/90) ≈ last ~12 days of Q1
   const q1PyTotal=groups.reduce((s,g)=>s+(g.pyQ?.["1"]||0),0);
@@ -1834,6 +1834,23 @@ function EstTab({pct,setPct,q1CY,groups}) {
   const proj=q1CY+est;
   const projAtt=proj/Q1_TARGET;
   const projGap=Q1_TARGET-proj;
+
+  // Build call list: all children with PY Q1 spend, sorted by PY desc
+  // These are the accounts that bought last year in this window — highest priority to call
+  const callList = useMemo(() => {
+    const accts = [];
+    for (const g of groups) {
+      for (const c of g.children) {
+        const py = c.pyQ?.["1"] || 0;
+        const cy = c.cyQ?.["1"] || 0;
+        if (py > 0) accts.push({...c, gName: g.name, gId: g.id, gTier: g.tier, py, cy, gap: py - cy});
+      }
+    }
+    return accts.sort((a,b) => b.py - a.py);
+  }, [groups]);
+
+  // Estimated share of PY per account (proportional)
+  const pyTotalForList = callList.reduce((s,a) => s + a.py, 0);
 
   return <div style={{padding:"16px 16px 80px"}}>
     <div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(79,142,247,.04))`,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
@@ -1863,8 +1880,53 @@ function EstTab({pct,setPct,q1CY,groups}) {
         <div style={{fontSize:11,color:T.green,fontWeight:600}}>On track! {$f(Math.abs(projGap))} over target.</div>
       </div>}
     </div>
-    <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:12,fontSize:10,color:T.t3}}>
-      <strong></strong> PY base ({$f(pyBase)}) is calculated from your actual Q1 2025 data — the last ~12 days of March spending. Slider models what percentage of that repeats this year.
+
+    {/* ── CALL LIST ── */}
+    {callList.length>0&&<div className="anim" style={{animationDelay:"80ms"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:10}}>
+        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.amber}}>Mar 20-31 Call List</div>
+        <div style={{fontSize:10,color:T.t4}}>{callList.length} accounts · bought last year</div>
+      </div>
+      <div style={{fontSize:10,color:T.t3,marginBottom:12}}>These accounts spent in the last 12 days of Q1 last year. Highest priority to call this week.</div>
+      {callList.slice(0,25).map((a,i)=>{
+        const estAmt = pyTotalForList > 0 ? Math.round((a.py / pyTotalForList) * est) : 0;
+        const hasCY = a.cy > 0;
+        return <button key={a.id} className="anim" onClick={()=>goAcct&&goAcct(a)}
+          style={{animationDelay:`${i*15}ms`,width:"100%",textAlign:"left",background:T.s1,
+            border:`1px solid ${hasCY?"rgba(52,211,153,.15)":T.b1}`,
+            borderRadius:12,padding:"10px 12px",marginBottom:7,cursor:"pointer"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
+              <div style={{fontSize:10,color:T.t3,marginTop:1}}>{a.city}, {a.st}
+                {a.gName&&a.gName!==a.name&&<span style={{color:T.t4}}> · {a.gName}</span>}
+              </div>
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:10,flexShrink:0,marginLeft:10}}>
+              <div style={{textAlign:"right"}}>
+                <div style={{fontSize:9,color:T.t4,marginBottom:1}}>PY spend</div>
+                <div className="m" style={{fontSize:12,fontWeight:700,color:T.t1}}>{$f(a.py)}</div>
+              </div>
+              {hasCY
+                ? <div style={{textAlign:"right"}}>
+                    <div style={{fontSize:9,color:T.green,marginBottom:1}}>Already bought</div>
+                    <div className="m" style={{fontSize:12,fontWeight:700,color:T.green}}>{$f(a.cy)}</div>
+                  </div>
+                : <div style={{textAlign:"right"}}>
+                    <div style={{fontSize:9,color:T.amber,marginBottom:1}}>Est. opp.</div>
+                    <div className="m" style={{fontSize:12,fontWeight:700,color:T.amber}}>{$f(estAmt)}</div>
+                  </div>
+              }
+              <Chev/>
+            </div>
+          </div>
+        </button>;
+      })}
+      {callList.length>25&&<div style={{fontSize:10,color:T.t4,textAlign:"center",padding:"8px 0"}}>+{callList.length-25} more accounts with PY Q1 spend</div>}
+    </div>}
+
+    <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:12,fontSize:10,color:T.t3,marginTop:8}}>
+      PY base ({$f(pyBase)}) is calculated from your actual Q1 2025 data — the last ~12 days of March spending. Slider models what percentage of that repeats this year.
     </div>
   </div>;
 }
