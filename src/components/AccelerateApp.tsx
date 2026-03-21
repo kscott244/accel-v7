@@ -265,7 +265,7 @@ function processCSVData(rows) {
       // Apply PY chargeback for Accelerate tier accounts
       // PY data comes in as full wholesale — need to deduct tier chargeback to match CY treatment
       // Use the CHILD's own tier (not parent) — same DSO can have mixed tiers
-      const acctTier = ci.tier || "Standard";
+      const acctTier = ci.tier || ci.acctType || "Standard";
       const cbRate = getTierRate(acctTier);
       if (cbRate > 0) {
         for (const k of Object.keys(pyQ)) {
@@ -294,7 +294,7 @@ function processCSVData(rows) {
       const hasMoney = Object.values(pyQ).some(v=>v!==0) || Object.values(cyQ).some(v=>v!==0);
       if (!hasMoney) continue;
 
-      children.push({ id: cid, name: ci.name, city: ci.city, st: ci.st, tier: ci.tier, last: daysSince, pyQ, cyQ, products: products.slice(0,10), dealer: DEALERS[cid] || "Unknown" });
+      children.push({ id: cid, name: ci.name, city: ci.city, st: ci.st, tier: ci.tier||ci.acctType||"Standard", last: daysSince, pyQ, cyQ, products: products.slice(0,10), dealer: DEALERS[cid] || "Unknown" });
 
       for (const [k,v] of Object.entries(pyQ)) gPy[k] = (gPy[k]||0) + v;
       for (const [k,v] of Object.entries(cyQ)) gCy[k] = (gCy[k]||0) + v;
@@ -308,7 +308,7 @@ function processCSVData(rows) {
     if (BAD_UPPER.includes(gName.toUpperCase())) {
       gName = children.length === 1 ? children[0].name : `${children[0].name} (+${children.length-1})`;
     }
-    groups.push({ id: pid, name: gName, tier: pi.tier||"Standard", class2: pi.class2||"", locs: children.length, pyQ: gPy, cyQ: gCy, children });
+    groups.push({ id: pid, name: gName, tier: pi.tier||pi.acctType||"Standard", class2: pi.class2||"", locs: children.length, pyQ: gPy, cyQ: gCy, children });
   }
 
   groups.sort((a,b) => ((b.pyQ["1"]||0)-(b.cyQ["1"]||0)) - ((a.pyQ["1"]||0)-(a.cyQ["1"]||0)));
