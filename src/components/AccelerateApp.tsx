@@ -2,8 +2,10 @@
 // @ts-nocheck
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { DEALER_LOOKUP } from "@/data/dealer-lookup";
-import { DEALERS } from "@/data/dealers";
+let DEALER_LOOKUP: Record<string, any> = {};
+let DEALERS: Record<string, string> = {};
+try { DEALER_LOOKUP = require("@/data/dealer-lookup").DEALER_LOOKUP; } catch(e) {}
+try { DEALERS = require("@/data/dealers").DEALERS; } catch(e) {}
 
 // ─── DESIGN TOKENS ───────────────────────────────────────────────
 const T = {
