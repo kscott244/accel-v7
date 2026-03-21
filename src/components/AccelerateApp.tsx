@@ -515,7 +515,7 @@ export default function App() {
       {!view && tab==="calc" && <CalcTab/>}
       {!view && tab==="est" && <EstTab pct={estPct} setPct={setEstPct} q1CY={q1CY} groups={groups||[]}/>}
       {view?.type==="group" && <GroupDetail group={view.data} goMain={()=>setView(null)} goAcct={a=>setView({type:"acct",data:{...a,gName:fixGroupName(view.data),gId:view.data.id,gTier:view.data.tier},from:view.data})}/>}
-      {view?.type==="acct" && <AcctDetail acct={view.data} goBack={()=>view?.from?setView({type:"group",data:view.from}):setView(null)} adjs={adjs} setAdjs={setAdjs}/>}
+      {view?.type==="acct" && <AcctDetail acct={view.data} goBack={()=>view?.from?setView({type:"group",data:view.from}):setView(null)} adjs={adjs} setAdjs={setAdjs} groups={groups||[]} goGroup={g=>setView({type:"group",data:g})}/>}
 
       {/* NAV BAR */}
       <nav style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:960,zIndex:50,borderTop:`1px solid ${T.b1}`,background:"rgba(10,10,15,.92)",backdropFilter:"blur(32px)"}}>
@@ -795,7 +795,7 @@ function GroupDetail({group,goMain,goAcct}) {
 }
 
 // ─── ACCOUNT DETAIL ──────────────────────────────────────────────
-function AcctDetail({acct,goBack,adjs,setAdjs}) {
+function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup}) {
   const [q,setQ]=useState("1");
   const [showForm,setShowForm]=useState(false);
   const [toast,setToast]=useState(null);
@@ -807,6 +807,10 @@ function AcctDetail({acct,goBack,adjs,setAdjs}) {
   const tierRate=getTierRate(acctTier);
   const isAccel=isAccelTier(acctTier);
   const acctType=getTierLabel(acctTier);
+
+  // Parent group + siblings
+  const parentGroup=useMemo(()=>acct.gId?(groups||[]).find(g=>g.id===acct.gId):null,[groups,acct.gId]);
+  const siblings=useMemo(()=>parentGroup?( parentGroup.children?.filter(c=>c.id!==acct.id)||[]).sort((a,b)=>((b.pyQ?.["1"]||0)-(b.cyQ?.["1"]||0))-((a.pyQ?.["1"]||0)-(a.cyQ?.["1"]||0))):[]  ,[parentGroup,acct.id]);
 
   const pyVal=acct.pyQ?.[qk]||0;
   const cyBase=acct.cyQ?.[qk]||0;
@@ -857,6 +861,54 @@ function AcctDetail({acct,goBack,adjs,setAdjs}) {
           {myAdj.map(a=><div key={a.id} style={{fontSize:10,color:T.t3,display:"flex",justifyContent:"space-between",marginBottom:2}}><span>{a.desc||"Manual"}</span><span className="m" style={{color:T.green,fontWeight:600}}>+{$f(a.credited)}</span></div>)}
         </div>}
       </div>
+
+      {/* PARENT GROUP SUMMARY */}
+      {parentGroup&&<div className="anim" style={{animationDelay:"60ms",background:T.s1,border:`1px solid rgba(79,142,247,.18)`,borderRadius:16,padding:16,marginBottom:12}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue}}>Parent Group</div>
+          <button onClick={()=>goGroup(parentGroup)} style={{background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.15)",borderRadius:8,padding:"3px 10px",fontSize:10,fontWeight:600,color:T.blue,cursor:"pointer",fontFamily:"inherit"}}>View Group →</button>
+        </div>
+        <div style={{fontSize:14,fontWeight:700,marginBottom:2}}>{fixGroupName(parentGroup)}</div>
+        <div style={{fontSize:10,color:T.t3,marginBottom:10}}>{parentGroup.locs} location{parentGroup.locs>1?"s":""} · {getTierLabel(parentGroup.tier)}</div>
+        {(()=>{
+          const gPy=parentGroup.pyQ?.["1"]||0;
+          const gCy=parentGroup.cyQ?.["1"]||0;
+          const gGap=gPy-gCy;
+          const gRet=gPy>0?gCy/gPy:0;
+          const thisLocPct=gCy>0?(acct.cyQ?.["1"]||0)/gCy:0;
+          return <>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6,marginBottom:10}}>
+              <Stat l="PY" v={$$(gPy)} c={T.t2}/>
+              <Stat l="CY" v={$$(gCy)} c={T.blue}/>
+              <Stat l="Gap" v={gGap<=0?`+${$$(Math.abs(gGap))}`:$$(gGap)} c={gGap<=0?T.green:T.red}/>
+              <Stat l="Ret" v={Math.round(gRet*100)+"%"} c={gRet>.5?T.green:gRet>.25?T.amber:T.red}/>
+            </div>
+            <div style={{fontSize:10,color:T.t4}}>This location = <span style={{color:T.cyan,fontWeight:700}}>{Math.round(thisLocPct*100)}%</span> of group's Q1 CY spend</div>
+          </>;
+        })()}
+
+        {/* SIBLING LOCATIONS */}
+        {siblings.length>0&&<>
+          <div style={{borderTop:`1px solid ${T.b1}`,marginTop:12,paddingTop:12,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3,marginBottom:8}}>Other Locations ({siblings.length})</div>
+          {siblings.slice(0,6).map((s,i)=>{
+            const sPy=s.pyQ?.["1"]||0;const sCy=s.cyQ?.["1"]||0;
+            const sGap=sPy-sCy;const sRet=sPy>0?Math.round(sCy/sPy*100):0;
+            const isDown=sGap>0&&sRet<50;
+            return <div key={s.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",borderRadius:10,background:isDown?"rgba(248,113,113,.04)":T.s2,border:`1px solid ${isDown?"rgba(248,113,113,.1)":T.b2}`,marginBottom:6}}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:11,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.name}</div>
+                <div style={{fontSize:9,color:T.t4,marginTop:1}}>{s.city}, {s.st}{s.dealer&&s.dealer!=="Unknown"?<span style={{color:T.cyan}}> · {s.dealer}</span>:""}</div>
+              </div>
+              <div style={{display:"flex",gap:8,flexShrink:0,marginLeft:8}}>
+                <Pill l="CY" v={$$(sCy)} c={T.blue}/>
+                <Pill l="Gap" v={sGap<=0?`+${$$(Math.abs(sGap))}`:$$(sGap)} c={sGap<=0?T.green:T.red}/>
+                <Pill l="Ret" v={sRet+"%"} c={sRet>50?T.green:sRet>25?T.amber:T.red}/>
+              </div>
+            </div>;
+          })}
+          {siblings.length>6&&<div style={{fontSize:10,color:T.t4,textAlign:"center",padding:"4px 0"}}>+{siblings.length-6} more locations — tap View Group</div>}
+        </>}
+      </div>}
 
       {/* VISIT PREP */}
       <div className="anim" style={{animationDelay:"80ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12}}>
