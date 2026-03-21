@@ -1308,8 +1308,20 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
             <button key={qr} onClick={()=>setQ(qr)} style={{flex:1,padding:"6px 0",borderRadius:8,fontSize:11,fontWeight:600,cursor:"pointer",border:`1px solid ${q===qr?"rgba(79,142,247,.25)":T.b2}`,background:q===qr?"rgba(79,142,247,.12)":T.s2,color:q===qr?T.blue:T.t3,fontFamily:"inherit"}}>{qr==="FY"?"FY":`Q${qr}`}</button>
           ))}
         </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}>
+          <Stat l="PY" v={$$(pyVal)} c={T.t2}/>
+          <Stat l="CY" v={$$(cyVal)} c={T.blue}/>
+          <Stat l="Gap" v={gap<=0?`+${$$(Math.abs(gap))}`:$$(gap)} c={gap<=0?T.green:T.red}/>
+          <Stat l="Ret" v={pc(ret)} c={ret>.3?T.green:ret>.15?T.amber:T.red}/>
+        </div>
+        {qk!=="1"&&<div style={{marginTop:6,fontSize:10,color:T.t4,textAlign:"center"}}>Showing {qk==="FY"?"Full Year":`Q${qk}`}. Manual adjustments apply to Q1.</div>}
+        {myAdj.length>0&&qk==="1"&&<div style={{marginTop:8,borderRadius:8,background:"rgba(52,211,153,.06)",border:"1px solid rgba(52,211,153,.12)",padding:"8px 10px"}}>
+          <div style={{fontSize:10,fontWeight:600,color:T.green,marginBottom:4}}>Adjustments ({myAdj.length})</div>
+          {myAdj.map(a=><div key={a.id} style={{fontSize:10,color:T.t3,display:"flex",justifyContent:"space-between",marginBottom:2}}><span>{a.desc||"Manual"}</span><span className="m" style={{color:T.green,fontWeight:600}}>+{$f(a.credited)}</span></div>)}
+        </div>}
+      </div>
 
-      {/* MOVE TO GROUP MODAL */}
+      {/* MOVE TO GROUP MODAL — outside account header card */}
       {showMoveModal&&<div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.7)",backdropFilter:"blur(8px)",display:"flex",flexDirection:"column",justifyContent:"flex-end"}} onClick={()=>{setShowMoveModal(false);setMoveSearch("");}}>
         <div style={{background:T.s1,borderRadius:"20px 20px 0 0",padding:20,maxHeight:"70vh",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
@@ -1336,18 +1348,6 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
           </div>
         </div>
       </div>}
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}>
-          <Stat l="PY" v={$$(pyVal)} c={T.t2}/>
-          <Stat l="CY" v={$$(cyVal)} c={T.blue}/>
-          <Stat l="Gap" v={gap<=0?`+${$$(Math.abs(gap))}`:$$(gap)} c={gap<=0?T.green:T.red}/>
-          <Stat l="Ret" v={pc(ret)} c={ret>.3?T.green:ret>.15?T.amber:T.red}/>
-        </div>
-        {qk!=="1"&&<div style={{marginTop:6,fontSize:10,color:T.t4,textAlign:"center"}}>Showing {qk==="FY"?"Full Year":`Q${qk}`}. Manual adjustments apply to Q1.</div>}
-        {myAdj.length>0&&qk==="1"&&<div style={{marginTop:8,borderRadius:8,background:"rgba(52,211,153,.06)",border:"1px solid rgba(52,211,153,.12)",padding:"8px 10px"}}>
-          <div style={{fontSize:10,fontWeight:600,color:T.green,marginBottom:4}}>Adjustments ({myAdj.length})</div>
-          {myAdj.map(a=><div key={a.id} style={{fontSize:10,color:T.t3,display:"flex",justifyContent:"space-between",marginBottom:2}}><span>{a.desc||"Manual"}</span><span className="m" style={{color:T.green,fontWeight:600}}>+{$f(a.credited)}</span></div>)}
-        </div>}
-      </div>
 
       {/* BADGER INTEL CARD */}
       {badger&&(badger.doctor||badger.orders||badger.dealerRep||badger.notes||badger.visitNotes||badger.feel)&&<div className="anim" style={{animationDelay:"50ms",background:T.s1,border:`1px solid rgba(34,211,238,.15)`,borderRadius:16,padding:16,marginBottom:12}}>
