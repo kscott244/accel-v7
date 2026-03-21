@@ -671,6 +671,91 @@ export default function App() {
 // ─── TODAY TAB ────────────────────────────────────────────────────
 function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGroup}) {
   const [search, setSearch] = useState("");
+  const [odDone, setOdDone] = useState<Record<string,{outcome:string,amt:number}>>(() => {
+    try { return JSON.parse(localStorage.getItem("overdrive_done") || "{}"); } catch { return {}; }
+  });
+
+  const saveDone = (id: string, outcome: string, amt: number) => {
+    const updated = {...odDone, [id]: {outcome, amt}};
+    setOdDone(updated);
+    try { localStorage.setItem("overdrive_done", JSON.stringify(updated)); } catch {}
+  };
+
+  const clearDone = (id: string) => {
+    const updated = {...odDone};
+    delete updated[id];
+    setOdDone(updated);
+    try { localStorage.setItem("overdrive_done", JSON.stringify(updated)); } catch {}
+  };
+
+  // ── OVERDRIVE ENGINE ──
+  const overdrive = useMemo(() => {
+    if (!scored.length) return null;
+
+    // Track 1: Already buying CY but below PY — high probability uplift
+    const uplift = scored
+      .filter(a => (a.cyQ?.["1"]||0) > 0 && (a.pyQ?.["1"]||0) > 0 && (a.pyQ?.["1"]||0) > (a.cyQ?.["1"]||0))
+      .map(a => {
+        const py = a.pyQ?.["1"]||0;
+        const cy = a.cyQ?.["1"]||0;
+        const gap = py - cy;
+        const retPct = cy/py;
+        // Ask = close the gap, min $200 max full gap
+        const ask = Math.min(gap, Math.max(200, gap * 0.8));
+        // Probability: higher if retention is already strong
+        const prob = retPct > 0.7 ? 0.75 : retPct > 0.4 ? 0.60 : 0.45;
+        return {...a, gap, ask, prob, track: "uplift", expectedVal: ask * prob};
+      })
+      .sort((a,b) => b.expectedVal - a.expectedVal)
+      .slice(0, 5);
+
+    // Track 2: Bought PY, completely dark this year — reactivation calls
+    const dark = scored
+      .filter(a => (a.cyQ?.["1"]||0) === 0 && (a.pyQ?.["1"]||0) > 300)
+      .map(a => {
+        const py = a.pyQ?.["1"]||0;
+        const ask = py * 0.6; // ask for 60% of PY
+        const prob = py > 2000 ? 0.35 : py > 800 ? 0.45 : 0.55;
+        return {...a, gap: py, ask, prob, track: "dark", expectedVal: ask * prob};
+      })
+      .sort((a,b) => b.expectedVal - a.expectedVal)
+      .slice(0, 8);
+
+    // Visit list: top uplift accounts (in-person has highest ROI for these)
+    const visitList = uplift.slice(0, 5);
+
+    // Call list: dark accounts + remaining uplift (phone first)
+    const callList = [...dark.slice(0,5), ...uplift.slice(5)].slice(0,8);
+
+    // Dealer actions: group by dealer, find top gaps per dealer
+    const dealerGroups: Record<string,any[]> = {};
+    [...uplift, ...dark].forEach(a => {
+      const d = a.dealer || "Unknown";
+      if (d !== "Unknown") {
+        dealerGroups[d] = dealerGroups[d] || [];
+        dealerGroups[d].push(a);
+      }
+    });
+    const dealerActions = Object.entries(dealerGroups)
+      .map(([dealer, accts]) => ({
+        dealer,
+        accts: accts.slice(0,3),
+        totalAsk: accts.slice(0,3).reduce((s,a) => s + (a.ask||0), 0),
+      }))
+      .sort((a,b) => b.totalAsk - a.totalAsk)
+      .slice(0, 3);
+
+    // Projected outcomes
+    const allTargets = [...uplift, ...dark];
+    const doneTotal = Object.values(odDone).reduce((s,v) => s + (v.amt||0), 0);
+    const pendingTargets = allTargets.filter(a => !odDone[a.id]);
+    const conservative = doneTotal + pendingTargets.reduce((s,a) => s + a.ask * Math.min(a.prob * 0.7, 1), 0);
+    const base = doneTotal + pendingTargets.reduce((s,a) => s + a.ask * a.prob, 0);
+    const aggressive = doneTotal + pendingTargets.reduce((s,a) => s + a.ask * Math.min(a.prob * 1.3, 1), 0);
+
+    return { visitList, callList, dealerActions, conservative, base, aggressive, doneTotal,
+             totalTargets: allTargets.length };
+  }, [scored, odDone]);
 
   // ── Section 1: Q1 status
   const ahead = q1Att >= 1.0;
@@ -818,6 +903,125 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
         </div>
       </div>
     </div>
+
+    {/* ── OVERDRIVE ── */}
+    {overdrive&&DAYS_LEFT>0&&q1Gap>0&&<div className="anim" style={{marginBottom:16}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+        <div style={{display:"flex",alignItems:"center",gap:7}}>
+          <span style={{fontSize:14}}>⚡</span>
+          <span style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.amber}}>Overdrive</span>
+          <span style={{fontSize:9,color:T.t4,background:T.s2,borderRadius:999,padding:"2px 8px"}}>{DAYS_LEFT} days · {overdrive.totalTargets} targets</span>
+        </div>
+        {overdrive.doneTotal>0&&<span style={{fontSize:10,fontWeight:700,color:T.green}}>+{$f(overdrive.doneTotal)} logged</span>}
+      </div>
+
+      {/* Projected landing */}
+      <div style={{background:`linear-gradient(135deg,${T.s1},rgba(251,191,36,.05))`,border:"1px solid rgba(251,191,36,.15)",borderRadius:14,padding:12,marginBottom:10}}>
+        <div style={{fontSize:9,textTransform:"uppercase",color:T.t4,letterSpacing:"1px",marginBottom:8}}>Projected Q1 Landing from Overdrive</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+          {[
+            {label:"Conservative",val:q1CY+overdrive.conservative,color:T.amber},
+            {label:"Base",val:q1CY+overdrive.base,color:T.blue},
+            {label:"Best Case",val:q1CY+overdrive.aggressive,color:T.green},
+          ].map(s=>(
+            <div key={s.label} style={{borderRadius:8,background:T.s2,padding:"8px 6px",textAlign:"center"}}>
+              <div style={{fontSize:8,color:T.t4,marginBottom:3}}>{s.label}</div>
+              <div className="m" style={{fontSize:11,fontWeight:800,color:s.val>=Q1_TARGET?T.green:s.color}}>{$$(s.val)}</div>
+              <div style={{fontSize:8,color:s.val>=Q1_TARGET?T.green:T.t4,marginTop:1}}>{s.val>=Q1_TARGET?"✓ hits target":`${$$(Q1_TARGET-s.val)} short`}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Visit Today */}
+      {overdrive.visitList.length>0&&<div style={{marginBottom:10}}>
+        <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan,marginBottom:6,display:"flex",alignItems:"center",gap:5}}>
+          <span>🚗</span> Visit Today — {overdrive.visitList.length} stops
+        </div>
+        {overdrive.visitList.map((a,i)=>{
+          const done = odDone[a.id];
+          return <div key={a.id} className="anim" style={{animationDelay:`${i*20}ms`,marginBottom:6}}>
+            <button onClick={()=>goAcct(a)} style={{width:"100%",textAlign:"left",background:done?"rgba(52,211,153,.06)":T.s1,
+              border:`1px solid ${done?"rgba(52,211,153,.2)":"rgba(34,211,238,.15)"}`,borderRadius:12,padding:"10px 12px",cursor:"pointer",
+              display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
+                  textDecoration:done?"line-through":"none",color:done?T.t3:T.t1}}>{a.name}</div>
+                <div style={{fontSize:10,color:T.t3,marginTop:1}}>{a.city}, {a.st} · Ask for <span style={{color:T.amber,fontWeight:700}}>{$f(a.ask)}</span> · {Math.round(a.prob*100)}% likely</div>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0,marginLeft:8}}>
+                {done
+                  ? <span style={{fontSize:10,fontWeight:700,color:T.green}}>{$f(done.amt)} ✓</span>
+                  : <div style={{display:"flex",gap:4}}>
+                      <button onClick={e=>{e.stopPropagation();saveDone(a.id,"won",a.ask);}} style={{background:"rgba(52,211,153,.12)",border:"1px solid rgba(52,211,153,.25)",borderRadius:6,padding:"3px 8px",fontSize:9,fontWeight:700,color:T.green,cursor:"pointer",fontFamily:"inherit"}}>✓ Win</button>
+                      <button onClick={e=>{e.stopPropagation();saveDone(a.id,"partial",a.ask*0.5);}} style={{background:"rgba(251,191,36,.08)",border:"1px solid rgba(251,191,36,.2)",borderRadius:6,padding:"3px 8px",fontSize:9,fontWeight:700,color:T.amber,cursor:"pointer",fontFamily:"inherit"}}>½</button>
+                      <button onClick={e=>{e.stopPropagation();saveDone(a.id,"lost",0);}} style={{background:"rgba(248,113,113,.08)",border:"1px solid rgba(248,113,113,.2)",borderRadius:6,padding:"3px 8px",fontSize:9,fontWeight:700,color:T.red,cursor:"pointer",fontFamily:"inherit"}}>✗</button>
+                    </div>
+                }
+                {done&&<button onClick={e=>{e.stopPropagation();clearDone(a.id);}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:12}}>↩</button>}
+              </div>
+            </button>
+          </div>;
+        })}
+      </div>}
+
+      {/* Call List */}
+      {overdrive.callList.length>0&&<div style={{marginBottom:10}}>
+        <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.purple,marginBottom:6,display:"flex",alignItems:"center",gap:5}}>
+          <span>📞</span> Call List — {overdrive.callList.length} accounts
+        </div>
+        {overdrive.callList.map((a,i)=>{
+          const done = odDone[a.id];
+          const isDark = a.track === "dark";
+          return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
+            style={{animationDelay:`${i*15}ms`,width:"100%",textAlign:"left",background:done?"rgba(52,211,153,.04)":T.s1,
+              border:`1px solid ${done?"rgba(52,211,153,.15)":isDark?"rgba(248,113,113,.15)":"rgba(167,139,250,.15)"}`,
+              borderRadius:12,padding:"9px 12px",marginBottom:5,cursor:"pointer",
+              display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
+                textDecoration:done?"line-through":"none",color:done?T.t3:T.t1}}>{a.name}</div>
+              <div style={{fontSize:10,color:T.t3,marginTop:1}}>
+                {isDark
+                  ? <span style={{color:T.red}}>⚠ Gone dark — </span>
+                  : <span style={{color:T.purple}}>Partial buyer — </span>
+                }
+                <span style={{color:T.amber,fontWeight:700}}>{$f(a.ask)}</span> ask · {Math.round(a.prob*100)}% likely
+              </div>
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:5,flexShrink:0,marginLeft:8}}>
+              {done
+                ? <span style={{fontSize:10,fontWeight:700,color:T.green}}>{$f(done.amt)} ✓</span>
+                : <>
+                    <button onClick={e=>{e.stopPropagation();saveDone(a.id,"won",a.ask);}} style={{background:"rgba(52,211,153,.12)",border:"1px solid rgba(52,211,153,.25)",borderRadius:6,padding:"3px 8px",fontSize:9,fontWeight:700,color:T.green,cursor:"pointer",fontFamily:"inherit"}}>✓</button>
+                    <button onClick={e=>{e.stopPropagation();saveDone(a.id,"lost",0);}} style={{background:"rgba(248,113,113,.08)",border:"1px solid rgba(248,113,113,.2)",borderRadius:6,padding:"3px 8px",fontSize:9,fontWeight:700,color:T.red,cursor:"pointer",fontFamily:"inherit"}}>✗</button>
+                  </>
+              }
+              {done&&<button onClick={e=>{e.stopPropagation();clearDone(a.id);}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:12}}>↩</button>}
+              <Chev/>
+            </div>
+          </button>;
+        })}
+      </div>}
+
+      {/* Dealer Actions */}
+      {overdrive.dealerActions.length>0&&<div>
+        <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue,marginBottom:6,display:"flex",alignItems:"center",gap:5}}>
+          <span>🤝</span> Dealer Push
+        </div>
+        {overdrive.dealerActions.map((d,i)=>(
+          <div key={d.dealer} className="anim" style={{animationDelay:`${i*20}ms`,background:T.s1,
+            border:"1px solid rgba(79,142,247,.15)",borderRadius:12,padding:"10px 12px",marginBottom:6}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+              <span style={{fontSize:11,fontWeight:700,color:T.blue}}>{d.dealer}</span>
+              <span style={{fontSize:10,color:T.amber,fontWeight:700}}>{$f(d.totalAsk)} potential</span>
+            </div>
+            <div style={{fontSize:10,color:T.t3}}>Ask your {d.dealer} DSM to push reorder on:</div>
+            {d.accts.map(a=><div key={a.id} style={{fontSize:10,color:T.t2,marginTop:3,paddingLeft:8}}>· {a.name} ({a.city}) — {$f(a.ask)}</div>)}
+          </div>
+        ))}
+      </div>}
+    </div>}
 
     {/* ── SECTION 2: WINS & MOMENTUM ── */}
     <div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(52,211,153,.04))`,border:"1px solid rgba(52,211,153,.1)",borderRadius:16,padding:14,marginBottom:16}}>
