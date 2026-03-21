@@ -2,6 +2,8 @@
 // @ts-nocheck
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+
+// Dealer data — loads if available, gracefully degrades if not
 let DEALER_LOOKUP: Record<string, any> = {};
 let DEALERS: Record<string, string> = {};
 try { DEALER_LOOKUP = require("@/data/dealer-lookup").DEALER_LOOKUP; } catch(e) {}
@@ -647,15 +649,27 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,mode,setMode
 // ─── GROUPS TAB ──────────────────────────────────────────────────
 function GroupsTab({groups,goGroup,filt,setFilt,search,setSearch}) {
   const fs=["All","Schein","Patterson","Benco","Darby","Top 100","Diamond","Platinum","Gold","DSO","Urgent"];
+  const isDealerFilt=["Schein","Patterson","Benco","Darby"].includes(filt);
   const list=useMemo(()=>{
     let l=[...groups];
     if(search){const q=search.toLowerCase();l=l.filter(g=>fixGroupName(g).toLowerCase().includes(q)||g.name.toLowerCase().includes(q)||g.children?.some(c=>c.name.toLowerCase().includes(q)));}
     if(filt==="Urgent")l=l.filter(g=>{const gap=(g.pyQ?.["1"]||0)-(g.cyQ?.["1"]||0);const ret=(g.pyQ?.["1"]||0)>0?(g.cyQ?.["1"]||0)/(g.pyQ?.["1"]||0):1;return gap>2000&&ret<0.3;});
     else if(filt==="Top 100")l=l.filter(g=>g.tier==="Top 100"||g.tier?.startsWith("Top 100"));
     else if(filt==="DSO")l=l.filter(g=>g.locs>=3||g.class2==="DSO"||g.class2==="EMERGING DSO");
-    else if(["Schein","Patterson","Benco","Darby"].includes(filt))l=l.filter(g=>g.children?.some(c=>c.dealer===filt));
+    else if(isDealerFilt)l=l.filter(g=>g.children?.some(c=>c.dealer===filt));
     else if(filt!=="All")l=l.filter(g=>g.tier===filt||g.tier?.includes(filt));
-    l.sort((a,b)=>((b.pyQ?.["1"]||0)-(b.cyQ?.["1"]||0))-((a.pyQ?.["1"]||0)-(a.cyQ?.["1"]||0)));
+    // When dealer filtered, sort by dealer-specific gap
+    if(isDealerFilt){
+      l.sort((a,b)=>{
+        const aKids=a.children?.filter(c=>c.dealer===filt)||[];
+        const bKids=b.children?.filter(c=>c.dealer===filt)||[];
+        const aGap=(aKids.reduce((s,c)=>s+(c.pyQ?.["1"]||0),0))-(aKids.reduce((s,c)=>s+(c.cyQ?.["1"]||0),0));
+        const bGap=(bKids.reduce((s,c)=>s+(c.pyQ?.["1"]||0),0))-(bKids.reduce((s,c)=>s+(c.cyQ?.["1"]||0),0));
+        return bGap-aGap;
+      });
+    } else {
+      l.sort((a,b)=>((b.pyQ?.["1"]||0)-(b.cyQ?.["1"]||0))-((a.pyQ?.["1"]||0)-(a.cyQ?.["1"]||0)));
+    }
     return l;
   },[groups,filt,search]);
 
@@ -667,15 +681,20 @@ function GroupsTab({groups,goGroup,filt,setFilt,search,setSearch}) {
       <svg style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",width:14,height:14,color:T.t4}} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
       <input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search groups…" style={{width:"100%",height:40,borderRadius:10,border:`1px solid ${T.b1}`,background:T.s1,color:T.t1,fontSize:13,paddingLeft:36,paddingRight:12,outline:"none",fontFamily:"inherit"}}/>
     </div>
-    <div style={{marginBottom:8,fontSize:10,color:T.t4}}>{list.length} groups</div>
+    <div style={{marginBottom:8,fontSize:10,color:T.t4}}>{list.length} groups{isDealerFilt?` with ${filt} accounts`:""}</div>
     {list.slice(0,50).map((g,i)=>{
-      const py1=g.pyQ?.["1"]||0;const cy1=g.cyQ?.["1"]||0;const gap=py1-cy1;const ret=py1>0?Math.round(cy1/py1*100):0;
+      // When dealer filter active, show only that dealer's spend
+      const dealerKids=isDealerFilt?g.children?.filter(c=>c.dealer===filt)||[]:null;
+      const py1=isDealerFilt?dealerKids.reduce((s,c)=>s+(c.pyQ?.["1"]||0),0):(g.pyQ?.["1"]||0);
+      const cy1=isDealerFilt?dealerKids.reduce((s,c)=>s+(c.cyQ?.["1"]||0),0):(g.cyQ?.["1"]||0);
+      const gap=py1-cy1;const ret=py1>0?Math.round(cy1/py1*100):0;
       const isUrgent=gap>5000&&ret<20;
+      const locCount=isDealerFilt?dealerKids.length:g.locs;
       return <button key={g.id} className="anim" onClick={()=>goGroup(g)} style={{animationDelay:`${i*20}ms`,width:"100%",textAlign:"left",background:T.s1,border:`1px solid ${isUrgent?"rgba(248,113,113,.15)":T.b1}`,borderRadius:14,padding:"14px 16px",marginBottom:8,cursor:"pointer"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontSize:13,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fixGroupName(g)}</div>
-            <div style={{fontSize:10,color:T.t3,marginTop:2}}>{g.locs} loc{g.locs>1?"s":""} · {getTierLabel(g.tier)}</div>
+            <div style={{fontSize:10,color:T.t3,marginTop:2}}>{locCount} loc{locCount>1?"s":""} · {getTierLabel(g.tier)}{isDealerFilt?<span style={{color:T.cyan}}> · {filt} only</span>:""}</div>
           </div>
           {isUrgent&&<span style={{flexShrink:0,borderRadius:999,background:"rgba(248,113,113,.09)",border:"1px solid rgba(248,113,113,.22)",padding:"2px 8px",fontSize:9,fontWeight:700,color:T.red,marginRight:4}}>Urgent</span>}
           <Chev/>
@@ -724,7 +743,7 @@ function GroupDetail({group,goMain,goAcct}) {
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
             <div style={{fontSize:12,fontWeight:600,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.name}</div><Chev/>
           </div>
-          <div style={{fontSize:10,color:T.t3,marginBottom:6}}>{c.city}, {c.st} · Last {c.last}d ago</div>
+          <div style={{fontSize:10,color:T.t3,marginBottom:6}}>{c.city}, {c.st}{c.dealer&&c.dealer!=="Unknown"?<span style={{color:T.cyan}}> · {c.dealer}</span>:""} · Last {c.last}d ago</div>
           <div style={{display:"flex",gap:12}}>
             <Pill l="PY" v={$$(cPy)} c={T.t2}/><Pill l="CY" v={$$(cCy)} c={T.blue}/><Pill l="Gap" v={$$(cGap)} c={T.red}/><div style={{marginLeft:"auto"}}><Pill l="Ret" v={cRet+"%"} c={T.t3}/></div>
           </div>
