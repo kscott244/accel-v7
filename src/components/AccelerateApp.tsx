@@ -512,7 +512,7 @@ export default function App() {
       {/* TAB CONTENT */}
       {!view && tab==="today" && <TodayTab scored={scored} goAcct={a=>setView({type:"acct",data:a})} q1CY={q1CY} q1Gap={q1Gap} q1Att={q1Att} adjCount={adjs.length} totalAdj={totalAdjQ1} mode={todayMode} setMode={setTodayMode} groups={groups||[]} goGroup={g=>setView({type:"group",data:g})}/>}
       {!view && tab==="groups" && <GroupsTab groups={groups||[]} goGroup={g=>setView({type:"group",data:g})} filt={gFilt} setFilt={setGFilt} search={gSearch} setSearch={setGSearch}/>}
-      {!view && tab==="calc" && <CalcTab groups={groups||[]} q1CY={q1CY} q1Gap={q1Gap} q1Att={q1Att}/>}
+      {!view && tab==="calc" && <CalcTab/>}
       {!view && tab==="est" && <EstTab pct={estPct} setPct={setEstPct} q1CY={q1CY} groups={groups||[]}/>}
       {view?.type==="group" && <GroupDetail group={view.data} goMain={()=>setView(null)} goAcct={a=>setView({type:"acct",data:{...a,gName:fixGroupName(view.data),gId:view.data.id,gTier:view.data.tier},from:view.data})}/>}
       {view?.type==="acct" && <AcctDetail acct={view.data} goBack={()=>view?.from?setView({type:"group",data:view.from}):setView(null)} adjs={adjs} setAdjs={setAdjs} groups={groups||[]} goGroup={g=>setView({type:"group",data:g})}/>}
@@ -520,7 +520,7 @@ export default function App() {
       {/* NAV BAR */}
       <nav style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:960,zIndex:50,borderTop:`1px solid ${T.b1}`,background:"rgba(10,10,15,.92)",backdropFilter:"blur(32px)"}}>
         <div style={{display:"flex",height:56,alignItems:"center",justifyContent:"space-around",padding:"0 4px"}}>
-          {[{k:"today",l:"Today",I:IconBolt},{k:"groups",l:"Groups",I:IconGroup},{k:"calc",l:"Dashboard",I:IconCalc},{k:"est",l:"Estimator",I:IconChart}].map(t=>(
+          {[{k:"today",l:"Today",I:IconBolt},{k:"groups",l:"Groups",I:IconGroup},{k:"calc",l:"Calc",I:IconCalc},{k:"est",l:"Estimator",I:IconChart}].map(t=>(
             <button key={t.k} onClick={()=>{setTab(t.k);setView(null)}} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 8px",cursor:"pointer",color:tab===t.k&&!view?T.blue:T.t4}}>
               <t.I c={tab===t.k&&!view?T.blue:T.t4}/>
               <span style={{fontSize:9,fontWeight:600,letterSpacing:".5px"}}>{t.l}</span>
@@ -534,135 +534,91 @@ export default function App() {
 
 // ─── TODAY TAB ────────────────────────────────────────────────────
 function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,mode,setMode,groups,goGroup}) {
-  const totalPY=groups.reduce((s,g)=>s+(g.pyQ?.["1"]||0),0);
-  const totalCY=groups.reduce((s,g)=>s+(g.cyQ?.["1"]||0),0);
-  const totalLocs=groups.reduce((s,g)=>s+g.locs,0);
-  const activeAccts=groups.reduce((s,g)=>s+g.children.filter(c=>(c.cyQ?.["1"]||0)>0).length,0);
-  const topGapGroups=[...groups].sort((a,b)=>((b.pyQ?.["1"]||0)-(b.cyQ?.["1"]||0))-((a.pyQ?.["1"]||0)-(a.cyQ?.["1"]||0))).slice(0,15);
-  const wins=useMemo(()=>[...scored].filter(a=>(a.cyQ?.["1"]||0)>(a.pyQ?.["1"]||0)&&(a.pyQ?.["1"]||0)>0).sort((a,b)=>((b.cyQ?.["1"]||0)-(b.pyQ?.["1"]||0))-((a.cyQ?.["1"]||0)-(a.pyQ?.["1"]||0))).slice(0,5),[scored]);
-  const protected_=useMemo(()=>[...scored].filter(a=>isAccelTier(a.gTier||a.tier)&&a.ret>0.7&&(a.cyQ?.["1"]||0)>0).sort((a,b)=>(b.cyQ?.["1"]||0)-(a.cyQ?.["1"]||0)).slice(0,4),[scored]);
-  const hot=scored.filter(a=>a.score>=50);
-  const followUp=scored.filter(a=>a.score>=20&&a.score<50);
-  const status=q1Att>=1?"ahead":q1Att>=0.85?"on-track":"behind";
-  const statusColor=status==="ahead"?T.green:status==="on-track"?T.blue:T.red;
-  const statusLabel=status==="ahead"?"Ahead of Pace":status==="on-track"?"On Track":"Behind Pace";
-  const CallCard=({a,i})=>(
-    <button key={a.id} className="anim" onClick={()=>goAcct(a)} style={{animationDelay:`${i*30}ms`,width:"100%",textAlign:"left",background:T.s1,border:`1px solid ${a.score>=50?"rgba(248,113,113,.15)":T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:8,cursor:"pointer"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
-        <div style={{flex:1,minWidth:0}}>
-          <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-            <span className="m" style={{fontSize:10,fontWeight:700,color:a.score>=60?T.red:a.score>=40?T.amber:T.t3,background:a.score>=60?"rgba(248,113,113,.08)":a.score>=40?"rgba(251,191,36,.08)":T.s2,borderRadius:4,padding:"2px 6px"}}>#{i+1} {a.score}pt</span>
-            {a.score>=50&&<span style={{fontSize:8,color:T.red,fontWeight:700,background:"rgba(248,113,113,.08)",borderRadius:4,padding:"1px 4px"}}>HOT</span>}
-            {a.adjCount>0&&<span style={{fontSize:9,color:T.green,background:"rgba(52,211,153,.08)",borderRadius:4,padding:"2px 5px"}}>+adj</span>}
-          </div>
-          <div style={{fontSize:13,fontWeight:600,marginTop:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
-          <div style={{fontSize:10,color:T.t3,marginTop:2}}>{a.city}, {a.st} · {isAccelTier(a.gTier||a.tier)?<span style={{color:T.amber}}>{a.gTier||a.tier}</span>:(a.gTier||a.tier)==="Top 100"?"Top 100":"Private"}</div>
-        </div>
-        <div style={{textAlign:"right",flexShrink:0,marginLeft:12}}>
-          <div className="m" style={{fontSize:12,fontWeight:700,color:T.red}}>{a.gap>0?`-${$$(a.gap)}`:$$(a.gap)}</div>
-          <div className="m" style={{fontSize:10,color:T.t4}}>{pc(a.ret)} ret</div>
-        </div>
-      </div>
-      <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
-        {a.reasons.slice(0,3).map((r,j)=><span key={j} style={{fontSize:9,color:T.t3,background:T.s2,borderRadius:4,padding:"2px 6px",border:`1px solid ${T.b2}`}}>{r}</span>)}
-      </div>
-    </button>
-  );
+  // Territory summary stats
+  const totalPY = groups.reduce((s,g) => s + (g.pyQ?.["1"]||0), 0);
+  const totalCY = groups.reduce((s,g) => s + (g.cyQ?.["1"]||0), 0);
+  const totalLocs = groups.reduce((s,g) => s + g.locs, 0);
+  const activeAccts = groups.reduce((s,g) => s + g.children.filter(c => (c.cyQ?.["1"]||0) > 0).length, 0);
+
+  // Top gap groups for territory view
+  const topGapGroups = [...groups].sort((a,b) => ((b.pyQ?.["1"]||0)-(b.cyQ?.["1"]||0)) - ((a.pyQ?.["1"]||0)-(a.cyQ?.["1"]||0))).slice(0,15);
+
   return <div style={{padding:"16px 16px 80px"}}>
+    {/* Q1 HERO */}
     <div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(79,142,247,.06))`,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12,boxShadow:"0 4px 24px rgba(0,0,0,.4)"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+      <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
         <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color:T.t3}}>Q1 Progress</span>
-        <span style={{fontSize:10,fontWeight:700,background:`rgba(${status==="ahead"?"52,211,153":status==="on-track"?"79,142,247":"248,113,113"},.12)`,border:`1px solid rgba(${status==="ahead"?"52,211,153":status==="on-track"?"79,142,247":"248,113,113"},.25)`,borderRadius:999,padding:"2px 10px",color:statusColor}}>{statusLabel}</span>
+        <span className="m" style={{fontSize:11,fontWeight:700,color:T.amber}}>{DAYS_LEFT}d left</span>
       </div>
       <div style={{display:"flex",alignItems:"baseline",gap:12,marginBottom:6}}>
-        <span className="m" style={{fontSize:28,fontWeight:800,color:statusColor}}>{pc(q1Att)}</span>
+        <span className="m" style={{fontSize:28,fontWeight:800}}>{pc(q1Att)}</span>
         <span style={{fontSize:12,color:T.t3}}>{$$(q1CY)} / {$$(Q1_TARGET)}</span>
       </div>
-      <Bar pct={q1Att*100} color={statusColor}/>
+      <Bar pct={q1Att*100}/>
       {adjCount>0&&<div style={{marginTop:8,padding:"6px 10px",borderRadius:8,background:"rgba(52,211,153,.06)",border:"1px solid rgba(52,211,153,.12)",fontSize:10,color:T.green}}>+{adjCount} adjustment{adjCount>1?"s":""}: +{$f(totalAdj)}</div>}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginTop:12}}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:12}}>
         <div style={{borderRadius:8,background:"rgba(248,113,113,.06)",border:"1px solid rgba(248,113,113,.12)",padding:10}}>
           <div style={{fontSize:9,color:T.t3}}>Gap to close</div>
-          <div className="m" style={{fontSize:14,fontWeight:700,color:T.red}}>{$$(q1Gap)}</div>
+          <div className="m" style={{fontSize:16,fontWeight:700,color:T.red}}>{$$(q1Gap)}</div>
         </div>
         <div style={{borderRadius:8,background:"rgba(79,142,247,.06)",border:"1px solid rgba(79,142,247,.12)",padding:10}}>
-          <div style={{fontSize:9,color:T.t3}}>Need / day</div>
-          <div className="m" style={{fontSize:14,fontWeight:700,color:T.blue}}>{$f(DAYS_LEFT>0?q1Gap/DAYS_LEFT:0)}</div>
-        </div>
-        <div style={{borderRadius:8,background:"rgba(251,191,36,.06)",border:"1px solid rgba(251,191,36,.12)",padding:10}}>
-          <div style={{fontSize:9,color:T.t3}}>Days left</div>
-          <div className="m" style={{fontSize:14,fontWeight:700,color:T.amber}}>{DAYS_LEFT}d</div>
+          <div style={{fontSize:9,color:T.t3}}>$/day needed</div>
+          <div className="m" style={{fontSize:16,fontWeight:700,color:T.blue}}>{$f(DAYS_LEFT>0?q1Gap/DAYS_LEFT:0)}</div>
         </div>
       </div>
     </div>
-    <div style={{display:"flex",background:T.s2,borderRadius:10,padding:3,marginBottom:16,border:`1px solid ${T.b1}`}}>
+
+    {/* TODAY / TERRITORY TOGGLE */}
+    <div style={{display:"flex",background:T.s2,borderRadius:10,padding:3,marginBottom:12,border:`1px solid ${T.b1}`}}>
       <button onClick={()=>setMode("today")} style={{flex:1,padding:"8px 0",borderRadius:8,fontSize:12,fontWeight:700,cursor:"pointer",border:"none",background:mode==="today"?"rgba(79,142,247,.15)":"transparent",color:mode==="today"?T.blue:T.t4,fontFamily:"inherit",letterSpacing:".3px"}}>Today</button>
       <button onClick={()=>setMode("territory")} style={{flex:1,padding:"8px 0",borderRadius:8,fontSize:12,fontWeight:700,cursor:"pointer",border:"none",background:mode==="territory"?"rgba(79,142,247,.15)":"transparent",color:mode==="territory"?T.blue:T.t4,fontFamily:"inherit",letterSpacing:".3px"}}>Territory</button>
     </div>
-    {mode==="today"&&<>
-      {(wins.length>0||protected_.length>0)&&<div className="anim" style={{animationDelay:"60ms",background:T.s1,border:"1px solid rgba(52,211,153,.15)",borderRadius:16,padding:14,marginBottom:16}}>
-        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T.green} strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.green}}>Wins &amp; Momentum</span>
-        </div>
-        {wins.length>0&&<>
-          <div style={{fontSize:9,fontWeight:600,color:T.t4,textTransform:"uppercase",letterSpacing:".8px",marginBottom:6}}>Growing vs Last Year</div>
-          {wins.map((a,i)=>{
-            const growth=(a.cyQ?.["1"]||0)-(a.pyQ?.["1"]||0);
-            return <button key={a.id} onClick={()=>goAcct(a)} style={{width:"100%",textAlign:"left",display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",borderRadius:10,background:"rgba(52,211,153,.04)",border:"1px solid rgba(52,211,153,.1)",marginBottom:5,cursor:"pointer"}}>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
-                <div style={{fontSize:9,color:T.t4,marginTop:1}}>{a.city}, {a.st}</div>
+
+    {mode==="today" && <>
+      {/* CALL LIST */}
+      <div style={{marginBottom:8,display:"flex",alignItems:"center",gap:8}}>
+        <div style={{width:8,height:8,borderRadius:4,background:T.blue,animation:"pulse 2s infinite"}}/>
+        <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color:T.blue}}>Action List ({scored.filter(a=>a.score>0).length})</span>
+      </div>
+      <div style={{fontSize:10,color:T.t4,marginBottom:12}}>Ranked by gap · retention · urgency · tier</div>
+      <div className="today-grid">
+      {scored.filter(a=>a.score>0).slice(0,15).map((a,i)=>(
+        <button key={a.id} className="anim" onClick={()=>goAcct(a)} style={{animationDelay:`${i*30}ms`,width:"100%",textAlign:"left",background:T.s1,border:`1px solid ${a.score>=50?"rgba(248,113,113,.15)":T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:8,cursor:"pointer"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                <span className="m" style={{fontSize:10,fontWeight:700,color:a.score>=60?T.red:a.score>=40?T.amber:T.t3,background:a.score>=60?"rgba(248,113,113,.08)":a.score>=40?"rgba(251,191,36,.08)":T.s2,borderRadius:4,padding:"2px 6px"}}>#{i+1} {a.score}pt</span>
+                {a.score>=50&&<span style={{fontSize:8,color:T.red,fontWeight:700,background:"rgba(248,113,113,.08)",borderRadius:4,padding:"1px 4px"}}>HOT</span>}
+                {a.adjCount>0&&<span style={{fontSize:9,color:T.green,background:"rgba(52,211,153,.08)",borderRadius:4,padding:"2px 5px"}}>+adj</span>}
               </div>
-              <div style={{textAlign:"right",flexShrink:0,marginLeft:10}}>
-                <div className="m" style={{fontSize:11,fontWeight:700,color:T.green}}>+{$$(growth)}</div>
-                <div className="m" style={{fontSize:9,color:T.t4}}>{Math.round((a.cyQ?.["1"]||0)/(a.pyQ?.["1"]||1)*100)}% ret</div>
-              </div>
-            </button>;
-          })}
-        </>}
-        {protected_.length>0&&<>
-          <div style={{fontSize:9,fontWeight:600,color:T.t4,textTransform:"uppercase",letterSpacing:".8px",marginTop:wins.length>0?10:0,marginBottom:6}}>Protected — Top Tier Healthy</div>
-          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-            {protected_.map((a)=>(
-              <button key={a.id} onClick={()=>goAcct(a)} style={{display:"flex",flexDirection:"column",padding:"6px 10px",borderRadius:8,background:"rgba(167,139,250,.06)",border:"1px solid rgba(167,139,250,.15)",cursor:"pointer",textAlign:"left"}}>
-                <span style={{fontSize:10,fontWeight:600,color:T.t1,maxWidth:130,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</span>
-                <span style={{fontSize:9,color:T.amber}}>{normalizeTier(a.gTier||a.tier)}</span>
-              </button>
-            ))}
+              <div style={{fontSize:13,fontWeight:600,marginTop:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
+              <div style={{fontSize:10,color:T.t3,marginTop:2}}>{a.city}, {a.st} {isAccelTier(a.gTier||a.tier)?<span style={{color:T.amber}}>{a.gTier||a.tier}</span>:(a.gTier||a.tier)==="Top 100"?"Top 100":"Private"}</div>
+            </div>
+            <div style={{textAlign:"right",flexShrink:0,marginLeft:12}}>
+              <div className="m" style={{fontSize:12,fontWeight:700,color:T.red}}>{a.gap>0?`-${$$(a.gap)}`:$$(a.gap)}</div>
+              <div className="m" style={{fontSize:10,color:T.t4}}>{pc(a.ret)} ret</div>
+            </div>
           </div>
-        </>}
-      </div>}
-      {hot.length>0&&<>
-        <div style={{marginBottom:8,display:"flex",alignItems:"center",gap:8}}>
-          <div style={{width:8,height:8,borderRadius:4,background:T.red,animation:"pulse 2s infinite"}}/>
-          <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color:T.red}}>Hot — Act Now ({hot.length})</span>
-        </div>
-        <div className="today-grid" style={{marginBottom:16}}>
-          {hot.slice(0,10).map((a,i)=><CallCard key={a.id} a={a} i={i}/>)}
-        </div>
-      </>}
-      {followUp.length>0&&<>
-        <div style={{marginBottom:8,display:"flex",alignItems:"center",gap:8}}>
-          <div style={{width:8,height:8,borderRadius:4,background:T.amber,animation:"pulse 2s infinite"}}/>
-          <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color:T.amber}}>Follow Up ({followUp.length})</span>
-        </div>
-        <div className="today-grid">
-          {followUp.slice(0,10).map((a,i)=><CallCard key={a.id} a={a} i={i+hot.length}/>)}
-        </div>
-      </>}
-      {hot.length===0&&followUp.length===0&&<div style={{textAlign:"center",padding:32,color:T.t4,fontSize:12}}>No urgent accounts — upload your latest CSV to refresh.</div>}
+          <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+            {a.reasons.slice(0,3).map((r,j)=><span key={j} style={{fontSize:9,color:T.t3,background:T.s2,borderRadius:4,padding:"2px 6px",border:`1px solid ${T.b2}`}}>{r}</span>)}
+          </div>
+        </button>
+      ))}
+      </div>
     </>}
-    {mode==="territory"&&<>
+
+    {mode==="territory" && <>
+      {/* TERRITORY SUMMARY */}
       <div className="anim" style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:14,padding:14,marginBottom:12}}>
         <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan,marginBottom:10}}>Territory Overview</div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}>
           <Stat l="Groups" v={groups.length.toString()} c={T.t1}/>
           <Stat l="Locations" v={totalLocs.toString()} c={T.t1}/>
           <Stat l="Active CY" v={activeAccts.toString()} c={T.green}/>
-          <Stat l="Q1 Gap" v={$$(totalPY-totalCY)} c={T.red}/>
+          <Stat l="Q1 Gap" v={$$(totalPY - totalCY)} c={T.red}/>
         </div>
       </div>
+
       <div style={{marginBottom:8,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3}}>Top Gap Groups</div>
       <div className="group-grid">
       {topGapGroups.map((g,i)=>{
@@ -672,7 +628,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,mode,setMode
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:13,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fixGroupName(g)}</div>
-              <div style={{fontSize:10,color:T.t3,marginTop:2}}>{g.locs} loc{g.locs>1?"s":""} · {getTierLabel(g.tier)}</div>
+              <div style={{fontSize:10,color:T.t3,marginTop:2}}>{g.locs} loc{g.locs>1?"s":""} {getTierLabel(g.tier)}</div>
             </div>
             {isUrgent&&<span style={{flexShrink:0,borderRadius:999,background:"rgba(248,113,113,.09)",border:"1px solid rgba(248,113,113,.22)",padding:"2px 8px",fontSize:9,fontWeight:700,color:T.red,marginRight:4}}>Urgent</span>}
             <Chev/>
@@ -1017,7 +973,6 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup}) {
         {!showForm&&myAdj.length===0&&<div style={{fontSize:11,color:T.t4,textAlign:"center",padding:8}}>Search product by name or SKU#, enter doctor spend → auto-calculates credited revenue.</div>}
       </div>
     </div>
-  </div>
   </div>;
 }
 
