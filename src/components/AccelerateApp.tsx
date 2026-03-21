@@ -367,8 +367,11 @@ const SKU = [
 ["29684","Point 4 Syringe Kit","POINT 4",411.92,686.51,271.87,339.83,297.82,381.82,327.35,430.73,349.84,472.76],
 ["N32","Build-It FR Intro Kit","BUILD IT F.R.",199.18,330.37,139.47,174.33,148.87,190.86,158.79,208.93,168.73,228.01],
 ["910860-1","Demi Plus LED Curing System","DEMI PLUS",1343.12,2238.54,886.46,1108.07,971.08,1244.97,1067.38,1404.44,1140.71,1541.5],
+["910861-1","Demi Pro LED Curing System","DEMI PRO",1549.0,2582.0,1022.34,1277.93,1120.28,1436.09,1231.22,1619.91,1315.69,1777.82],
 ["N56CA","Simile A2 Syringe","SIMILE",60.21,100.34,30.89,38.61,36.06,46.23,42.07,55.36,45.07,60.91],
 ["34338","Herculite Ultra Syringe A2","HERCULITE ULTRA",107.94,179.89,82.12,102.65,87.22,111.81,92.6,121.84,97.98,132.4],
+["36920","Nexus RMGI Intro Kit","NEXUS RMGI",189.0,315.0,124.74,155.93,136.67,175.24,150.27,197.73,160.65,217.08],
+["36921","Nexus RMGI Refill A2","NEXUS RMGI",89.0,148.33,58.74,73.43,64.36,82.49,70.75,93.11,75.65,102.24],
 ];
 
 // ═════════════════════════════════════════════════════════════════
@@ -878,7 +881,23 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup}) {
   const buying=products.filter(p=>(p[`cy${qk}`]||0)>0).sort((a,b)=>(b[`cy${qk}`]||0)-(a[`cy${qk}`]||0));
   const stopped=products.filter(p=>(p[`py${qk}`]||0)>100&&(p[`cy${qk}`]||0)===0);
   const allProdNames=products.map(p=>p.n);
-  const xsell=["MAXCEM ELITE","DEMI PLUS","SONICFILL 3","PREMISE"].filter(n=>!allProdNames.some(an=>an.includes(n.split(" ")[0])));
+  // Smart cross-sell: category-aware suggestions based on what they're NOT buying
+  // Each entry: [matchKeyword, suggestLabel, pitch]
+  const XSELL_OPPS = [
+    // Composite — newest options by practice profile
+    { kw:"HARMONIZE",    label:"Harmonize",            pitch:"Premium aesthetic composite — ideal for high-cosmetic practices. Nano-optimized filler, exceptional polish." },
+    { kw:"SIMPLISHADE",  label:"SimpliShade",          pitch:"Simplified shade system for larger practices — fewer shades, faster workflow, less chair time." },
+    { kw:"SONICFILL",    label:"SonicFill 3",          pitch:"Sonic-activated bulk-fill composite — one shade, posterior-focused, huge time saver." },
+    // Cement
+    { kw:"MAXCEM",       label:"MaxCem Elite Chroma",  pitch:"Self-adhesive resin cement with color-change indicator — no more guessing cleanup. Upgrade from plain MaxCem." },
+    // Bond — newest
+    { kw:"OPTIBOND 360", label:"OptiBond Universal 360", pitch:"Newest universal bond — 360° etching pattern, works self-etch or total-etch, broadest clinical coverage." },
+    // Pedo
+    { kw:"NEXUS",        label:"Nexus RMGI",           pitch:"RMGI for pediatric — strong fluoride release, moisture tolerant, ideal for pedo practices." },
+    // Curing light — newest
+    { kw:"DEMI",         label:"Demi Pro",             pitch:"Newest curing light — just launched, upgraded from Demi Plus. Broader spectrum, faster cure times." },
+  ];
+  const xsell = XSELL_OPPS.filter(o => !allProdNames.some(n => n.toUpperCase().includes(o.kw)));
 
   const runAI = async () => {
     setAiState("loading"); setAiText("");
@@ -889,7 +908,7 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup}) {
       Q1_PY: pyVal, Q1_CY: cyVal, gap, retentionPct: Math.round(ret*100),
       buying: buying.slice(0,6).map(p=>({name:p.n, py:p[`py1`]||0, cy:p[`cy1`]||0})),
       stopped: stopped.slice(0,5).map(p=>({name:p.n, py:p[`py1`]||0})),
-      crossSellOpportunities: xsell,
+      crossSellOpportunities: xsell.map(o=>o.label),
       groupLocations: (parentGroup?.locs||1),
     };
     const prompt = `You are an AI assistant for Ken Scott, a dental territory sales manager for Kerr dental products covering CT/MA/RI/NY.
@@ -1058,8 +1077,11 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
         </div>}
         {xsell.length>0&&<div>
           <div style={{fontSize:10,fontWeight:600,color:T.purple,marginBottom:6}}>Cross-Sell White Space</div>
-          <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
-            {xsell.map((n,i)=><span key={i} style={{fontSize:10,color:T.purple,background:"rgba(167,139,250,.06)",border:"1px solid rgba(167,139,250,.12)",borderRadius:6,padding:"3px 8px"}}>{n}</span>)}
+          <div style={{display:"flex",flexDirection:"column",gap:5}}>
+            {xsell.slice(0,4).map((o,i)=><div key={i} style={{borderRadius:7,background:"rgba(167,139,250,.05)",border:"1px solid rgba(167,139,250,.12)",padding:"6px 10px"}}>
+              <div style={{fontSize:10,fontWeight:700,color:T.purple,marginBottom:2}}>{o.label}</div>
+              <div style={{fontSize:10,color:T.t3,lineHeight:1.4}}>{o.pitch}</div>
+            </div>)}
           </div>
         </div>}
       </div>
@@ -1076,7 +1098,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
         if (nt === "Silver") moves.push({icon:"⬆️", color:T.amber, text:`Gold upgrade saves doctor ~6% vs Silver MSRP. At ${$$(cyVal)} spend, that's a meaningful difference — worth the conversation.`});
         else if (nt === "Standard" && pyVal > 1000) moves.push({icon:"⬆️", color:T.amber, text:`Not on Accelerate. At ${$$(pyVal)} PY spend, Silver tier would meaningfully lower their cost. Pitch the program.`});
         // 3. Cross-sell white space
-        if (xsell.length > 0) moves.push({icon:"💡", color:T.purple, text:`Not buying ${xsell.slice(0,2).join(" or ")}. High-volume Kerr products with no history here — good conversation starter.`});
+        if (xsell.length > 0) moves.push({icon:"💡", color:T.purple, text:`Not buying ${xsell.slice(0,2).map(o=>o.label).join(" or ")}. ${xsell[0].pitch}`});
         // 4. Retention recovery if no stopped products
         if (moves.length < 2 && ret < 0.5 && gap > 500) moves.push({icon:"📞", color:T.blue, text:`Retention at ${Math.round(ret*100)}% — ${$$(gap)} gap to close. Check in on supply chain, competitor activity, or budget cycle.`});
         // 5. Growing — reinforce
