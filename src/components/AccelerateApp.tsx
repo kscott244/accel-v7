@@ -100,39 +100,48 @@ const Bar = ({pct, color}) => <div style={{width:"100%",height:6,borderRadius:3,
 
 // ─── SCORING ENGINE ──────────────────────────────────────────────
 function scoreAccount(a, q) {
-  let s = 0; const r = [];
+  let s = 0; const r = []; // r = [{label, pts}]
   const py = a.pyQ?.[q] || 0;
   const cy = a.cyQ?.[q] || 0;
   const gap = py - cy;
   const ret = py > 0 ? cy / py : 0;
   const d = a.last || 999;
 
-  if (gap > 8000) { s += 30; r.push(`Large gap: ${$$(gap)}`); }
-  else if (gap > 4000) { s += 20; r.push(`Gap: ${$$(gap)}`); }
-  else if (gap > 2000) { s += 10; r.push(`Gap: ${$$(gap)}`); }
+  if (gap > 8000) { s += 30; r.push({label:`Large gap: ${$$(gap)}`, pts:30}); }
+  else if (gap > 4000) { s += 20; r.push({label:`Gap: ${$$(gap)}`, pts:20}); }
+  else if (gap > 2000) { s += 10; r.push({label:`Gap: ${$$(gap)}`, pts:10}); }
 
-  if (py > 500 && ret < 0.05) { s += 25; r.push("Near-zero retention"); }
-  else if (py > 500 && ret < 0.15) { s += 20; r.push(`Critical ${Math.round(ret*100)}%`); }
-  else if (py > 200 && ret < 0.30) { s += 12; r.push(`Low retention ${Math.round(ret*100)}%`); }
+  if (py > 500 && ret < 0.05) { s += 25; r.push({label:"Near-zero retention", pts:25}); }
+  else if (py > 500 && ret < 0.15) { s += 20; r.push({label:`Critical ${Math.round(ret*100)}%`, pts:20}); }
+  else if (py > 200 && ret < 0.30) { s += 12; r.push({label:`Low retention ${Math.round(ret*100)}%`, pts:12}); }
 
-  if (d > 120) { s += 20; r.push(`Gone dark — ${d}d`); }
-  else if (d > 60) { s += 15; r.push(`${d}d since order`); }
-  else if (d > 30) { s += 8; r.push(`${d}d since order`); }
+  if (d > 120) { s += 20; r.push({label:`Gone dark — ${d}d`, pts:20}); }
+  else if (d > 60) { s += 15; r.push({label:`${d}d since order`, pts:15}); }
+  else if (d > 30) { s += 8; r.push({label:`${d}d since order`, pts:8}); }
 
-  if (gap > 5000 && d < 60) { s += 15; r.push("Q1 close — act now"); }
-  else if (gap > 3000) { s += 10; r.push("Q1 closing window"); }
+  if (gap > 5000 && d < 60) { s += 15; r.push({label:"Q1 close — act now", pts:15}); }
+  else if (gap > 3000) { s += 10; r.push({label:"Q1 closing window", pts:10}); }
 
   const tier = a.gTier || a.tier;
-  if (tier === "Diamond" || tier?.includes("Diamond")) { s += 10; r.push("Diamond tier"); }
-  else if (tier === "Platinum") { s += 8; r.push("Platinum tier"); }
-  else if (tier === "Top 100") { s += 5; r.push("Top 100"); }
+  if (tier === "Diamond" || tier?.includes("Diamond")) { s += 10; r.push({label:"Diamond tier", pts:10}); }
+  else if (tier === "Platinum") { s += 8; r.push({label:"Platinum tier", pts:8}); }
+  else if (tier === "Top 100") { s += 5; r.push({label:"Top 100", pts:5}); }
 
   // Products at $0
   const dead = (a.products||[]).filter(p => (p[`py${q}`]||0) > 200 && (p[`cy${q}`]||0) === 0);
-  if (dead.length) { s += dead.length * 3; r.push(`${dead.length} products at $0`); }
+  if (dead.length) { s += dead.length * 3; r.push({label:`${dead.length} products at $0`, pts:dead.length*3}); }
 
   return { score: s, reasons: r, gap, ret, d, py, cy };
 }
+
+// ─── ACCOUNT HEALTH STATUS ───────────────────────────────────────
+const getHealthStatus = (ret, gap, cy, py) => {
+  if (py > 0 && cy > py) return {label:"Growing — cross-sell opportunity", color:T.green, bg:"rgba(52,211,153,.08)", border:"rgba(52,211,153,.18)"};
+  if (ret >= 0.6)         return {label:"Stable", color:T.cyan,  bg:"rgba(34,211,238,.08)",  border:"rgba(34,211,238,.18)"};
+  if (ret >= 0.25 && gap < 2000) return {label:"Recoverable — product-specific decline", color:T.amber, bg:"rgba(251,191,36,.08)", border:"rgba(251,191,36,.18)"};
+  if (ret >= 0.25)        return {label:"Recoverable — needs attention", color:T.amber, bg:"rgba(251,191,36,.08)", border:"rgba(251,191,36,.18)"};
+  return                         {label:"Critical retention risk", color:T.red,   bg:"rgba(248,113,113,.08)", border:"rgba(248,113,113,.18)"};
+};
 
 // ─── CSV PROCESSOR ───────────────────────────────────────────────
 function parseCSV(text) {
@@ -579,7 +588,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
         </div>
       </div>
       <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
-        {a.reasons.slice(0,3).map((r,j)=><span key={j} style={{fontSize:9,color:T.t3,background:T.s2,borderRadius:4,padding:"2px 6px",border:`1px solid ${T.b2}`}}>{r}</span>)}
+        {a.reasons.slice(0,4).map((r,j)=><span key={j} style={{display:"inline-flex",alignItems:"center",gap:4,fontSize:9,color:T.t3,background:T.s2,borderRadius:4,padding:"2px 6px",border:`1px solid ${T.b2}`}}>{r.label}<span style={{color:T.amber,fontWeight:700,fontFamily:"'JetBrains Mono',monospace"}}>+{r.pts}</span></span>)}
       </div>
     </button>
   );
@@ -883,6 +892,7 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup}) {
       <div className="anim" style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12}}>
         <div style={{fontSize:16,fontWeight:700}}>{acct.name}</div>
         <div style={{fontSize:11,color:T.t3,marginTop:2}}>{acct.city}, {acct.st} · <span style={{color:isAccel?T.amber:T.t3}}>{acctType}</span> · Last {acct.last}d ago</div>
+        {(()=>{const h=getHealthStatus(ret,gap,cyVal,pyVal);return <div style={{display:"inline-flex",alignItems:"center",marginTop:6,fontSize:10,fontWeight:700,color:h.color,background:h.bg,border:`1px solid ${h.border}`,borderRadius:999,padding:"3px 10px",letterSpacing:".2px"}}>{h.label}</div>;})()}
         <div style={{fontSize:10,color:T.t4,marginTop:2,display:"flex",gap:8,flexWrap:"wrap"}}>
           {acct.gName&&<span>Group: {acct.gName}</span>}
           {acct.dealer&&acct.dealer!=="Unknown"&&<span style={{color:T.cyan}}>Dealer: {acct.dealer}</span>}
@@ -986,6 +996,33 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup}) {
           </div>
         </div>}
       </div>
+
+      {/* NEXT BEST MOVE */}
+      {(()=>{
+        const moves = [];
+        // 1. Stopped products — highest value first
+        const topStopped = [...stopped].sort((a,b)=>(b[`py${qk}`]||0)-(a[`py${qk}`]||0));
+        if (topStopped.length === 1) moves.push({icon:"🎯", color:T.red, text:`Re-engage on ${topStopped[0].n} — was ${$$(topStopped[0][`py${qk}`]||0)} last year, nothing this quarter.`});
+        else if (topStopped.length > 1) moves.push({icon:"🎯", color:T.red, text:`${topStopped.length} products stopped. Lead with ${topStopped[0].n} (was ${$$(topStopped[0][`py${qk}`]||0)}) — ask what changed.`});
+        // 2. Tier upsell
+        const nt = normalizeTier(acctTier);
+        if (nt === "Silver") moves.push({icon:"⬆️", color:T.amber, text:`Gold upgrade saves doctor ~6% vs Silver MSRP. At ${$$(cyVal)} spend, that's a meaningful difference — worth the conversation.`});
+        else if (nt === "Standard" && pyVal > 1000) moves.push({icon:"⬆️", color:T.amber, text:`Not on Accelerate. At ${$$(pyVal)} PY spend, Silver tier would meaningfully lower their cost. Pitch the program.`});
+        // 3. Cross-sell white space
+        if (xsell.length > 0) moves.push({icon:"💡", color:T.purple, text:`Not buying ${xsell.slice(0,2).join(" or ")}. High-volume Kerr products with no history here — good conversation starter.`});
+        // 4. Retention recovery if no stopped products
+        if (moves.length < 2 && ret < 0.5 && gap > 500) moves.push({icon:"📞", color:T.blue, text:`Retention at ${Math.round(ret*100)}% — ${$$(gap)} gap to close. Check in on supply chain, competitor activity, or budget cycle.`});
+        // 5. Growing — reinforce
+        if (cyVal > pyVal) moves.push({icon:"✅", color:T.green, text:`Up ${$$(cyVal-pyVal)} vs last year. Reinforce the relationship — ask about upcoming procedures to lock in Q2.`});
+        if (moves.length === 0) return null;
+        return <div className="anim" style={{animationDelay:"120ms",background:`linear-gradient(135deg,${T.s1},rgba(79,142,247,.04))`,border:`1px solid rgba(79,142,247,.15)`,borderRadius:16,padding:16,marginBottom:12}}>
+          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue,marginBottom:12}}>Next Best Move</div>
+          {moves.slice(0,3).map((m,i)=><div key={i} style={{display:"flex",gap:10,marginBottom:i<moves.slice(0,3).length-1?10:0}}>
+            <span style={{fontSize:14,flexShrink:0,lineHeight:1.4}}>{m.icon}</span>
+            <div style={{fontSize:12,color:T.t2,lineHeight:1.5,borderLeft:`2px solid ${m.color}`,paddingLeft:10}}>{m.text}</div>
+          </div>)}
+        </div>;
+      })()}
 
       {/* PRODUCT BREAKDOWN BARS */}
       <div className="anim" style={{animationDelay:"160ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12}}>
