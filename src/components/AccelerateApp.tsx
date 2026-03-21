@@ -674,6 +674,14 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
   const [odDone, setOdDone] = useState<Record<string,{outcome:string,amt:number}>>(() => {
     try { return JSON.parse(localStorage.getItem("overdrive_done") || "{}"); } catch { return {}; }
   });
+  const [odOpen, setOdOpen] = useState<boolean>(() => {
+    try { return localStorage.getItem("overdrive_open") !== "false"; } catch { return true; }
+  });
+  const toggleOd = () => {
+    const next = !odOpen;
+    setOdOpen(next);
+    try { localStorage.setItem("overdrive_open", String(next)); } catch {}
+  };
 
   const saveDone = (id: string, outcome: string, amt: number) => {
     const updated = {...odDone, [id]: {outcome, amt}};
@@ -906,14 +914,53 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
 
     {/* ── OVERDRIVE ── */}
     {overdrive&&DAYS_LEFT>0&&q1Gap>0&&<div className="anim" style={{marginBottom:16}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-        <div style={{display:"flex",alignItems:"center",gap:7}}>
-          <span style={{fontSize:14}}>⚡</span>
-          <span style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.amber}}>Overdrive</span>
-          <span style={{fontSize:9,color:T.t4,background:T.s2,borderRadius:999,padding:"2px 8px"}}>{DAYS_LEFT} days · {overdrive.totalTargets} targets</span>
+      {/* Overdrive toggle header */}
+      <button onClick={toggleOd} style={{
+        width:"100%", textAlign:"left", cursor:"pointer", fontFamily:"inherit",
+        background: odOpen
+          ? `linear-gradient(135deg,rgba(251,191,36,.12),rgba(251,191,36,.04))`
+          : T.s1,
+        border: `1px solid ${odOpen ? "rgba(251,191,36,.35)" : T.b2}`,
+        borderRadius: odOpen ? "14px 14px 0 0" : 14,
+        padding:"12px 14px",
+        transition:"all 0.2s",
+        marginBottom: odOpen ? 0 : 0,
+      }}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div style={{display:"flex",alignItems:"center",gap:7}}>
+            <span style={{fontSize:16, filter: odOpen ? "none" : "grayscale(1)", opacity: odOpen ? 1 : 0.4}}>⚡</span>
+            <span style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",
+              color: odOpen ? T.amber : T.t4,
+              transition:"color 0.2s",
+            }}>Overdrive</span>
+            <span style={{fontSize:9,color: odOpen ? T.amber : T.t4,
+              background: odOpen ? "rgba(251,191,36,.1)" : T.s2,
+              borderRadius:999,padding:"2px 8px",
+              transition:"all 0.2s",
+            }}>{DAYS_LEFT} days · {overdrive.totalTargets} targets</span>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            {overdrive.doneTotal>0&&<span style={{fontSize:10,fontWeight:700,color:T.green}}>+{$f(overdrive.doneTotal)}</span>}
+            <span style={{fontSize:12,color: odOpen ? T.amber : T.t4,
+              transform: odOpen ? "rotate(0deg)" : "rotate(-90deg)",
+              transition:"transform 0.2s, color 0.2s",
+              display:"inline-block",
+            }}>▼</span>
+          </div>
         </div>
-        {overdrive.doneTotal>0&&<span style={{fontSize:10,fontWeight:700,color:T.green}}>+{$f(overdrive.doneTotal)} logged</span>}
-      </div>
+        {!odOpen&&<div style={{fontSize:10,color:T.t4,marginTop:3}}>
+          Tap to activate your end-of-quarter game plan
+        </div>}
+      </button>
+
+      {/* Overdrive content — only shown when open */}
+      {odOpen&&<div style={{
+        background:`linear-gradient(180deg,rgba(251,191,36,.04) 0%,transparent 60%)`,
+        border:"1px solid rgba(251,191,36,.2)",
+        borderTop:"none",
+        borderRadius:"0 0 14px 14px",
+        padding:"12px 14px 14px",
+      }}>
 
       {/* Projected landing */}
       <div style={{background:`linear-gradient(135deg,${T.s1},rgba(251,191,36,.05))`,border:"1px solid rgba(251,191,36,.15)",borderRadius:14,padding:12,marginBottom:10}}>
@@ -1021,7 +1068,8 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
           </div>
         ))}
       </div>}
-    </div>}
+      </div>}  {/* close odOpen content */}
+    </div>}  {/* close overdrive outer */}
 
     {/* ── SECTION 2: WINS & MOMENTUM ── */}
     <div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(52,211,153,.04))`,border:"1px solid rgba(52,211,153,.1)",borderRadius:16,padding:14,marginBottom:16}}>
