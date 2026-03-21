@@ -696,11 +696,20 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
     try { localStorage.setItem("overdrive_done", JSON.stringify(updated)); } catch {}
   };
 
-  // ── OVERDRIVE ENGINE ──
+  // ── OVERDRIVE ENGINE — time-aware ──
   const overdrive = useMemo(() => {
     if (!scored.length) return null;
 
-    // Track 1: Already buying CY but below PY — high probability uplift
+    // Time pressure bands — behavior changes based on days left
+    const isEndgame  = DAYS_LEFT <= 5;   // last 5 days: only sure things
+    const isSprint   = DAYS_LEFT <= 14;  // last 2 weeks: urgency mode (TODAY)
+    const isCruise   = DAYS_LEFT > 30;   // early quarter: build pipeline
+
+    // Mode label shown on the Overdrive header
+    const modeLabel = isEndgame ? "🔴 Endgame" : isSprint ? "🟡 Sprint" : isCruise ? "🟢 Pipeline" : "🟠 Push";
+
+    // ── TRACK 1: Already buying CY but below PY ──
+    // These are always top priority — they're in buying mode RIGHT NOW
     const uplift = scored
       .filter(a => (a.cyQ?.["1"]||0) > 0 && (a.pyQ?.["1"]||0) > 0 && (a.pyQ?.["1"]||0) > (a.cyQ?.["1"]||0))
       .map(a => {
@@ -708,34 +717,61 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
         const cy = a.cyQ?.["1"]||0;
         const gap = py - cy;
         const retPct = cy/py;
-        // Ask = close the gap, min $200 max full gap
-        const ask = Math.min(gap, Math.max(200, gap * 0.8));
-        // Probability: higher if retention is already strong
-        const prob = retPct > 0.7 ? 0.75 : retPct > 0.4 ? 0.60 : 0.45;
+        // Ask amount scales with time pressure — less days = more aggressive ask
+        const askPct = isEndgame ? 1.0 : isSprint ? 0.85 : 0.70;
+        const ask = Math.min(gap, Math.max(150, gap * askPct));
+        // Base probability from retention level
+        let prob = retPct > 0.7 ? 0.78 : retPct > 0.4 ? 0.62 : 0.48;
+        // Time pressure BOOSTS probability for active buyers — they're already in the flow
+        if (isSprint || isEndgame) prob = Math.min(prob * 1.15, 0.92);
         return {...a, gap, ask, prob, track: "uplift", expectedVal: ask * prob};
       })
-      .sort((a,b) => b.expectedVal - a.expectedVal)
-      .slice(0, 5);
+      .sort((a,b) => b.expectedVal - a.expectedVal);
 
-    // Track 2: Bought PY, completely dark this year — reactivation calls
+    // ── TRACK 2: Bought PY, dark this year — reactivation ──
+    // Time-sensitivity: in endgame these drop off — not enough time to warm them
+    // In sprint: still worth a call, but only smaller accounts (faster decisions)
+    // In cruise: full pipeline, target everyone
+    const darkMaxPY = isEndgame ? 800 : isSprint ? 2000 : 999999;
     const dark = scored
-      .filter(a => (a.cyQ?.["1"]||0) === 0 && (a.pyQ?.["1"]||0) > 300)
+      .filter(a => (a.cyQ?.["1"]||0) === 0 && (a.pyQ?.["1"]||0) > 200
+        && (a.pyQ?.["1"]||0) <= darkMaxPY)  // filter out big accounts in endgame (too slow)
       .map(a => {
         const py = a.pyQ?.["1"]||0;
-        const ask = py * 0.6; // ask for 60% of PY
-        const prob = py > 2000 ? 0.35 : py > 800 ? 0.45 : 0.55;
+        // Ask lower in endgame — just get them to place anything
+        const askPct = isEndgame ? 0.4 : isSprint ? 0.55 : 0.65;
+        const ask = py * askPct;
+        // Probability drops sharply as quarter ends — cold reactivation takes time
+        let prob = py > 2000 ? 0.28 : py > 800 ? 0.40 : 0.52;
+        if (isEndgame) prob *= 0.5;   // cold reactivation in last 5 days is very low
+        if (isSprint) prob *= 0.75;
         return {...a, gap: py, ask, prob, track: "dark", expectedVal: ask * prob};
       })
-      .sort((a,b) => b.expectedVal - a.expectedVal)
-      .slice(0, 8);
+      .sort((a,b) => b.expectedVal - a.expectedVal);
 
-    // Visit list: top uplift accounts (in-person has highest ROI for these)
-    const visitList = uplift.slice(0, 5);
+    // ── VISIT LIST: accounts worth driving to ──
+    // Endgame: only top uplift (already buying — just need a face)
+    // Sprint: top uplift + 1-2 high-value dark accounts nearby
+    // Cruise: broader mix
+    const visitCount = isEndgame ? 5 : isSprint ? 5 : 5;
+    const visitList = isEndgame
+      ? uplift.slice(0, visitCount)
+      : isSprint
+        ? [...uplift.slice(0,4), ...dark.slice(0,1)].slice(0, visitCount)
+        : [...uplift.slice(0,3), ...dark.slice(0,2)].slice(0, visitCount);
 
-    // Call list: dark accounts + remaining uplift (phone first)
-    const callList = [...dark.slice(0,5), ...uplift.slice(5)].slice(0,8);
+    // ── CALL LIST: phone/email contacts ──
+    // Sprint/Endgame: dark accounts are CALL-first (faster than visits)
+    // More dark accounts make the call list as time compresses
+    const callCount = isEndgame ? 10 : isSprint ? 10 : 8;
+    const callList = isEndgame
+      ? [...dark.slice(0,6), ...uplift.filter(a=>!visitList.includes(a)).slice(0,4)].slice(0, callCount)
+      : isSprint
+        ? [...dark.slice(0,5), ...uplift.filter(a=>!visitList.includes(a)).slice(0,5)].slice(0, callCount)
+        : [...dark.slice(0,4), ...uplift.filter(a=>!visitList.includes(a)).slice(0,4)].slice(0, callCount);
 
-    // Dealer actions: group by dealer, find top gaps per dealer
+    // ── DEALER PUSH: ask your DSMs to push reorders ──
+    // Only worth doing in sprint/endgame if there are enough accounts per dealer
     const dealerGroups: Record<string,any[]> = {};
     [...uplift, ...dark].forEach(a => {
       const d = a.dealer || "Unknown";
@@ -745,6 +781,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
       }
     });
     const dealerActions = Object.entries(dealerGroups)
+      .filter(([,accts]) => accts.length >= (isEndgame ? 1 : 2)) // lower bar in endgame
       .map(([dealer, accts]) => ({
         dealer,
         accts: accts.slice(0,3),
@@ -753,16 +790,16 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
       .sort((a,b) => b.totalAsk - a.totalAsk)
       .slice(0, 3);
 
-    // Projected outcomes
-    const allTargets = [...uplift, ...dark];
+    // ── PROJECTED OUTCOMES ──
+    const allTargets = [...new Map([...uplift, ...dark].map(a => [a.id, a])).values()];
     const doneTotal = Object.values(odDone).reduce((s,v) => s + (v.amt||0), 0);
     const pendingTargets = allTargets.filter(a => !odDone[a.id]);
-    const conservative = doneTotal + pendingTargets.reduce((s,a) => s + a.ask * Math.min(a.prob * 0.7, 1), 0);
+    const conservative = doneTotal + pendingTargets.reduce((s,a) => s + a.ask * Math.min(a.prob * 0.65, 1), 0);
     const base = doneTotal + pendingTargets.reduce((s,a) => s + a.ask * a.prob, 0);
-    const aggressive = doneTotal + pendingTargets.reduce((s,a) => s + a.ask * Math.min(a.prob * 1.3, 1), 0);
+    const aggressive = doneTotal + pendingTargets.reduce((s,a) => s + a.ask * Math.min(a.prob * 1.35, 1), 0);
 
     return { visitList, callList, dealerActions, conservative, base, aggressive, doneTotal,
-             totalTargets: allTargets.length };
+             totalTargets: allTargets.length, modeLabel, isEndgame, isSprint };
   }, [scored, odDone]);
 
   // ── Section 1: Q1 status
@@ -937,7 +974,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
               background: odOpen ? "rgba(251,191,36,.1)" : T.s2,
               borderRadius:999,padding:"2px 8px",
               transition:"all 0.2s",
-            }}>{DAYS_LEFT} days · {overdrive.totalTargets} targets</span>
+            }}>{overdrive.modeLabel} · {DAYS_LEFT}d · {overdrive.totalTargets} targets</span>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             {overdrive.doneTotal>0&&<span style={{fontSize:10,fontWeight:700,color:T.green}}>+{$f(overdrive.doneTotal)}</span>}
