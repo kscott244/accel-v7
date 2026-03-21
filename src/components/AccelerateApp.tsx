@@ -878,7 +878,7 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup}) {
   const buying=products.filter(p=>(p[`cy${qk}`]||0)>0).sort((a,b)=>(b[`cy${qk}`]||0)-(a[`cy${qk}`]||0));
   const stopped=products.filter(p=>(p[`py${qk}`]||0)>100&&(p[`cy${qk}`]||0)===0);
   const allProdNames=products.map(p=>p.n);
-  const xsell=["KERR CLEANSE","MAXCEM ELITE","DEMI PLUS","SONICFILL 3","PREMISE"].filter(n=>!allProdNames.some(an=>an.includes(n.split(" ")[0])));
+  const xsell=["MAXCEM ELITE","DEMI PLUS","SONICFILL 3","PREMISE"].filter(n=>!allProdNames.some(an=>an.includes(n.split(" ")[0])));
 
   const runAI = async () => {
     setAiState("loading"); setAiText("");
