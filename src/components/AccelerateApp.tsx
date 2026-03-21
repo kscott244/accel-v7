@@ -1001,7 +1001,18 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup}) {
   const [aiText,setAiText]=useState("");
   const [drState,setDrState]=useState("idle"); // idle | loading | done | error
   const [drIntel,setDrIntel]=useState<any>(null);
+  const [savedContacts,setSavedContacts]=useState<any>(null); // persisted contact intel
+  const storageKey = `contact:${acct.id}`;
   const qk=q;
+
+  // Load saved contacts from storage on mount
+  useEffect(() => {
+    window.storage?.get(storageKey).then((result:any) => {
+      if (result?.value) {
+        try { setSavedContacts(JSON.parse(result.value)); } catch {}
+      }
+    }).catch(()=>{});
+  }, [acct.id]);
 
   const myAdj=adjs.filter(m=>m.acctId===acct.id);
   const adjTotal=myAdj.reduce((s,m)=>s+m.credited,0);
@@ -1120,6 +1131,21 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
       if (data?.intel) {
         setDrIntel(data.intel);
         setDrState("done");
+        // Save contact info to persistent storage
+        const contacts = {
+          contactName: data.intel.contactName || null,
+          phone: data.intel.phone || null,
+          email: data.intel.email || null,
+          website: data.intel.website || null,
+          savedAt: new Date().toISOString(),
+          practiceName: acct.name,
+        };
+        // Only save if we actually found something
+        const hasContact = contacts.contactName || contacts.phone || contacts.email || contacts.website;
+        if (hasContact) {
+          window.storage?.set(storageKey, JSON.stringify(contacts)).catch(()=>{});
+          setSavedContacts(contacts);
+        }
       } else {
         setDrState("error");
         setDrIntel({error: data?.error || "Research failed. Try again."});
@@ -1290,6 +1316,39 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
             {badger.phone}
           </a>
         </div>}
+        {/* Saved Research Contacts — merged into Field Intel card */}
+        {savedContacts&&(savedContacts.contactName||savedContacts.phone||savedContacts.email||savedContacts.website)&&<div style={{marginTop:12,paddingTop:10,borderTop:`1px solid ${T.b2}`}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+            <div style={{fontSize:8,textTransform:"uppercase",color:T.t4,letterSpacing:"1px"}}>Research Contacts</div>
+            <div style={{fontSize:8,color:T.t4}}>{savedContacts.savedAt?new Date(savedContacts.savedAt).toLocaleDateString():""}</div>
+          </div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+            {savedContacts.contactName&&<div><div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:1}}>Contact</div><div style={{fontSize:11,fontWeight:600,color:T.t1}}>{savedContacts.contactName}</div></div>}
+            {savedContacts.phone&&<div><div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:1}}>Direct #</div><a href={`tel:${savedContacts.phone}`} style={{fontSize:11,fontWeight:600,color:T.green,textDecoration:"none"}}>{savedContacts.phone}</a></div>}
+            {savedContacts.email&&<div><div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:1}}>Email</div><a href={`mailto:${savedContacts.email}`} style={{fontSize:11,fontWeight:600,color:T.cyan,textDecoration:"none"}}>{savedContacts.email}</a></div>}
+            {savedContacts.website&&<div><div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:1}}>Web</div><a href={savedContacts.website} target="_blank" rel="noreferrer" style={{fontSize:11,fontWeight:600,color:T.blue,textDecoration:"none"}}>Visit →</a></div>}
+          </div>
+        </div>}
+      </div>}
+
+      {/* SAVED CONTACTS — standalone card when no Badger data */}
+      {!badger&&savedContacts&&(savedContacts.contactName||savedContacts.phone||savedContacts.email||savedContacts.website)&&<div className="anim" style={{animationDelay:"50ms",background:T.s1,border:`1px solid rgba(34,211,238,.15)`,borderRadius:16,padding:16,marginBottom:12}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={T.cyan} strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan}}>Saved Contacts</span>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <div style={{fontSize:9,color:T.t4}}>{savedContacts.savedAt?new Date(savedContacts.savedAt).toLocaleDateString():""}</div>
+            <button onClick={()=>{window.storage?.delete(storageKey).catch(()=>{}); setSavedContacts(null);}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:13,lineHeight:1,padding:2}}>✕</button>
+          </div>
+        </div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:10}}>
+          {savedContacts.contactName&&<div><div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:1}}>Contact</div><div style={{fontSize:12,fontWeight:600,color:T.t1}}>{savedContacts.contactName}</div></div>}
+          {savedContacts.phone&&<div><div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:1}}>Direct #</div><a href={`tel:${savedContacts.phone}`} style={{fontSize:12,fontWeight:600,color:T.green,textDecoration:"none"}}>{savedContacts.phone}</a></div>}
+          {savedContacts.email&&<div><div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:1}}>Email</div><a href={`mailto:${savedContacts.email}`} style={{fontSize:12,fontWeight:600,color:T.cyan,textDecoration:"none"}}>{savedContacts.email}</a></div>}
+          {savedContacts.website&&<div><div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:1}}>Website</div><a href={savedContacts.website} target="_blank" rel="noreferrer" style={{fontSize:12,fontWeight:600,color:T.blue,textDecoration:"none"}}>Visit →</a></div>}
+        </div>
       </div>}
 
       {/* PARENT GROUP SUMMARY */}
