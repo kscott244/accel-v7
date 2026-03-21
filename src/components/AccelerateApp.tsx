@@ -1051,6 +1051,7 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup}) {
   const tierRate=getTierRate(acctTier);
   const isAccel=isAccelTier(acctTier);
   const acctType=getTierLabel(acctTier);
+  const qk=q;
 
   // Parent group + siblings
   // Parent group — uses override group if set, otherwise natural group from data
