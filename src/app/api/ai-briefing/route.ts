@@ -5,10 +5,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { prompt } = body;
     if (!prompt) return NextResponse.json({ error: "No prompt" }, { status: 400 });
-
     const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) return NextResponse.json({ error: "No API key configured" }, { status: 500 });
-
+    if (!apiKey) return NextResponse.json({ error: "No API key" }, { status: 500 });
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -17,18 +15,16 @@ export async function POST(req: NextRequest) {
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-3-sonnet-20240229",
+        model: "claude-3-5-sonnet-20240620",
         max_tokens: 400,
         messages: [{ role: "user", content: prompt }],
       }),
     });
-
     const data = await response.json();
     if (!response.ok) {
       console.error("Anthropic error:", response.status, JSON.stringify(data));
       return NextResponse.json({ error: `Anthropic ${response.status}: ${data?.error?.message || JSON.stringify(data)}` }, { status: 502 });
     }
-
     return NextResponse.json({ text: data?.content?.[0]?.text || "" });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });
