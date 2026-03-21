@@ -1053,7 +1053,12 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup}) {
   const acctType=getTierLabel(acctTier);
 
   // Parent group + siblings
-  const parentGroup=useMemo(()=>acct.gId?(groups||[]).find(g=>g.id===acct.gId):null,[groups,acct.gId]);
+  // Parent group — uses override group if set, otherwise natural group from data
+  const parentGroup=useMemo(()=>{
+    const overrideGroupId = groupOverride?.targetGroupId;
+    if (overrideGroupId) return (groups||[]).find(g=>g.id===overrideGroupId) || null;
+    return acct.gId ? (groups||[]).find(g=>g.id===acct.gId) : null;
+  },[groups,acct.gId,groupOverride]);
   const siblings=useMemo(()=>parentGroup?( parentGroup.children?.filter(c=>c.id!==acct.id)||[]).sort((a,b)=>((b.pyQ?.["1"]||0)-(b.cyQ?.["1"]||0))-((a.pyQ?.["1"]||0)-(a.cyQ?.["1"]||0))):[]  ,[parentGroup,acct.id]);
 
   // Badger Maps intel — keyed by Master-CM id
