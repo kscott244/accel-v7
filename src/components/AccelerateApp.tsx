@@ -636,7 +636,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,mode,setMode
           <div style={{display:"flex",alignItems:"center",gap:16}}>
             <Pill l="PY" v={$$(py1)} c={T.t2}/>
             <Pill l="CY" v={$$(cy1)} c={T.blue}/>
-            <Pill l="Gap" v={$$(gap)} c={T.red}/>
+            <Pill l="Gap" v={gap<=0?`+${$$(Math.abs(gap))}`:$$(gap)} c={gap<=0?T.green:T.red}/>
             <div style={{marginLeft:"auto"}}><Pill l="Ret" v={ret+"%"} c={ret>50?T.green:ret>25?T.amber:T.red}/></div>
           </div>
         </button>;
@@ -696,7 +696,7 @@ function GroupsTab({groups,goGroup,filt,setFilt,search,setSearch}) {
       <div style={{display:"flex",alignItems:"center",gap:16}}>
         <Pill l="PY" v={$$(g._py1)} c={T.t2}/>
         <Pill l="CY" v={$$(g._cy1)} c={T.blue}/>
-        <Pill l="Gap" v={$$(g._gap)} c={g._gap<=0?T.green:T.red}/>
+        <Pill l="Gap" v={g._gap<=0?`+${$$(Math.abs(g._gap))}`:$$(g._gap)} c={g._gap<=0?T.green:T.red}/>
         <div style={{marginLeft:"auto"}}><Pill l="Ret" v={Math.round(g._ret*100)+"%"} c={g._ret>0.5?T.green:g._ret>0.25?T.amber:T.red}/></div>
       </div>
     </button>;
@@ -768,7 +768,7 @@ function GroupDetail({group,goMain,goAcct}) {
           ))}
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}>
-          <Stat l="PY" v={$$(py)} c={T.t2}/><Stat l="CY" v={$$(cy)} c={T.blue}/><Stat l="Gap" v={$$(gap)} c={T.red}/><Stat l="Ret" v={ret+"%"} c={ret>30?T.green:ret>15?T.amber:T.red}/>
+          <Stat l="PY" v={$$(py)} c={T.t2}/><Stat l="CY" v={$$(cy)} c={T.blue}/><Stat l="Gap" v={gap<=0?`+${$$(Math.abs(gap))}`:$$(gap)} c={gap<=0?T.green:T.red}/><Stat l="Ret" v={ret+"%"} c={ret>30?T.green:ret>15?T.amber:T.red}/>
         </div>
       </div>
       <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3,marginBottom:8}}>Locations ({group.children.length})</div>
@@ -780,7 +780,7 @@ function GroupDetail({group,goMain,goAcct}) {
           </div>
           <div style={{fontSize:10,color:T.t3,marginBottom:6}}>{c.city}, {c.st}{c.dealer&&c.dealer!=="Unknown"?<span style={{color:T.cyan}}> · {c.dealer}</span>:""} · Last {c.last}d ago</div>
           <div style={{display:"flex",gap:12}}>
-            <Pill l="PY" v={$$(cPy)} c={T.t2}/><Pill l="CY" v={$$(cCy)} c={T.blue}/><Pill l="Gap" v={$$(cGap)} c={T.red}/><div style={{marginLeft:"auto"}}><Pill l="Ret" v={cRet+"%"} c={T.t3}/></div>
+            <Pill l="PY" v={$$(cPy)} c={T.t2}/><Pill l="CY" v={$$(cCy)} c={T.blue}/><Pill l="Gap" v={cGap<=0?`+${$$(Math.abs(cGap))}`:$$(cGap)} c={cGap<=0?T.green:T.red}/><div style={{marginLeft:"auto"}}><Pill l="Ret" v={cRet+"%"} c={T.t3}/></div>
           </div>
           {(c.products||[]).length>0&&<div style={{marginTop:8,display:"flex",gap:4,flexWrap:"wrap"}}>
             {c.products.slice(0,4).map((p,j)=>{
@@ -848,7 +848,7 @@ function AcctDetail({acct,goBack,adjs,setAdjs}) {
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}>
           <Stat l="PY" v={$$(pyVal)} c={T.t2}/>
           <Stat l="CY" v={$$(cyVal)} c={T.blue}/>
-          <Stat l="Gap" v={$$(gap)} c={T.red}/>
+          <Stat l="Gap" v={gap<=0?`+${$$(Math.abs(gap))}`:$$(gap)} c={gap<=0?T.green:T.red}/>
           <Stat l="Ret" v={pc(ret)} c={ret>.3?T.green:ret>.15?T.amber:T.red}/>
         </div>
         {qk!=="1"&&<div style={{marginTop:6,fontSize:10,color:T.t4,textAlign:"center"}}>Showing {qk==="FY"?"Full Year":`Q${qk}`}. Manual adjustments apply to Q1.</div>}
