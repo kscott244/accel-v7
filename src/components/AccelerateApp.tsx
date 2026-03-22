@@ -691,7 +691,7 @@ export default function App() {
       {!view && tab==="map" && <MapTab/>}
       {!view && tab==="calc" && <DashTab groups={groups||[]} q1CY={q1CY} q1Att={q1Att} q1Gap={q1Gap} scored={scored} goAcct={a=>setView({type:"acct",data:a})}/>}
       {!view && tab==="est" && <EstTab pct={estPct} setPct={setEstPct} q1CY={q1CY} groups={groups||[]} goAcct={a=>setView({type:"acct",data:a})}/>}
-      {!view && tab==="dealers" && <DealersTab scored={scored} goAcct={a=>setView({type:"acct",data:a})}/>}
+      {!view && tab==="dealers" && <DealersTab scored={scored} groups={groups||[]} goAcct={a=>setView({type:"acct",data:a})} goGroup={g=>setView({type:"group",data:g})}/>}
       {view?.type==="group" && <GroupDetail group={view.data} goMain={()=>setView(null)} goAcct={a=>setView({type:"acct",data:{...a,gName:fixGroupName(view.data),gId:view.data.id,gTier:view.data.tier},from:view.data})}/>}
       {view?.type==="acct" && <AcctDetail acct={view.data} goBack={()=>view?.from?setView({type:"group",data:view.from}):setView(null)} adjs={adjs} setAdjs={setAdjs} groups={groups||[]} goGroup={g=>setView({type:"group",data:g})}/>}
 
@@ -3246,9 +3246,10 @@ function isNoRep(s:string|undefined):boolean {
 
 const PRI_ORDER:Record<string,number> = {NOW:0,SOON:1,"ON TRACK":2,PROTECT:3,PIPELINE:4};
 
-function DealersTab({scored,goAcct}:{scored:any[],goAcct:(a:any)=>void}) {
+function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],goAcct:(a:any)=>void,goGroup:(g:any)=>void}) {
   const [selDist,setSelDist] = useState<string|null>(null);
   const [selRep,setSelRep]  = useState<string|null>(null); // null = all reps view
+  const [selGroup,setSelGroup] = useState<string|null>(null); // gId of selected group in rep drill-down
   const [showAddRep,setShowAddRep] = useState(false);
   const [newRepName,setNewRepName] = useState("");
   const [newRepPhone,setNewRepPhone] = useState("");
@@ -3321,83 +3322,103 @@ function DealersTab({scored,goAcct}:{scored:any[],goAcct:(a:any)=>void}) {
     if(!selDist) return null;
     const B = typeof BADGER !== "undefined" ? BADGER : {};
 
-    // Pass 1: scan ALL scored accounts to build groupId → repName for selDist.
-    // Also collect "orphan" accounts: rep hint = selDist but account.dealer ≠ selDist
-    // and no correct sibling found → still include under the rep.
-    const groupRepMap: Record<string,string> = {}; // gId → repName
-    const orphanAccts: Record<string, any[]> = {}; // repName → accounts[]
+    // Build gId → group lookup
+    const groupById: Record<string,any> = {};
+    groups.forEach(g => { groupById[g.id] = g; });
 
-    // Build a quick lookup: gId → all accounts in that group with dealer = selDist
+    // --- Step 1: Build gId → repName map ---
+    // Source A: groupFSC localStorage assignments (highest priority — you set these manually)
+    const gIdToRep: Record<string,string> = {};
+    groups.forEach(g => {
+      try {
+        const saved = localStorage.getItem(`groupFSC:${g.id}:${selDist}`);
+        if(saved) {
+          const data = JSON.parse(saved);
+          if(data?.name) gIdToRep[g.id] = data.name;
+        }
+      } catch {}
+    });
+
+    // Source B: Badger dealerRep on child accounts (fallback)
     const groupHasCorrectDealer: Record<string,boolean> = {};
     scored.forEach(a => {
       if(a.dealer === selDist && a.gId) groupHasCorrectDealer[a.gId] = true;
     });
 
     scored.forEach(a => {
+      if(gIdToRep[a.gId]) return; // already assigned via groupFSC
       const badger = B[a.id];
       const rep = badger?.dealerRep;
       if(isNoRep(rep)) return;
       const hint = repDistHint(rep!);
-
-      // Only process reps whose distributor = selDist
       if(hint && hint !== selDist) return;
-      if(!hint && a.dealer !== selDist) return; // no-hint rep on wrong dealer — skip
-
+      if(!hint && a.dealer !== selDist) return;
       const repKey = rep!.trim();
-
-      if(a.dealer === selDist) {
-        // Account is already in the right distributor — register group directly
-        if(a.gId && !groupRepMap[a.gId]) groupRepMap[a.gId] = repKey;
-      } else if(hint === selDist) {
-        // Rep hint matches selDist but account.dealer doesn't
-        if(a.gId && groupHasCorrectDealer[a.gId]) {
-          // Correct-distributor sibling exists — group registration handles it
-          if(!groupRepMap[a.gId]) groupRepMap[a.gId] = repKey;
-        } else {
-          // No correct sibling — trust the rep, include this account as an orphan
-          if(!orphanAccts[repKey]) orphanAccts[repKey] = [];
-          // Only add if not already there
-          if(!orphanAccts[repKey].find((x:any) => x.id === a.id)) {
-            orphanAccts[repKey].push(a);
-          }
-        }
+      if(a.dealer === selDist && a.gId && !gIdToRep[a.gId]) {
+        gIdToRep[a.gId] = repKey;
+      } else if(hint === selDist && a.gId && groupHasCorrectDealer[a.gId] && !gIdToRep[a.gId]) {
+        gIdToRep[a.gId] = repKey;
       }
     });
 
-    // Pass 2: assign each selDist account to its rep, or __none__
-    const groups: Record<string,any[]> = {"__none__":[]};
-    const distAccts = distStats[selDist]?.accts || [];
-    distAccts.forEach(a => {
-      const rep = a.gId ? groupRepMap[a.gId] : undefined;
-      if(!rep) { groups["__none__"].push(a); return; }
-      if(!groups[rep]) groups[rep] = [];
-      groups[rep].push(a);
+    // --- Step 2: For each rep, collect the parent groups they own (for selDist) ---
+    // Roll up: rep → { gId → { group, children (selDist only), totalPY, totalCY } }
+    const repToGroups: Record<string, Record<string,any>> = {"__none__": {}};
+
+    // For each scored account that belongs to selDist, roll into its parent group under the right rep
+    scored.forEach(a => {
+      if(a.dealer !== selDist) return;
+      const rep = a.gId ? gIdToRep[a.gId] : undefined;
+      const repKey = rep || "__none__";
+      if(!repToGroups[repKey]) repToGroups[repKey] = {};
+
+      const gId = a.gId || `__single__${a.id}`;
+      const gObj = a.gId ? groupById[a.gId] : null;
+      if(!repToGroups[repKey][gId]) {
+        repToGroups[repKey][gId] = {
+          gId,
+          gName: a.gName || a.name,
+          gObj,
+          children: [],
+          totalPY: 0,
+          totalCY: 0,
+          maxVisitPriority: a.visitPriority,
+        };
+      }
+      const bucket = repToGroups[repKey][gId];
+      bucket.children.push(a);
+      bucket.totalPY += a.pyQ?.["1"] || 0;
+      bucket.totalCY += a.cyQ?.["1"] || 0;
+      // Track highest priority child
+      const PO = {NOW:0,SOON:1,"ON TRACK":2,PROTECT:3,PIPELINE:4};
+      if((PO[a.visitPriority]??9) < (PO[bucket.maxVisitPriority]??9)) bucket.maxVisitPriority = a.visitPriority;
     });
 
-    // Pass 3: merge orphan accounts under their rep (deduplicate)
-    Object.entries(orphanAccts).forEach(([repKey, accts]) => {
-      if(!groups[repKey]) groups[repKey] = [];
-      accts.forEach((a:any) => {
-        if(!groups[repKey].find((x:any) => x.id === a.id)) {
-          groups[repKey].push(a);
-        }
-      });
+    // Convert inner objects to sorted arrays
+    const result: Record<string, any[]> = {};
+    Object.entries(repToGroups).forEach(([rep, gMap]) => {
+      result[rep] = Object.values(gMap).sort((a,b) => (b.totalPY - b.totalCY) - (a.totalPY - a.totalCY));
     });
 
-    return groups;
-  },[selDist,scored,distStats]);
+    return result;
+  },[selDist, scored, groups, distStats]);
 
   // Sort accounts by visit priority
   const sortByPriority = (accts:any[]) =>
     [...accts].sort((a,b)=>(PRI_ORDER[a.visitPriority]??9)-(PRI_ORDER[b.visitPriority]??9));
 
-  // Accounts to show in rep drill-down
-  const repAccts = useMemo(()=>{
-    if(!repGroups) return [];
-    if(selRep==="__none__") return sortByPriority(repGroups["__none__"]||[]);
-    if(selRep) return sortByPriority(repGroups[selRep]||[]);
-    return [];
+  // Groups to show under selected rep
+  const repGroupsList = useMemo(()=>{
+    if(!repGroups || !selRep) return [];
+    return repGroups[selRep] || [];
   },[repGroups,selRep]);
+
+  // Children of selected group (for selDist) — shown when user taps a group in rep view
+  const selGroupData = useMemo(()=>{
+    if(!selRep || !selGroup || !repGroups) return null;
+    const list = repGroups[selRep] || [];
+    return list.find((g:any) => g.gId === selGroup) || null;
+  },[repGroups, selRep, selGroup]);
 
   const PRI_CHIP:Record<string,{bg:string,color:string}> = {
     NOW:{bg:"rgba(248,113,113,.12)",color:"#f87171"},
@@ -3407,26 +3428,37 @@ function DealersTab({scored,goAcct}:{scored:any[],goAcct:(a:any)=>void}) {
     PIPELINE:{bg:"rgba(167,139,250,.10)",color:"#a78bfa"},
   };
 
-  // ── Rep drill-down view ──
-  if(selDist && selRep !== null) {
-    const repLabel = selRep==="__none__" ? "No Rep Assigned" : selRep;
-    const manuals = manualReps[selDist]||[];
-    const manualEntry = manuals.find(r=>r.name===selRep);
+  // ── Level 3: Group children view (rep → group → children) ──
+  if(selDist && selRep !== null && selGroup && selGroupData) {
+    const children = sortByPriority(selGroupData.children || []);
+    const totalPY = selGroupData.totalPY;
+    const totalCY = selGroupData.totalCY;
+    const gap = totalPY - totalCY;
+    const ret = totalPY > 0 ? Math.round(totalCY/totalPY*100) : 0;
     return <div style={{paddingBottom:80}}>
       <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"10px 16px",display:"flex",alignItems:"center",gap:10}}>
-        <button onClick={()=>setSelRep(null)} style={{background:"none",border:"none",color:T.blue,cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"inherit",display:"flex",alignItems:"center",gap:4}}><Back/> {selDist}</button>
+        <button onClick={()=>setSelGroup(null)} style={{background:"none",border:"none",color:T.blue,cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"inherit",display:"flex",alignItems:"center",gap:4}}><Back/> {selRep==="__none__"?"No Rep":selRep}</button>
       </div>
       <div style={{padding:"16px 16px 0"}}>
-        <div style={{background:DIST_COLORS[selDist],border:`1px solid ${DIST_BORDER[selDist]}`,borderRadius:14,padding:"12px 14px",marginBottom:14}}>
-          <div style={{fontSize:14,fontWeight:700,color:selRep==="__none__"?T.t3:DIST_TEXT[selDist]}}>{repLabel}</div>
-          <div style={{fontSize:10,color:T.t3,marginTop:2}}>{selDist} · {repAccts.length} account{repAccts.length!==1?"s":""}</div>
-          {manualEntry?.phone&&<a href={`tel:${manualEntry.phone}`} style={{display:"inline-flex",alignItems:"center",gap:5,marginTop:6,fontSize:10,color:T.cyan,textDecoration:"none",background:"rgba(34,211,238,.08)",border:"1px solid rgba(34,211,238,.15)",borderRadius:8,padding:"3px 10px"}}>
-            📞 {manualEntry.phone}
-          </a>}
-          {manualEntry?.notes&&<div style={{fontSize:10,color:T.t3,marginTop:6,fontStyle:"italic"}}>{manualEntry.notes}</div>}
+        {/* Group header card */}
+        <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:14}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:15,fontWeight:700,color:T.t1,marginBottom:2}}>{selGroupData.gName}</div>
+              <div style={{fontSize:10,color:T.t3}}>{selDist} · {children.length} location{children.length!==1?"s":""}</div>
+            </div>
+            {selGroupData.gObj&&<button onClick={()=>goGroup(selGroupData.gObj)} style={{background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.15)",borderRadius:8,padding:"4px 10px",fontSize:10,fontWeight:600,color:T.blue,cursor:"pointer",fontFamily:"inherit",flexShrink:0,marginLeft:10}}>Group →</button>}
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}>
+            <Stat l="PY" v={$$(totalPY)} c={T.t2}/>
+            <Stat l="CY" v={$$(totalCY)} c={T.blue}/>
+            <Stat l="Gap" v={gap<=0?`+${$$(Math.abs(gap))}`:$$(gap)} c={gap<=0?T.green:T.red}/>
+            <Stat l="Ret" v={ret+"%"} c={ret>=95?T.green:ret>=70?T.amber:T.red}/>
+          </div>
         </div>
-        {repAccts.length===0&&<div style={{fontSize:12,color:T.t4,textAlign:"center",padding:"30px 0"}}>No accounts linked to this rep yet.</div>}
-        {repAccts.map((a,i)=>{
+        {/* Child locations */}
+        <div style={{fontSize:9,textTransform:"uppercase",color:T.t4,letterSpacing:"1px",marginBottom:8,fontWeight:700}}>Locations ({children.length})</div>
+        {children.map((a:any,i:number)=>{
           const cy=a.cyQ?.["1"]||0, py=a.pyQ?.["1"]||0, gap=py-cy;
           const chip=PRI_CHIP[a.visitPriority]||PRI_CHIP["ON TRACK"];
           return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
@@ -3452,6 +3484,61 @@ function DealersTab({scored,goAcct}:{scored:any[],goAcct:(a:any)=>void}) {
     </div>;
   }
 
+  // ── Level 2: Rep drill-down → parent groups ──
+  if(selDist && selRep !== null) {
+    const repLabel = selRep==="__none__" ? "No Rep Assigned" : selRep;
+    const manuals = manualReps[selDist]||[];
+    const manualEntry = manuals.find(r=>r.name===selRep);
+    const totalPY = repGroupsList.reduce((s:number,g:any)=>s+g.totalPY,0);
+    const totalCY = repGroupsList.reduce((s:number,g:any)=>s+g.totalCY,0);
+    const totalGap = totalPY - totalCY;
+    return <div style={{paddingBottom:80}}>
+      <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"10px 16px",display:"flex",alignItems:"center",gap:10}}>
+        <button onClick={()=>setSelRep(null)} style={{background:"none",border:"none",color:T.blue,cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"inherit",display:"flex",alignItems:"center",gap:4}}><Back/> {selDist}</button>
+      </div>
+      <div style={{padding:"16px 16px 0"}}>
+        {/* Rep header */}
+        <div style={{background:DIST_COLORS[selDist],border:`1px solid ${DIST_BORDER[selDist]}`,borderRadius:14,padding:"12px 14px",marginBottom:14}}>
+          <div style={{fontSize:14,fontWeight:700,color:selRep==="__none__"?T.t3:DIST_TEXT[selDist]}}>{repLabel}</div>
+          <div style={{fontSize:10,color:T.t3,marginTop:2}}>{selDist} · {repGroupsList.length} group{repGroupsList.length!==1?"s":""}</div>
+          <div style={{display:"flex",gap:16,marginTop:8}}>
+            <div><div style={{fontSize:9,color:T.t4}}>PY</div><div style={{fontSize:12,fontWeight:700,color:T.t2,fontFamily:"monospace"}}>{$$(totalPY)}</div></div>
+            <div><div style={{fontSize:9,color:T.t4}}>CY</div><div style={{fontSize:12,fontWeight:700,color:T.blue,fontFamily:"monospace"}}>{$$(totalCY)}</div></div>
+            <div><div style={{fontSize:9,color:T.t4}}>Gap</div><div style={{fontSize:12,fontWeight:700,color:totalGap>0?T.red:T.green,fontFamily:"monospace"}}>{totalGap>0?"-":"+"}${Math.abs(totalGap)>=1000?`${(Math.abs(totalGap)/1000).toFixed(1)}k`:`${Math.round(Math.abs(totalGap))}`}</div></div>
+          </div>
+          {manualEntry?.phone&&<a href={`tel:${manualEntry.phone}`} style={{display:"inline-flex",alignItems:"center",gap:5,marginTop:8,fontSize:10,color:T.cyan,textDecoration:"none",background:"rgba(34,211,238,.08)",border:"1px solid rgba(34,211,238,.15)",borderRadius:8,padding:"3px 10px"}}>
+            📞 {manualEntry.phone}
+          </a>}
+          {manualEntry?.notes&&<div style={{fontSize:10,color:T.t3,marginTop:6,fontStyle:"italic"}}>{manualEntry.notes}</div>}
+        </div>
+        {repGroupsList.length===0&&<div style={{fontSize:12,color:T.t4,textAlign:"center",padding:"30px 0"}}>No accounts linked to this rep yet.</div>}
+        {/* Parent group cards */}
+        {repGroupsList.map((g:any,i:number)=>{
+          const gap=g.totalPY-g.totalCY;
+          const ret=g.totalPY>0?Math.round(g.totalCY/g.totalPY*100):0;
+          const chip=PRI_CHIP[g.maxVisitPriority]||PRI_CHIP["ON TRACK"];
+          return <button key={g.gId} className="anim" onClick={()=>setSelGroup(g.gId)}
+            style={{animationDelay:`${i*20}ms`,width:"100%",textAlign:"left",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:"11px 13px",marginBottom:7,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
+                <div style={{fontSize:12,fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{g.gName}</div>
+                <span style={{flexShrink:0,fontSize:8,fontWeight:700,borderRadius:4,padding:"1px 5px",background:chip.bg,color:chip.color}}>{g.maxVisitPriority}</span>
+              </div>
+              <div style={{fontSize:10,color:T.t3}}>{g.children.length} loc{g.children.length!==1?"s":""}{g.children[0]?.city?` · ${g.children[0].city}`:""}</div>
+            </div>
+            <div style={{display:"flex",gap:6,flexShrink:0,marginLeft:10,alignItems:"center"}}>
+              <div style={{textAlign:"right"}}>
+                <div style={{fontSize:10,color:T.blue,fontWeight:600,fontFamily:"'DM Mono',monospace"}}>{$$(g.totalCY)}</div>
+                <div style={{fontSize:9,color:gap>0?T.red:T.green,fontFamily:"'DM Mono',monospace"}}>{gap>0?"-":"+"}${Math.abs(gap)>=1000?`${(Math.abs(gap)/1000).toFixed(1)}k`:`${Math.round(Math.abs(gap))}`}</div>
+              </div>
+              <Chev/>
+            </div>
+          </button>;
+        })}
+      </div>
+    </div>;
+  }
+
   // ── Distributor drill-down: rep list ──
   if(selDist) {
     const rg = repGroups!;
@@ -3460,11 +3547,12 @@ function DealersTab({scored,goAcct}:{scored:any[],goAcct:(a:any)=>void}) {
     const manuals = (manualReps[selDist]||[]).filter(r=>!knownReps.includes(r.name));
     const distColor = DIST_TEXT[selDist];
 
-    const repStat = (accts:any[]) => {
-      const cy=accts.reduce((s,a)=>s+(a.cyQ?.["1"]||0),0);
-      const py=accts.reduce((s,a)=>s+(a.pyQ?.["1"]||0),0);
-      const nowC=accts.filter(a=>a.visitPriority==="NOW").length;
-      return {cy,py,gap:py-cy,nowC};
+    const repStat = (gList:any[]) => {
+      const cy=gList.reduce((s,g)=>s+g.totalCY,0);
+      const py=gList.reduce((s,g)=>s+g.totalPY,0);
+      const nowC=gList.reduce((s,g)=>s+g.children.filter((a:any)=>a.visitPriority==="NOW").length,0);
+      const acctCount=gList.reduce((s,g)=>s+g.children.length,0);
+      return {cy,py,gap:py-cy,nowC,acctCount,groupCount:gList.length};
     };
 
     return <div style={{paddingBottom:80}}>
@@ -3482,7 +3570,7 @@ function DealersTab({scored,goAcct}:{scored:any[],goAcct:(a:any)=>void}) {
               style={{animationDelay:`${i*20}ms`,width:"100%",textAlign:"left",background:DIST_COLORS[selDist],border:`1px solid ${DIST_BORDER[selDist]}`,borderRadius:12,padding:"11px 13px",marginBottom:7,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:12,fontWeight:700,color:distColor,marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{rep}</div>
-                <div style={{fontSize:10,color:T.t3}}>{rg[rep].length} account{rg[rep].length!==1?"s":""}{s.nowC>0?<span style={{color:"#f87171"}}> · {s.nowC} NOW</span>:""}</div>
+                <div style={{fontSize:10,color:T.t3}}>{s.groupCount} group{s.groupCount!==1?"s":""} · {s.acctCount} acct{s.acctCount!==1?"s":""}{s.nowC>0?<span style={{color:"#f87171"}}> · {s.nowC} NOW</span>:""}</div>
               </div>
               <div style={{display:"flex",gap:6,flexShrink:0,marginLeft:10,alignItems:"center"}}>
                 <div style={{textAlign:"right"}}>
@@ -3516,8 +3604,8 @@ function DealersTab({scored,goAcct}:{scored:any[],goAcct:(a:any)=>void}) {
           <button onClick={()=>setSelRep("__none__")}
             style={{width:"100%",textAlign:"left",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:"11px 13px",marginBottom:12,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <div>
-              <div style={{fontSize:12,fontWeight:600,color:T.t2}}>Unassigned accounts</div>
-              <div style={{fontSize:10,color:T.t3}}>{unassigned.length} account{unassigned.length!==1?"s":""} · {unassigned.filter(a=>a.visitPriority==="NOW").length} NOW priority</div>
+              <div style={{fontSize:12,fontWeight:600,color:T.t2}}>Unassigned groups</div>
+              <div style={{fontSize:10,color:T.t3}}>{unassigned.length} group{unassigned.length!==1?"s":" "} · {unassigned.reduce((s:number,g:any)=>s+g.children.length,0)} accounts · {unassigned.reduce((s:number,g:any)=>s+g.children.filter((a:any)=>a.visitPriority==="NOW").length,0)} NOW priority</div>
             </div>
             <Chev/>
           </button>
