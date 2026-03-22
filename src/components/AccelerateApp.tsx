@@ -1045,10 +1045,65 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
       .sort((a:any,b:any) => b.totalGap - a.totalGap);
   }, [scored]);
 
-  const hotGroups = scoredGroups.filter((g:any) => g.maxScore >= 50).slice(0,12);
-  const followGroups = scoredGroups.filter((g:any) => g.maxScore >= 20 && g.maxScore < 50).slice(0,12);
-  const hot = scored.filter(a => a.score >= 50).slice(0,10);
-  const followUp = scored.filter(a => a.score >= 20 && a.score < 50).slice(0,10);
+  // ── Group health lookup: gId → {totalPY, totalCY, isHealthy}
+  const groupHealthMap = useMemo(() => {
+    const map: Record<string,{totalPY:number,totalCY:number,isHealthy:boolean}> = {};
+    scoredGroups.forEach((g:any) => {
+      map[g.gId] = {
+        totalPY: g.totalPY,
+        totalCY: g.totalCY,
+        isHealthy: g.totalCY >= g.totalPY, // group is at or above PY overall
+      };
+    });
+    return map;
+  }, [scoredGroups]);
+
+  // ── Rule 1: suppress multi-dealer private practices where combined spend is on track
+  // ── Rule 2: suppress group children where the parent group is healthy overall
+  //    → these go to groupWatch instead
+  const isGroupAccount = (a:any) => {
+    // A child is "in a group" if its parent has >1 location
+    const grp = (groups||[]).find((g:any) => g.id === a.gId);
+    return grp && grp.locs > 1;
+  };
+
+  const suppressedByRule = (a:any): "none"|"rule1"|"rule2" => {
+    // Rule 1: multi-dealer private practice, combined on track
+    if (a.hasSiblings && a.combinedPY > 0 && a.combinedCY >= a.combinedPY) return "rule1";
+    // Rule 2: child of a multi-location group where group overall is healthy
+    if (a.gId && isGroupAccount(a)) {
+      const gh = groupHealthMap[a.gId];
+      if (gh && gh.isHealthy) return "rule2";
+    }
+    return "none";
+  };
+
+  // scoredGroups already rolls up by gId. Filter out groups that are healthy overall.
+  const hotGroups = scoredGroups
+    .filter((g:any) => g.totalCY < g.totalPY) // Rule 2: group must be down overall
+    .filter((g:any) => g.maxScore >= 50)
+    .slice(0,12);
+  const followGroups = scoredGroups
+    .filter((g:any) => g.totalCY < g.totalPY) // Rule 2: group must be down overall
+    .filter((g:any) => g.maxScore >= 20 && g.maxScore < 50)
+    .slice(0,12);
+
+  // ── Group Watch: healthy-group children that are individually underperforming
+  // These are lower priority than a genuinely down account, but still worth flagging
+  const groupWatch = useMemo(() => {
+    return scored
+      .filter((a:any) => {
+        if (!a.gId || !isGroupAccount(a)) return false;
+        const gh = groupHealthMap[a.gId];
+        if (!gh || !gh.isHealthy) return false; // group is actually down → already in hotGroups/followGroups
+        return (a.gap || 0) > 200 && a.score >= 20; // child is individually down by $200+
+      })
+      .sort((a:any,b:any) => (b.gap||0) - (a.gap||0))
+      .slice(0,15);
+  }, [scored, groupHealthMap]);
+
+  const hot = scored.filter(a => suppressedByRule(a) === "none" && a.score >= 50).slice(0,10);
+  const followUp = scored.filter(a => suppressedByRule(a) === "none" && a.score >= 20 && a.score < 50).slice(0,10);
 
   // ── Group-first action card for Today tab
   const GroupActionCard = ({g, i, isHot, goAcct, goGroup, groups}: any) => {
@@ -1595,6 +1650,41 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
       {hotGroups.length===0&&followGroups.length===0&&(
         <div style={{padding:"24px 0",textAlign:"center",color:T.t4,fontSize:12}}>No scored accounts — upload a CSV to get started.</div>
       )}
+
+      {/* ── GROUP WATCH: healthy-group children individually underperforming ── */}
+      {groupWatch.length>0&&<div style={{marginTop:16}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+          <span style={{fontSize:12,fontWeight:700,color:T.blue,letterSpacing:.5,textTransform:"uppercase"}}>Group Watch</span>
+          <span style={{fontSize:10,color:T.t4,background:T.s2,borderRadius:10,padding:"1px 7px"}}>{groupWatch.length}</span>
+        </div>
+        <div style={{fontSize:10,color:T.t4,marginBottom:10,lineHeight:1.5}}>
+          Individually down · parent group on track · may reflect bulk buying · lower priority unless a nearby sibling is over-performing
+        </div>
+        {groupWatch.map((a:any,i:number)=>{
+          const badger = BADGER[a.id]||BADGER[a.gId]||null;
+          const gh = groupHealthMap[a.gId];
+          const grpRet = gh && gh.totalPY>0 ? Math.round(gh.totalCY/gh.totalPY*100) : null;
+          return (
+            <div key={a.id} className="anim" style={{animationDelay:`${i*30}ms`,background:T.s1,border:`1px solid rgba(79,142,247,.15)`,borderRadius:14,padding:"12px 14px",marginBottom:8,cursor:"pointer"}}
+              onClick={()=>goAcct(a)}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:13,fontWeight:700,color:T.t1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{a.name}</div>
+                  <div style={{fontSize:10,color:T.t3,marginTop:1}}>{a.gName&&a.gName!==a.name?`${a.gName} · `:""}{ a.city||""}{a.dealer?<span style={{color:T.t4}}> · {a.dealer}</span>:""}</div>
+                </div>
+                <div style={{textAlign:"right",flexShrink:0,marginLeft:10}}>
+                  <div style={{fontSize:13,fontWeight:700,color:T.amber}} className="m">−${Math.round(a.gap).toLocaleString()}</div>
+                  <div style={{fontSize:10,color:T.t4}} className="m">{Math.round(a.ret*100)}% ret</div>
+                </div>
+              </div>
+              {grpRet!==null&&<div style={{fontSize:10,color:T.t4,background:T.s2,borderRadius:6,padding:"3px 8px",display:"inline-flex",alignItems:"center",gap:4}}>
+                <span style={{color:"rgba(52,211,153,.8)"}}>●</span>&nbsp;Group {grpRet}% · ${Math.round(gh!.totalCY).toLocaleString()} CY vs ${Math.round(gh!.totalPY).toLocaleString()} PY
+              </div>}
+              {badger?.feel&&<div style={{marginTop:6,fontSize:10,color:T.t3}}>Feel: {badger.feel}</div>}
+            </div>
+          );
+        })}
+      </div>}
     </div>
     </>}
   </div>;
