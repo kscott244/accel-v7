@@ -731,6 +731,61 @@ export default function App() {
 
 // ─── TODAY TAB ────────────────────────────────────────────────────
 function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGroup}) {
+  const [scope, setScope] = useState<string>(() => {
+    try { return localStorage.getItem("today_scope") || "1"; } catch { return "1"; }
+  });
+  const setAndSaveScope = (s: string) => {
+    setScope(s);
+    try { localStorage.setItem("today_scope", s); } catch {}
+  };
+
+  // ── Scoped totals: PY vs CY for selected scope across all groups ──
+  const scopeTotals = useMemo(() => {
+    if (!groups) return {py:0, cy:0};
+    const py = groups.reduce((s,g) => s + (g.pyQ?.[scope]||0), 0);
+    const cy = groups.reduce((s,g) => s + (g.cyQ?.[scope]||0), 0);
+    return {py, cy};
+  }, [groups, scope]);
+
+  // ── Scoped scored: rescore all accounts for the selected scope ──
+  // Only needed when scope ≠ "1" (Q1 scored array is already computed at App level)
+  const scopedScored = useMemo(() => {
+    if (scope === "1") return scored; // use existing Q1 scored — already adjusted
+    return scored.map(a => {
+      const py = a.pyQ?.[scope] || 0;
+      const cy = a.cyQ?.[scope] || 0;
+      const scoreBase = {...a, pyQ:{...a.pyQ, [scope]: py}, cyQ:{...a.cyQ, [scope]: cy}};
+      return {
+        ...a,
+        ...scoreAccount(scoreBase, scope),
+        // override py/cy/gap/ret for display in this scope
+        py, cy, gap: py-cy, ret: py>0 ? cy/py : 0,
+      };
+    }).sort((a:any,b:any) => b.score - a.score);
+  }, [scored, scope]);
+
+  // ── Scoped group rolls: re-aggregate groups for selected scope ──
+  const scopedGroups = useMemo(() => {
+    const gMap: Record<string,any> = {};
+    scopedScored.forEach(a => {
+      if(!a.gId) return;
+      if(!gMap[a.gId]) gMap[a.gId] = {gId:a.gId, gName:a.gName||a.gId, gTier:a.gTier||"", children:[], totalPY:0, totalCY:0, maxScore:0};
+      const g = gMap[a.gId];
+      g.children.push(a);
+      g.totalPY += (a.pyQ?.[scope]||0);
+      g.totalCY += (a.cyQ?.[scope]||0);
+      if((a.score||0) > g.maxScore) g.maxScore = a.score;
+    });
+    return Object.values(gMap)
+      .map((g:any) => ({
+        ...g,
+        totalGap: g.totalPY - g.totalCY,
+        totalRet: g.totalPY > 0 ? g.totalCY / g.totalPY : 0,
+        children: [...g.children].sort((a:any,b:any) => (b.gap||0) - (a.gap||0)),
+      }))
+      .filter((g:any) => g.totalGap > 0 || g.maxScore >= 20)
+      .sort((a:any,b:any) => b.totalGap - a.totalGap);
+  }, [scopedScored, scope]);
   const [search, setSearch] = useState("");
   const [odDone, setOdDone] = useState<Record<string,{outcome:string,amt:number,note?:string}>>(() => {
     try { return JSON.parse(localStorage.getItem("overdrive_done") || "{}"); } catch { return {}; }
@@ -1040,55 +1095,30 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
     .sort((a,b) => (b.cyQ?.["1"]||0) - (a.cyQ?.["1"]||0))
     .slice(0,5);
 
-  // ── Section 3: Group-first action list
-  // Collapse scored children by group, compute group-level gap/score
-  const scoredGroups = useMemo(() => {
-    const gMap: Record<string,any> = {};
-    scored.forEach(a => {
-      if(!a.gId) return;
-      if(!gMap[a.gId]) gMap[a.gId] = {gId:a.gId, gName:a.gName||a.gId, gTier:a.gTier||"", children:[], totalPY:0, totalCY:0, maxScore:0};
-      const g = gMap[a.gId];
-      g.children.push(a);
-      g.totalPY += a.py || 0;
-      g.totalCY += a.cy || 0;
-      if((a.score||0) > g.maxScore) g.maxScore = a.score;
-    });
-    return Object.values(gMap)
-      .map((g:any) => ({
-        ...g,
-        totalGap: g.totalPY - g.totalCY,
-        totalRet: g.totalPY > 0 ? g.totalCY / g.totalPY : 0,
-        children: [...g.children].sort((a:any,b:any) => (b.gap||0) - (a.gap||0)),
-      }))
-      .filter((g:any) => g.totalGap > 0 || g.maxScore >= 20)
-      .sort((a:any,b:any) => b.totalGap - a.totalGap);
-  }, [scored]);
+  // ── Section 3: Group-first action list — uses scopedGroups (scope-aware)
+  // scoredGroups is now scopedGroups defined above with scope state
 
   // ── Group health lookup: gId → {totalPY, totalCY, isHealthy}
   const groupHealthMap = useMemo(() => {
     const map: Record<string,{totalPY:number,totalCY:number,isHealthy:boolean}> = {};
-    scoredGroups.forEach((g:any) => {
+    scopedGroups.forEach((g:any) => {
       map[g.gId] = {
         totalPY: g.totalPY,
         totalCY: g.totalCY,
-        isHealthy: g.totalCY >= g.totalPY, // group is at or above PY overall
+        isHealthy: g.totalCY >= g.totalPY,
       };
     });
     return map;
-  }, [scoredGroups]);
+  }, [scopedGroups]);
 
-  // ── Rule 1: suppress multi-dealer private practices where combined spend is on track
-  // ── Rule 2: suppress group children where the parent group is healthy overall
-  //    → these go to groupWatch instead
   const isGroupAccount = (a:any) => {
-    // A child is "in a group" if its parent has >1 location
     const grp = (groups||[]).find((g:any) => g.id === a.gId);
     return grp && grp.locs > 1;
   };
 
   const suppressedByRule = (a:any): "none"|"rule1"|"rule2" => {
-    // Rule 1: multi-dealer private practice, combined on track
-    if (a.hasSiblings && a.combinedPY > 0 && a.combinedCY >= a.combinedPY) return "rule1";
+    // Rule 1: multi-dealer private practice, combined on track (only meaningful for Q scopes)
+    if (scope !== "FY" && a.hasSiblings && a.combinedPY > 0 && a.combinedCY >= a.combinedPY) return "rule1";
     // Rule 2: child of a multi-location group where group overall is healthy
     if (a.gId && isGroupAccount(a)) {
       const gh = groupHealthMap[a.gId];
@@ -1097,32 +1127,31 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
     return "none";
   };
 
-  // scoredGroups already rolls up by gId. Filter out groups that are healthy overall.
-  const hotGroups = scoredGroups
-    .filter((g:any) => g.totalCY < g.totalPY) // Rule 2: group must be down overall
+  const hotGroups = scopedGroups
+    .filter((g:any) => g.totalCY < g.totalPY)
     .filter((g:any) => g.maxScore >= 50)
     .slice(0,12);
-  const followGroups = scoredGroups
-    .filter((g:any) => g.totalCY < g.totalPY) // Rule 2: group must be down overall
+  const followGroups = scopedGroups
+    .filter((g:any) => g.totalCY < g.totalPY)
     .filter((g:any) => g.maxScore >= 20 && g.maxScore < 50)
     .slice(0,12);
 
   // ── Group Watch: healthy-group children that are individually underperforming
   // These are lower priority than a genuinely down account, but still worth flagging
   const groupWatch = useMemo(() => {
-    return scored
+    return scopedScored
       .filter((a:any) => {
         if (!a.gId || !isGroupAccount(a)) return false;
         const gh = groupHealthMap[a.gId];
-        if (!gh || !gh.isHealthy) return false; // group is actually down → already in hotGroups/followGroups
-        return (a.gap || 0) > 200 && a.score >= 20; // child is individually down by $200+
+        if (!gh || !gh.isHealthy) return false;
+        return (a.gap || 0) > 200 && a.score >= 20;
       })
       .sort((a:any,b:any) => (b.gap||0) - (a.gap||0))
       .slice(0,15);
-  }, [scored, groupHealthMap]);
+  }, [scopedScored, groupHealthMap]);
 
-  const hot = scored.filter(a => suppressedByRule(a) === "none" && a.score >= 50).slice(0,10);
-  const followUp = scored.filter(a => suppressedByRule(a) === "none" && a.score >= 20 && a.score < 50).slice(0,10);
+  const hot = scopedScored.filter((a:any) => suppressedByRule(a) === "none" && a.score >= 50).slice(0,10);
+  const followUp = scopedScored.filter((a:any) => suppressedByRule(a) === "none" && a.score >= 20 && a.score < 50).slice(0,10);
 
   // ── Group-first action card for Today tab
   const GroupActionCard = ({g, i, isHot, goAcct, goGroup, groups}: any) => {
@@ -1293,34 +1322,93 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
 
     /* ── NORMAL TODAY CONTENT ── */
     <>
+    {/* ── SCOPE SELECTOR + PROGRESS CARD ── */}
     <div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(79,142,247,.06))`,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16,boxShadow:"0 4px 24px rgba(0,0,0,.4)"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-        <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color:T.t3}}>Q1 Progress</span>
-        <div style={{display:"flex",alignItems:"center",gap:6}}>
-          <span style={{fontSize:10,fontWeight:700,color:statusColor,background:statusBg,border:`1px solid ${statusBorder}`,borderRadius:999,padding:"2px 10px"}}>{statusLabel}</span>
-          <span className="m" style={{fontSize:10,fontWeight:700,color:T.amber}}>{DAYS_LEFT}d left</span>
-        </div>
+
+      {/* Scope pills */}
+      <div style={{display:"flex",gap:5,marginBottom:14}}>
+        {(["1","2","3","4","FY"] as const).map(s => {
+          const isActive = scope === s;
+          const label = s === "FY" ? "FY" : `Q${s}`;
+          return <button key={s} onClick={()=>setAndSaveScope(s)}
+            style={{flex:1,padding:"5px 0",borderRadius:8,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",
+              border:`1px solid ${isActive?"rgba(79,142,247,.4)":T.b2}`,
+              background:isActive?"rgba(79,142,247,.18)":T.s2,
+              color:isActive?T.blue:T.t3,
+              transition:"all 0.15s"}}>{label}</button>;
+        })}
       </div>
-      <div style={{display:"flex",alignItems:"baseline",gap:12,marginBottom:8}}>
-        <span className="m" style={{fontSize:30,fontWeight:800,color:statusColor}}>{pc(q1Att)}</span>
-        <span style={{fontSize:12,color:T.t3}}>{$$(q1CY)} / {$$(Q1_TARGET)}</span>
-      </div>
-      <Bar pct={q1Att*100} color={`linear-gradient(90deg,${statusColor},${ahead?T.cyan:onTrack?T.orange:T.red})`}/>
-      {adjCount>0&&<div style={{marginTop:8,padding:"5px 10px",borderRadius:8,background:"rgba(52,211,153,.06)",border:"1px solid rgba(52,211,153,.12)",fontSize:10,color:T.green}}>+{adjCount} adj: +{$f(totalAdj)}</div>}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:10}}>
-        <div style={{borderRadius:8,background:"rgba(248,113,113,.06)",border:"1px solid rgba(248,113,113,.12)",padding:10}}>
-          <div style={{fontSize:9,color:T.t3}}>Gap to close</div>
-          <div className="m" style={{fontSize:16,fontWeight:700,color:q1Gap<=0?T.green:T.red}}>{q1Gap<=0?`+${$$(-q1Gap)}`:$$(q1Gap)}</div>
+
+      {scope === "1" ? <>
+        {/* ── Q1 view: target attainment (existing logic) ── */}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+          <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color:T.t3}}>Q1 Progress</span>
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+            <span style={{fontSize:10,fontWeight:700,color:statusColor,background:statusBg,border:`1px solid ${statusBorder}`,borderRadius:999,padding:"2px 10px"}}>{statusLabel}</span>
+            <span className="m" style={{fontSize:10,fontWeight:700,color:T.amber}}>{DAYS_LEFT}d left</span>
+          </div>
         </div>
-        <div style={{borderRadius:8,background:"rgba(79,142,247,.06)",border:"1px solid rgba(79,142,247,.12)",padding:10}}>
-          <div style={{fontSize:9,color:T.t3}}>$/day needed</div>
-          <div className="m" style={{fontSize:16,fontWeight:700,color:T.blue}}>{$f(DAYS_LEFT>0&&q1Gap>0?q1Gap/DAYS_LEFT:0)}</div>
+        <div style={{display:"flex",alignItems:"baseline",gap:12,marginBottom:8}}>
+          <span className="m" style={{fontSize:30,fontWeight:800,color:statusColor}}>{pc(q1Att)}</span>
+          <span style={{fontSize:12,color:T.t3}}>{$$(q1CY)} / {$$(Q1_TARGET)}</span>
         </div>
-      </div>
+        <Bar pct={q1Att*100} color={`linear-gradient(90deg,${statusColor},${ahead?T.cyan:onTrack?T.orange:T.red})`}/>
+        {adjCount>0&&<div style={{marginTop:8,padding:"5px 10px",borderRadius:8,background:"rgba(52,211,153,.06)",border:"1px solid rgba(52,211,153,.12)",fontSize:10,color:T.green}}>+{adjCount} adj: +{$f(totalAdj)}</div>}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:10}}>
+          <div style={{borderRadius:8,background:"rgba(248,113,113,.06)",border:"1px solid rgba(248,113,113,.12)",padding:10}}>
+            <div style={{fontSize:9,color:T.t3}}>Gap to close</div>
+            <div className="m" style={{fontSize:16,fontWeight:700,color:q1Gap<=0?T.green:T.red}}>{q1Gap<=0?`+${$$(-q1Gap)}`:$$(q1Gap)}</div>
+          </div>
+          <div style={{borderRadius:8,background:"rgba(79,142,247,.06)",border:"1px solid rgba(79,142,247,.12)",padding:10}}>
+            <div style={{fontSize:9,color:T.t3}}>$/day needed</div>
+            <div className="m" style={{fontSize:16,fontWeight:700,color:T.blue}}>{$f(DAYS_LEFT>0&&q1Gap>0?q1Gap/DAYS_LEFT:0)}</div>
+          </div>
+        </div>
+      </> : (() => {
+        /* ── Non-Q1 view: PY vs CY comparison ── */
+        const sPY = scopeTotals.py;
+        const sCY = scopeTotals.cy;
+        const sGap = sPY - sCY;
+        const sRet = sPY > 0 ? sCY / sPY : 0;
+        const sAhead = sCY >= sPY;
+        const sColor = sAhead ? T.green : sRet >= 0.85 ? T.amber : T.red;
+        const sLabel = scope === "FY"
+          ? (sAhead ? "Ahead of PY" : `${Math.round(sRet*100)}% of PY pace`)
+          : (sAhead ? `Q${scope} Ahead` : `Q${scope} Behind`);
+        const scopeTitle = scope === "FY" ? "Full Year — CY vs PY" : `Q${scope} — CY vs PY`;
+        return <>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+            <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color:T.t3}}>{scopeTitle}</span>
+            <span style={{fontSize:10,fontWeight:700,color:sColor,background:sAhead?"rgba(52,211,153,.08)":"rgba(248,113,113,.08)",border:`1px solid ${sAhead?"rgba(52,211,153,.2)":"rgba(248,113,113,.2)"}`,borderRadius:999,padding:"2px 10px"}}>{sLabel}</span>
+          </div>
+          <div style={{display:"flex",alignItems:"baseline",gap:12,marginBottom:8}}>
+            <span className="m" style={{fontSize:30,fontWeight:800,color:sColor}}>{Math.round(sRet*100)}%</span>
+            <span style={{fontSize:12,color:T.t3}}>of prior year</span>
+          </div>
+          <Bar pct={Math.min(sRet*100,100)} color={`linear-gradient(90deg,${sColor},${sAhead?T.cyan:T.red})`}/>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginTop:10}}>
+            <div style={{borderRadius:8,background:T.s2,border:`1px solid ${T.b1}`,padding:10}}>
+              <div style={{fontSize:9,color:T.t3}}>Prior Year</div>
+              <div className="m" style={{fontSize:14,fontWeight:700,color:T.t2}}>{$$(sPY)}</div>
+            </div>
+            <div style={{borderRadius:8,background:T.s2,border:`1px solid ${T.b1}`,padding:10}}>
+              <div style={{fontSize:9,color:T.t3}}>Current Year</div>
+              <div className="m" style={{fontSize:14,fontWeight:700,color:T.blue}}>{$$(sCY)}</div>
+            </div>
+            <div style={{borderRadius:8,background:sAhead?"rgba(52,211,153,.06)":"rgba(248,113,113,.06)",border:`1px solid ${sAhead?"rgba(52,211,153,.12)":"rgba(248,113,113,.12)"}`,padding:10}}>
+              <div style={{fontSize:9,color:T.t3}}>{sAhead?"Ahead":"Gap"}</div>
+              <div className="m" style={{fontSize:14,fontWeight:700,color:sColor}}>{sAhead?"+":"-"}{$$(Math.abs(sGap))}</div>
+            </div>
+          </div>
+          {scope === "FY" && sPY > 0 && <div style={{marginTop:10,padding:"6px 10px",borderRadius:8,background:"rgba(79,142,247,.06)",border:"1px solid rgba(79,142,247,.12)",fontSize:10,color:T.t3}}>
+            Accounts below show YTD gaps vs prior year — action list reflects full-year performance
+          </div>}
+        </>;
+      })()}
     </div>
 
-    {/* ── OVERDRIVE ── */}
-    {overdrive&&DAYS_LEFT>0&&q1Gap>0&&<div className="anim" style={{marginBottom:16}}>
+    {/* ── OVERDRIVE — Q1 only ── */}
+    {scope === "1" && overdrive&&DAYS_LEFT>0&&q1Gap>0&&<div className="anim" style={{marginBottom:16}}>
       {/* Overdrive toggle header */}
       <button onClick={toggleOd} style={{
         width:"100%", textAlign:"left", cursor:"pointer", fontFamily:"inherit",
@@ -1652,7 +1740,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
     <div>
       {hotGroups.length>0&&<>
         <SectionHeader label="Hot" color={T.red} count={`${hotGroups.length} group${hotGroups.length>1?"s":""}`} pulse={true}/>
-        <div style={{fontSize:10,color:T.t4,marginBottom:10}}>Highest urgency · Act this week</div>
+        <div style={{fontSize:10,color:T.t4,marginBottom:10}}>{scope==="FY"?"Down vs prior year · highest gap":"Highest urgency · Act this week"}</div>
         <div>
           {hotGroups.map((g:any,i:number)=><GroupActionCard key={g.gId} g={g} i={i} isHot={true} goAcct={goAcct} goGroup={goGroup} groups={groups}/>)}
         </div>
@@ -1660,7 +1748,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
       {followGroups.length>0&&<>
         <div style={{marginTop:hotGroups.length>0?4:0}}>
           <SectionHeader label="Follow Up" color={T.amber} count={`${followGroups.length} group${followGroups.length>1?"s":""}`}/>
-          <div style={{fontSize:10,color:T.t4,marginBottom:10}}>Worth a call this week</div>
+          <div style={{fontSize:10,color:T.t4,marginBottom:10}}>{scope==="FY"?"Moderate YTD gap vs prior year":"Worth a call this week"}</div>
           <div>
             {followGroups.map((g:any,i:number)=><GroupActionCard key={g.gId} g={g} i={i} isHot={false} goAcct={goAcct} goGroup={goGroup} groups={groups}/>)}
           </div>
