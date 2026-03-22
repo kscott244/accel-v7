@@ -16,39 +16,48 @@ async function refreshAccessToken(refreshToken: string): Promise<string> {
     }),
   });
   const data = await res.json();
-  if (!data.access_token) throw new Error("Failed to refresh token: " + JSON.stringify(data));
+  if (!data.access_token) throw new Error("Failed to refresh token");
   return data.access_token;
 }
 
 async function generateEmail(account: any): Promise<{ subject: string; body: string }> {
-  const gapDollars = Math.abs(account.gap || 0);
-  const gapPct = account.gapPct ? Math.abs(account.gapPct) : 0;
+  // Determine the primary dealer for this email (largest gap dealer)
+  const dealer = account.primaryDealer || account.dealer || "your distributor";
+  const doctorName = account.doctor || null;
+  const greeting = doctorName ? `Hi ${doctorName}` : "Hi there";
+  
+  // Gap info
+  const gapDollars = Math.abs(account.combinedGap || account.gap || 0);
   const tier = account.tier || "Standard";
+  
+  // Products - split by dealer if available
   const products = account.topSkus?.map((s: any) => s.desc).filter(Boolean).join(", ") || "";
   const stoppedProducts = account.stoppedSkus?.map((s: any) => s.desc).filter(Boolean).join(", ") || "";
-  const daysLeft = 10; // Q1 ends March 31
 
-  const prompt = `You are Ken Scott, a Kerr Dental territory sales rep based in Connecticut covering CT/MA/RI/NY. 
-You're writing a SHORT, personal email to a dental office that is down in purchases compared to last year.
+  const prompt = `You are Ken Scott, a Kerr Dental territory sales rep based in Connecticut covering CT/MA/RI/NY.
+You're writing a SHORT, personal email to a dental office that is down in purchases vs last year.
 This is from your PERSONAL Gmail so it should feel like a real person wrote it, not a marketing blast.
 
 Account details:
 - Office: ${account.name}
-- City: ${account.city}, ${account.state}  
-- Distributor: ${account.dealer}
+- City: ${account.city}, ${account.state || account.st || "CT"}
+- Primary distributor for this gap: ${dealer}
 - Account tier: ${tier}
-- Q1 gap vs last year: $${gapDollars.toLocaleString()} (${gapPct.toFixed(0)}% down)
+- Gap vs last year: $${gapDollars.toLocaleString()} down
 - Products they've been buying: ${products || "various Kerr products"}
-${stoppedProducts ? `- Products they stopped buying: ${stoppedProducts}` : ""}
-- Days left in Q1: ${daysLeft}
+${stoppedProducts ? `- Products they stopped buying this quarter: ${stoppedProducts}` : ""}
+- Days left in Q1: 9
 
 Write a GENUINE, SHORT email (4-6 sentences max). Rules:
+- Start with: "${greeting},"
+- Reference the SPECIFIC distributor (${dealer}) naturally — e.g. "through ${dealer}" or "on your ${dealer} account"
+- Reference specific products they buy by name if available
+- Do NOT mention any other distributor — only ${dealer}
+- Do NOT mention any distributor rep by name — just the distributor
 - Sound like a real person, not a sales robot
-- Reference something specific about their account (gap, products, or tier if relevant)  
-- Don't be pushy or aggressive — be helpful
-- Mention Q1 promos or end of quarter savings naturally if it fits
+- Mention end of Q1 / March 31st deadline naturally
 - Sign off as: Ken Scott | Kerr Dental | 860-417-4071
-- Subject line should be casual and personal, NOT generic like "Checking In"
+- Subject line should be casual and specific to their products, NOT generic
 
 Return ONLY a JSON object like:
 {"subject": "...", "body": "..."}
@@ -75,15 +84,13 @@ No markdown, no preamble.`;
   } catch {
     return {
       subject: `Quick note from Ken — Kerr Dental`,
-      body: `Hi there,\n\nJust wanted to reach out personally as we wrap up Q1. I noticed your account is running a bit behind compared to last year and wanted to see if there's anything I can help with — whether it's timing an order before quarter end or talking through what's working for other practices in the area.\n\nLet me know if you have a few minutes to connect.\n\nKen Scott | Kerr Dental | 860-417-4071`,
+      body: `${greeting},\n\nJust wanted to reach out as we wrap up Q1. I noticed your account through ${dealer} is running behind compared to last year and wanted to see if there's anything I can help with before March 31st.\n\nLet me know if you have a few minutes.\n\nKen Scott | Kerr Dental | 860-417-4071`,
     };
   }
 }
 
 async function sendGmail(accessToken: string, to: string, subject: string, body: string): Promise<void> {
-  const fromName = "Ken Scott - Kerr Dental";
   const message = [
-    `From: ${fromName} <me>`,
     `To: ${to}`,
     `Subject: ${subject}`,
     `Content-Type: text/plain; charset=utf-8`,
@@ -91,18 +98,12 @@ async function sendGmail(accessToken: string, to: string, subject: string, body:
     body,
   ].join("\n");
 
-  const encoded = Buffer.from(message)
-    .toString("base64")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
+  const encoded = Buffer.from(message).toString("base64")
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 
   const res = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
     body: JSON.stringify({ raw: encoded }),
   });
 
@@ -115,42 +116,31 @@ async function sendGmail(accessToken: string, to: string, subject: string, body:
 export async function POST(req: NextRequest) {
   try {
     const { accounts, refreshToken, preview } = await req.json();
-
-    if (!accounts?.length) return NextResponse.json({ error: "No accounts provided" }, { status: 400 });
+    if (!accounts?.length) return NextResponse.json({ error: "No accounts" }, { status: 400 });
     if (!refreshToken && !preview) return NextResponse.json({ error: "No Gmail token" }, { status: 401 });
 
-    // Get fresh access token
     let accessToken = "";
-    if (!preview) {
-      accessToken = await refreshAccessToken(refreshToken);
-    }
+    if (!preview) accessToken = await refreshAccessToken(refreshToken);
 
     const results = [];
-
     for (const account of accounts) {
       try {
-        // Generate personalized email via Claude
         const { subject, body } = await generateEmail(account);
-
         if (preview) {
-          // Just return the draft without sending
           results.push({ id: account.id, name: account.name, email: account.email, subject, body, status: "preview" });
         } else {
           if (!account.email) {
             results.push({ id: account.id, name: account.name, status: "skipped", reason: "no email" });
             continue;
           }
-          // Actually send
           await sendGmail(accessToken, account.email, subject, body);
           results.push({ id: account.id, name: account.name, email: account.email, subject, status: "sent" });
-          // Small delay to avoid rate limiting
           await new Promise(r => setTimeout(r, 500));
         }
       } catch (err: any) {
         results.push({ id: account.id, name: account.name, status: "error", reason: err.message });
       }
     }
-
     return NextResponse.json({ results, sent: results.filter(r => r.status === "sent").length });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
