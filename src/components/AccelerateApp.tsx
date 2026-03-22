@@ -2771,20 +2771,39 @@ function DealersTab({scored,goAcct}:{scored:any[],goAcct:(a:any)=>void}) {
     try { localStorage.setItem("dealer_manual_reps", JSON.stringify(updated)); } catch {}
   };
 
-  // Build per-distributor stats from scored accounts
+  // Build per-distributor stats from scored accounts — includes all accounts
   const distStats = useMemo(()=>{
+    const ALL_BUCKETS = [...DIST_ORDER, "All Other", "Unknown"];
     const map:Record<string,{accts:any[],cy:number,py:number,nowCount:number}> = {};
-    DIST_ORDER.forEach(d=>{ map[d]={accts:[],cy:0,py:0,nowCount:0}; });
+    ALL_BUCKETS.forEach(d=>{ map[d]={accts:[],cy:0,py:0,nowCount:0}; });
     scored.forEach(a=>{
-      const d = a.dealer;
-      if(!d || !map[d]) return;
+      const d = a.dealer || "Unknown";
+      if(!map[d]) map[d]={accts:[],cy:0,py:0,nowCount:0};
       const cy=a.cyQ?.["1"]||0, py=a.pyQ?.["1"]||0;
       map[d].accts.push(a);
       map[d].cy+=cy; map[d].py+=py;
       if(a.visitPriority==="NOW") map[d].nowCount++;
     });
+    // Merge Unknown into All Other
+    if(map["Unknown"]) {
+      map["All Other"].accts.push(...map["Unknown"].accts);
+      map["All Other"].cy += map["Unknown"].cy;
+      map["All Other"].py += map["Unknown"].py;
+      map["All Other"].nowCount += map["Unknown"].nowCount;
+    }
     return map;
   },[scored]);
+
+  // Extract distributor hint from a freeform rep string
+  // e.g. "Dave R - Benco" → "Benco", "Jeff T - Schein" → "Schein", "Lyndon" → null
+  const repDistHint = (rep:string): string|null => {
+    const r = rep.toLowerCase();
+    if(r.includes("schein") || r.includes("henry schein")) return "Schein";
+    if(r.includes("patterson")) return "Patterson";
+    if(r.includes("benco")) return "Benco";
+    if(r.includes("darby")) return "Darby";
+    return null; // no distributor hint — rep could belong to any
+  };
 
   // For selected distributor: group accounts by rep
   const repGroups = useMemo(()=>{
@@ -2792,15 +2811,24 @@ function DealersTab({scored,goAcct}:{scored:any[],goAcct:(a:any)=>void}) {
     const accts = distStats[selDist]?.accts || [];
     const groups:Record<string,any[]> = {"__none__":[]};
     accts.forEach(a=>{
-      const badger = (typeof BADGER !== "undefined" ? BADGER : {})[a.id] || (typeof BADGER !== "undefined" ? BADGER : {})[a.gId];
+      // Only use child-level Badger entry (a.id) — never fall back to parent (a.gId)
+      // because the parent may have children across multiple distributors
+      const badger = (typeof BADGER !== "undefined" ? BADGER : {})[a.id];
       const rep = badger?.dealerRep;
       if(isNoRep(rep)) {
         groups["__none__"].push(a);
-      } else {
-        const key = rep!.trim();
-        if(!groups[key]) groups[key]=[];
-        groups[key].push(a);
+        return;
       }
+      const hint = repDistHint(rep!);
+      // If rep name contains a distributor hint that doesn't match this account's
+      // actual dealer, skip — the rep note was logged against the wrong child
+      if(hint && hint !== selDist) {
+        groups["__none__"].push(a);
+        return;
+      }
+      const key = rep!.trim();
+      if(!groups[key]) groups[key]=[];
+      groups[key].push(a);
     });
     return groups;
   },[selDist,scored,distStats]);
@@ -2974,30 +3002,54 @@ function DealersTab({scored,goAcct}:{scored:any[],goAcct:(a:any)=>void}) {
   // ── Top-level: 4 distributor cards ──
   return <div style={{padding:"16px 16px 0",paddingBottom:80}}>
     <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t4,marginBottom:12}}>Dealer Dashboard</div>
-    {DIST_ORDER.map(dist=>{
+  // ── Top-level: 4 distributor cards + All Other ──
+  return <div style={{padding:"16px 16px 0",paddingBottom:80}}>
+    {/* Territory total summary */}
+    {(()=>{
+      const totalCY=scored.reduce((s,a)=>s+(a.cyQ?.["1"]||0),0);
+      const totalPY=scored.reduce((s,a)=>s+(a.pyQ?.["1"]||0),0);
+      const totalGap=totalPY-totalCY;
+      return <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:"10px 14px",marginBottom:14,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div style={{fontSize:10,color:T.t3,fontWeight:600,textTransform:"uppercase",letterSpacing:"1px"}}>All Distributors · {scored.length} accounts</div>
+        <div style={{display:"flex",gap:12}}>
+          <div style={{textAlign:"right"}}><div style={{fontSize:8,color:T.t4}}>CY</div><div style={{fontSize:11,fontWeight:700,color:T.blue,fontFamily:"'DM Mono',monospace"}}>{$$(totalCY)}</div></div>
+          <div style={{textAlign:"right"}}><div style={{fontSize:8,color:T.t4}}>Gap</div><div style={{fontSize:11,fontWeight:700,color:totalGap<=0?T.green:T.red,fontFamily:"'DM Mono',monospace"}}>{totalGap<=0?`+${$$(Math.abs(totalGap))}`:$$(totalGap)}</div></div>
+        </div>
+      </div>;
+    })()}
+    {[...DIST_ORDER,"All Other"].map(dist=>{
       const s=distStats[dist];
+      if(!s||s.accts.length===0) return null;
       const gap=s.py-s.cy;
       const ret=s.py>0?s.cy/s.py:0;
       const upCount=s.accts.filter(a=>(a.cyQ?.["1"]||0)>=(a.pyQ?.["1"]||0)).length;
       const downCount=s.accts.length-upCount;
-      const repCount=Object.keys(
+      const isAllOther=dist==="All Other";
+      // repCount: only count reps whose distributor hint matches this dist
+      const repCount=isAllOther?0:Object.keys(
         s.accts.reduce((m:Record<string,boolean>,a)=>{
-          const b=(typeof BADGER!=="undefined"?BADGER:{})[a.id]||(typeof BADGER!=="undefined"?BADGER:{})[a.gId];
+          const b=(typeof BADGER!=="undefined"?BADGER:{})[a.id];
           const rep=b?.dealerRep;
-          if(!isNoRep(rep)) m[rep!.trim()]=true;
+          if(!isNoRep(rep)){
+            const hint=repDistHint(rep);
+            if(!hint||hint===dist) m[rep!.trim()]=true;
+          }
           return m;
         },{})
       ).length;
-      return <button key={dist} className="anim" onClick={()=>{setSelDist(dist);setSelRep(null);setShowAddRep(false);}}
-        style={{width:"100%",textAlign:"left",background:DIST_COLORS[dist],border:`1px solid ${DIST_BORDER[dist]}`,borderRadius:16,padding:"14px 16px",marginBottom:10,cursor:"pointer"}}>
+      const cardBg=isAllOther?"rgba(85,85,112,.12)":DIST_COLORS[dist];
+      const cardBorder=isAllOther?"rgba(85,85,112,.25)":DIST_BORDER[dist];
+      const cardText=isAllOther?T.t3:DIST_TEXT[dist];
+      return <button key={dist} className="anim" onClick={()=>{if(!isAllOther){setSelDist(dist);setSelRep(null);setShowAddRep(false);}}}
+        style={{width:"100%",textAlign:"left",background:cardBg,border:`1px solid ${cardBorder}`,borderRadius:16,padding:"14px 16px",marginBottom:10,cursor:isAllOther?"default":"pointer"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
           <div>
-            <div style={{fontSize:16,fontWeight:800,color:DIST_TEXT[dist],marginBottom:2}}>{dist}</div>
-            <div style={{fontSize:10,color:T.t3}}>{s.accts.length} accounts{repCount>0?` · ${repCount} rep${repCount!==1?"s":""} known`:""}</div>
+            <div style={{fontSize:16,fontWeight:800,color:cardText,marginBottom:2}}>{dist}</div>
+            <div style={{fontSize:10,color:T.t3}}>{s.accts.length} accounts{repCount>0?` · ${repCount} rep${repCount!==1?"s":""} known`:""}{isAllOther?" · no rep drill-down":""}</div>
           </div>
           <div style={{display:"flex",gap:6,alignItems:"center"}}>
             {s.nowCount>0&&<span style={{fontSize:9,fontWeight:700,color:"#f87171",background:"rgba(248,113,113,.1)",border:"1px solid rgba(248,113,113,.2)",borderRadius:6,padding:"2px 7px"}}>{s.nowCount} NOW</span>}
-            <Chev/>
+            {!isAllOther&&<Chev/>}
           </div>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}>
