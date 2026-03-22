@@ -127,6 +127,7 @@ const IconGroup   = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0
 const IconChart   = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>;
 const IconMap     = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>;
 const IconSliders = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>;
+const IconDealer  = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>;
 
 // ─── DISPLAY NAME FIXER ──────────────────────────────────────────
 const BAD_GROUP_NAMES = new Set(["STANDARD","Standard","HOUSE ACCOUNTS","House Accounts","SILVER","GOLD","PLATINUM","DIAMOND","TOP 100","Silver","Gold","Platinum","Diamond","Top 100",""]);
@@ -653,13 +654,14 @@ export default function App() {
       {!view && tab==="map" && <MapTab/>}
       {!view && tab==="calc" && <DashTab groups={groups||[]} q1CY={q1CY} q1Att={q1Att} q1Gap={q1Gap} scored={scored} goAcct={a=>setView({type:"acct",data:a})}/>}
       {!view && tab==="est" && <EstTab pct={estPct} setPct={setEstPct} q1CY={q1CY} groups={groups||[]} goAcct={a=>setView({type:"acct",data:a})}/>}
+      {!view && tab==="dealers" && <DealersTab scored={scored} goAcct={a=>setView({type:"acct",data:a})}/>}
       {view?.type==="group" && <GroupDetail group={view.data} goMain={()=>setView(null)} goAcct={a=>setView({type:"acct",data:{...a,gName:fixGroupName(view.data),gId:view.data.id,gTier:view.data.tier},from:view.data})}/>}
       {view?.type==="acct" && <AcctDetail acct={view.data} goBack={()=>view?.from?setView({type:"group",data:view.from}):setView(null)} adjs={adjs} setAdjs={setAdjs} groups={groups||[]} goGroup={g=>setView({type:"group",data:g})}/>}
 
       {/* NAV BAR */}
       <nav style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:960,zIndex:50,borderTop:`1px solid ${T.b1}`,background:"rgba(10,10,15,.92)",backdropFilter:"blur(32px)"}}>
         <div style={{display:"flex",height:56,alignItems:"center",justifyContent:"space-around",padding:"0 4px"}}>
-          {[{k:"today",l:"Today",I:IconBolt},{k:"groups",l:"Groups",I:IconGroup},{k:"map",l:"Route",I:IconMap},{k:"calc",l:"Dash",I:IconChart},{k:"est",l:"Close",I:IconSliders}].map(t=>(
+          {[{k:"today",l:"Today",I:IconBolt},{k:"groups",l:"Groups",I:IconGroup},{k:"map",l:"Route",I:IconMap},{k:"calc",l:"Dash",I:IconChart},{k:"est",l:"Close",I:IconSliders},{k:"dealers",l:"Dealers",I:IconDealer}].map(t=>(
             <button key={t.k} onClick={()=>{setTab(t.k);setView(null)}} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 8px",cursor:"pointer",color:tab===t.k&&!view?T.blue:T.t4}}>
               <t.I c={tab===t.k&&!view?T.blue:T.t4}/>
               <span style={{fontSize:9,fontWeight:600,letterSpacing:".5px"}}>{t.l}</span>
@@ -674,23 +676,36 @@ export default function App() {
 // ─── TODAY TAB ────────────────────────────────────────────────────
 function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGroup}) {
   const [search, setSearch] = useState("");
-  const [odDone, setOdDone] = useState<Record<string,{outcome:string,amt:number}>>(() => {
+  const [odDone, setOdDone] = useState<Record<string,{outcome:string,amt:number,note?:string}>>(() => {
     try { return JSON.parse(localStorage.getItem("overdrive_done") || "{}"); } catch { return {}; }
   });
+  const [odNotePrompt, setOdNotePrompt] = useState<{id:string,outcome:string,amt:number}|null>(null);
+  const [odNoteText, setOdNoteText] = useState("");
   const [odOpen, setOdOpen] = useState<boolean>(() => {
     try { return localStorage.getItem("overdrive_open") !== "false"; } catch { return true; }
   });
-  const [tripAnchor, setTripAnchor] = useState<any>(null); // account to plan a trip around
+  const [tripAnchor, setTripAnchor] = useState<any>(null);
   const toggleOd = () => {
     const next = !odOpen;
     setOdOpen(next);
     try { localStorage.setItem("overdrive_open", String(next)); } catch {}
   };
 
-  const saveDone = (id: string, outcome: string, amt: number) => {
-    const updated = {...odDone, [id]: {outcome, amt}};
+  const saveDone = (id: string, outcome: string, amt: number, note?: string) => {
+    const updated = {...odDone, [id]: {outcome, amt, ...(note ? {note} : {})}};
     setOdDone(updated);
     try { localStorage.setItem("overdrive_done", JSON.stringify(updated)); } catch {}
+  };
+  const promptOutcome = (e: React.MouseEvent, id: string, outcome: string, amt: number) => {
+    e.stopPropagation();
+    setOdNotePrompt({id, outcome, amt});
+    setOdNoteText("");
+  };
+  const commitOutcome = () => {
+    if (!odNotePrompt) return;
+    saveDone(odNotePrompt.id, odNotePrompt.outcome, odNotePrompt.amt, odNoteText.trim() || undefined);
+    setOdNotePrompt(null);
+    setOdNoteText("");
   };
 
   const clearDone = (id: string) => {
@@ -1179,11 +1194,14 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
               </div>
               <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0,marginLeft:8}}>
                 {done
-                  ? <span style={{fontSize:10,fontWeight:700,color:T.green}}>{$f(done.amt)} ✓</span>
+                  ? <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:1}}>
+                      <span style={{fontSize:10,fontWeight:700,color:done.outcome==="lost"?T.red:T.green}}>{done.outcome==="lost"?"✗ Lost":`${$f(done.amt)} ✓`}</span>
+                      {done.note&&<span style={{fontSize:8,color:T.t4,maxWidth:90,textAlign:"right",lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{done.note}</span>}
+                    </div>
                   : <div style={{display:"flex",gap:4}}>
-                      <button onClick={e=>{e.stopPropagation();saveDone(a.id,"won",a.ask);}} style={{background:"rgba(52,211,153,.12)",border:"1px solid rgba(52,211,153,.25)",borderRadius:6,padding:"3px 8px",fontSize:9,fontWeight:700,color:T.green,cursor:"pointer",fontFamily:"inherit"}}>✓ Win</button>
-                      <button onClick={e=>{e.stopPropagation();saveDone(a.id,"partial",a.ask*0.5);}} style={{background:"rgba(251,191,36,.08)",border:"1px solid rgba(251,191,36,.2)",borderRadius:6,padding:"3px 8px",fontSize:9,fontWeight:700,color:T.amber,cursor:"pointer",fontFamily:"inherit"}}>½</button>
-                      <button onClick={e=>{e.stopPropagation();saveDone(a.id,"lost",0);}} style={{background:"rgba(248,113,113,.08)",border:"1px solid rgba(248,113,113,.2)",borderRadius:6,padding:"3px 8px",fontSize:9,fontWeight:700,color:T.red,cursor:"pointer",fontFamily:"inherit"}}>✗</button>
+                      <button onClick={e=>promptOutcome(e,a.id,"won",a.ask)} style={{background:"rgba(52,211,153,.12)",border:"1px solid rgba(52,211,153,.25)",borderRadius:6,padding:"3px 8px",fontSize:9,fontWeight:700,color:T.green,cursor:"pointer",fontFamily:"inherit"}}>✓ Win</button>
+                      <button onClick={e=>promptOutcome(e,a.id,"partial",a.ask*0.5)} style={{background:"rgba(251,191,36,.08)",border:"1px solid rgba(251,191,36,.2)",borderRadius:6,padding:"3px 8px",fontSize:9,fontWeight:700,color:T.amber,cursor:"pointer",fontFamily:"inherit"}}>½</button>
+                      <button onClick={e=>promptOutcome(e,a.id,"lost",0)} style={{background:"rgba(248,113,113,.08)",border:"1px solid rgba(248,113,113,.2)",borderRadius:6,padding:"3px 8px",fontSize:9,fontWeight:700,color:T.red,cursor:"pointer",fontFamily:"inherit"}}>✗</button>
                     </div>
                 }
                 {done&&<button onClick={e=>{e.stopPropagation();clearDone(a.id);}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:12}}>↩</button>}
@@ -1224,10 +1242,13 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
             </div>
             <div style={{display:"flex",alignItems:"center",gap:5,flexShrink:0,marginLeft:8}}>
               {done
-                ? <span style={{fontSize:10,fontWeight:700,color:T.green}}>{$f(done.amt)} ✓</span>
+                ? <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:1}}>
+                    <span style={{fontSize:10,fontWeight:700,color:done.outcome==="lost"?T.red:T.green}}>{done.outcome==="lost"?"✗ Lost":`${$f(done.amt)} ✓`}</span>
+                    {done.note&&<span style={{fontSize:8,color:T.t4,maxWidth:90,textAlign:"right",lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{done.note}</span>}
+                  </div>
                 : <>
-                    <button onClick={e=>{e.stopPropagation();saveDone(a.id,"won",a.ask);}} style={{background:"rgba(52,211,153,.12)",border:"1px solid rgba(52,211,153,.25)",borderRadius:6,padding:"3px 8px",fontSize:9,fontWeight:700,color:T.green,cursor:"pointer",fontFamily:"inherit"}}>✓</button>
-                    <button onClick={e=>{e.stopPropagation();saveDone(a.id,"lost",0);}} style={{background:"rgba(248,113,113,.08)",border:"1px solid rgba(248,113,113,.2)",borderRadius:6,padding:"3px 8px",fontSize:9,fontWeight:700,color:T.red,cursor:"pointer",fontFamily:"inherit"}}>✗</button>
+                    <button onClick={e=>promptOutcome(e,a.id,"won",a.ask)} style={{background:"rgba(52,211,153,.12)",border:"1px solid rgba(52,211,153,.25)",borderRadius:6,padding:"3px 8px",fontSize:9,fontWeight:700,color:T.green,cursor:"pointer",fontFamily:"inherit"}}>✓</button>
+                    <button onClick={e=>promptOutcome(e,a.id,"lost",0)} style={{background:"rgba(248,113,113,.08)",border:"1px solid rgba(248,113,113,.2)",borderRadius:6,padding:"3px 8px",fontSize:9,fontWeight:700,color:T.red,cursor:"pointer",fontFamily:"inherit"}}>✗</button>
                   </>
               }
               {done&&<button onClick={e=>{e.stopPropagation();clearDone(a.id);}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:12}}>↩</button>}
@@ -1310,19 +1331,20 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
                       <span style={{fontSize:9,fontWeight:700,color:isAnchor?T.amber:T.t4,background:isAnchor?"rgba(251,191,36,.1)":T.s1,borderRadius:4,padding:"1px 5px"}}>{isAnchor?"ANCHOR":`STOP ${i+1}`}</span>
-                      {done&&<span style={{fontSize:9,fontWeight:700,color:T.green}}>✓ {done.outcome}</span>}
+                      {done&&<span style={{fontSize:9,fontWeight:700,color:done.outcome==="lost"?T.red:T.green}}>{done.outcome==="lost"?"✗ Lost":`✓ ${done.outcome}`}</span>}
                     </div>
                     <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
                     <div style={{fontSize:10,color:T.t3,marginTop:1}}>{a.city}, {a.st} · {Math.round(a.miles||0)}mi from home</div>
                     <div style={{fontSize:10,color:T.t3,marginTop:1}}>Ask <span style={{color:T.amber,fontWeight:600}}>{$f(a.ask)}</span> · {Math.round((a.prob||0)*100)}% likely</div>
+                    {done?.note&&<div style={{fontSize:9,color:T.t4,marginTop:3,fontStyle:"italic"}}>"{done.note}"</div>}
                   </div>
                   <div style={{display:"flex",gap:4,flexShrink:0,marginLeft:8}}>
                     {done
                       ? <button onClick={()=>clearDone(a.id)} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:12}}>↩</button>
                       : <>
-                          <button onClick={()=>saveDone(a.id,"won",a.ask)} style={{background:"rgba(52,211,153,.12)",border:"1px solid rgba(52,211,153,.25)",borderRadius:6,padding:"4px 8px",fontSize:9,fontWeight:700,color:T.green,cursor:"pointer",fontFamily:"inherit"}}>✓ Win</button>
-                          <button onClick={()=>saveDone(a.id,"partial",a.ask*0.5)} style={{background:"rgba(251,191,36,.08)",border:"1px solid rgba(251,191,36,.2)",borderRadius:6,padding:"4px 8px",fontSize:9,fontWeight:700,color:T.amber,cursor:"pointer",fontFamily:"inherit"}}>½</button>
-                          <button onClick={()=>saveDone(a.id,"lost",0)} style={{background:"rgba(248,113,113,.08)",border:"1px solid rgba(248,113,113,.2)",borderRadius:6,padding:"4px 8px",fontSize:9,fontWeight:700,color:T.red,cursor:"pointer",fontFamily:"inherit"}}>✗</button>
+                          <button onClick={e=>promptOutcome(e,a.id,"won",a.ask)} style={{background:"rgba(52,211,153,.12)",border:"1px solid rgba(52,211,153,.25)",borderRadius:6,padding:"4px 8px",fontSize:9,fontWeight:700,color:T.green,cursor:"pointer",fontFamily:"inherit"}}>✓ Win</button>
+                          <button onClick={e=>promptOutcome(e,a.id,"partial",a.ask*0.5)} style={{background:"rgba(251,191,36,.08)",border:"1px solid rgba(251,191,36,.2)",borderRadius:6,padding:"4px 8px",fontSize:9,fontWeight:700,color:T.amber,cursor:"pointer",fontFamily:"inherit"}}>½</button>
+                          <button onClick={e=>promptOutcome(e,a.id,"lost",0)} style={{background:"rgba(248,113,113,.08)",border:"1px solid rgba(248,113,113,.2)",borderRadius:6,padding:"4px 8px",fontSize:9,fontWeight:700,color:T.red,cursor:"pointer",fontFamily:"inherit"}}>✗</button>
                         </>
                     }
                   </div>
@@ -1333,6 +1355,26 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
         </div>
       </div>;
     })()}
+
+    {/* ── OUTCOME NOTE MODAL ── */}
+    {odNotePrompt&&<div style={{position:"fixed",inset:0,zIndex:210,background:"rgba(0,0,0,.72)",backdropFilter:"blur(8px)",display:"flex",alignItems:"flex-end"}} onClick={commitOutcome}>
+      <div style={{width:"100%",background:T.s1,borderRadius:"20px 20px 0 0",padding:20}} onClick={e=>e.stopPropagation()}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+          <div style={{fontSize:13,fontWeight:700,color:odNotePrompt.outcome==="won"?T.green:odNotePrompt.outcome==="partial"?T.amber:T.red}}>
+            {odNotePrompt.outcome==="won"?"✓ Win — add a note?":odNotePrompt.outcome==="partial"?"½ Partial — add a note?":"✗ Lost — what happened?"}
+          </div>
+          <span style={{fontSize:10,color:T.t4,fontWeight:600}}>{odNotePrompt.outcome!=="lost"?`+${$f(odNotePrompt.amt)} credited`:""}</span>
+        </div>
+        <div style={{fontSize:11,color:T.t3,marginBottom:10}}>Optional · tap outside or press Enter to skip</div>
+        <input autoFocus type="text" value={odNoteText} onChange={e=>setOdNoteText(e.target.value)}
+          onKeyDown={e=>e.key==="Enter"&&commitOutcome()}
+          placeholder={odNotePrompt.outcome==="won"?"e.g. Dr. committed to SonicFill 3 trial, reorder in 2 wks":odNotePrompt.outcome==="partial"?"e.g. Ordered MaxCem, passed on composites":"e.g. On contract through Q3, revisit then"}
+          style={{width:"100%",height:44,borderRadius:10,border:`1px solid ${T.b1}`,background:T.s2,color:T.t1,fontSize:13,padding:"0 12px",outline:"none",fontFamily:"inherit",marginBottom:12,boxSizing:"border-box"}}/>
+        <button onClick={commitOutcome} style={{width:"100%",background:odNotePrompt.outcome==="won"?`linear-gradient(90deg,${T.green},${T.cyan})`:odNotePrompt.outcome==="partial"?`linear-gradient(90deg,${T.amber},rgba(251,191,36,.7))`:`linear-gradient(90deg,${T.red},rgba(248,113,113,.7))`,border:"none",borderRadius:10,padding:"11px 0",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer",fontFamily:"inherit"}}>
+          {odNoteText.trim()?"Save Note & Log →":"Log Without Note →"}
+        </button>
+      </div>
+    </div>}
 
     {/* ── SECTION 2: WINS & MOMENTUM ── */}
     <div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(52,211,153,.04))`,border:"1px solid rgba(52,211,153,.1)",borderRadius:16,padding:14,marginBottom:16}}>
@@ -1571,14 +1613,22 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup}) {
   const [savedContacts,setSavedContacts]=useState<any>(null);
   const [showMoveModal,setShowMoveModal]=useState(false);
   const [moveSearch,setMoveSearch]=useState("");
-  const [groupOverride,setGroupOverride]=useState<any>(null); // persisted override
+  const [groupOverride,setGroupOverride]=useState<any>(null);
+  const [actLog,setActLog]=useState<any[]>([]);
+  const [actType,setActType]=useState("visit");
+  const [actContact,setActContact]=useState("");
+  const [actNotes,setActNotes]=useState("");
+  const [actFollowUp,setActFollowUp]=useState("");
+  const [showActForm,setShowActForm]=useState(false);
   const storageKey = `contact:${acct.id}`;
   const overrideKey = `group-override:${acct.id}`;
+  const actLogKey = `actlog:${acct.id}`;
 
-  // Load saved contacts + group override from storage on mount
+  // Load saved contacts + group override + activity log from storage on mount
   useEffect(() => {
     try { const v=localStorage.getItem(storageKey); if(v) setSavedContacts(JSON.parse(v)); } catch {}
     try { const v=localStorage.getItem(overrideKey); if(v) setGroupOverride(JSON.parse(v)); } catch {}
+    try { const v=localStorage.getItem(actLogKey); if(v) setActLog(JSON.parse(v)); } catch {}
   }, [acct.id]);
 
   // Group search for move modal
@@ -1725,6 +1775,14 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
           products: buying.slice(0,5).map(p=>p.n),
           doctor: badger?.doctor || "",
           gName: acct.gName || "",
+          gap: Math.round(gap),
+          retentionPct: Math.round(ret*100),
+          Q1_PY: Math.round(pyVal),
+          Q1_CY: Math.round(cyVal),
+          buying: buying.slice(0,6).map(p=>({name:p.n,cy:Math.round(p["cy1"]||0),py:Math.round(p["py1"]||0)})),
+          stopped: stopped.slice(0,5).map(p=>({name:p.n,py:Math.round(p["py1"]||0)})),
+          xsell: xsell.slice(0,3).map(o=>({label:o.label,pitch:o.pitch})),
+          tier: acctType,
         })
       });
       const data = await res.json();
@@ -2132,6 +2190,69 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
         }}/>}
         {!showForm&&myAdj.length===0&&<div style={{fontSize:11,color:T.t4,textAlign:"center",padding:8}}>Search product by name or SKU#, enter doctor spend → auto-calculates credited revenue.</div>}
       </div>
+
+      {/* ACTIVITY LOG */}
+      {(()=>{
+        const ACT_ICONS:Record<string,string>={visit:"🚗",call:"📞",email:"📧",event:"🎓"};
+        const saveEntry = () => {
+          if(!actNotes.trim()&&!actContact.trim()) return;
+          const entry={id:Date.now(),type:actType,contact:actContact.trim(),notes:actNotes.trim(),followUp:actFollowUp.trim(),ts:new Date().toISOString()};
+          const updated=[entry,...actLog];
+          setActLog(updated);
+          try{localStorage.setItem(actLogKey,JSON.stringify(updated.slice(0,50)));}catch{}
+          setActContact("");setActNotes("");setActFollowUp("");setShowActForm(false);
+        };
+        return <div className="anim" style={{animationDelay:"280ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:showActForm||actLog.length>0?10:0}}>
+            <div style={{display:"flex",alignItems:"center",gap:6}}>
+              <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan}}>Activity Log</span>
+              {actLog.length>0&&<span style={{fontSize:9,color:T.t4,background:T.s2,borderRadius:10,padding:"1px 6px"}}>{actLog.length}</span>}
+            </div>
+            <button onClick={()=>setShowActForm(!showActForm)} style={{background:"rgba(34,211,238,.08)",border:"1px solid rgba(34,211,238,.18)",borderRadius:8,color:T.cyan,cursor:"pointer",fontSize:11,fontWeight:600,padding:"4px 10px",fontFamily:"inherit"}}>{showActForm?"Cancel":"+ Log"}</button>
+          </div>
+          {showActForm&&<div style={{marginBottom:12}}>
+            <div style={{display:"flex",gap:5,marginBottom:10}}>
+              {([["visit","🚗 Visit"],["call","📞 Call"],["email","📧 Email"],["event","🎓 Event"]] as [string,string][]).map(([v,l])=>(
+                <button key={v} onClick={()=>setActType(v)} style={{flex:1,padding:"6px 0",borderRadius:8,fontSize:10,cursor:"pointer",border:`1px solid ${actType===v?"rgba(34,211,238,.4)":T.b2}`,background:actType===v?"rgba(34,211,238,.12)":T.s2,color:actType===v?T.cyan:T.t3,fontFamily:"inherit",fontWeight:600}}>{l}</button>
+              ))}
+            </div>
+            <input type="text" value={actContact} onChange={e=>setActContact(e.target.value)}
+              placeholder="Contact name (optional)"
+              style={{width:"100%",height:36,borderRadius:8,border:`1px solid ${T.b1}`,background:T.s2,color:T.t1,fontSize:12,padding:"0 10px",outline:"none",fontFamily:"inherit",marginBottom:7,boxSizing:"border-box"}}/>
+            <textarea value={actNotes} onChange={e=>setActNotes(e.target.value)}
+              placeholder="Notes from this visit / call…"
+              rows={3}
+              style={{width:"100%",borderRadius:8,border:`1px solid ${T.b1}`,background:T.s2,color:T.t1,fontSize:12,padding:"8px 10px",outline:"none",fontFamily:"inherit",marginBottom:7,resize:"none",boxSizing:"border-box",lineHeight:1.5}}/>
+            <input type="text" value={actFollowUp} onChange={e=>setActFollowUp(e.target.value)}
+              onKeyDown={e=>e.key==="Enter"&&saveEntry()}
+              placeholder="Follow-up action (optional)"
+              style={{width:"100%",height:36,borderRadius:8,border:`1px solid ${T.b1}`,background:T.s2,color:T.t1,fontSize:12,padding:"0 10px",outline:"none",fontFamily:"inherit",marginBottom:10,boxSizing:"border-box"}}/>
+            <button onClick={saveEntry} style={{width:"100%",background:`linear-gradient(90deg,${T.cyan},${T.blue})`,border:"none",borderRadius:8,padding:"10px 0",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer",fontFamily:"inherit"}}>Save Activity</button>
+          </div>}
+          {actLog.length===0&&!showActForm&&<div style={{fontSize:11,color:T.t4,textAlign:"center",padding:"6px 0"}}>No activity logged. Tap + Log after visits, calls, or emails.</div>}
+          {actLog.slice(0,8).map((entry,i)=>{
+            const d=new Date(entry.ts);
+            const dateStr=d.toLocaleDateString("en-US",{month:"short",day:"numeric"});
+            const timeStr=d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
+            return <div key={entry.id} style={{borderTop:`1px solid ${T.b1}`,paddingTop:10,marginTop:i>0?0:2,paddingBottom:i<Math.min(actLog.length,8)-1?10:0}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:3}}>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <span style={{fontSize:12}}>{ACT_ICONS[entry.type]||"📋"}</span>
+                  <span style={{fontSize:11,fontWeight:700,color:T.t1,textTransform:"capitalize"}}>{entry.type}</span>
+                  {entry.contact&&<span style={{fontSize:10,color:T.cyan}}>· {entry.contact}</span>}
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <span style={{fontSize:9,color:T.t4}}>{dateStr} {timeStr}</span>
+                  <button onClick={()=>{const upd=actLog.filter(e=>e.id!==entry.id);setActLog(upd);try{localStorage.setItem(actLogKey,JSON.stringify(upd));}catch{}}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:11,padding:0,lineHeight:1}}>✕</button>
+                </div>
+              </div>
+              {entry.notes&&<div style={{fontSize:11,color:T.t2,lineHeight:1.5,paddingLeft:22,marginBottom:entry.followUp?3:0}}>{entry.notes}</div>}
+              {entry.followUp&&<div style={{fontSize:10,color:T.amber,paddingLeft:22,display:"flex",alignItems:"center",gap:4}}><span>→</span>{entry.followUp}</div>}
+            </div>;
+          })}
+          {actLog.length>8&&<div style={{fontSize:10,color:T.t4,textAlign:"center",paddingTop:8}}>+{actLog.length-8} older entries</div>}
+        </div>;
+      })()}
     </div>
   </div>;
 }
@@ -2608,6 +2729,289 @@ function MapTab() {
       ))}
       <span style={{marginLeft:"auto",fontSize:9,color:T.t4}}>{displayed.filter(a=>a.lat).length} mapped · {displayed.filter(a=>!a.lat).length} no GPS</span>
     </div>
+  </div>;
+}
+
+// ─── DEALERS TAB ─────────────────────────────────────────────────
+const DIST_ORDER = ["Schein","Patterson","Benco","Darby"];
+const DIST_COLORS: Record<string,string> = {
+  Schein:"rgba(79,142,247,.18)", Patterson:"rgba(167,139,250,.18)",
+  Benco:"rgba(34,211,238,.18)", Darby:"rgba(251,191,36,.18)"
+};
+const DIST_TEXT: Record<string,string> = {
+  Schein:"#4f8ef7", Patterson:"#a78bfa", Benco:"#22d3ee", Darby:"#fbbf24"
+};
+const DIST_BORDER: Record<string,string> = {
+  Schein:"rgba(79,142,247,.35)", Patterson:"rgba(167,139,250,.35)",
+  Benco:"rgba(34,211,238,.35)", Darby:"rgba(251,191,36,.35)"
+};
+// Strings that mean "no rep name — just a distributor label"
+const NO_REP_LABELS = new Set(["schein","henry schein","patterson","benco","darby","direct","all other","unknown",""]);
+
+function isNoRep(s:string|undefined):boolean {
+  if(!s) return true;
+  return NO_REP_LABELS.has(s.trim().toLowerCase());
+}
+
+const PRI_ORDER:Record<string,number> = {NOW:0,SOON:1,"ON TRACK":2,PROTECT:3,PIPELINE:4};
+
+function DealersTab({scored,goAcct}:{scored:any[],goAcct:(a:any)=>void}) {
+  const [selDist,setSelDist] = useState<string|null>(null);
+  const [selRep,setSelRep]  = useState<string|null>(null); // null = all reps view
+  const [showAddRep,setShowAddRep] = useState(false);
+  const [newRepName,setNewRepName] = useState("");
+  const [newRepPhone,setNewRepPhone] = useState("");
+  const [newRepNotes,setNewRepNotes] = useState("");
+  const [manualReps,setManualReps] = useState<Record<string,any[]>>(()=>{
+    try { return JSON.parse(localStorage.getItem("dealer_manual_reps")||"{}"); } catch { return {}; }
+  });
+
+  const saveManualReps = (updated:Record<string,any[]>) => {
+    setManualReps(updated);
+    try { localStorage.setItem("dealer_manual_reps", JSON.stringify(updated)); } catch {}
+  };
+
+  // Build per-distributor stats from scored accounts
+  const distStats = useMemo(()=>{
+    const map:Record<string,{accts:any[],cy:number,py:number,nowCount:number}> = {};
+    DIST_ORDER.forEach(d=>{ map[d]={accts:[],cy:0,py:0,nowCount:0}; });
+    scored.forEach(a=>{
+      const d = a.dealer;
+      if(!d || !map[d]) return;
+      const cy=a.cyQ?.["1"]||0, py=a.pyQ?.["1"]||0;
+      map[d].accts.push(a);
+      map[d].cy+=cy; map[d].py+=py;
+      if(a.visitPriority==="NOW") map[d].nowCount++;
+    });
+    return map;
+  },[scored]);
+
+  // For selected distributor: group accounts by rep
+  const repGroups = useMemo(()=>{
+    if(!selDist) return null;
+    const accts = distStats[selDist]?.accts || [];
+    const groups:Record<string,any[]> = {"__none__":[]};
+    accts.forEach(a=>{
+      const badger = (typeof BADGER !== "undefined" ? BADGER : {})[a.id] || (typeof BADGER !== "undefined" ? BADGER : {})[a.gId];
+      const rep = badger?.dealerRep;
+      if(isNoRep(rep)) {
+        groups["__none__"].push(a);
+      } else {
+        const key = rep!.trim();
+        if(!groups[key]) groups[key]=[];
+        groups[key].push(a);
+      }
+    });
+    return groups;
+  },[selDist,scored,distStats]);
+
+  // Sort accounts by visit priority
+  const sortByPriority = (accts:any[]) =>
+    [...accts].sort((a,b)=>(PRI_ORDER[a.visitPriority]??9)-(PRI_ORDER[b.visitPriority]??9));
+
+  // Accounts to show in rep drill-down
+  const repAccts = useMemo(()=>{
+    if(!repGroups) return [];
+    if(selRep==="__none__") return sortByPriority(repGroups["__none__"]||[]);
+    if(selRep) return sortByPriority(repGroups[selRep]||[]);
+    return [];
+  },[repGroups,selRep]);
+
+  const PRI_CHIP:Record<string,{bg:string,color:string}> = {
+    NOW:{bg:"rgba(248,113,113,.12)",color:"#f87171"},
+    SOON:{bg:"rgba(251,191,36,.10)",color:"#fbbf24"},
+    "ON TRACK":{bg:"rgba(52,211,153,.10)",color:"#34d399"},
+    PROTECT:{bg:"rgba(79,142,247,.10)",color:"#4f8ef7"},
+    PIPELINE:{bg:"rgba(167,139,250,.10)",color:"#a78bfa"},
+  };
+
+  // ── Rep drill-down view ──
+  if(selDist && selRep !== null) {
+    const repLabel = selRep==="__none__" ? "No Rep Assigned" : selRep;
+    const manuals = manualReps[selDist]||[];
+    const manualEntry = manuals.find(r=>r.name===selRep);
+    return <div style={{paddingBottom:80}}>
+      <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"10px 16px",display:"flex",alignItems:"center",gap:10}}>
+        <button onClick={()=>setSelRep(null)} style={{background:"none",border:"none",color:T.blue,cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"inherit",display:"flex",alignItems:"center",gap:4}}><Back/> {selDist}</button>
+      </div>
+      <div style={{padding:"16px 16px 0"}}>
+        <div style={{background:DIST_COLORS[selDist],border:`1px solid ${DIST_BORDER[selDist]}`,borderRadius:14,padding:"12px 14px",marginBottom:14}}>
+          <div style={{fontSize:14,fontWeight:700,color:selRep==="__none__"?T.t3:DIST_TEXT[selDist]}}>{repLabel}</div>
+          <div style={{fontSize:10,color:T.t3,marginTop:2}}>{selDist} · {repAccts.length} account{repAccts.length!==1?"s":""}</div>
+          {manualEntry?.phone&&<a href={`tel:${manualEntry.phone}`} style={{display:"inline-flex",alignItems:"center",gap:5,marginTop:6,fontSize:10,color:T.cyan,textDecoration:"none",background:"rgba(34,211,238,.08)",border:"1px solid rgba(34,211,238,.15)",borderRadius:8,padding:"3px 10px"}}>
+            📞 {manualEntry.phone}
+          </a>}
+          {manualEntry?.notes&&<div style={{fontSize:10,color:T.t3,marginTop:6,fontStyle:"italic"}}>{manualEntry.notes}</div>}
+        </div>
+        {repAccts.length===0&&<div style={{fontSize:12,color:T.t4,textAlign:"center",padding:"30px 0"}}>No accounts linked to this rep yet.</div>}
+        {repAccts.map((a,i)=>{
+          const cy=a.cyQ?.["1"]||0, py=a.pyQ?.["1"]||0, gap=py-cy;
+          const chip=PRI_CHIP[a.visitPriority]||PRI_CHIP["ON TRACK"];
+          return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
+            style={{animationDelay:`${i*20}ms`,width:"100%",textAlign:"left",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:"11px 13px",marginBottom:7,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+                <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
+                <span style={{flexShrink:0,fontSize:8,fontWeight:700,borderRadius:4,padding:"1px 5px",background:chip.bg,color:chip.color}}>{a.visitPriority}</span>
+              </div>
+              <div style={{fontSize:10,color:T.t3}}>{a.city}, {a.st}</div>
+            </div>
+            <div style={{display:"flex",gap:6,flexShrink:0,marginLeft:10,alignItems:"center"}}>
+              <div style={{textAlign:"right"}}>
+                <div style={{fontSize:10,color:T.blue,fontWeight:600,fontFamily:"'DM Mono',monospace"}}>{$$(cy)}</div>
+                <div style={{fontSize:9,color:gap>0?T.red:T.green,fontFamily:"'DM Mono',monospace"}}>{gap>0?"-":"+"}${Math.abs(gap)>=1000?`${(Math.abs(gap)/1000).toFixed(1)}k`:`${Math.round(Math.abs(gap))}`}</div>
+              </div>
+              <Chev/>
+            </div>
+          </button>;
+        })}
+      </div>
+    </div>;
+  }
+
+  // ── Distributor drill-down: rep list ──
+  if(selDist) {
+    const rg = repGroups!;
+    const knownReps = Object.keys(rg).filter(k=>k!=="__none__").sort();
+    const unassigned = rg["__none__"]||[];
+    const manuals = (manualReps[selDist]||[]).filter(r=>!knownReps.includes(r.name));
+    const distColor = DIST_TEXT[selDist];
+
+    const repStat = (accts:any[]) => {
+      const cy=accts.reduce((s,a)=>s+(a.cyQ?.["1"]||0),0);
+      const py=accts.reduce((s,a)=>s+(a.pyQ?.["1"]||0),0);
+      const nowC=accts.filter(a=>a.visitPriority==="NOW").length;
+      return {cy,py,gap:py-cy,nowC};
+    };
+
+    return <div style={{paddingBottom:80}}>
+      <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"10px 16px",display:"flex",alignItems:"center",gap:10}}>
+        <button onClick={()=>setSelDist(null)} style={{background:"none",border:"none",color:T.blue,cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"inherit",display:"flex",alignItems:"center",gap:4}}><Back/> Dealers</button>
+        <span style={{fontSize:13,fontWeight:700,color:distColor}}>{selDist}</span>
+      </div>
+      <div style={{padding:"16px 16px 0"}}>
+        {/* Known reps from Badger */}
+        {knownReps.length>0&&<>
+          <div style={{fontSize:9,textTransform:"uppercase",color:T.t4,letterSpacing:"1px",marginBottom:8,fontWeight:700}}>Known Reps ({knownReps.length})</div>
+          {knownReps.map((rep,i)=>{
+            const s=repStat(rg[rep]);
+            return <button key={rep} className="anim" onClick={()=>setSelRep(rep)}
+              style={{animationDelay:`${i*20}ms`,width:"100%",textAlign:"left",background:DIST_COLORS[selDist],border:`1px solid ${DIST_BORDER[selDist]}`,borderRadius:12,padding:"11px 13px",marginBottom:7,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:12,fontWeight:700,color:distColor,marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{rep}</div>
+                <div style={{fontSize:10,color:T.t3}}>{rg[rep].length} account{rg[rep].length!==1?"s":""}{s.nowC>0?<span style={{color:"#f87171"}}> · {s.nowC} NOW</span>:""}</div>
+              </div>
+              <div style={{display:"flex",gap:6,flexShrink:0,marginLeft:10,alignItems:"center"}}>
+                <div style={{textAlign:"right"}}>
+                  <div style={{fontSize:10,color:T.blue,fontWeight:600,fontFamily:"'DM Mono',monospace"}}>{$$(s.cy)}</div>
+                  <div style={{fontSize:9,color:s.gap>0?T.red:T.green,fontFamily:"'DM Mono',monospace"}}>{s.gap>0?`-${$$(s.gap)}`:`+${$$(Math.abs(s.gap))}`}</div>
+                </div>
+                <Chev/>
+              </div>
+            </button>;
+          })}
+        </>}
+
+        {/* Manual reps not in Badger */}
+        {manuals.length>0&&<>
+          <div style={{fontSize:9,textTransform:"uppercase",color:T.t4,letterSpacing:"1px",marginBottom:8,marginTop:knownReps.length>0?14:0,fontWeight:700}}>Added by You</div>
+          {manuals.map((r,i)=>(
+            <button key={r.name} className="anim" onClick={()=>setSelRep(r.name)}
+              style={{animationDelay:`${i*20}ms`,width:"100%",textAlign:"left",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:"11px 13px",marginBottom:7,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:12,fontWeight:700,color:distColor,marginBottom:2}}>{r.name}</div>
+                <div style={{fontSize:10,color:T.t3}}>{r.phone||"No phone"}{r.notes?` · ${r.notes.slice(0,40)}`:""}</div>
+              </div>
+              <Chev/>
+            </button>
+          ))}
+        </>}
+
+        {/* Unassigned accounts */}
+        {unassigned.length>0&&<>
+          <div style={{fontSize:9,textTransform:"uppercase",color:T.t4,letterSpacing:"1px",marginBottom:8,marginTop:14,fontWeight:700}}>No Rep Assigned ({unassigned.length})</div>
+          <button onClick={()=>setSelRep("__none__")}
+            style={{width:"100%",textAlign:"left",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:"11px 13px",marginBottom:12,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div>
+              <div style={{fontSize:12,fontWeight:600,color:T.t2}}>Unassigned accounts</div>
+              <div style={{fontSize:10,color:T.t3}}>{unassigned.length} account{unassigned.length!==1?"s":""} · {unassigned.filter(a=>a.visitPriority==="NOW").length} NOW priority</div>
+            </div>
+            <Chev/>
+          </button>
+        </>}
+
+        {/* Add Rep form */}
+        <div style={{marginTop:8,background:T.s1,border:`1px solid ${T.b1}`,borderRadius:14,padding:14}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:showAddRep?10:0}}>
+            <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3}}>Add Rep</div>
+            <button onClick={()=>setShowAddRep(!showAddRep)} style={{background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.18)",borderRadius:8,color:T.blue,cursor:"pointer",fontSize:11,fontWeight:600,padding:"4px 10px",fontFamily:"inherit"}}>{showAddRep?"Cancel":"+ Add"}</button>
+          </div>
+          {showAddRep&&<div>
+            <input type="text" value={newRepName} onChange={e=>setNewRepName(e.target.value)}
+              placeholder="Rep name *"
+              style={{width:"100%",height:38,borderRadius:8,border:`1px solid ${T.b1}`,background:T.s2,color:T.t1,fontSize:12,padding:"0 10px",outline:"none",fontFamily:"inherit",marginBottom:7,boxSizing:"border-box"}}/>
+            <input type="text" value={newRepPhone} onChange={e=>setNewRepPhone(e.target.value)}
+              placeholder="Phone (optional)"
+              style={{width:"100%",height:38,borderRadius:8,border:`1px solid ${T.b1}`,background:T.s2,color:T.t1,fontSize:12,padding:"0 10px",outline:"none",fontFamily:"inherit",marginBottom:7,boxSizing:"border-box"}}/>
+            <input type="text" value={newRepNotes} onChange={e=>setNewRepNotes(e.target.value)}
+              placeholder="Notes (optional)"
+              style={{width:"100%",height:38,borderRadius:8,border:`1px solid ${T.b1}`,background:T.s2,color:T.t1,fontSize:12,padding:"0 10px",outline:"none",fontFamily:"inherit",marginBottom:10,boxSizing:"border-box"}}/>
+            <button onClick={()=>{
+              if(!newRepName.trim()) return;
+              const entry={name:newRepName.trim(),phone:newRepPhone.trim(),notes:newRepNotes.trim(),addedAt:new Date().toISOString()};
+              const updated={...manualReps,[selDist]:[...(manualReps[selDist]||[]).filter(r=>r.name!==entry.name),entry]};
+              saveManualReps(updated);
+              setNewRepName("");setNewRepPhone("");setNewRepNotes("");setShowAddRep(false);
+            }} style={{width:"100%",background:`linear-gradient(90deg,${distColor},${T.blue})`,border:"none",borderRadius:8,padding:"10px 0",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer",fontFamily:"inherit"}}>
+              Save Rep
+            </button>
+          </div>}
+        </div>
+      </div>
+    </div>;
+  }
+
+  // ── Top-level: 4 distributor cards ──
+  return <div style={{padding:"16px 16px 0",paddingBottom:80}}>
+    <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t4,marginBottom:12}}>Dealer Dashboard</div>
+    {DIST_ORDER.map(dist=>{
+      const s=distStats[dist];
+      const gap=s.py-s.cy;
+      const ret=s.py>0?s.cy/s.py:0;
+      const upCount=s.accts.filter(a=>(a.cyQ?.["1"]||0)>=(a.pyQ?.["1"]||0)).length;
+      const downCount=s.accts.length-upCount;
+      const repCount=Object.keys(
+        s.accts.reduce((m:Record<string,boolean>,a)=>{
+          const b=(typeof BADGER!=="undefined"?BADGER:{})[a.id]||(typeof BADGER!=="undefined"?BADGER:{})[a.gId];
+          const rep=b?.dealerRep;
+          if(!isNoRep(rep)) m[rep!.trim()]=true;
+          return m;
+        },{})
+      ).length;
+      return <button key={dist} className="anim" onClick={()=>{setSelDist(dist);setSelRep(null);setShowAddRep(false);}}
+        style={{width:"100%",textAlign:"left",background:DIST_COLORS[dist],border:`1px solid ${DIST_BORDER[dist]}`,borderRadius:16,padding:"14px 16px",marginBottom:10,cursor:"pointer"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+          <div>
+            <div style={{fontSize:16,fontWeight:800,color:DIST_TEXT[dist],marginBottom:2}}>{dist}</div>
+            <div style={{fontSize:10,color:T.t3}}>{s.accts.length} accounts{repCount>0?` · ${repCount} rep${repCount!==1?"s":""} known`:""}</div>
+          </div>
+          <div style={{display:"flex",gap:6,alignItems:"center"}}>
+            {s.nowCount>0&&<span style={{fontSize:9,fontWeight:700,color:"#f87171",background:"rgba(248,113,113,.1)",border:"1px solid rgba(248,113,113,.2)",borderRadius:6,padding:"2px 7px"}}>{s.nowCount} NOW</span>}
+            <Chev/>
+          </div>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}>
+          <Stat l="CY" v={$$(s.cy)} c={T.blue}/>
+          <Stat l="PY" v={$$(s.py)} c={T.t2}/>
+          <Stat l="Gap" v={gap<=0?`+${$$(Math.abs(gap))}`:$$(gap)} c={gap<=0?T.green:T.red}/>
+          <Stat l="Ret" v={Math.round(ret*100)+"%"} c={ret>.7?T.green:ret>.4?T.amber:T.red}/>
+        </div>
+        <div style={{display:"flex",gap:8,marginTop:8}}>
+          <span style={{fontSize:9,color:T.green,background:"rgba(52,211,153,.08)",border:"1px solid rgba(52,211,153,.15)",borderRadius:6,padding:"2px 8px"}}>↑ {upCount} up</span>
+          <span style={{fontSize:9,color:T.red,background:"rgba(248,113,113,.08)",border:"1px solid rgba(248,113,113,.15)",borderRadius:6,padding:"2px 8px"}}>↓ {downCount} down</span>
+        </div>
+      </button>;
+    })}
   </div>;
 }
 
