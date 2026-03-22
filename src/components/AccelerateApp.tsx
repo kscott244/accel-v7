@@ -1965,6 +1965,7 @@ function GroupDetail({group,goMain,goAcct}) {
   });
 
   const [selProduct, setSelProduct] = useState<string|null>(null);
+  const [editDist, setEditDist] = useState<string|null>(null);
   const [editName, setEditName] = useState("");
   const [editPhone, setEditPhone] = useState("");
   const [editNotes, setEditNotes] = useState("");
