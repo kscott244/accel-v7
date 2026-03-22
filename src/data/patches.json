@@ -1,7 +1,7 @@
 {
   "_comment": "Manual data corrections. Applied on top of any CSV or preloaded data. Never overwritten by data rebuilds.",
   "_version": "1.0",
-  "_lastUpdated": "2026-03-22",
+  "_lastUpdated": "2026-03-23",
   "group_creates": [
     {
       "id": "Master-RDP-001",
@@ -27,19 +27,19 @@
       "fromGroupId": "Master-CM048310",
       "newGroupId": "Master-CM300371-standalone",
       "newGroupName": "ASPEN DENTAL",
-      "reason": "Bad MDM parent assignment — Aspen Torrington incorrectly parented under Columbia Dental"
+      "reason": "Bad MDM parent assignment \u2014 Aspen Torrington incorrectly parented under Columbia Dental"
     }
   ],
   "name_overrides": [
     {
       "id": "Master-CM116929",
       "name": "WELLS STREET DENTISTRY",
-      "reason": "TRIS CARTA is wrong — Wells Street Dentistry, Westerly RI"
+      "reason": "TRIS CARTA is wrong \u2014 Wells Street Dentistry, Westerly RI"
     },
     {
       "id": "Master-CM17699391",
       "name": "FLANDERS DENTAL STUDIO",
-      "reason": "CENTER FOR DENTAL EXCELLENCE is old name — now Flanders Dental Studio (Resolute)"
+      "reason": "CENTER FOR DENTAL EXCELLENCE is old name \u2014 now Flanders Dental Studio (Resolute)"
     }
   ],
   "contact_overrides": [
@@ -48,14 +48,14 @@
       "contactName": "Brittany Burroughs",
       "email": "bburroughs@coastalctdental.com",
       "address": "112 Cross Rd, Waterford, CT 06385",
-      "note": "PM at Coastal Connecticut Dentistry — part of Resolute Dental Partners"
+      "note": "PM at Coastal Connecticut Dentistry \u2014 part of Resolute Dental Partners"
     },
     {
       "id": "Master-CM116929",
       "contactName": "Christine Lague",
       "email": "clague@westerlydentists.com",
       "address": "11 Wells Street, Westerly, RI",
-      "note": "PM at Wells Street Dentistry — part of Resolute Dental Partners"
+      "note": "PM at Wells Street Dentistry \u2014 part of Resolute Dental Partners"
     },
     {
       "id": "Master-CM413476",
@@ -80,6 +80,13 @@
       ],
       "website": "https://newenglanddentalllc.com",
       "note": "Auto-saved from Deep Research 3/22/2026"
+    },
+    {
+      "id": "Master-CM175757",
+      "contactName": "Ryan Mastej",
+      "note": "Patterson rep for CT locations. Acquired by Abra Dental NJ. Schein rep was Rich Foti (CT) but NJ Schein rep took over full account post-acquisition. Dr. Helene Strazza (Norwalk + Danbury) = best entry points. Danbury still active via Schein NJ.",
+      "dealer": "Patterson",
+      "dealerRep": "Ryan Mastej"
     }
   ],
   "dealer_overrides": []
