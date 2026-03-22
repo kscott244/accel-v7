@@ -104,51 +104,61 @@ function applyOverlays(grps: any[]): any[] {
   });
 
   // 4. GROUP CREATES — build custom groups from childIds
-  // Key fix: each childId may exist as a nested group (with its own .children array containing
-  // the real leaf record with products/city/dealer). We always unwrap to get the leaf.
-  const groupsById: Record<string,any> = {};
-  result.forEach(g => { groupsById[g.id] = g; });
-
-  // Build a flat childId → leaf child lookup from ALL groups
+  // The preloaded data nests children 2-3 levels deep:
+  //   top-level group → child wrapper (no products) → grandchild leaf (has products/city/dealer)
+  // We must build the leafByChildId map FIRST from the full result tree,
+  // then remove the pre-baked group, then pull children from the map directly.
+  
+  // Step 4a: Build a deep leafByChildId map from ALL groups BEFORE removing anything.
+  // Recurse up to 2 levels to find the richest (most products) version of each child.
   const leafByChildId: Record<string,any> = {};
+  const updateLeaf = (id: string, candidate: any) => {
+    const existing = leafByChildId[id];
+    if (!existing || (candidate.products||[]).length > (existing.products||[]).length
+        || (!existing.city && candidate.city)) {
+      leafByChildId[id] = candidate;
+    }
+  };
   result.forEach(g => {
     (g.children||[]).forEach((c:any) => {
-      // If this child is itself a group stub (has .children), unwrap to its leaf
       if (c.children && c.children.length > 0) {
-        const leaf = c.children[0];
-        leafByChildId[c.id] = leaf;
+        // This child is a wrapper — its real data is in its children
+        c.children.forEach((leaf:any) => updateLeaf(c.id, leaf));
       } else {
-        leafByChildId[c.id] = c;
+        updateLeaf(c.id, c);
       }
     });
   });
 
   Object.values(OV.groups||{}).forEach((create:any) => {
-    // Remove any pre-existing group with this ID (could be a stale preloaded stub)
-    result = result.filter(g => g.id !== create.id);
-
     const childIdSet = new Set(create.childIds || []);
     const children: any[] = [];
     let totalPY: Record<string,number> = {};
     let totalCY: Record<string,number> = {};
 
-    // Pull children — prefer leaf records (have products) over stubs
+    // Step 4b: Remove the pre-existing baked group from result
+    result = result.filter(g => g.id !== create.id);
+
+    // Step 4c: Remove these childIds from wherever they currently live in result
+    // (they may be children of the removed group or standalone groups)
     result = result.map(g => {
       const kept: any[] = [];
       (g.children||[]).forEach((c:any) => {
-        if (!childIdSet.has(c.id)) { kept.push(c); return; }
-        // Use leaf (unwrapped) if available and richer
-        const leaf = leafByChildId[c.id] || c;
-        const existing = children.find(x => x.id === c.id);
-        if (!existing) {
-          children.push({ ...leaf, gId: create.id, gName: create.name });
-        } else if ((leaf.products||[]).length > (existing.products||[]).length) {
-          const idx = children.findIndex(x => x.id === c.id);
-          children[idx] = { ...leaf, gId: create.id, gName: create.name };
-        }
-        // Always remove from current group
+        if (childIdSet.has(c.id)) return; // remove from old parent
+        // Also remove wrapper children whose grandchildren match
+        if (c.children && c.children.some((gc:any) => childIdSet.has(gc.id))) return;
+        kept.push(c);
       });
       return { ...g, children: kept, locs: kept.length };
+    });
+
+    // Step 4d: Build the children array from the leaf map
+    (create.childIds||[]).forEach((cid:string) => {
+      const leaf = leafByChildId[cid];
+      if (leaf) {
+        children.push({ ...leaf, id: cid, gId: create.id, gName: create.name });
+      }
+      // Unfound childIds added below as stubs
     });
 
     // Roll up financials
