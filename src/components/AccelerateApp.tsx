@@ -33,45 +33,56 @@ let DEALERS: Record<string, string> = {};
 let WEEK_ROUTES: any = { routes: {}, unplaced: [] };
 let BADGER: Record<string, any> = {};
 let PARENT_NAMES: Record<string, string> = {};
-let PATCHES: any = { group_creates:[], group_detaches:[], name_overrides:[], contact_overrides:[], dealer_overrides:[] };
+// DEALERS, BADGER, WEEK_ROUTES remain static base data
 try { DEALER_LOOKUP = require("@/data/dealer-lookup").DEALER_LOOKUP; } catch(e) {}
 try { DEALERS = require("@/data/dealers").DEALERS; } catch(e) {}
 try { WEEK_ROUTES = require("@/data/week-routes.json"); } catch(e) {}
 try { BADGER = require("@/data/badger-lookup.json"); } catch(e) {}
 try { PARENT_NAMES = require("@/data/parent-names.json"); } catch(e) {}
-try { PATCHES = require("@/data/patches.json"); } catch(e) {}
 
-// ─── APPLY PATCHES ───────────────────────────────────────────────────────────
-// Applies all manual corrections on top of any data source (preloaded or CSV).
-// Add new corrections to src/data/patches.json — they survive any data rebuild.
-function applyPatches(grps: any[]): any[] {
-  if (!grps || !PATCHES) return grps;
+// OVERLAYS: runtime-loaded from data/overlays.json via API — NOT a static import
+// Default empty shape used until loadOverlays() resolves on app mount
+const EMPTY_OVERLAYS: any = {
+  schemaVersion: 2, lastUpdated: new Date().toISOString(),
+  groups: {}, groupDetaches: [], groupMoves: {}, nameOverrides: {},
+  contacts: {}, fscReps: {}, activityLogs: {}, research: {}, dealerOverrides: {},
+};
+// Module-level ref so applyOverlays() (called outside React) can access current overlays
+let OVERLAYS_REF: any = EMPTY_OVERLAYS;
+
+// ─── APPLY OVERLAYS ─────────────────────────────────────────────
+// Applies all user-authored overlays on top of base data.
+// Reads from OVERLAYS_REF (set at runtime from data/overlays.json).
+// Survives CSV uploads because overlays are stored separately.
+function applyOverlays(grps: any[]): any[] {
+  if (!grps) return grps;
+  const OV = OVERLAYS_REF;
   let result = [...grps];
 
-  // 1. NAME OVERRIDES — fix bad MDM names
-  const nameMap: Record<string,string> = {};
-  (PATCHES.name_overrides||[]).forEach((o:any) => { nameMap[o.id] = o.name; });
+  // 1. NAME OVERRIDES
+  const nameMap: Record<string,string> = OV.nameOverrides || {};
   if (Object.keys(nameMap).length > 0) {
     result = result.map(g => ({
       ...g,
       name: nameMap[g.id] || g.name,
-      children: (g.children||[]).map((c:any) => ({
-        ...c,
-        name: nameMap[c.id] || c.name,
-      }))
+      children: (g.children||[]).map((c:any) => ({ ...c, name: nameMap[c.id] || c.name }))
     }));
   }
 
-  // 2. CONTACT OVERRIDES — inject emails/contacts into BADGER at runtime
-  (PATCHES.contact_overrides||[]).forEach((o:any) => {
-    if (!BADGER[o.id]) BADGER[o.id] = {};
-    if (o.contactName && !BADGER[o.id].contactName) BADGER[o.id].contactName = o.contactName;
-    if (o.email && !BADGER[o.id].email) BADGER[o.id].email = o.email;
-    if (o.address && !BADGER[o.id].address) BADGER[o.id].address = o.address;
+  // 2. CONTACT OVERRIDES — inject into BADGER at runtime so AcctDetail can read them
+  const contacts = OV.contacts || {};
+  Object.entries(contacts).forEach(([id, co]: any) => {
+    if (!BADGER[id]) BADGER[id] = {};
+    if (co.contactName && !BADGER[id].contactName) BADGER[id].contactName = co.contactName;
+    if (co.email && !BADGER[id].email) BADGER[id].email = co.email;
+    if (co.phone && !BADGER[id].phone) BADGER[id].phone = co.phone;
+    if (co.address && !BADGER[id].address) BADGER[id].address = co.address;
+    if (co.website && !BADGER[id].website) BADGER[id].website = co.website;
+    if (co.contacts?.length && !BADGER[id].contacts) BADGER[id].contacts = co.contacts;
   });
 
   // 3. GROUP DETACHES — remove child from wrong parent, make standalone
-  (PATCHES.group_detaches||[]).forEach((detach:any) => {
+  (OV.groupDetaches||[]).forEach((detach:any) => {
     const childId = detach.childId;
     let detachedChild: any = null;
     result = result.map(g => {
@@ -82,67 +93,84 @@ function applyPatches(grps: any[]): any[] {
       });
       return { ...g, children: kept, locs: kept.length };
     });
-    // Create standalone group for detached child
     if (detachedChild && !result.find(g => g.id === detach.newGroupId)) {
-      const standalone = {
-        id: detach.newGroupId,
-        name: detach.newGroupName || detachedChild.name,
-        tier: detachedChild.tier || "Standard",
-        class2: detachedChild.class2 || "Private Practice",
-        locs: 1,
-        pyQ: detachedChild.pyQ || {},
-        cyQ: detachedChild.cyQ || {},
-        children: [{ ...detachedChild, gId: detach.newGroupId, gName: detach.newGroupName || detachedChild.name }],
-      };
-      result.push(standalone);
+      result.push({
+        id: detach.newGroupId, name: detach.newGroupName || detachedChild.name,
+        tier: detachedChild.tier||"Standard", class2: detachedChild.class2||"Private Practice",
+        locs: 1, pyQ: detachedChild.pyQ||{}, cyQ: detachedChild.cyQ||{},
+        children: [{ ...detachedChild, gId: detach.newGroupId, gName: detach.newGroupName||detachedChild.name }],
+      });
     }
   });
 
-  // 4. GROUP CREATES — create new parent groups and pull children in
-  (PATCHES.group_creates||[]).forEach((create:any) => {
-    if (result.find(g => g.id === create.id)) return; // already exists
+  // 4. GROUP CREATES — build custom groups from childIds
+  // Key fix: each childId may exist as a nested group (with its own .children array containing
+  // the real leaf record with products/city/dealer). We always unwrap to get the leaf.
+  const groupsById: Record<string,any> = {};
+  result.forEach(g => { groupsById[g.id] = g; });
+
+  // Build a flat childId → leaf child lookup from ALL groups
+  const leafByChildId: Record<string,any> = {};
+  result.forEach(g => {
+    (g.children||[]).forEach((c:any) => {
+      // If this child is itself a group stub (has .children), unwrap to its leaf
+      if (c.children && c.children.length > 0) {
+        const leaf = c.children[0];
+        leafByChildId[c.id] = leaf;
+      } else {
+        leafByChildId[c.id] = c;
+      }
+    });
+  });
+
+  Object.values(OV.groups||{}).forEach((create:any) => {
+    // Remove any pre-existing group with this ID (could be a stale preloaded stub)
+    result = result.filter(g => g.id !== create.id);
+
     const childIdSet = new Set(create.childIds || []);
     const children: any[] = [];
     let totalPY: Record<string,number> = {};
     let totalCY: Record<string,number> = {};
 
-    // Pull matching children from existing groups
+    // Pull children — prefer leaf records (have products) over stubs
     result = result.map(g => {
       const kept: any[] = [];
       (g.children||[]).forEach((c:any) => {
-        if (childIdSet.has(c.id)) {
-          children.push({ ...c, gId: create.id, gName: create.name });
-          // Roll up financials
-          Object.entries(c.pyQ||{}).forEach(([q,v]:any) => { totalPY[q] = (totalPY[q]||0) + v; });
-          Object.entries(c.cyQ||{}).forEach(([q,v]:any) => { totalCY[q] = (totalCY[q]||0) + v; });
-        } else {
-          kept.push(c);
+        if (!childIdSet.has(c.id)) { kept.push(c); return; }
+        // Use leaf (unwrapped) if available and richer
+        const leaf = leafByChildId[c.id] || c;
+        const existing = children.find(x => x.id === c.id);
+        if (!existing) {
+          children.push({ ...leaf, gId: create.id, gName: create.name });
+        } else if ((leaf.products||[]).length > (existing.products||[]).length) {
+          const idx = children.findIndex(x => x.id === c.id);
+          children[idx] = { ...leaf, gId: create.id, gName: create.name };
         }
+        // Always remove from current group
       });
       return { ...g, children: kept, locs: kept.length };
     });
 
-    // Add any childIds that weren't found (e.g. new accounts like Coastal CT)
-    create.childIds.forEach((cid:string) => {
+    // Roll up financials
+    children.forEach((c:any) => {
+      Object.entries(c.pyQ||{}).forEach(([q,v]:any) => { totalPY[q] = (totalPY[q]||0) + v; });
+      Object.entries(c.cyQ||{}).forEach(([q,v]:any) => { totalCY[q] = (totalCY[q]||0) + v; });
+    });
+
+    // Add any childIds not found anywhere in base data
+    (create.childIds||[]).forEach((cid:string) => {
       if (!children.find(c => c.id === cid)) {
-        children.push({
-          id: cid, name: nameMap[cid] || cid, gId: create.id, gName: create.name,
-          pyQ: {}, cyQ: {}, products: [], tier: "Standard", class2: "Private Practice",
-        });
+        children.push({ id: cid, name: nameMap[cid]||cid, gId: create.id, gName: create.name,
+          pyQ: {}, cyQ: {}, products: [], tier: "Standard", class2: "Private Practice" });
       }
     });
 
     if (children.length > 0) {
       result.unshift({
-        id: create.id,
-        name: create.name,
-        tier: create.tier || "Standard",
-        class2: create.class2 || "Private Practice",
-        dsoName: create.dsoName || create.name,
-        locs: children.length,
-        pyQ: totalPY,
-        cyQ: totalCY,
-        children,
+        id: create.id, name: create.name,
+        tier: create.tier||"Standard", class2: create.class2||"Private Practice",
+        dsoName: create.dsoName||create.name, locs: children.length,
+        pyQ: totalPY, cyQ: totalCY, children,
       });
     }
   });
@@ -596,6 +624,49 @@ function AppInner() {
   const [uploadMsg, setUploadMsg] = useState(null);
   const fileRef = useRef(null);
 
+  // ── OVERLAY STATE ─────────────────────────────────────────────
+  // overlays: runtime-loaded from data/overlays.json, never wiped by CSV upload
+  const [overlays, setOverlaysState] = useState<any>(EMPTY_OVERLAYS);
+  const [overlaySaveStatus, setOverlaySaveStatus] = useState<"idle"|"saving"|"saved"|"error">("idle");
+  const [overlaySaveError, setOverlaySaveError] = useState<string|null>(null);
+
+  // Keep OVERLAYS_REF in sync so applyOverlays() (called outside React) always has current data
+  const setOverlays = (next: any) => {
+    OVERLAYS_REF = next;
+    setOverlaysState(next);
+  };
+
+  // ── CENTRAL PERSISTENCE SERVICE ───────────────────────────────
+  // All overlay saves go through here. Updates state immediately, writes to GitHub durably.
+  // Shows real error if durable save fails — never silent.
+  const saveOverlays = async (next: any): Promise<boolean> => {
+    // 1. Update in-memory immediately
+    setOverlays(next);
+    // 2. Cache to localStorage
+    try { localStorage.setItem("overlay_cache", JSON.stringify(next)); } catch {}
+    // 3. Write to GitHub durably
+    setOverlaySaveStatus("saving");
+    setOverlaySaveError(null);
+    try {
+      const res = await fetch("/api/save-overlay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ overlays: next }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Save failed");
+      }
+      setOverlaySaveStatus("saved");
+      setTimeout(() => setOverlaySaveStatus("idle"), 3000);
+      return true;
+    } catch (err: any) {
+      setOverlaySaveStatus("error");
+      setOverlaySaveError(err.message || "Failed to save — check connection");
+      return false;
+    }
+  };
+
   // Hydrate dealer info onto groups (handles preloaded data that was built without dealer field)
   const hydrateDealer = (grps) => {
     if (!grps) return grps;
@@ -608,17 +679,23 @@ function AppInner() {
     }));
   };
 
-  // Apply group overrides from localStorage — moves misparented accounts into correct groups
+  // Apply group moves from overlays (durable) + localStorage (session cache)
   const applyGroupOverrides = (grps) => {
     if (!grps) return grps;
-    // Collect all overrides from localStorage
     const overrides: {childId:string, targetGroupId:string}[] = [];
+    // From overlays.groupMoves (permanent — survives cache clear)
+    Object.values(OVERLAYS_REF.groupMoves||{}).forEach((m:any) => {
+      if (m.childId && m.targetGroupId) overrides.push(m);
+    });
+    // From localStorage (session fallback for any moves not yet synced)
     try {
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key?.startsWith("group-override:")) {
           const val = JSON.parse(localStorage.getItem(key) || "{}");
-          if (val.childId && val.targetGroupId) overrides.push(val);
+          if (val.childId && val.targetGroupId && !overrides.find(o => o.childId === val.childId)) {
+            overrides.push(val);
+          }
         }
       }
     } catch {}
@@ -660,30 +737,58 @@ function AppInner() {
     });
   };
 
-  // Load pre-loaded data on mount
+  // ── DATA LOADING ON MOUNT ────────────────────────────────────
+  // Step 1: Load overlays from GitHub (durable user data)
+  // Step 2: Load base data (CSV upload or preloaded)
+  // Step 3: Apply overlays on top of base data → final state
   useEffect(() => {
-    // Check localStorage first
-    try {
-      const saved = localStorage.getItem("accel_data");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setGroups(applyGroupOverrides(applyPatches(hydrateDealer(parsed.groups))));
-        setDataSource(`CSV uploaded ${parsed.generated}`);
-        setLoading(false);
-        return;
-      }
-    } catch(e) {}
+    const boot = async () => {
+      // ── Load Overlays ──
+      let loadedOverlays = EMPTY_OVERLAYS;
+      try {
+        // Try localStorage cache first (fast)
+        const cached = localStorage.getItem("overlay_cache");
+        if (cached) {
+          loadedOverlays = JSON.parse(cached);
+        }
+        // Always fetch fresh from GitHub in background to stay current
+        fetch("/api/load-overlay").then(async (res) => {
+          if (res.ok) {
+            const { overlays: fresh } = await res.json();
+            if (fresh) {
+              setOverlays(fresh);
+              try { localStorage.setItem("overlay_cache", JSON.stringify(fresh)); } catch {}
+              // Reapply overlays onto current groups with fresh data
+              setGroups(prev => prev ? applyGroupOverrides(applyOverlays(prev.map((g:any) => ({...g})))) : prev);
+            }
+          }
+        }).catch(() => {});
+      } catch {}
+      setOverlays(loadedOverlays);
 
-    // Load pre-loaded data
-    try {
-      const { PRELOADED } = require("@/data/preloaded-data");
-      setGroups(applyGroupOverrides(applyPatches(hydrateDealer(PRELOADED.groups))));
-      setDataSource(`Pre-loaded ${PRELOADED.generated}`);
-    } catch(e) {
-      setGroups([]);
-      setDataSource("No data — upload CSV");
-    }
-    setLoading(false);
+      // ── Load Base Data ──
+      try {
+        const saved = localStorage.getItem("accel_data");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          setGroups(applyGroupOverrides(applyOverlays(hydrateDealer(parsed.groups))));
+          setDataSource(`CSV uploaded ${parsed.generated}`);
+          setLoading(false);
+          return;
+        }
+      } catch {}
+
+      try {
+        const { PRELOADED } = require("@/data/preloaded-data");
+        setGroups(applyGroupOverrides(applyOverlays(hydrateDealer(PRELOADED.groups))));
+        setDataSource(`Pre-loaded ${PRELOADED.generated}`);
+      } catch {
+        setGroups([]);
+        setDataSource("No data — upload CSV");
+      }
+      setLoading(false);
+    };
+    boot();
   }, []);
 
   // Handle CSV upload
@@ -697,12 +802,27 @@ function AppInner() {
         const text = ev.target.result;
         const rows = parseCSV(text);
         const result = processCSVData(rows);
-        setGroups(applyGroupOverrides(applyPatches(result.groups)));
+
+        // Build set of all child IDs in new base data for conflict checking
+        const newChildIds = new Set(result.groups.flatMap((g:any) => (g.children||[]).map((c:any) => c.id)));
+
+        // Check for overlay conflicts (group children that no longer exist in new data)
+        const missingIds: string[] = [];
+        Object.values(OVERLAYS_REF.groups||{}).forEach((grp:any) => {
+          (grp.childIds||[]).forEach((cid:string) => {
+            if (!newChildIds.has(cid)) missingIds.push(cid);
+          });
+        });
+
+        // Apply overlays on top of new base data
+        setGroups(applyGroupOverrides(applyOverlays(hydrateDealer(result.groups))));
         setDataSource(`CSV uploaded ${result.generated}`);
         localStorage.setItem("accel_data", JSON.stringify(result));
-        setUploadMsg(`OK Loaded ${result.groups.length} groups from CSV`);
-        setTimeout(() => setUploadMsg(null), 4000);
-      } catch(err) {
+
+        const warn = missingIds.length > 0 ? ` ⚠ ${missingIds.length} overlay account(s) not found in new data` : "";
+        setUploadMsg(`OK Loaded ${result.groups.length} groups from CSV${warn}`);
+        setTimeout(() => setUploadMsg(null), missingIds.length > 0 ? 8000 : 4000);
+      } catch(err: any) {
         setUploadMsg(`ERR Error: ${err.message}`);
         setTimeout(() => setUploadMsg(null), 5000);
       }
@@ -824,6 +944,9 @@ function AppInner() {
 
       {/* UPLOAD MESSAGE */}
       {uploadMsg && <div className="anim" style={{margin:"8px 16px",padding:"10px 14px",borderRadius:10,background:uploadMsg.startsWith("OK")?"rgba(52,211,153,.08)":"rgba(248,113,113,.08)",border:`1px solid ${uploadMsg.startsWith("OK")?"rgba(52,211,153,.15)":"rgba(248,113,113,.15)"}`,fontSize:12,color:uploadMsg.startsWith("OK")?T.green:uploadMsg.startsWith("ERR")?T.red:T.t3}}>{uploadMsg}</div>}
+      {overlaySaveStatus==="saving"&&<div className="anim" style={{margin:"0 16px 8px",padding:"6px 12px",borderRadius:8,background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.15)",fontSize:11,color:T.blue}}>💾 Saving...</div>}
+      {overlaySaveStatus==="saved"&&<div className="anim" style={{margin:"0 16px 8px",padding:"6px 12px",borderRadius:8,background:"rgba(52,211,153,.08)",border:"1px solid rgba(52,211,153,.15)",fontSize:11,color:T.green}}>✓ Saved</div>}
+      {overlaySaveStatus==="error"&&<div className="anim" style={{margin:"0 16px 8px",padding:"6px 12px",borderRadius:8,background:"rgba(248,113,113,.08)",border:"1px solid rgba(248,113,113,.15)",fontSize:11,color:T.red}}>⚠ Save failed: {overlaySaveError} — your change is cached locally but not backed up yet.</div>}
 
       {/* TAB CONTENT */}
       {/* goSmart: always route child taps through the parent group when group has >1 loc.
@@ -850,9 +973,9 @@ function AppInner() {
           {!view && tab==="est" && <EstTab pct={estPct} setPct={setEstPct} q1CY={q1CY} groups={groups||[]} goAcct={goSmartFn}/>}
           {!view && tab==="dealers" && <DealersTab scored={scored} groups={groups||[]} goAcct={goAcctFn} goGroup={goGroupFn}/>}
           {!view && tab==="outreach" && <OutreachTab scored={scored}/>}
-          {!view && tab==="admin" && <AdminTab groups={groups||[]} scored={scored}/>}
-          {view?.type==="group" && <GroupDetail group={view.data} goMain={()=>setView(null)} goAcct={(a:any)=>setView({type:"acct",data:{...a,gName:fixGroupName(view.data),gId:view.data.id,gTier:view.data.tier},from:view.data})}/>}
-          {view?.type==="acct" && <AcctDetail acct={view.data} goBack={()=>view?.from?setView({type:"group",data:view.from}):setView(null)} adjs={adjs} setAdjs={setAdjs} groups={groups||[]} goGroup={goGroupFn}/>}
+          {!view && tab==="admin" && <AdminTab groups={groups||[]} scored={scored} overlays={overlays} saveOverlays={saveOverlays}/>}
+          {view?.type==="group" && <GroupDetail group={view.data} goMain={()=>setView(null)} overlays={overlays} saveOverlays={saveOverlays} goAcct={(a:any)=>setView({type:"acct",data:{...a,gName:fixGroupName(view.data),gId:view.data.id,gTier:view.data.tier},from:view.data})}/>}
+          {view?.type==="acct" && <AcctDetail acct={view.data} goBack={()=>view?.from?setView({type:"group",data:view.from}):setView(null)} adjs={adjs} setAdjs={setAdjs} groups={groups||[]} goGroup={goGroupFn} overlays={overlays} saveOverlays={saveOverlays}/>}
         </>;
       })()}
 
@@ -2039,7 +2162,7 @@ function GroupsTab({groups,goGroup,filt,setFilt,search,setSearch}) {
 }
 
 // ─── GROUP DETAIL ────────────────────────────────────────────────
-function GroupDetail({group,goMain,goAcct}) {
+function GroupDetail({group,goMain,goAcct,overlays,saveOverlays}) {
   const [q,setQ]=useState("1");
   const qk=q;
   const py=group.pyQ?.[qk]||0;const cy=group.cyQ?.[qk]||0;
@@ -2052,9 +2175,22 @@ function GroupDetail({group,goMain,goAcct}) {
   };
   const saveFSC = (dist:string, data:any) => {
     try { localStorage.setItem(fscKey(dist), JSON.stringify(data)); } catch {}
+    // Persist to overlays durably
+    if (saveOverlays) {
+      const groupFSC = { ...(OVERLAYS_REF.fscReps?.[group.id] || {}), [dist]: data };
+      const next = { ...OVERLAYS_REF, fscReps: { ...(OVERLAYS_REF.fscReps||{}), [group.id]: groupFSC } };
+      saveOverlays(next);
+    }
   };
   const removeFSC = (dist:string) => {
     try { localStorage.removeItem(fscKey(dist)); } catch {}
+    // Remove from overlays durably
+    if (saveOverlays) {
+      const groupFSC = { ...(OVERLAYS_REF.fscReps?.[group.id] || {}) };
+      delete groupFSC[dist];
+      const next = { ...OVERLAYS_REF, fscReps: { ...(OVERLAYS_REF.fscReps||{}), [group.id]: groupFSC } };
+      saveOverlays(next);
+    }
   };
 
   // Detect which distributors are present in this group's children
@@ -2068,9 +2204,13 @@ function GroupDetail({group,goMain,goAcct}) {
   const [fscMap, setFscMap] = useState<Record<string,any>>(()=>{
     const m:Record<string,any> = {};
     groupDists.forEach(d => {
+      // Priority 1: overlays.fscReps (durable — survives cache clear)
+      const fromOverlay = overlays?.fscReps?.[group.id]?.[d];
+      if (fromOverlay) { m[d] = {...fromOverlay, source:"overlay"}; return; }
+      // Priority 2: localStorage (fast cache for recent saves)
       const manual = loadFSC(d);
       if(manual) { m[d] = {...manual, source:"manual"}; return; }
-      // Fall back to Badger: find first child of this distributor with a dealerRep
+      // Priority 3: Badger Maps data
       const child = (group.children||[]).find((c:any) => c.dealer===d && BADGER[c.id]?.dealerRep);
       if(child) { m[d] = {name: BADGER[child.id].dealerRep, source:"badger"}; }
     });
@@ -2331,7 +2471,7 @@ function GroupDetail({group,goMain,goAcct}) {
 }
 
 // ─── ACCOUNT DETAIL ──────────────────────────────────────────────
-function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup}) {
+function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup,overlays,saveOverlays}) {
   const [q,setQ]=useState("1");
   const [showForm,setShowForm]=useState(false);
   const [toast,setToast]=useState(null);
@@ -2355,9 +2495,35 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup}) {
 
   // Load saved contacts + group override + activity log from storage on mount
   useEffect(() => {
-    try { const v=localStorage.getItem(storageKey); if(v) setSavedContacts(JSON.parse(v)); } catch {}
-    try { const v=localStorage.getItem(overrideKey); if(v) setGroupOverride(JSON.parse(v)); } catch {}
-    try { const v=localStorage.getItem(actLogKey); if(v) setActLog(JSON.parse(v)); } catch {}
+    // Load contact: overlays is durable source, localStorage is fast cache fallback
+    try {
+      const fromOverlay = overlays?.contacts?.[acct.id];
+      if (fromOverlay) {
+        setSavedContacts(fromOverlay);
+      } else {
+        const v = localStorage.getItem(storageKey);
+        if (v) setSavedContacts(JSON.parse(v));
+      }
+    } catch {}
+    // Load group move: overlays.groupMoves is durable, localStorage is fallback
+    try {
+      const fromOverlay = overlays?.groupMoves?.[acct.id];
+      if (fromOverlay) {
+        setGroupOverride(fromOverlay);
+      } else {
+        const v = localStorage.getItem(overrideKey);
+        if (v) setGroupOverride(JSON.parse(v));
+      }
+    } catch {}
+    // Load activity log: merge overlays (durable) with localStorage (recent unsynced)
+    try {
+      const fromOverlay: any[] = overlays?.activityLogs?.[acct.id] || [];
+      const fromLocal: any[] = (() => { try { return JSON.parse(localStorage.getItem(actLogKey)||"[]"); } catch { return []; } })();
+      const overlayIds = new Set(fromOverlay.map((e:any) => e.id));
+      const merged = [...fromOverlay, ...fromLocal.filter((e:any) => !overlayIds.has(e.id))];
+      merged.sort((a:any,b:any) => b.id - a.id);
+      if (merged.length > 0) setActLog(merged);
+    } catch {}
   }, [acct.id]);
 
   // Group search for move modal
@@ -2385,6 +2551,11 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup}) {
     setMoveSearch("");
     setToast({msg:`Moved to ${fixGroupName(targetGroup)}`, color:T.green});
     setTimeout(()=>setToast(null), 3000);
+    // Persist to overlays durably
+    if (saveOverlays) {
+      const next = { ...OVERLAYS_REF, groupMoves: { ...(OVERLAYS_REF.groupMoves||{}), [acct.id]: override } };
+      saveOverlays(next);
+    }
   };
 
   const myAdj=adjs.filter(m=>m.acctId===acct.id);
@@ -2534,6 +2705,11 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
         if (hasContact) {
           try { localStorage.setItem(storageKey, JSON.stringify(contacts)); } catch {}
           setSavedContacts(contacts);
+          // Persist to overlays durably
+          if (saveOverlays) {
+            const next = { ...OVERLAYS_REF, contacts: { ...(OVERLAYS_REF.contacts||{}), [acct.id]: contacts } };
+            saveOverlays(next);
+          }
         }
       } else {
         setDrState("error");
@@ -3030,6 +3206,11 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
           const updated=[entry,...actLog];
           setActLog(updated);
           try{localStorage.setItem(actLogKey,JSON.stringify(updated.slice(0,50)));}catch{}
+          // Persist to overlays durably
+          if (saveOverlays) {
+            const next = { ...OVERLAYS_REF, activityLogs: { ...(OVERLAYS_REF.activityLogs||{}), [acct.id]: updated.slice(0,50) } };
+            saveOverlays(next);
+          }
           setActContact("");setActNotes("");setActFollowUp("");setShowActForm(false);
         };
         return <div className="anim" style={{animationDelay:"280ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12}}>
@@ -4511,11 +4692,12 @@ function OutreachTab({scored}:{scored:any[]}) {
 // ADMIN TAB — Edit patches.json directly from the app
 // All changes commit to GitHub automatically. No data lost on CSV reload.
 // ─────────────────────────────────────────────────────────────────
-function AdminTab({groups, scored}:{groups:any[], scored:any[]}) {
+function AdminTab({groups, scored, overlays, saveOverlays}:{groups:any[], scored:any[], overlays:any, saveOverlays:any}) {
   const [section, setSection] = useState<string>("groups"); // groups | detach | names | contacts
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{msg:string,ok:boolean}|null>(null);
-  const [patches, setPatches] = useState<any>(PATCHES);
+  // Admin reads/writes from overlays prop (passed from AppInner)
+  // No local patches state needed — overlays is the single source of truth
 
   // Search
   const [search, setSearch] = useState("");
@@ -4571,28 +4753,19 @@ function AdminTab({groups, scored}:{groups:any[], scored:any[]}) {
     ).slice(0,6);
   };
 
-  async function savePatch(action:string, payload:any) {
+  // All admin saves go through saveOverlays (central persistence service)
+  // This updates in-memory state, writes to localStorage cache, and commits to GitHub
+  async function adminSave(nextOverlays: any, successMsg: string) {
     setSaving(true);
-    try {
-      const res = await fetch("/api/save-patch", {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({action, payload})
-      });
-      const data = await res.json();
-      if(data.success) {
-        setPatches(data.patches);
-        showToast(`✅ Saved — commit ${data.commit}`);
-        // Reset forms
-        setNewGroupName(""); setChildIds([]); setChildIdInput(""); setEditingGroup(null);
-        setDetachAccount(null); setDetachSearch(""); setDetachNewName("");
-        setNameAccount(null); setNameSearch(""); setNameNewValue("");
-        setContactAccount(null); setContactSearch(""); setContactName(""); setContactEmail(""); setContactPhone(""); setContactNote("");
-      } else {
-        showToast(`❌ ${data.error}`, false);
-      }
-    } catch(e:any) {
-      showToast(`❌ ${e.message}`, false);
+    const ok = await saveOverlays(nextOverlays);
+    if (ok) {
+      showToast(`✅ ${successMsg}`);
+      setNewGroupName(""); setChildIds([]); setChildIdInput(""); setEditingGroup(null);
+      setDetachAccount(null); setDetachSearch(""); setDetachNewName("");
+      setNameAccount(null); setNameSearch(""); setNameNewValue("");
+      setContactAccount(null); setContactSearch(""); setContactName(""); setContactEmail(""); setContactPhone(""); setContactNote("");
+    } else {
+      showToast("❌ Save failed — check connection", false);
     }
     setSaving(false);
   }
@@ -4628,15 +4801,21 @@ function AdminTab({groups, scored}:{groups:any[], scored:any[]}) {
     {/* ── GROUPS SECTION ── */}
     {section==="groups"&&<div>
       {/* Existing patch groups */}
-      {(patches.group_creates||[]).length>0&&<div style={{marginBottom:16}}>
+      {(Object.values(overlays?.groups||{})).length>0&&<div style={{marginBottom:16}}>
         <div style={{fontSize:11,fontWeight:700,color:T.t3,textTransform:"uppercase",letterSpacing:.5,marginBottom:8}}>Existing Custom Groups</div>
-        {(patches.group_creates||[]).map((g:any)=>(
+        {(Object.values(overlays?.groups||{})).map((g:any)=>(
           <div key={g.id} style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:10,padding:12,marginBottom:8}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
               <div style={{fontSize:13,fontWeight:700,color:T.t1}}>{g.name}</div>
               <div style={{display:"flex",gap:6}}>
                 <button onClick={()=>{setEditingGroup(g);setNewGroupName(g.name);setNewGroupClass(g.class2||"Emerging DSO");setChildIds(g.childIds||[]);}} style={{fontSize:10,color:T.blue,background:"none",border:`1px solid ${T.blue}`,borderRadius:6,padding:"3px 8px",cursor:"pointer",fontFamily:"inherit"}}>Edit</button>
-                <button onClick={()=>savePatch("delete_group",{id:g.id})} disabled={saving} style={{fontSize:10,color:T.red,background:"none",border:`1px solid ${T.red}`,borderRadius:6,padding:"3px 8px",cursor:"pointer",fontFamily:"inherit"}}>Delete</button>
+                <button onClick={()=>{
+                  if(saveOverlays){
+                    const next={...OVERLAYS_REF,groups:{...(OVERLAYS_REF.groups||{})}};
+                    delete next.groups[g.id];
+                    saveOverlays(next).then(ok=>{ if(ok) showToast("✅ Deleted"); else showToast("❌ Delete failed",false); });
+                  }
+                }} disabled={saving} style={{fontSize:10,color:T.red,background:"none",border:`1px solid ${T.red}`,borderRadius:6,padding:"3px 8px",cursor:"pointer",fontFamily:"inherit"}}>Delete</button>
               </div>
             </div>
             <div style={{fontSize:10,color:T.t4}}>{g.class2} · {(g.childIds||[]).length} locations</div>
@@ -4700,7 +4879,12 @@ function AdminTab({groups, scored}:{groups:any[], scored:any[]}) {
         <button onClick={()=>{
           if(!newGroupName.trim()||childIds.length===0){showToast("❌ Need a name and at least one account",false);return;}
           const id = editingGroup?.id || `Master-CUSTOM-${Date.now()}`;
-          savePatch("create_group",{id,name:newGroupName.trim(),class2:newGroupClass,childIds,tier:"Standard"});
+          // Save group to overlays (durable) instead of old save-patch
+        if (saveOverlays) {
+          const grp = {id,name:newGroupName.trim(),class2:newGroupClass,childIds,tier:"Standard",createdAt:editingGroup?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
+          const next = { ...OVERLAYS_REF, groups: { ...(OVERLAYS_REF.groups||{}), [id]: grp } };
+          saveOverlays(next).then(ok => { if(ok) showToast("✅ Group saved"); else showToast("❌ Save failed",false); });
+        }
         }} disabled={saving||!newGroupName.trim()||childIds.length===0}
           style={{width:"100%",padding:"11px 0",borderRadius:10,border:"none",background:(!newGroupName.trim()||childIds.length===0)?T.s2:T.blue,color:"#fff",fontSize:13,fontWeight:700,cursor:(!newGroupName.trim()||childIds.length===0)?"not-allowed":"pointer",fontFamily:"inherit"}}>
           {saving?"Saving...":editingGroup?"Update Group":"Create Group"}
@@ -4711,15 +4895,15 @@ function AdminTab({groups, scored}:{groups:any[], scored:any[]}) {
 
     {/* ── DETACH SECTION ── */}
     {section==="detach"&&<div>
-      {(patches.group_detaches||[]).length>0&&<div style={{marginBottom:16}}>
+      {(overlays?.groupDetaches||[]).length>0&&<div style={{marginBottom:16}}>
         <div style={{fontSize:11,fontWeight:700,color:T.t3,textTransform:"uppercase",letterSpacing:.5,marginBottom:8}}>Current Detachments</div>
-        {(patches.group_detaches||[]).map((d:any)=>(
+        {(overlays?.groupDetaches||[]).map((d:any)=>(
           <div key={d.childId} style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:10,padding:12,marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <div>
               <div style={{fontSize:12,fontWeight:700,color:T.t1}}>{d.newGroupName}</div>
               <div style={{fontSize:10,color:T.t4}}>Detached from {d.fromGroupId} · {d.reason}</div>
             </div>
-            <button onClick={()=>savePatch("remove_detach",{childId:d.childId})} disabled={saving} style={{fontSize:10,color:T.red,background:"none",border:`1px solid ${T.red}`,borderRadius:6,padding:"3px 8px",cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>Remove</button>
+            <button onClick={()=>adminSave({...OVERLAYS_REF,groupDetaches:(OVERLAYS_REF.groupDetaches||[]).filter((x:any)=>x.childId!==d.childId)},"Detach removed")} disabled={saving} style={{fontSize:10,color:T.red,background:"none",border:`1px solid ${T.red}`,borderRadius:6,padding:"3px 8px",cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>Remove</button>
           </div>
         ))}
       </div>}
@@ -4751,13 +4935,10 @@ function AdminTab({groups, scored}:{groups:any[], scored:any[]}) {
             <input value={detachNewName} onChange={e=>setDetachNewName(e.target.value)}
               style={{width:"100%",padding:"9px 12px",borderRadius:8,border:`1px solid ${T.b1}`,background:T.bg,color:T.t1,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
           </div>
-          <button onClick={()=>savePatch("detach_account",{
-            childId: detachAccount.id,
-            fromGroupId: detachAccount.gId,
-            newGroupId: `${detachAccount.id}-standalone`,
-            newGroupName: detachNewName.trim()||detachAccount.name,
-            reason: "Manual correction via Admin tab"
-          })} disabled={saving||!detachNewName.trim()}
+          <button onClick={()=>{
+            const det={childId:detachAccount.id,fromGroupId:detachAccount.gId,newGroupId:`${detachAccount.id}-standalone`,newGroupName:detachNewName.trim()||detachAccount.name,reason:"Manual correction via Admin tab"};
+            adminSave({...OVERLAYS_REF,groupDetaches:[...(OVERLAYS_REF.groupDetaches||[]).filter((x:any)=>x.childId!==det.childId),det]},"Account detached");
+          }} disabled={saving||!detachNewName.trim()}
             style={{width:"100%",padding:"11px 0",borderRadius:10,border:"none",background:T.amber,color:"#000",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
             {saving?"Saving...":"Detach Account"}
           </button>
@@ -4767,15 +4948,15 @@ function AdminTab({groups, scored}:{groups:any[], scored:any[]}) {
 
     {/* ── NAME OVERRIDES SECTION ── */}
     {section==="names"&&<div>
-      {(patches.name_overrides||[]).length>0&&<div style={{marginBottom:16}}>
+      {(Object.entries(overlays?.nameOverrides||{}).map(([id,name]:any)=>({id,name}))).length>0&&<div style={{marginBottom:16}}>
         <div style={{fontSize:11,fontWeight:700,color:T.t3,textTransform:"uppercase",letterSpacing:.5,marginBottom:8}}>Current Name Overrides</div>
-        {(patches.name_overrides||[]).map((n:any)=>(
+        {(Object.entries(overlays?.nameOverrides||{}).map(([id,name]:any)=>({id,name}))).map((n:any)=>(
           <div key={n.id} style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:10,padding:12,marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <div>
               <div style={{fontSize:12,fontWeight:700,color:T.t1}}>{n.name}</div>
               <div style={{fontSize:10,color:T.t4}}>{n.id} · {n.reason}</div>
             </div>
-            <button onClick={()=>savePatch("remove_name_override",{id:n.id})} disabled={saving} style={{fontSize:10,color:T.red,background:"none",border:`1px solid ${T.red}`,borderRadius:6,padding:"3px 8px",cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>Remove</button>
+            <button onClick={()=>{const nm={...((OVERLAYS_REF.nameOverrides)||{})};delete nm[n.id];adminSave({...OVERLAYS_REF,nameOverrides:nm},"Name override removed");}} disabled={saving} style={{fontSize:10,color:T.red,background:"none",border:`1px solid ${T.red}`,borderRadius:6,padding:"3px 8px",cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>Remove</button>
           </div>
         ))}
       </div>}
@@ -4802,11 +4983,7 @@ function AdminTab({groups, scored}:{groups:any[], scored:any[]}) {
             <input value={nameNewValue} onChange={e=>setNameNewValue(e.target.value)}
               style={{width:"100%",padding:"9px 12px",borderRadius:8,border:`1px solid ${T.b1}`,background:T.bg,color:T.t1,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
           </div>
-          <button onClick={()=>savePatch("name_override",{
-            id: nameAccount.id,
-            name: nameNewValue.trim(),
-            reason: "Manual correction via Admin tab"
-          })} disabled={saving||!nameNewValue.trim()}
+          <button onClick={()=>adminSave({...OVERLAYS_REF,nameOverrides:{...(OVERLAYS_REF.nameOverrides||{}),[nameAccount.id]:nameNewValue.trim()}},"Name saved")} disabled={saving||!nameNewValue.trim()}
             style={{width:"100%",padding:"11px 0",borderRadius:10,border:"none",background:T.blue,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
             {saving?"Saving...":"Save Name Override"}
           </button>
@@ -4816,16 +4993,16 @@ function AdminTab({groups, scored}:{groups:any[], scored:any[]}) {
 
     {/* ── CONTACTS SECTION ── */}
     {section==="contacts"&&<div>
-      {(patches.contact_overrides||[]).length>0&&<div style={{marginBottom:16}}>
+      {(Object.entries(overlays?.contacts||{}).map(([id,c]:any)=>({id,...c}))).length>0&&<div style={{marginBottom:16}}>
         <div style={{fontSize:11,fontWeight:700,color:T.t3,textTransform:"uppercase",letterSpacing:.5,marginBottom:8}}>Saved Contacts</div>
-        {(patches.contact_overrides||[]).map((c:any)=>(
+        {(Object.entries(overlays?.contacts||{}).map(([id,c]:any)=>({id,...c}))).map((c:any)=>(
           <div key={c.id} style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:10,padding:12,marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
             <div>
               <div style={{fontSize:12,fontWeight:700,color:T.t1}}>{c.contactName}</div>
               <div style={{fontSize:10,color:T.cyan}}>{c.email}</div>
               <div style={{fontSize:10,color:T.t4}}>{c.id}</div>
             </div>
-            <button onClick={()=>savePatch("remove_contact",{id:c.id})} disabled={saving} style={{fontSize:10,color:T.red,background:"none",border:`1px solid ${T.red}`,borderRadius:6,padding:"3px 8px",cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>Remove</button>
+            <button onClick={()=>{const ct={...(OVERLAYS_REF.contacts||{})};delete ct[c.id];adminSave({...OVERLAYS_REF,contacts:ct},"Contact removed");}} disabled={saving} style={{fontSize:10,color:T.red,background:"none",border:`1px solid ${T.red}`,borderRadius:6,padding:"3px 8px",cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>Remove</button>
           </div>
         ))}
       </div>}
@@ -4862,13 +5039,7 @@ function AdminTab({groups, scored}:{groups:any[], scored:any[]}) {
                 style={{width:"100%",padding:"8px 10px",borderRadius:8,border:`1px solid ${T.b1}`,background:T.bg,color:T.t1,fontSize:11,fontFamily:"inherit",boxSizing:"border-box"}}/>
             </div>
           ))}
-          <button onClick={()=>savePatch("contact_override",{
-            id: contactAccount.id,
-            contactName: contactName.trim()||undefined,
-            email: contactEmail.trim()||undefined,
-            phone: contactPhone.trim()||undefined,
-            note: contactNote.trim()||undefined,
-          })} disabled={saving||(!contactName.trim()&&!contactEmail.trim())}
+          <button onClick={()=>saveOverlays&&saveOverlays({...OVERLAYS_REF,contacts:{...(OVERLAYS_REF.contacts||{}),[contactAccount.id]:{contactName:contactName.trim()||undefined,email:contactEmail.trim()||undefined,phone:contactPhone.trim()||undefined,note:contactNote.trim()||undefined,savedAt:new Date().toISOString()}}}).then(ok=>{if(ok)showToast("✅ Contact saved");else showToast("❌ Save failed",false);})} disabled={saving||(!contactName.trim()&&!contactEmail.trim())}
             style={{width:"100%",padding:"11px 0",borderRadius:10,border:"none",background:T.blue,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
             {saving?"Saving...":"Save Contact"}
           </button>
