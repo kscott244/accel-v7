@@ -102,7 +102,11 @@ EMAIL RULES:
 4. If practice intel or a relationship hook exists, weave ONE of those in naturally.
 5. Reference end of Q1 / March 31st once — not as pressure, as a helpful timing note.
 6. Reference ONLY ${dealer} as the distributor. Never name a competitor distributor or a rep by name.
-7. Sign off: Ken Scott | Kerr Dental | 860-417-4071
+7. Sign off: Ken Scott
+Territory Manager | National Clinical Sales Trainer
+Kerr Dental
+ken.scott@envistaco.com
+M: 860-930-4027
 8. Subject line: casual, specific to their products or situation. NOT generic.
 
 Return ONLY valid JSON: {"subject": "...", "body": "..."}`;
@@ -128,7 +132,11 @@ Return ONLY valid JSON: {"subject": "...", "body": "..."}`;
   } catch {
     return {
       subject: `Quick note from Ken — Kerr Dental`,
-      body: `${greeting},\n\nJust wanted to reach out as we wrap up Q1. I noticed your account through ${dealer} is running a bit behind compared to last year and wanted to see if there's anything I can help with before March 31st.\n\nKen Scott | Kerr Dental | 860-417-4071`,
+      body: `${greeting},\n\nJust wanted to reach out as we wrap up Q1. I noticed your account through ${dealer} is running a bit behind compared to last year and wanted to see if there's anything I can help with before March 31st.\n\nKen Scott
+Territory Manager | National Clinical Sales Trainer
+Kerr Dental
+ken.scott@envistaco.com
+M: 860-930-4027`,
     };
   }
 }
