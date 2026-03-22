@@ -4077,20 +4077,64 @@ function OutreachTab({scored}:{scored:any[]}) {
   }, []);
 
   const downAccounts = useMemo(()=>{
-    return scored
+    const seen = new Set<string>(); // deduplicate by email
+    const results: any[] = [];
+
+    // Sort by largest gap first
+    const sorted = [...scored]
       .filter(a => {
         const gap = (a.combinedGap ?? a.q1_gap ?? 0);
-        if(gap >= 0) return false;
-        if(Math.abs(gap) < minGap) return false;
-        if(emailOnly && !a.email) return false;
-        return true;
+        return gap < 0 && Math.abs(gap) >= minGap;
       })
-      .sort((a,b) => (a.combinedGap??a.q1_gap??0) - (b.combinedGap??b.q1_gap??0))
-      .slice(0, 50);
+      .sort((a,b) => (a.combinedGap??a.q1_gap??0) - (b.combinedGap??b.q1_gap??0));
+
+    for (const a of sorted) {
+      // Get email + doctor from BADGER (populated from Badger CSV)
+      const badger = BADGER[a.id] || BADGER[a.gId] || null;
+      const email = a.email || badger?.email || null;
+      const doctor = a.doctor || badger?.doctor || null;
+
+      if(emailOnly && !email) continue;
+
+      // Deduplicate — if we already queued an email to this address, skip
+      if(email && seen.has(email)) continue;
+      if(email) seen.add(email);
+
+      // Determine primary dealer = dealer with largest gap
+      // For multi-dealer accounts use combinedGap dealer breakdown if available
+      const primaryDealer = a.dealer || "your distributor";
+
+      results.push({
+        ...a,
+        email,
+        doctor,
+        primaryDealer,
+        // Pass dealer-specific products for context
+        topSkus: a.products?.filter((p:any) => (p.py1||0) > 0)
+          .sort((x:any,y:any) => (y.py1||0)-(x.py1||0))
+          .slice(0,3)
+          .map((p:any) => ({desc: p.n, py: p.py1||0, cy: p.cy1||0})) || [],
+      });
+
+      if(results.length >= 50) break;
+    }
+    return results;
   }, [scored, minGap, emailOnly]);
 
   const allDownCount = scored.filter(a=>(a.combinedGap??a.q1_gap??0)<0).length;
-  const withEmail = scored.filter(a=>(a.combinedGap??a.q1_gap??0)<0 && a.email).length;
+  const withEmail = useMemo(()=>{
+    const seen = new Set<string>();
+    return scored.filter(a => {
+      const gap = (a.combinedGap ?? a.q1_gap ?? 0);
+      if(gap >= 0) return false;
+      const badger = BADGER[a.id] || BADGER[a.gId] || null;
+      const email = a.email || badger?.email || null;
+      if(!email) return false;
+      if(seen.has(email)) return false;
+      seen.add(email);
+      return true;
+    }).length;
+  }, [scored]);
 
   const $f = (n:number) => "$"+Math.abs(n).toLocaleString(undefined,{maximumFractionDigits:0});
 
