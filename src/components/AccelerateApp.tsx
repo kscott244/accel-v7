@@ -591,16 +591,53 @@ export default function App() {
   const q1Gap = Q1_TARGET - q1CY;
   const q1Att = q1CY / Q1_TARGET;
 
-  // Score all accounts
+  // Score all accounts — use combined sibling totals for gap/priority when addr siblings exist
   const scored = useMemo(() => {
+    // First pass: build a quick id→cyQ1 map so siblings can look up adjusted CY
+    const adjCYMap: Record<string,number> = {};
+    allChildren.forEach(a => {
+      const myAdj = adjs.filter(m => m.acctId === a.id);
+      adjCYMap[a.id] = (a.cyQ?.["1"]||0) + myAdj.reduce((s,m) => s + m.credited, 0);
+    });
+
     return allChildren.map(a => {
       const myAdj = adjs.filter(m => m.acctId === a.id);
-      const adjCY = (a.cyQ?.["1"]||0) + myAdj.reduce((s,m) => s + m.credited, 0);
+      const adjCY = adjCYMap[a.id];
       const adjusted = { ...a, cyQ: { ...a.cyQ, "1": adjCY }, adjCount: myAdj.length };
+
       // Enrich addr from Badger if not already set
       const b = BADGER[a.id] || BADGER[a.gId] || null;
       const addr = a.addr || (b?.address ? b.address.split(',')[0].trim() : "");
-      return { ...adjusted, addr, ...scoreAccount(adjusted, "1") };
+
+      // Compute combined totals across same-address siblings (different groups)
+      const siblings: any[] = a.addrSiblings || [];
+      let combinedPY = a.pyQ?.["1"] || 0;
+      let combinedCY = adjCY;
+      if(siblings.length > 0) {
+        siblings.forEach((s:any) => {
+          combinedPY += s.pyQ1 || 0;
+          combinedCY += adjCYMap[s.id] ?? s.cyQ1 ?? 0;
+        });
+      }
+      const hasSiblings = siblings.length > 0;
+
+      // Score using COMBINED totals so priority reflects true account health
+      const scoreBase = hasSiblings
+        ? { ...adjusted, pyQ: { ...adjusted.pyQ, "1": combinedPY }, cyQ: { ...adjusted.cyQ, "1": combinedCY } }
+        : adjusted;
+
+      return {
+        ...adjusted, addr,
+        ...scoreAccount(scoreBase, "1"),
+        // Store combined for display
+        combinedPY, combinedCY,
+        combinedGap: combinedPY - combinedCY,
+        hasSiblings,
+        siblingCount: siblings.length,
+        // Keep individual for dealer breakdown
+        indivPY: a.pyQ?.["1"] || 0,
+        indivCY: adjCY,
+      };
     }).sort((a,b) => b.score - a.score);
   }, [allChildren, adjs]);
 
@@ -988,7 +1025,10 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
   const hot = scored.filter(a => a.score >= 50).slice(0,10);
   const followUp = scored.filter(a => a.score >= 20 && a.score < 50).slice(0,10);
 
-  const AcctCard = ({a, i, showHot=false}) => (
+  const AcctCard = ({a, i, showHot=false}) => {
+    const dispGap = a.hasSiblings ? a.combinedGap : a.gap;
+    const dispRet = a.hasSiblings && a.combinedPY > 0 ? a.combinedCY / a.combinedPY : a.ret;
+    return (
     <button className="anim" onClick={()=>goAcct(a)}
       style={{animationDelay:`${i*25}ms`,width:"100%",textAlign:"left",background:T.s1,
         border:`1px solid ${showHot?"rgba(248,113,113,.18)":T.b1}`,borderRadius:14,
@@ -1002,13 +1042,14 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
               borderRadius:4,padding:"2px 6px"}}>{a.score}pt</span>
             {showHot&&<span style={{fontSize:8,color:T.red,fontWeight:700,background:"rgba(248,113,113,.08)",borderRadius:4,padding:"1px 4px"}}>HOT</span>}
             {a.adjCount>0&&<span style={{fontSize:9,color:T.green,background:"rgba(52,211,153,.08)",borderRadius:4,padding:"2px 5px"}}>+adj</span>}
+            {a.hasSiblings&&<span style={{fontSize:8,color:T.cyan,background:"rgba(34,211,238,.08)",border:`1px solid rgba(34,211,238,.2)`,borderRadius:4,padding:"1px 5px",fontWeight:700}}>+{a.siblingCount} dealer{a.siblingCount>1?"s":""}</span>}
           </div>
           <div style={{fontSize:13,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
           <div style={{fontSize:10,color:T.t3,marginTop:2}}>{a.city}, {a.st} · {isAccelTier(a.gTier||a.tier)?<span style={{color:T.amber}}>{normalizeTier(a.gTier||a.tier)}</span>:"Private"}</div>
         </div>
         <div style={{textAlign:"right",flexShrink:0,marginLeft:12}}>
-          <div className="m" style={{fontSize:12,fontWeight:700,color:T.red}}>{a.gap>0?`-${$$(a.gap)}`:$$(a.gap)}</div>
-          <div className="m" style={{fontSize:10,color:T.t4}}>{pc(a.ret)} ret</div>
+          <div className="m" style={{fontSize:12,fontWeight:700,color:dispGap>0?T.red:T.green}}>{dispGap>0?`-${$$(dispGap)}`:$$(Math.abs(dispGap))}</div>
+          <div className="m" style={{fontSize:10,color:T.t4}}>{pc(dispRet)} ret{a.hasSiblings&&<span style={{color:T.cyan}}> all</span>}</div>
         </div>
         <Chev/>
       </div>
@@ -1016,7 +1057,9 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
         {a.reasons.slice(0,4).map((r,j)=><span key={j} style={{display:"inline-flex",alignItems:"center",gap:4,fontSize:9,color:T.t3,background:T.s2,borderRadius:4,padding:"2px 6px",border:`1px solid ${T.b2}`}}>{r.label}<span style={{color:T.amber,fontWeight:700,fontFamily:"'JetBrains Mono',monospace"}}>+{r.pts}</span></span>)}
       </div>
     </button>
-  );
+  );};
+
+
 
   const SectionHeader = ({label, color, count, pulse=false}) => (
     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,marginTop:4}}>
@@ -2014,6 +2057,76 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
           {myAdj.map(a=><div key={a.id} style={{fontSize:10,color:T.t3,display:"flex",justifyContent:"space-between",marginBottom:2}}><span>{a.desc||"Manual"}</span><span className="m" style={{color:T.green,fontWeight:600}}>+{$f(a.credited)}</span></div>)}
         </div>}
       </div>
+
+      {/* MULTI-DEALER COMBINED VIEW */}
+      {(()=>{
+        const sibs:any[] = acct.addrSiblings || [];
+        if(sibs.length === 0) return null;
+        const [expanded, setExpanded] = useState(false);
+        const combPY = acct.combinedPY ?? ((acct.pyQ?.["1"]||0) + sibs.reduce((s:number,x:any)=>s+(x.pyQ1||0),0));
+        const combCY = acct.combinedCY ?? ((acct.cyQ?.["1"]||0) + sibs.reduce((s:number,x:any)=>s+(x.cyQ1||0),0));
+        const combGap = combPY - combCY;
+        const combRet = combPY > 0 ? Math.round(combCY/combPY*100) : 0;
+        // Build dealer share rows — this account + siblings
+        const allAccts = [
+          {name: acct.name, dealer: acct.dealer||'Unknown', pyQ1: acct.pyQ?.["1"]||0, cyQ1: acct.cyQ?.["1"]||0, id: acct.id, isSelf: true},
+          ...sibs.map((s:any) => ({...s, isSelf: false}))
+        ].filter(a => (a.pyQ1||0) > 0 || (a.cyQ1||0) > 0)
+         .sort((a,b) => (b.pyQ1||0) - (a.pyQ1||0));
+        const isActuallyUp = combGap <= 0;
+        return <div className="anim" style={{animationDelay:"30ms",background:"rgba(34,211,238,.04)",border:`1px solid rgba(34,211,238,.15)`,borderRadius:16,padding:14,marginBottom:12}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+            <div style={{display:"flex",alignItems:"center",gap:6}}>
+              <span style={{fontSize:10,fontWeight:700,color:T.cyan,textTransform:"uppercase",letterSpacing:"1px"}}>All Distributors</span>
+              <span style={{fontSize:9,color:T.cyan,background:"rgba(34,211,238,.1)",borderRadius:4,padding:"1px 5px",border:"1px solid rgba(34,211,238,.2)"}}>{sibs.length+1} dealers</span>
+            </div>
+            <button onClick={()=>setExpanded(!expanded)} style={{background:"none",border:"none",color:T.cyan,cursor:"pointer",fontSize:10,fontWeight:600,fontFamily:"inherit"}}>{expanded?"Hide":"Breakdown"}</button>
+          </div>
+          {/* Combined totals — the TRUE number */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8,marginBottom:expanded?12:0}}>
+            <Stat l="PY" v={$$(combPY)} c={T.t2}/>
+            <Stat l="CY" v={$$(combCY)} c={T.blue}/>
+            <Stat l="True Gap" v={combGap<=0?`+${$$(Math.abs(combGap))}`:$$(combGap)} c={isActuallyUp?T.green:T.red}/>
+            <Stat l="Ret" v={combRet+"%"} c={combRet>30?T.green:combRet>15?T.amber:T.red}/>
+          </div>
+          {isActuallyUp&&<div style={{fontSize:10,color:T.green,marginBottom:expanded?10:0}}>✓ Account is net positive across all distributors</div>}
+          {/* Dealer breakdown — expandable */}
+          {expanded&&<div>
+            <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t4,marginBottom:8}}>Dealer Share</div>
+            {allAccts.map((a,i)=>{
+              const py = a.pyQ1||0; const cy = a.cyQ1||0;
+              const pyPct = combPY > 0 ? Math.round(py/combPY*100) : 0;
+              const cyPct = combCY > 0 ? Math.round(cy/combCY*100) : 0;
+              const pctShift = cyPct - pyPct;
+              const barW = Math.max(cyPct, pyPct);
+              return <div key={a.id} style={{marginBottom:10,padding:"8px 10px",borderRadius:8,background:a.isSelf?"rgba(79,142,247,.06)":T.s2,border:`1px solid ${a.isSelf?"rgba(79,142,247,.15)":T.b2}`}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                  <div style={{flex:1,minWidth:0}}>
+                    <span style={{fontSize:11,fontWeight:600,color:a.isSelf?T.blue:T.t1}}>{a.name}</span>
+                    {a.isSelf&&<span style={{fontSize:8,color:T.blue,marginLeft:5}}>← this account</span>}
+                    <div style={{fontSize:9,color:T.t4}}>{a.dealer}</div>
+                  </div>
+                  <div style={{textAlign:"right",flexShrink:0,marginLeft:8}}>
+                    <div style={{fontSize:10,fontWeight:600,fontFamily:"'DM Mono',monospace",color:T.blue}}>{$$(cy)}</div>
+                    <div style={{fontSize:9,color:T.t4,fontFamily:"'DM Mono',monospace"}}>{$$(py)} PY</div>
+                  </div>
+                </div>
+                {/* Share bar */}
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <div style={{flex:1,height:4,borderRadius:2,background:T.s3,overflow:"hidden"}}>
+                    <div style={{height:"100%",borderRadius:2,width:`${Math.min(cyPct,100)}%`,background:cyPct>=pyPct?`linear-gradient(90deg,${T.blue},${T.cyan})`:T.amber,transition:"width .4s ease"}}/>
+                  </div>
+                  <span style={{fontSize:9,color:T.t3,flexShrink:0,minWidth:50,textAlign:"right"}}>
+                    <span style={{color:T.t2,fontWeight:600}}>{cyPct}%</span>
+                    {pctShift !== 0 && <span style={{color:pctShift>0?T.green:T.red,marginLeft:3}}>{pctShift>0?"+":""}{pctShift}%</span>}
+                    {" PY "+pyPct+"%"}
+                  </span>
+                </div>
+              </div>;
+            })}
+          </div>}
+        </div>;
+      })()}
 
       {/* MOVE TO GROUP MODAL — outside account header card */}
       {showMoveModal&&<div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.7)",backdropFilter:"blur(8px)",display:"flex",flexDirection:"column",justifyContent:"flex-end"}} onClick={()=>{setShowMoveModal(false);setMoveSearch("");}}>
