@@ -4063,6 +4063,7 @@ function OutreachTab({scored}:{scored:any[]}) {
   const [researching, setResearching] = useState(false);
   const [researchProgress, setResearchProgress] = useState<{done:number,total:number,current:string}|null>(null);
   const [researchDone, setResearchDone] = useState<string[]>([]); // account ids researched this session
+  const [refreshCount, setRefreshCount] = useState(0); // incremented after research to force queue recompute
 
   useEffect(()=>{
     try { const t = localStorage.getItem("gmail_refresh_token"); if(t) setGmailToken(t); } catch {}
@@ -4135,6 +4136,7 @@ function OutreachTab({scored}:{scored:any[]}) {
     }
     setResearchDone(found);
     setResearchProgress({done:25, total:25, current:""});
+    setRefreshCount(c => c + 1); // force downAccounts + withEmail to recompute
     setResearching(false);
   }
 
@@ -4174,7 +4176,7 @@ function OutreachTab({scored}:{scored:any[]}) {
       if(acctQueue.length >= 50) break;
     }
     return acctQueue;
-  }, [scored, minGap, emailOnly]);
+  }, [scored, minGap, emailOnly, refreshCount]);
 
   const allDownCount = scored.filter(a=>(a.combinedGap??a.q1_gap??0)<0).length;
   const withEmail = useMemo(()=>{
@@ -4189,7 +4191,7 @@ function OutreachTab({scored}:{scored:any[]}) {
       seenEmails.add(email);
       return true;
     }).length;
-  }, [scored]);
+  }, [scored, refreshCount]);
 
   const $f = (n:number) => "$"+Math.abs(n).toLocaleString(undefined,{maximumFractionDigits:0});
 
