@@ -1016,7 +1016,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
         nearbyAccounts: nearbyAccounts.slice(0,8), // full objects for trip planner
         nearbyNames: nearbyAccounts.slice(0,3).map((b: any) => b.name),
         signals: [
-          ...a.signals,
+          ...(a.signals||[]),
           clusterCount >= 2 ? `${clusterCount} nearby accts` : null,
           !visitEligible && a.miles > 75 ? `${Math.round(a.miles)}mi — call instead` : null,
         ].filter(Boolean),
