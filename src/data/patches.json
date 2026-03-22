@@ -1,7 +1,7 @@
 {
   "_comment": "Manual data corrections. Applied on top of any CSV or preloaded data. Never overwritten by data rebuilds.",
   "_version": "1.0",
-  "_lastUpdated": "2026-03-23",
+  "_lastUpdated": "2026-03-22",
   "group_creates": [
     {
       "id": "Master-RDP-001",
@@ -19,20 +19,6 @@
         "Master-CM1994205",
         "Master-CM231113"
       ]
-    },
-    {
-      "id": "Master-CM175757",
-      "name": "ABRA DENTAL",
-      "class2": "DSO",
-      "tier": "Standard",
-      "childIds": [
-        "Master-CM491938",
-        "Master-CM988055",
-        "Master-CM705315",
-        "Master-CM830415",
-        "Master-CM9814079"
-      ],
-      "note": "All 4 CT locations acquired by Abra Dental NJ. Revenue ~$14.5K gross Q1 PY all via Schein. Benco child (Master-CM9814079) ~$492 FY \u2014 same Stamford address. Rich Foti was CT Schein rep, NJ rep took over post-acquisition. Dr. Helene Strazza (Norwalk + Danbury) only active buyer 2026."
     }
   ],
   "group_detaches": [
@@ -41,19 +27,19 @@
       "fromGroupId": "Master-CM048310",
       "newGroupId": "Master-CM300371-standalone",
       "newGroupName": "ASPEN DENTAL",
-      "reason": "Bad MDM parent assignment \u2014 Aspen Torrington incorrectly parented under Columbia Dental"
+      "reason": "Bad MDM parent assignment — Aspen Torrington incorrectly parented under Columbia Dental"
     }
   ],
   "name_overrides": [
     {
       "id": "Master-CM116929",
       "name": "WELLS STREET DENTISTRY",
-      "reason": "TRIS CARTA is wrong \u2014 Wells Street Dentistry, Westerly RI"
+      "reason": "TRIS CARTA is wrong — Wells Street Dentistry, Westerly RI"
     },
     {
       "id": "Master-CM17699391",
       "name": "FLANDERS DENTAL STUDIO",
-      "reason": "CENTER FOR DENTAL EXCELLENCE is old name \u2014 now Flanders Dental Studio (Resolute)"
+      "reason": "CENTER FOR DENTAL EXCELLENCE is old name — now Flanders Dental Studio (Resolute)"
     }
   ],
   "contact_overrides": [
@@ -62,14 +48,14 @@
       "contactName": "Brittany Burroughs",
       "email": "bburroughs@coastalctdental.com",
       "address": "112 Cross Rd, Waterford, CT 06385",
-      "note": "PM at Coastal Connecticut Dentistry \u2014 part of Resolute Dental Partners"
+      "note": "PM at Coastal Connecticut Dentistry — part of Resolute Dental Partners"
     },
     {
       "id": "Master-CM116929",
       "contactName": "Christine Lague",
       "email": "clague@westerlydentists.com",
       "address": "11 Wells Street, Westerly, RI",
-      "note": "PM at Wells Street Dentistry \u2014 part of Resolute Dental Partners"
+      "note": "PM at Wells Street Dentistry — part of Resolute Dental Partners"
     },
     {
       "id": "Master-CM413476",
@@ -94,26 +80,7 @@
       ],
       "website": "https://newenglanddentalllc.com",
       "note": "Auto-saved from Deep Research 3/22/2026"
-    },
-    {
-      "id": "Master-CM175757",
-      "contactName": "Dr. Helene Strazza",
-      "note": "Abra Dental Group \u2014 4 CT locations acquired by Abra Dental NJ. ALL revenue flows through Schein (~$14.5K gross Q1 PY). Schein CT rep was Rich Foti \u2014 NJ Schein rep took control post-acquisition. Dr. Helene Strazza (Norwalk + Danbury) is the only active buyer in 2026. Best entry point is direct relationship with Dr. Strazza. YoY down 88%.",
-      "dealer": "Schein",
-      "dealerRep": "NJ Schein rep (Rich Foti was CT rep pre-acquisition)"
     }
   ],
-  "dealer_overrides": [
-    {
-      "id": "Master-CM9814079",
-      "dealer": "Benco",
-      "groupId": "Master-CM175757",
-      "groupName": "ABRA DENTAL",
-      "name": "ALL ABOUT KIDS PEDIATRIC DENTISTRY",
-      "city": "Stamford",
-      "st": "CT",
-      "address": "127 Greyrock Pl, Stamford, CT",
-      "note": "Benco child account for Abra Dental Stamford location. ~$492 FY PY. Same address as Master-CM491938 (Schein). Add to group so Benco orders are visible if they resume."
-    }
-  ]
+  "dealer_overrides": []
 }
