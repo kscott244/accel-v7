@@ -3538,22 +3538,38 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
         {children.map((a:any,i:number)=>{
           const cy=a.cyQ?.["1"]||0, py=a.pyQ?.["1"]||0, gap=py-cy;
           const chip=PRI_CHIP[a.visitPriority]||PRI_CHIP["ON TRACK"];
+          const isDown=gap>0;
+          const locRet=py>0?Math.round(cy/py*100):0;
           return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
-            style={{animationDelay:`${i*20}ms`,width:"100%",textAlign:"left",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:"11px 13px",marginBottom:7,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+            style={{animationDelay:`${i*20}ms`,width:"100%",textAlign:"left",background:T.s1,
+              border:`1px solid ${isDown?"rgba(248,113,113,.2)":"rgba(52,211,153,.15)"}`,
+              borderRadius:12,padding:"11px 13px",marginBottom:7,cursor:"pointer"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,flex:1,minWidth:0}}>
                 <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
                 <span style={{flexShrink:0,fontSize:8,fontWeight:700,borderRadius:4,padding:"1px 5px",background:chip.bg,color:chip.color}}>{a.visitPriority}</span>
                 {a.dealerFlag&&<span style={{flexShrink:0,fontSize:8,fontWeight:700,color:T.amber,background:"rgba(251,191,36,.1)",borderRadius:4,padding:"1px 5px",border:"1px solid rgba(251,191,36,.25)"}}>⚠ verify</span>}
               </div>
-              <div style={{fontSize:10,color:T.t3}}>{a.city}, {a.st}</div>
-            </div>
-            <div style={{display:"flex",gap:6,flexShrink:0,marginLeft:10,alignItems:"center"}}>
-              <div style={{textAlign:"right"}}>
-                <div style={{fontSize:10,color:T.blue,fontWeight:600,fontFamily:"'DM Mono',monospace"}}>{$$(cy)}</div>
-                <div style={{fontSize:9,color:gap>0?T.red:T.green,fontFamily:"'DM Mono',monospace"}}>{gap>0?"-":"+"}${Math.abs(gap)>=1000?`${(Math.abs(gap)/1000).toFixed(1)}k`:`${Math.round(Math.abs(gap))}`}</div>
-              </div>
               <Chev/>
+            </div>
+            <div style={{fontSize:10,color:T.t3,marginBottom:7}}>{a.city}, {a.st}</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:5}}>
+              <div style={{background:T.s2,borderRadius:6,padding:"4px 6px"}}>
+                <div style={{fontSize:8,color:T.t4,marginBottom:1}}>PY</div>
+                <div style={{fontSize:10,fontWeight:700,color:T.t2,fontFamily:"monospace"}}>{$$(py)}</div>
+              </div>
+              <div style={{background:T.s2,borderRadius:6,padding:"4px 6px"}}>
+                <div style={{fontSize:8,color:T.t4,marginBottom:1}}>CY</div>
+                <div style={{fontSize:10,fontWeight:700,color:T.blue,fontFamily:"monospace"}}>{$$(cy)}</div>
+              </div>
+              <div style={{background:isDown?"rgba(248,113,113,.06)":"rgba(52,211,153,.06)",borderRadius:6,padding:"4px 6px"}}>
+                <div style={{fontSize:8,color:T.t4,marginBottom:1}}>Gap</div>
+                <div style={{fontSize:10,fontWeight:700,color:isDown?T.red:T.green,fontFamily:"monospace"}}>{isDown?"-":"+"}${Math.abs(gap)>=1000?`${(Math.abs(gap)/1000).toFixed(1)}k`:`${Math.round(Math.abs(gap))}`}</div>
+              </div>
+              <div style={{background:T.s2,borderRadius:6,padding:"4px 6px"}}>
+                <div style={{fontSize:8,color:T.t4,marginBottom:1}}>Ret</div>
+                <div style={{fontSize:10,fontWeight:700,color:locRet>=95?T.green:locRet>=70?T.amber:T.red,fontFamily:"monospace"}}>{locRet}%</div>
+              </div>
             </div>
           </button>;
         })}
@@ -3593,22 +3609,41 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
         {repGroupsList.map((g:any,i:number)=>{
           const gap=g.totalPY-g.totalCY;
           const ret=g.totalPY>0?Math.round(g.totalCY/g.totalPY*100):0;
+          const isDown=gap>0;
           const chip=PRI_CHIP[g.maxVisitPriority]||PRI_CHIP["ON TRACK"];
+          const borderColor=isDown?"rgba(248,113,113,.2)":"rgba(52,211,153,.15)";
           return <button key={g.gId} className="anim" onClick={()=>setSelGroup(g.gId)}
-            style={{animationDelay:`${i*20}ms`,width:"100%",textAlign:"left",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:"11px 13px",marginBottom:7,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
-                <div style={{fontSize:12,fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{g.gName}</div>
+            style={{animationDelay:`${i*20}ms`,width:"100%",textAlign:"left",background:T.s1,
+              border:`1px solid ${borderColor}`,
+              borderRadius:12,padding:"11px 13px",marginBottom:7,cursor:"pointer"}}>
+            {/* Row 1: Name + priority + chevron */}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,flex:1,minWidth:0}}>
+                <div style={{fontSize:13,fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{g.gName}</div>
                 <span style={{flexShrink:0,fontSize:8,fontWeight:700,borderRadius:4,padding:"1px 5px",background:chip.bg,color:chip.color}}>{g.maxVisitPriority}</span>
               </div>
-              <div style={{fontSize:10,color:T.t3}}>{g.children.length} loc{g.children.length!==1?"s":""}{g.children[0]?.city?` · ${g.children[0].city}`:""}</div>
-            </div>
-            <div style={{display:"flex",gap:6,flexShrink:0,marginLeft:10,alignItems:"center"}}>
-              <div style={{textAlign:"right"}}>
-                <div style={{fontSize:10,color:T.blue,fontWeight:600,fontFamily:"'DM Mono',monospace"}}>{$$(g.totalCY)}</div>
-                <div style={{fontSize:9,color:gap>0?T.red:T.green,fontFamily:"'DM Mono',monospace"}}>{gap>0?"-":"+"}${Math.abs(gap)>=1000?`${(Math.abs(gap)/1000).toFixed(1)}k`:`${Math.round(Math.abs(gap))}`}</div>
-              </div>
               <Chev/>
+            </div>
+            {/* Row 2: city + loc count */}
+            <div style={{fontSize:10,color:T.t3,marginBottom:8}}>{g.children.length} loc{g.children.length!==1?"s":""}{g.children[0]?.city?` · ${g.children[0].city}`:""}</div>
+            {/* Row 3: PY / CY / Gap / Ret pills */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6}}>
+              <div style={{background:T.s2,borderRadius:6,padding:"4px 6px"}}>
+                <div style={{fontSize:8,color:T.t4,marginBottom:1}}>PY</div>
+                <div style={{fontSize:11,fontWeight:700,color:T.t2,fontFamily:"monospace"}}>{$$(g.totalPY)}</div>
+              </div>
+              <div style={{background:T.s2,borderRadius:6,padding:"4px 6px"}}>
+                <div style={{fontSize:8,color:T.t4,marginBottom:1}}>CY</div>
+                <div style={{fontSize:11,fontWeight:700,color:T.blue,fontFamily:"monospace"}}>{$$(g.totalCY)}</div>
+              </div>
+              <div style={{background:isDown?"rgba(248,113,113,.06)":"rgba(52,211,153,.06)",borderRadius:6,padding:"4px 6px"}}>
+                <div style={{fontSize:8,color:T.t4,marginBottom:1}}>Gap</div>
+                <div style={{fontSize:11,fontWeight:700,color:isDown?T.red:T.green,fontFamily:"monospace"}}>{isDown?"-":"+"}${Math.abs(gap)>=1000?`${(Math.abs(gap)/1000).toFixed(1)}k`:`${Math.round(Math.abs(gap))}`}</div>
+              </div>
+              <div style={{background:T.s2,borderRadius:6,padding:"4px 6px"}}>
+                <div style={{fontSize:8,color:T.t4,marginBottom:1}}>Ret</div>
+                <div style={{fontSize:11,fontWeight:700,color:ret>=95?T.green:ret>=70?T.amber:T.red,fontFamily:"monospace"}}>{ret}%</div>
+              </div>
             </div>
           </button>;
         })}
