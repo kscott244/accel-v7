@@ -264,6 +264,7 @@ const IconMap     = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0
 const IconSliders = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>;
 const IconDealer  = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>;
 const IconMail    = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>;
+const IconAdmin   = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M12 14c-5 0-8 2-8 3v1h16v-1c0-1-3-3-8-3z"/><path d="M18 3l2 2-8 8-4-4 2-2 2 2z" strokeWidth="1.5"/></svg>;
 
 // ─── DISPLAY NAME FIXER ──────────────────────────────────────────
 const BAD_GROUP_NAMES = new Set(["STANDARD","Standard","HOUSE ACCOUNTS","House Accounts","SILVER","GOLD","PLATINUM","DIAMOND","TOP 100","Silver","Gold","Platinum","Diamond","Top 100",""]);
@@ -849,6 +850,7 @@ function AppInner() {
           {!view && tab==="est" && <EstTab pct={estPct} setPct={setEstPct} q1CY={q1CY} groups={groups||[]} goAcct={goSmartFn}/>}
           {!view && tab==="dealers" && <DealersTab scored={scored} groups={groups||[]} goAcct={goAcctFn} goGroup={goGroupFn}/>}
           {!view && tab==="outreach" && <OutreachTab scored={scored}/>}
+          {!view && tab==="admin" && <AdminTab groups={groups||[]} scored={scored}/>}
           {view?.type==="group" && <GroupDetail group={view.data} goMain={()=>setView(null)} goAcct={(a:any)=>setView({type:"acct",data:{...a,gName:fixGroupName(view.data),gId:view.data.id,gTier:view.data.tier},from:view.data})}/>}
           {view?.type==="acct" && <AcctDetail acct={view.data} goBack={()=>view?.from?setView({type:"group",data:view.from}):setView(null)} adjs={adjs} setAdjs={setAdjs} groups={groups||[]} goGroup={goGroupFn}/>}
         </>;
@@ -857,7 +859,7 @@ function AppInner() {
       {/* NAV BAR */}
       <nav style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:960,zIndex:50,borderTop:`1px solid ${T.b1}`,background:"rgba(10,10,15,.92)",backdropFilter:"blur(32px)"}}>
         <div style={{display:"flex",height:56,alignItems:"center",justifyContent:"space-around",padding:"0 4px"}}>
-          {[{k:"today",l:"Today",I:IconBolt},{k:"groups",l:"Groups",I:IconGroup},{k:"map",l:"Route",I:IconMap},{k:"calc",l:"Dash",I:IconChart},{k:"est",l:"Close",I:IconSliders},{k:"dealers",l:"Dealers",I:IconDealer},{k:"outreach",l:"Outreach",I:IconMail}].map(t=>(
+          {[{k:"today",l:"Today",I:IconBolt},{k:"groups",l:"Groups",I:IconGroup},{k:"map",l:"Route",I:IconMap},{k:"calc",l:"Dash",I:IconChart},{k:"est",l:"Close",I:IconSliders},{k:"dealers",l:"Dealers",I:IconDealer},{k:"outreach",l:"Outreach",I:IconMail},{k:"admin",l:"Admin",I:IconAdmin}].map(t=>(
             <button key={t.k} onClick={()=>{setTab(t.k);setView(null)}} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 8px",cursor:"pointer",color:tab===t.k&&!view?T.blue:T.t4}}>
               <t.I c={tab===t.k&&!view?T.blue:T.t4}/>
               <span style={{fontSize:9,fontWeight:600,letterSpacing:".5px"}}>{t.l}</span>
@@ -4471,5 +4473,376 @@ function OutreachTab({scored}:{scored:any[]}) {
 
     {scored.length===0&&<div style={{textAlign:"center",padding:"40px 0",color:T.t4,fontSize:12}}>Upload a CSV to get started.</div>}
     {scored.length>0&&downAccounts.length===0&&<div style={{textAlign:"center",padding:"40px 0",color:T.t4,fontSize:12}}>No down accounts match filters. Try lowering the minimum gap.</div>}
+  </div>;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// ADMIN TAB — Edit patches.json directly from the app
+// All changes commit to GitHub automatically. No data lost on CSV reload.
+// ─────────────────────────────────────────────────────────────────
+function AdminTab({groups, scored}:{groups:any[], scored:any[]}) {
+  const [section, setSection] = useState<string>("groups"); // groups | detach | names | contacts
+  const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState<{msg:string,ok:boolean}|null>(null);
+  const [patches, setPatches] = useState<any>(PATCHES);
+
+  // Search
+  const [search, setSearch] = useState("");
+
+  // Create Group form
+  const [newGroupName, setNewGroupName] = useState("");
+  const [newGroupClass, setNewGroupClass] = useState("Emerging DSO");
+  const [childIdInput, setChildIdInput] = useState("");
+  const [childIds, setChildIds] = useState<string[]>([]);
+  const [editingGroup, setEditingGroup] = useState<any>(null);
+
+  // Detach form
+  const [detachSearch, setDetachSearch] = useState("");
+  const [detachAccount, setDetachAccount] = useState<any>(null);
+  const [detachNewName, setDetachNewName] = useState("");
+
+  // Name override form
+  const [nameSearch, setNameSearch] = useState("");
+  const [nameAccount, setNameAccount] = useState<any>(null);
+  const [nameNewValue, setNameNewValue] = useState("");
+
+  // Contact form
+  const [contactSearch, setContactSearch] = useState("");
+  const [contactAccount, setContactAccount] = useState<any>(null);
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [contactNote, setContactNote] = useState("");
+
+  const showToast = (msg:string, ok=true) => {
+    setToast({msg,ok});
+    setTimeout(()=>setToast(null), 3500);
+  };
+
+  // Search helper — find accounts by name/ID
+  const searchAccounts = (q:string) => {
+    if(!q || q.length < 2) return [];
+    const ql = q.toLowerCase();
+    return scored.filter(a =>
+      a.name?.toLowerCase().includes(ql) ||
+      a.id?.toLowerCase().includes(ql) ||
+      a.city?.toLowerCase().includes(ql)
+    ).slice(0,8);
+  };
+
+  // Search groups
+  const searchGroups = (q:string) => {
+    if(!q || q.length < 2) return [];
+    const ql = q.toLowerCase();
+    return groups.filter(g =>
+      (g.name||'').toLowerCase().includes(ql) ||
+      g.id?.toLowerCase().includes(ql)
+    ).slice(0,6);
+  };
+
+  async function savePatch(action:string, payload:any) {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/save-patch", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({action, payload})
+      });
+      const data = await res.json();
+      if(data.success) {
+        setPatches(data.patches);
+        showToast(`✅ Saved — commit ${data.commit}`);
+        // Reset forms
+        setNewGroupName(""); setChildIds([]); setChildIdInput(""); setEditingGroup(null);
+        setDetachAccount(null); setDetachSearch(""); setDetachNewName("");
+        setNameAccount(null); setNameSearch(""); setNameNewValue("");
+        setContactAccount(null); setContactSearch(""); setContactName(""); setContactEmail(""); setContactPhone(""); setContactNote("");
+      } else {
+        showToast(`❌ ${data.error}`, false);
+      }
+    } catch(e:any) {
+      showToast(`❌ ${e.message}`, false);
+    }
+    setSaving(false);
+  }
+
+  const sectionBtn = (k:string, label:string) => (
+    <button onClick={()=>setSection(k)} style={{
+      padding:"7px 14px", borderRadius:8, border:"none", fontFamily:"inherit",
+      background:section===k?"rgba(79,142,247,.2)":"transparent",
+      color:section===k?T.blue:T.t3, fontSize:11, fontWeight:700, cursor:"pointer"
+    }}>{label}</button>
+  );
+
+  return <div style={{padding:"16px 12px 80px",maxWidth:680,margin:"0 auto"}}>
+    {/* Header */}
+    <div style={{marginBottom:16}}>
+      <div style={{fontSize:18,fontWeight:700,color:T.t1,marginBottom:4}}>Data Admin</div>
+      <div style={{fontSize:12,color:T.t3}}>Fix groupings, names, and contacts — changes save to GitHub automatically and survive any CSV upload</div>
+    </div>
+
+    {/* Toast */}
+    {toast&&<div style={{background:toast.ok?"rgba(52,211,153,.12)":"rgba(248,113,113,.12)",border:`1px solid ${toast.ok?"rgba(52,211,153,.3)":"rgba(248,113,113,.3)"}`,borderRadius:10,padding:"10px 14px",marginBottom:12,fontSize:12,color:toast.ok?T.green:T.red}}>
+      {toast.msg}
+    </div>}
+
+    {/* Section tabs */}
+    <div style={{display:"flex",gap:4,marginBottom:16,background:T.s1,borderRadius:10,padding:4}}>
+      {sectionBtn("groups","📁 Groups")}
+      {sectionBtn("detach","✂️ Detach")}
+      {sectionBtn("names","✏️ Names")}
+      {sectionBtn("contacts","📇 Contacts")}
+    </div>
+
+    {/* ── GROUPS SECTION ── */}
+    {section==="groups"&&<div>
+      {/* Existing patch groups */}
+      {(patches.group_creates||[]).length>0&&<div style={{marginBottom:16}}>
+        <div style={{fontSize:11,fontWeight:700,color:T.t3,textTransform:"uppercase",letterSpacing:.5,marginBottom:8}}>Existing Custom Groups</div>
+        {(patches.group_creates||[]).map((g:any)=>(
+          <div key={g.id} style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:10,padding:12,marginBottom:8}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+              <div style={{fontSize:13,fontWeight:700,color:T.t1}}>{g.name}</div>
+              <div style={{display:"flex",gap:6}}>
+                <button onClick={()=>{setEditingGroup(g);setNewGroupName(g.name);setNewGroupClass(g.class2||"Emerging DSO");setChildIds(g.childIds||[]);}} style={{fontSize:10,color:T.blue,background:"none",border:`1px solid ${T.blue}`,borderRadius:6,padding:"3px 8px",cursor:"pointer",fontFamily:"inherit"}}>Edit</button>
+                <button onClick={()=>savePatch("delete_group",{id:g.id})} disabled={saving} style={{fontSize:10,color:T.red,background:"none",border:`1px solid ${T.red}`,borderRadius:6,padding:"3px 8px",cursor:"pointer",fontFamily:"inherit"}}>Delete</button>
+              </div>
+            </div>
+            <div style={{fontSize:10,color:T.t4}}>{g.class2} · {(g.childIds||[]).length} locations</div>
+            {g.note&&<div style={{fontSize:10,color:T.t3,marginTop:4,fontStyle:"italic"}}>{g.note}</div>}
+          </div>
+        ))}
+      </div>}
+
+      {/* Create / Edit group form */}
+      <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:14}}>
+        <div style={{fontSize:12,fontWeight:700,color:T.t2,marginBottom:12}}>{editingGroup?"✏️ Edit Group":"➕ Create New Group"}</div>
+        
+        <div style={{marginBottom:10}}>
+          <div style={{fontSize:10,color:T.t3,marginBottom:4}}>Group Name</div>
+          <input value={newGroupName} onChange={e=>setNewGroupName(e.target.value)} placeholder="e.g. Resolute Dental Partners"
+            style={{width:"100%",padding:"9px 12px",borderRadius:8,border:`1px solid ${T.b1}`,background:T.bg,color:T.t1,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
+        </div>
+
+        <div style={{marginBottom:10}}>
+          <div style={{fontSize:10,color:T.t3,marginBottom:4}}>Type</div>
+          <select value={newGroupClass} onChange={e=>setNewGroupClass(e.target.value)}
+            style={{width:"100%",padding:"9px 12px",borderRadius:8,border:`1px solid ${T.b1}`,background:T.bg,color:T.t1,fontSize:12,fontFamily:"inherit"}}>
+            <option>Emerging DSO</option>
+            <option>DSO</option>
+            <option>Private Practice</option>
+            <option>Academic</option>
+          </select>
+        </div>
+
+        <div style={{marginBottom:10}}>
+          <div style={{fontSize:10,color:T.t3,marginBottom:4}}>Child Account IDs (paste Master-CM IDs or search below)</div>
+          <div style={{display:"flex",gap:6,marginBottom:6}}>
+            <input value={childIdInput} onChange={e=>setChildIdInput(e.target.value)}
+              placeholder="Master-CM123456 or search name..."
+              style={{flex:1,padding:"8px 10px",borderRadius:8,border:`1px solid ${T.b1}`,background:T.bg,color:T.t1,fontSize:11,fontFamily:"inherit"}}/>
+            <button onClick={()=>{
+              const trimmed = childIdInput.trim();
+              if(trimmed && !childIds.includes(trimmed)) setChildIds([...childIds, trimmed]);
+              setChildIdInput("");
+            }} style={{padding:"8px 12px",borderRadius:8,border:"none",background:T.blue,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>Add</button>
+          </div>
+          {/* Search accounts to add */}
+          {childIdInput.length>=2&&searchAccounts(childIdInput).map(a=>(
+            <button key={a.id} onClick={()=>{if(!childIds.includes(a.id))setChildIds([...childIds,a.id]);setChildIdInput("");}}
+              style={{display:"block",width:"100%",textAlign:"left",padding:"6px 10px",borderRadius:6,border:`1px solid ${T.b1}`,background:T.s2,color:T.t2,fontSize:10,cursor:"pointer",fontFamily:"inherit",marginBottom:3}}>
+              {a.name} · {a.city} · {a.id}
+            </button>
+          ))}
+          {/* Current child list */}
+          {childIds.length>0&&<div style={{marginTop:6}}>
+            {childIds.map(id=>{
+              const acct = scored.find(a=>a.id===id);
+              return <div key={id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 8px",background:T.s2,borderRadius:6,marginBottom:3}}>
+                <span style={{fontSize:10,color:T.t2}}>{acct?`${acct.name} · ${acct.city}`:id}</span>
+                <button onClick={()=>setChildIds(childIds.filter(x=>x!==id))} style={{background:"none",border:"none",color:T.red,cursor:"pointer",fontSize:12,padding:0}}>✕</button>
+              </div>;
+            })}
+          </div>}
+        </div>
+
+        <button onClick={()=>{
+          if(!newGroupName.trim()||childIds.length===0){showToast("❌ Need a name and at least one account",false);return;}
+          const id = editingGroup?.id || `Master-CUSTOM-${Date.now()}`;
+          savePatch("create_group",{id,name:newGroupName.trim(),class2:newGroupClass,childIds,tier:"Standard"});
+        }} disabled={saving||!newGroupName.trim()||childIds.length===0}
+          style={{width:"100%",padding:"11px 0",borderRadius:10,border:"none",background:(!newGroupName.trim()||childIds.length===0)?T.s2:T.blue,color:"#fff",fontSize:13,fontWeight:700,cursor:(!newGroupName.trim()||childIds.length===0)?"not-allowed":"pointer",fontFamily:"inherit"}}>
+          {saving?"Saving...":editingGroup?"Update Group":"Create Group"}
+        </button>
+        {editingGroup&&<button onClick={()=>{setEditingGroup(null);setNewGroupName("");setChildIds([]);}} style={{width:"100%",marginTop:6,padding:"9px 0",borderRadius:10,border:`1px solid ${T.b1}`,background:"transparent",color:T.t3,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>Cancel Edit</button>}
+      </div>
+    </div>}
+
+    {/* ── DETACH SECTION ── */}
+    {section==="detach"&&<div>
+      {(patches.group_detaches||[]).length>0&&<div style={{marginBottom:16}}>
+        <div style={{fontSize:11,fontWeight:700,color:T.t3,textTransform:"uppercase",letterSpacing:.5,marginBottom:8}}>Current Detachments</div>
+        {(patches.group_detaches||[]).map((d:any)=>(
+          <div key={d.childId} style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:10,padding:12,marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div>
+              <div style={{fontSize:12,fontWeight:700,color:T.t1}}>{d.newGroupName}</div>
+              <div style={{fontSize:10,color:T.t4}}>Detached from {d.fromGroupId} · {d.reason}</div>
+            </div>
+            <button onClick={()=>savePatch("remove_detach",{childId:d.childId})} disabled={saving} style={{fontSize:10,color:T.red,background:"none",border:`1px solid ${T.red}`,borderRadius:6,padding:"3px 8px",cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>Remove</button>
+          </div>
+        ))}
+      </div>}
+
+      <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:14}}>
+        <div style={{fontSize:12,fontWeight:700,color:T.t2,marginBottom:4}}>✂️ Detach Account from Wrong Group</div>
+        <div style={{fontSize:11,color:T.t4,marginBottom:12}}>Use when Kerr's MDM incorrectly parents an account under the wrong group</div>
+
+        <div style={{marginBottom:10}}>
+          <div style={{fontSize:10,color:T.t3,marginBottom:4}}>Search Account to Detach</div>
+          <input value={detachSearch} onChange={e=>{setDetachSearch(e.target.value);setDetachAccount(null);}}
+            placeholder="Type account name..."
+            style={{width:"100%",padding:"9px 12px",borderRadius:8,border:`1px solid ${T.b1}`,background:T.bg,color:T.t1,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
+          {detachSearch.length>=2&&!detachAccount&&searchAccounts(detachSearch).map(a=>(
+            <button key={a.id} onClick={()=>{setDetachAccount(a);setDetachSearch(a.name);setDetachNewName(a.name);}}
+              style={{display:"block",width:"100%",textAlign:"left",padding:"7px 10px",borderRadius:6,border:`1px solid ${T.b1}`,background:T.s2,color:T.t2,fontSize:11,cursor:"pointer",fontFamily:"inherit",marginTop:3}}>
+              {a.name} · {a.city} · <span style={{color:T.t4}}>{a.gName||"no group"}</span>
+            </button>
+          ))}
+        </div>
+
+        {detachAccount&&<div>
+          <div style={{background:T.s2,borderRadius:8,padding:10,marginBottom:10}}>
+            <div style={{fontSize:11,fontWeight:700,color:T.amber}}>Detaching: {detachAccount.name}</div>
+            <div style={{fontSize:10,color:T.t4}}>From group: {detachAccount.gName||"unknown"} ({detachAccount.gId})</div>
+          </div>
+          <div style={{marginBottom:10}}>
+            <div style={{fontSize:10,color:T.t3,marginBottom:4}}>Standalone Group Name</div>
+            <input value={detachNewName} onChange={e=>setDetachNewName(e.target.value)}
+              style={{width:"100%",padding:"9px 12px",borderRadius:8,border:`1px solid ${T.b1}`,background:T.bg,color:T.t1,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
+          </div>
+          <button onClick={()=>savePatch("detach_account",{
+            childId: detachAccount.id,
+            fromGroupId: detachAccount.gId,
+            newGroupId: `${detachAccount.id}-standalone`,
+            newGroupName: detachNewName.trim()||detachAccount.name,
+            reason: "Manual correction via Admin tab"
+          })} disabled={saving||!detachNewName.trim()}
+            style={{width:"100%",padding:"11px 0",borderRadius:10,border:"none",background:T.amber,color:"#000",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+            {saving?"Saving...":"Detach Account"}
+          </button>
+        </div>}
+      </div>
+    </div>}
+
+    {/* ── NAME OVERRIDES SECTION ── */}
+    {section==="names"&&<div>
+      {(patches.name_overrides||[]).length>0&&<div style={{marginBottom:16}}>
+        <div style={{fontSize:11,fontWeight:700,color:T.t3,textTransform:"uppercase",letterSpacing:.5,marginBottom:8}}>Current Name Overrides</div>
+        {(patches.name_overrides||[]).map((n:any)=>(
+          <div key={n.id} style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:10,padding:12,marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div>
+              <div style={{fontSize:12,fontWeight:700,color:T.t1}}>{n.name}</div>
+              <div style={{fontSize:10,color:T.t4}}>{n.id} · {n.reason}</div>
+            </div>
+            <button onClick={()=>savePatch("remove_name_override",{id:n.id})} disabled={saving} style={{fontSize:10,color:T.red,background:"none",border:`1px solid ${T.red}`,borderRadius:6,padding:"3px 8px",cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>Remove</button>
+          </div>
+        ))}
+      </div>}
+
+      <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:14}}>
+        <div style={{fontSize:12,fontWeight:700,color:T.t2,marginBottom:4}}>✏️ Fix Account Name</div>
+        <div style={{fontSize:11,color:T.t4,marginBottom:12}}>Override a bad MDM name with the correct practice name</div>
+
+        <div style={{marginBottom:10}}>
+          <input value={nameSearch} onChange={e=>{setNameSearch(e.target.value);setNameAccount(null);}}
+            placeholder="Search account to rename..."
+            style={{width:"100%",padding:"9px 12px",borderRadius:8,border:`1px solid ${T.b1}`,background:T.bg,color:T.t1,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
+          {nameSearch.length>=2&&!nameAccount&&searchAccounts(nameSearch).map(a=>(
+            <button key={a.id} onClick={()=>{setNameAccount(a);setNameSearch(a.name);setNameNewValue(a.name);}}
+              style={{display:"block",width:"100%",textAlign:"left",padding:"7px 10px",borderRadius:6,border:`1px solid ${T.b1}`,background:T.s2,color:T.t2,fontSize:11,cursor:"pointer",fontFamily:"inherit",marginTop:3}}>
+              {a.name} · {a.city} · {a.id}
+            </button>
+          ))}
+        </div>
+
+        {nameAccount&&<div>
+          <div style={{marginBottom:10}}>
+            <div style={{fontSize:10,color:T.t3,marginBottom:4}}>New Name</div>
+            <input value={nameNewValue} onChange={e=>setNameNewValue(e.target.value)}
+              style={{width:"100%",padding:"9px 12px",borderRadius:8,border:`1px solid ${T.b1}`,background:T.bg,color:T.t1,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
+          </div>
+          <button onClick={()=>savePatch("name_override",{
+            id: nameAccount.id,
+            name: nameNewValue.trim(),
+            reason: "Manual correction via Admin tab"
+          })} disabled={saving||!nameNewValue.trim()}
+            style={{width:"100%",padding:"11px 0",borderRadius:10,border:"none",background:T.blue,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+            {saving?"Saving...":"Save Name Override"}
+          </button>
+        </div>}
+      </div>
+    </div>}
+
+    {/* ── CONTACTS SECTION ── */}
+    {section==="contacts"&&<div>
+      {(patches.contact_overrides||[]).length>0&&<div style={{marginBottom:16}}>
+        <div style={{fontSize:11,fontWeight:700,color:T.t3,textTransform:"uppercase",letterSpacing:.5,marginBottom:8}}>Saved Contacts</div>
+        {(patches.contact_overrides||[]).map((c:any)=>(
+          <div key={c.id} style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:10,padding:12,marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+            <div>
+              <div style={{fontSize:12,fontWeight:700,color:T.t1}}>{c.contactName}</div>
+              <div style={{fontSize:10,color:T.cyan}}>{c.email}</div>
+              <div style={{fontSize:10,color:T.t4}}>{c.id}</div>
+            </div>
+            <button onClick={()=>savePatch("remove_contact",{id:c.id})} disabled={saving} style={{fontSize:10,color:T.red,background:"none",border:`1px solid ${T.red}`,borderRadius:6,padding:"3px 8px",cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>Remove</button>
+          </div>
+        ))}
+      </div>}
+
+      <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:14}}>
+        <div style={{fontSize:12,fontWeight:700,color:T.t2,marginBottom:4}}>📇 Add Contact Info</div>
+        <div style={{fontSize:11,color:T.t4,marginBottom:12}}>Save a PM, office manager, or doctor email to an account</div>
+
+        <div style={{marginBottom:10}}>
+          <input value={contactSearch} onChange={e=>{setContactSearch(e.target.value);setContactAccount(null);}}
+            placeholder="Search account..."
+            style={{width:"100%",padding:"9px 12px",borderRadius:8,border:`1px solid ${T.b1}`,background:T.bg,color:T.t1,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
+          {contactSearch.length>=2&&!contactAccount&&searchAccounts(contactSearch).map(a=>(
+            <button key={a.id} onClick={()=>{setContactAccount(a);setContactSearch(a.name);}}
+              style={{display:"block",width:"100%",textAlign:"left",padding:"7px 10px",borderRadius:6,border:`1px solid ${T.b1}`,background:T.s2,color:T.t2,fontSize:11,cursor:"pointer",fontFamily:"inherit",marginTop:3}}>
+              {a.name} · {a.city} · {a.id}
+            </button>
+          ))}
+        </div>
+
+        {contactAccount&&<div>
+          <div style={{background:T.s2,borderRadius:8,padding:8,marginBottom:10}}>
+            <div style={{fontSize:11,fontWeight:700,color:T.blue}}>{contactAccount.name} · {contactAccount.city}</div>
+          </div>
+          {[
+            {label:"Contact Name", val:contactName, set:setContactName, placeholder:"Dr. Smith or Brittany Burroughs"},
+            {label:"Email", val:contactEmail, set:setContactEmail, placeholder:"email@practice.com"},
+            {label:"Phone", val:contactPhone, set:setContactPhone, placeholder:"860-555-1234"},
+            {label:"Note", val:contactNote, set:setContactNote, placeholder:"PM, office manager, etc."},
+          ].map(f=>(
+            <div key={f.label} style={{marginBottom:8}}>
+              <div style={{fontSize:10,color:T.t3,marginBottom:3}}>{f.label}</div>
+              <input value={f.val} onChange={e=>f.set(e.target.value)} placeholder={f.placeholder}
+                style={{width:"100%",padding:"8px 10px",borderRadius:8,border:`1px solid ${T.b1}`,background:T.bg,color:T.t1,fontSize:11,fontFamily:"inherit",boxSizing:"border-box"}}/>
+            </div>
+          ))}
+          <button onClick={()=>savePatch("contact_override",{
+            id: contactAccount.id,
+            contactName: contactName.trim()||undefined,
+            email: contactEmail.trim()||undefined,
+            phone: contactPhone.trim()||undefined,
+            note: contactNote.trim()||undefined,
+          })} disabled={saving||(!contactName.trim()&&!contactEmail.trim())}
+            style={{width:"100%",padding:"11px 0",borderRadius:10,border:"none",background:T.blue,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+            {saving?"Saving...":"Save Contact"}
+          </button>
+        </div>}
+      </div>
+    </div>}
   </div>;
 }
