@@ -108,24 +108,34 @@ function applyPatches(grps: any[]): any[] {
     // Remove this group if it already exists (we'll rebuild it with full child data)
     result = result.filter(g => g.id !== create.id);
 
-    // Pull matching children from ALL groups (including their full standalone records)
-    // Prefer the richest version of each child (has products, has city, etc.)
-    const seenChildIds = new Set<string>();
+    // Pull matching children from ALL groups, flattening any nested group-in-group structures.
+    // Some preloaded groups wrap accounts in an extra shell {id, children:[actual_account]}.
+    // Multi-dealer locations each have their own child ID — keep them all as separate flat entries.
     result = result.map(g => {
       const kept: any[] = [];
       (g.children||[]).forEach((c:any) => {
         if (childIdSet.has(c.id)) {
-          const existing = children.find(x => x.id === c.id);
-          if (!existing) {
-            // First time seeing this child — take it
-            children.push({ ...c, gId: create.id, gName: create.name });
-            seenChildIds.add(c.id);
-          } else if ((c.products||[]).length > (existing.products||[]).length) {
-            // Found a richer version (has more products) — upgrade
-            const idx = children.findIndex(x => x.id === c.id);
-            children[idx] = { ...c, gId: create.id, gName: create.name };
+          // If this child is itself a mini-group (has a children array), flatten down to actual accounts
+          if (c.children && c.children.length > 0) {
+            c.children.forEach((inner:any) => {
+              const existing = children.find(x => x.id === inner.id);
+              if (!existing || (inner.products||[]).length > (existing.products||[]).length) {
+                const idx2 = children.findIndex(x => x.id === inner.id);
+                const flat = { ...inner, gId: create.id, gName: create.name };
+                if (idx2 >= 0) children[idx2] = flat; else children.push(flat);
+              }
+            });
+          } else {
+            // Flat account record — prefer richest version (most products)
+            const existing = children.find(x => x.id === c.id);
+            if (!existing) {
+              children.push({ ...c, gId: create.id, gName: create.name });
+            } else if ((c.products||[]).length > (existing.products||[]).length || (c.city && !existing.city)) {
+              const idx2 = children.findIndex(x => x.id === c.id);
+              children[idx2] = { ...c, gId: create.id, gName: create.name };
+            }
           }
-          // Either way remove from current group
+          // Remove from source group either way
         } else {
           kept.push(c);
         }
