@@ -19,7 +19,7 @@ try { PARENT_NAMES = require("@/data/parent-names.json"); } catch(e) {}
 const T = {
   bg: "#0a0a0f", s1: "#12121a", s2: "#1a1a25", s3: "#222230", s4: "#2a2a3a",
   b1: "rgba(255,255,255,.06)", b2: "rgba(255,255,255,.08)", b3: "rgba(255,255,255,.04)",
-  t1: "#f0f0f5", t2: "#c8c8d0", t3: "#8888a0", t4: "#555570",
+  t1: "#f0f0f5", t2: "#c8c8d0", t3: "#a0a0b8", t4: "#7878a0",
   blue: "#4f8ef7", cyan: "#22d3ee", green: "#34d399", amber: "#fbbf24",
   red: "#f87171", purple: "#a78bfa", orange: "#fb923c",
 };
@@ -151,8 +151,8 @@ const fixGroupName = (g) => {
 };
 
 // ─── SMALL COMPONENTS ────────────────────────────────────────────
-const Pill = ({l,v,c}) => <div><span style={{fontSize:8,textTransform:"uppercase",color:T.t4}}>{l} </span><span className="m" style={{fontSize:12,fontWeight:700,color:c}}>{v}</span></div>;
-const Stat = ({l,v,c}) => <div style={{background:T.s2,borderRadius:8,padding:"8px 10px",textAlign:"center"}}><div style={{fontSize:8,textTransform:"uppercase",color:T.t4,marginBottom:2}}>{l}</div><div className="m" style={{fontSize:14,fontWeight:700,color:c}}>{v}</div></div>;
+const Pill = ({l,v,c}) => <div><span style={{fontSize:9,textTransform:"uppercase",color:T.t3}}>{l} </span><span className="m" style={{fontSize:12,fontWeight:700,color:c}}>{v}</span></div>;
+const Stat = ({l,v,c}) => <div style={{background:T.s2,borderRadius:8,padding:"8px 10px",textAlign:"center"}}><div style={{fontSize:9,textTransform:"uppercase",color:T.t3,marginBottom:2}}>{l}</div><div className="m" style={{fontSize:14,fontWeight:700,color:c}}>{v}</div></div>;
 const Bar = ({pct, color}) => <div style={{width:"100%",height:6,borderRadius:3,background:T.s3,overflow:"hidden"}}><div className="bar-g" style={{height:"100%",borderRadius:3,width:`${Math.min(Math.max(pct,0),100)}%`,background:color||`linear-gradient(90deg,${T.blue},${T.cyan})`}}/></div>;
 
 // ─── SCORING ENGINE ──────────────────────────────────────────────
@@ -1231,7 +1231,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
         <Chev/>
       </div>
       <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
-        {a.reasons.slice(0,4).map((r,j)=><span key={j} style={{display:"inline-flex",alignItems:"center",gap:4,fontSize:9,color:T.t3,background:T.s2,borderRadius:4,padding:"2px 6px",border:`1px solid ${T.b2}`}}>{r.label}<span style={{color:T.amber,fontWeight:700,fontFamily:"'JetBrains Mono',monospace"}}>+{r.pts}</span></span>)}
+        {a.reasons.slice(0,4).map((r,j)=><span key={j} style={{display:"inline-flex",alignItems:"center",gap:4,fontSize:9,color:T.t2,background:"rgba(255,255,255,.06)",borderRadius:4,padding:"2px 7px",border:"1px solid rgba(255,255,255,.14)",fontWeight:500}}>{r.label}<span style={{color:T.amber,fontWeight:700,fontFamily:"'JetBrains Mono',monospace"}}>+{r.pts}</span></span>)}
       </div>
     </button>
   );};
@@ -1379,7 +1379,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
             {label:"Best Case",val:q1CY+overdrive.aggressive,color:T.green},
           ].map(s=>(
             <div key={s.label} style={{borderRadius:8,background:T.s2,padding:"8px 6px",textAlign:"center"}}>
-              <div style={{fontSize:8,color:T.t4,marginBottom:3}}>{s.label}</div>
+              <div style={{fontSize:9,color:T.t3,marginBottom:3}}>{s.label}</div>
               <div className="m" style={{fontSize:11,fontWeight:800,color:s.val>=Q1_TARGET?T.green:s.color}}>{$$(s.val)}</div>
               <div style={{fontSize:8,color:s.val>=Q1_TARGET?T.green:T.t4,marginTop:1}}>{s.val>=Q1_TARGET?"✓ hits target":`${$$(Q1_TARGET-s.val)} short`}</div>
             </div>
@@ -1408,7 +1408,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
               </div>}
               {a.signals?.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:3,marginTop:4}}>
                 {a.signals.slice(0,4).map((s:string,si:number)=>(
-                  <span key={si} style={{fontSize:8,color:T.t4,background:T.s2,borderRadius:4,padding:"1px 5px",border:`1px solid ${T.b2}`}}>{s}</span>
+                  <span key={si} style={{fontSize:9,color:T.t2,background:"rgba(255,255,255,.06)",borderRadius:4,padding:"2px 7px",border:"1px solid rgba(255,255,255,.14)",fontWeight:500}}>{s}</span>
                 ))}
               </div>}
               </div>
@@ -1416,7 +1416,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
                 {done
                   ? <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:1}}>
                       <span style={{fontSize:10,fontWeight:700,color:done.outcome==="lost"?T.red:T.green}}>{done.outcome==="lost"?"✗ Lost":`${$f(done.amt)} ✓`}</span>
-                      {done.note&&<span style={{fontSize:8,color:T.t4,maxWidth:90,textAlign:"right",lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{done.note}</span>}
+                      {done.note&&<span style={{fontSize:9,color:T.t3,maxWidth:90,textAlign:"right",lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{done.note}</span>}
                     </div>
                   : <div style={{display:"flex",gap:4}}>
                       <button onClick={e=>promptOutcome(e,a.id,"won",a.ask)} style={{background:"rgba(52,211,153,.12)",border:"1px solid rgba(52,211,153,.25)",borderRadius:6,padding:"3px 8px",fontSize:9,fontWeight:700,color:T.green,cursor:"pointer",fontFamily:"inherit"}}>✓ Win</button>
@@ -1456,7 +1456,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
               </div>
               {a.signals?.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:3,marginTop:4}}>
                 {a.signals.slice(0,4).map((s:string,si:number)=>(
-                  <span key={si} style={{fontSize:8,color:T.t4,background:T.s2,borderRadius:4,padding:"1px 5px",border:`1px solid ${T.b2}`}}>{s}</span>
+                  <span key={si} style={{fontSize:9,color:T.t2,background:"rgba(255,255,255,.06)",borderRadius:4,padding:"2px 7px",border:"1px solid rgba(255,255,255,.14)",fontWeight:500}}>{s}</span>
                 ))}
               </div>}
             </div>
@@ -1464,7 +1464,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
               {done
                 ? <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:1}}>
                     <span style={{fontSize:10,fontWeight:700,color:done.outcome==="lost"?T.red:T.green}}>{done.outcome==="lost"?"✗ Lost":`${$f(done.amt)} ✓`}</span>
-                    {done.note&&<span style={{fontSize:8,color:T.t4,maxWidth:90,textAlign:"right",lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{done.note}</span>}
+                    {done.note&&<span style={{fontSize:9,color:T.t3,maxWidth:90,textAlign:"right",lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{done.note}</span>}
                   </div>
                 : <>
                     <button onClick={e=>promptOutcome(e,a.id,"won",a.ask)} style={{background:"rgba(52,211,153,.12)",border:"1px solid rgba(52,211,153,.25)",borderRadius:6,padding:"3px 8px",fontSize:9,fontWeight:700,color:T.green,cursor:"pointer",fontFamily:"inherit"}}>✓</button>
@@ -2059,8 +2059,8 @@ function GroupDetail({group,goMain,goAcct}) {
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
                 <span style={{fontSize:11,color:T.t2,flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</span>
                 <div style={{display:"flex",gap:8,flexShrink:0,marginLeft:8,alignItems:"center"}}>
-                  <span className="m" style={{fontSize:9,color:T.t4}}>{$$(p.py)}</span>
-                  <span style={{fontSize:9,color:T.t4}}>→</span>
+                  <span className="m" style={{fontSize:9,color:T.t3}}>{$$(p.py)}</span>
+                  <span style={{fontSize:9,color:T.t3}}>→</span>
                   <span className="m" style={{fontSize:10,color:trend>=0.8?T.blue:T.amber,fontWeight:600}}>{$$(p.cy)}</span>
                   <Chev/>
                 </div>
@@ -2352,19 +2352,19 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
           </div>}
           {/* Contact info */}
           {(drIntel.phone||drIntel.email||drIntel.contactName||drIntel.website)&&<div style={{marginBottom:10,display:"flex",flexWrap:"wrap",gap:8}}>
-            {drIntel.contactName&&<div><div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:1}}>Contact</div><div style={{fontSize:11,fontWeight:600}}>{drIntel.contactName}</div></div>}
-            {drIntel.phone&&<div><div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:1}}>Phone</div><a href={`tel:${drIntel.phone}`} style={{fontSize:11,fontWeight:600,color:T.cyan,textDecoration:"none"}}>{drIntel.phone}</a></div>}
-            {drIntel.email&&<div><div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:1}}>Email</div><div style={{fontSize:11,fontWeight:600,color:T.cyan}}>{drIntel.email}</div></div>}
-            {drIntel.website&&<div><div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:1}}>Website</div><a href={drIntel.website} target="_blank" rel="noreferrer" style={{fontSize:11,fontWeight:600,color:T.blue,textDecoration:"none"}}>Visit →</a></div>}
+            {drIntel.contactName&&<div><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:1}}>Contact</div><div style={{fontSize:11,fontWeight:600}}>{drIntel.contactName}</div></div>}
+            {drIntel.phone&&<div><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:1}}>Phone</div><a href={`tel:${drIntel.phone}`} style={{fontSize:11,fontWeight:600,color:T.cyan,textDecoration:"none"}}>{drIntel.phone}</a></div>}
+            {drIntel.email&&<div><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:1}}>Email</div><div style={{fontSize:11,fontWeight:600,color:T.cyan}}>{drIntel.email}</div></div>}
+            {drIntel.website&&<div><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:1}}>Website</div><a href={drIntel.website} target="_blank" rel="noreferrer" style={{fontSize:11,fontWeight:600,color:T.blue,textDecoration:"none"}}>Visit →</a></div>}
           </div>}
           {/* Ownership */}
           {drIntel.ownershipNote&&<div style={{marginBottom:10}}>
-            <div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:3}}>Ownership</div>
+            <div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:3}}>Ownership</div>
             <div style={{fontSize:11,color:T.t2}}>{drIntel.ownershipNote}</div>
           </div>}
           {/* Hooks */}
           {drIntel.hooks?.length>0&&<div style={{marginBottom:10}}>
-            <div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:6}}>Relationship Hooks</div>
+            <div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:6}}>Relationship Hooks</div>
             {drIntel.hooks.map((h,i)=><div key={i} style={{display:"flex",gap:6,alignItems:"flex-start",marginBottom:5}}>
               <span style={{color:T.amber,marginTop:1,fontSize:10}}>◆</span>
               <span style={{fontSize:11,color:T.t2,lineHeight:1.5}}>{h}</span>
@@ -2372,12 +2372,12 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
           </div>}
           {/* Competitive */}
           {drIntel.competitive&&<div style={{marginBottom:10,padding:"8px 10px",borderRadius:8,background:"rgba(248,113,113,.05)",border:"1px solid rgba(248,113,113,.1)"}}>
-            <div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:2}}>Competitive Signal</div>
+            <div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:2}}>Competitive Signal</div>
             <div style={{fontSize:11,color:T.t2}}>{drIntel.competitive}</div>
           </div>}
           {/* Talking points */}
           {drIntel.talkingPoints?.length>0&&<div>
-            <div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:6}}>Talking Points for Your Visit</div>
+            <div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:6}}>Talking Points for Your Visit</div>
             {drIntel.talkingPoints.map((p,i)=><div key={i} style={{display:"flex",gap:6,alignItems:"flex-start",marginBottom:6,padding:"6px 8px",borderRadius:7,background:"rgba(79,142,247,.05)",border:"1px solid rgba(79,142,247,.1)"}}>
               <span style={{color:T.blue,fontWeight:700,fontSize:10,marginTop:1,flexShrink:0}}>{i+1}.</span>
               <span style={{fontSize:11,color:T.t1,lineHeight:1.5}}>{p}</span>
@@ -2550,25 +2550,25 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
         </div>
         <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:badger.notes||badger.visitNotes?10:0}}>
           {badger.doctor&&<div style={{minWidth:0}}>
-            <div style={{fontSize:8,textTransform:"uppercase",color:T.t4,marginBottom:1}}>Doctor</div>
+            <div style={{fontSize:9,textTransform:"uppercase",color:T.t3,marginBottom:1}}>Doctor</div>
             <div style={{fontSize:11,fontWeight:600,color:T.t1}}>{badger.doctor}</div>
           </div>}
           {badger.orders&&<div style={{minWidth:0}}>
-            <div style={{fontSize:8,textTransform:"uppercase",color:T.t4,marginBottom:1}}>Orders</div>
+            <div style={{fontSize:9,textTransform:"uppercase",color:T.t3,marginBottom:1}}>Orders</div>
             <div style={{fontSize:11,fontWeight:600,color:T.t1}}>{badger.orders}</div>
           </div>}
           {badger.dealerRep&&<div style={{minWidth:0}}>
-            <div style={{fontSize:8,textTransform:"uppercase",color:T.t4,marginBottom:1}}>Dealer Rep</div>
+            <div style={{fontSize:9,textTransform:"uppercase",color:T.t3,marginBottom:1}}>Dealer Rep</div>
             <div style={{fontSize:11,fontWeight:600,color:T.cyan}}>{badger.dealerRep}</div>
           </div>}
           {badger.accelLevel&&<div style={{minWidth:0}}>
-            <div style={{fontSize:8,textTransform:"uppercase",color:T.t4,marginBottom:1}}>Accel Level</div>
+            <div style={{fontSize:9,textTransform:"uppercase",color:T.t3,marginBottom:1}}>Accel Level</div>
             <div style={{fontSize:11,fontWeight:600,color:T.amber}}>{badger.accelLevel}</div>
           </div>}
         </div>
         {badger.notes&&<div style={{fontSize:11,color:T.t2,lineHeight:1.5,background:T.s2,borderRadius:8,padding:"8px 10px",marginBottom:badger.visitNotes?8:0,whiteSpace:"pre-wrap"}}>{badger.notes.replace(/\\n/g,'\n')}</div>}
         {badger.visitNotes&&<div>
-          <div style={{fontSize:8,textTransform:"uppercase",color:T.t4,marginBottom:3}}>Last Visit{badger.lastVisit?` · ${badger.lastVisit}`:""}</div>
+          <div style={{fontSize:9,textTransform:"uppercase",color:T.t3,marginBottom:3}}>Last Visit{badger.lastVisit?` · ${badger.lastVisit}`:""}</div>
           <div style={{fontSize:11,color:T.t3,lineHeight:1.5,fontStyle:"italic"}}>"{badger.visitNotes}"</div>
         </div>}
         {badger.phone&&<div style={{marginTop:10}}>
@@ -2580,14 +2580,14 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
         {/* Saved Research Contacts — merged into Field Intel card */}
         {savedContacts&&(savedContacts.contactName||savedContacts.phone||savedContacts.email||savedContacts.website)&&<div style={{marginTop:12,paddingTop:10,borderTop:`1px solid ${T.b2}`}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-            <div style={{fontSize:8,textTransform:"uppercase",color:T.t4,letterSpacing:"1px"}}>Research Contacts</div>
+            <div style={{fontSize:9,textTransform:"uppercase",color:T.t3,letterSpacing:"1px"}}>Research Contacts</div>
             <div style={{fontSize:8,color:T.t4}}>{savedContacts.savedAt?new Date(savedContacts.savedAt).toLocaleDateString():""}</div>
           </div>
           <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
-            {savedContacts.contactName&&<div><div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:1}}>Contact</div><div style={{fontSize:11,fontWeight:600,color:T.t1}}>{savedContacts.contactName}</div></div>}
-            {savedContacts.phone&&<div><div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:1}}>Direct #</div><a href={`tel:${savedContacts.phone}`} style={{fontSize:11,fontWeight:600,color:T.green,textDecoration:"none"}}>{savedContacts.phone}</a></div>}
-            {savedContacts.email&&<div><div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:1}}>Email</div><a href={`mailto:${savedContacts.email}`} style={{fontSize:11,fontWeight:600,color:T.cyan,textDecoration:"none"}}>{savedContacts.email}</a></div>}
-            {savedContacts.website&&<div><div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:1}}>Web</div><a href={savedContacts.website} target="_blank" rel="noreferrer" style={{fontSize:11,fontWeight:600,color:T.blue,textDecoration:"none"}}>Visit →</a></div>}
+            {savedContacts.contactName&&<div><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:1}}>Contact</div><div style={{fontSize:11,fontWeight:600,color:T.t1}}>{savedContacts.contactName}</div></div>}
+            {savedContacts.phone&&<div><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:1}}>Direct #</div><a href={`tel:${savedContacts.phone}`} style={{fontSize:11,fontWeight:600,color:T.green,textDecoration:"none"}}>{savedContacts.phone}</a></div>}
+            {savedContacts.email&&<div><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:1}}>Email</div><a href={`mailto:${savedContacts.email}`} style={{fontSize:11,fontWeight:600,color:T.cyan,textDecoration:"none"}}>{savedContacts.email}</a></div>}
+            {savedContacts.website&&<div><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:1}}>Web</div><a href={savedContacts.website} target="_blank" rel="noreferrer" style={{fontSize:11,fontWeight:600,color:T.blue,textDecoration:"none"}}>Visit →</a></div>}
           </div>
         </div>}
       </div>}
@@ -2605,10 +2605,10 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
           </div>
         </div>
         <div style={{display:"flex",flexWrap:"wrap",gap:10}}>
-          {savedContacts.contactName&&<div><div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:1}}>Contact</div><div style={{fontSize:12,fontWeight:600,color:T.t1}}>{savedContacts.contactName}</div></div>}
-          {savedContacts.phone&&<div><div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:1}}>Direct #</div><a href={`tel:${savedContacts.phone}`} style={{fontSize:12,fontWeight:600,color:T.green,textDecoration:"none"}}>{savedContacts.phone}</a></div>}
-          {savedContacts.email&&<div><div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:1}}>Email</div><a href={`mailto:${savedContacts.email}`} style={{fontSize:12,fontWeight:600,color:T.cyan,textDecoration:"none"}}>{savedContacts.email}</a></div>}
-          {savedContacts.website&&<div><div style={{fontSize:8,color:T.t4,textTransform:"uppercase",marginBottom:1}}>Website</div><a href={savedContacts.website} target="_blank" rel="noreferrer" style={{fontSize:12,fontWeight:600,color:T.blue,textDecoration:"none"}}>Visit →</a></div>}
+          {savedContacts.contactName&&<div><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:1}}>Contact</div><div style={{fontSize:12,fontWeight:600,color:T.t1}}>{savedContacts.contactName}</div></div>}
+          {savedContacts.phone&&<div><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:1}}>Direct #</div><a href={`tel:${savedContacts.phone}`} style={{fontSize:12,fontWeight:600,color:T.green,textDecoration:"none"}}>{savedContacts.phone}</a></div>}
+          {savedContacts.email&&<div><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:1}}>Email</div><a href={`mailto:${savedContacts.email}`} style={{fontSize:12,fontWeight:600,color:T.cyan,textDecoration:"none"}}>{savedContacts.email}</a></div>}
+          {savedContacts.website&&<div><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:1}}>Website</div><a href={savedContacts.website} target="_blank" rel="noreferrer" style={{fontSize:12,fontWeight:600,color:T.blue,textDecoration:"none"}}>Visit →</a></div>}
         </div>
       </div>}
 
@@ -3555,19 +3555,19 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
             <div style={{fontSize:10,color:T.t3,marginBottom:7}}>{a.city}, {a.st}</div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:5}}>
               <div style={{background:T.s2,borderRadius:6,padding:"4px 6px"}}>
-                <div style={{fontSize:8,color:T.t4,marginBottom:1}}>PY</div>
+                <div style={{fontSize:9,color:T.t3,marginBottom:1}}>PY</div>
                 <div style={{fontSize:10,fontWeight:700,color:T.t2,fontFamily:"monospace"}}>{$$(py)}</div>
               </div>
               <div style={{background:T.s2,borderRadius:6,padding:"4px 6px"}}>
-                <div style={{fontSize:8,color:T.t4,marginBottom:1}}>CY</div>
+                <div style={{fontSize:9,color:T.t3,marginBottom:1}}>CY</div>
                 <div style={{fontSize:10,fontWeight:700,color:T.blue,fontFamily:"monospace"}}>{$$(cy)}</div>
               </div>
               <div style={{background:isDown?"rgba(248,113,113,.06)":"rgba(52,211,153,.06)",borderRadius:6,padding:"4px 6px"}}>
-                <div style={{fontSize:8,color:T.t4,marginBottom:1}}>Gap</div>
+                <div style={{fontSize:9,color:T.t3,marginBottom:1}}>Gap</div>
                 <div style={{fontSize:10,fontWeight:700,color:isDown?T.red:T.green,fontFamily:"monospace"}}>{isDown?"-":"+"}${Math.abs(gap)>=1000?`${(Math.abs(gap)/1000).toFixed(1)}k`:`${Math.round(Math.abs(gap))}`}</div>
               </div>
               <div style={{background:T.s2,borderRadius:6,padding:"4px 6px"}}>
-                <div style={{fontSize:8,color:T.t4,marginBottom:1}}>Ret</div>
+                <div style={{fontSize:9,color:T.t3,marginBottom:1}}>Ret</div>
                 <div style={{fontSize:10,fontWeight:700,color:locRet>=95?T.green:locRet>=70?T.amber:T.red,fontFamily:"monospace"}}>{locRet}%</div>
               </div>
             </div>
@@ -3629,19 +3629,19 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
             {/* Row 3: PY / CY / Gap / Ret pills */}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6}}>
               <div style={{background:T.s2,borderRadius:6,padding:"4px 6px"}}>
-                <div style={{fontSize:8,color:T.t4,marginBottom:1}}>PY</div>
+                <div style={{fontSize:9,color:T.t3,marginBottom:1}}>PY</div>
                 <div style={{fontSize:11,fontWeight:700,color:T.t2,fontFamily:"monospace"}}>{$$(g.totalPY)}</div>
               </div>
               <div style={{background:T.s2,borderRadius:6,padding:"4px 6px"}}>
-                <div style={{fontSize:8,color:T.t4,marginBottom:1}}>CY</div>
+                <div style={{fontSize:9,color:T.t3,marginBottom:1}}>CY</div>
                 <div style={{fontSize:11,fontWeight:700,color:T.blue,fontFamily:"monospace"}}>{$$(g.totalCY)}</div>
               </div>
               <div style={{background:isDown?"rgba(248,113,113,.06)":"rgba(52,211,153,.06)",borderRadius:6,padding:"4px 6px"}}>
-                <div style={{fontSize:8,color:T.t4,marginBottom:1}}>Gap</div>
+                <div style={{fontSize:9,color:T.t3,marginBottom:1}}>Gap</div>
                 <div style={{fontSize:11,fontWeight:700,color:isDown?T.red:T.green,fontFamily:"monospace"}}>{isDown?"-":"+"}${Math.abs(gap)>=1000?`${(Math.abs(gap)/1000).toFixed(1)}k`:`${Math.round(Math.abs(gap))}`}</div>
               </div>
               <div style={{background:T.s2,borderRadius:6,padding:"4px 6px"}}>
-                <div style={{fontSize:8,color:T.t4,marginBottom:1}}>Ret</div>
+                <div style={{fontSize:9,color:T.t3,marginBottom:1}}>Ret</div>
                 <div style={{fontSize:11,fontWeight:700,color:ret>=95?T.green:ret>=70?T.amber:T.red,fontFamily:"monospace"}}>{ret}%</div>
               </div>
             </div>
