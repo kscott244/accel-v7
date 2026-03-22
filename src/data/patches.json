@@ -1,0 +1,59 @@
+{
+  "_comment": "Manual data corrections. Applied on top of any CSV or preloaded data. Never overwritten by data rebuilds.",
+  "_version": "1.0",
+  "_lastUpdated": "2026-03-23",
+
+  "group_creates": [
+    {
+      "id": "Master-RDP-001",
+      "name": "RESOLUTE DENTAL PARTNERS",
+      "tier": "Standard",
+      "class2": "Emerging DSO",
+      "dsoName": "Resolute Dental Partners",
+      "website": "https://resolutedentalpartners.com",
+      "note": "Dr. Toback CEO. Steve D Patterson account. ~$14K FY PY. Graniteville growing fast after lunch and learn.",
+      "childIds": [
+        "Master-CM17699391",
+        "Master-CM116929",
+        "Master-CM220635",
+        "Master-CM9814196",
+        "Master-CM1994205",
+        "Master-CM231113"
+      ]
+    }
+  ],
+
+  "group_detaches": [
+    {
+      "childId": "Master-CM300371",
+      "fromGroupId": "Master-CM048310",
+      "newGroupId": "Master-CM300371-standalone",
+      "newGroupName": "ASPEN DENTAL",
+      "reason": "Bad MDM parent assignment — Aspen Torrington incorrectly parented under Columbia Dental"
+    }
+  ],
+
+  "name_overrides": [
+    { "id": "Master-CM116929", "name": "WELLS STREET DENTISTRY", "reason": "TRIS CARTA is wrong — Wells Street Dentistry, Westerly RI" },
+    { "id": "Master-CM17699391", "name": "FLANDERS DENTAL STUDIO", "reason": "CENTER FOR DENTAL EXCELLENCE is old name — now Flanders Dental Studio (Resolute)" }
+  ],
+
+  "contact_overrides": [
+    {
+      "id": "Master-CM231113",
+      "contactName": "Brittany Burroughs",
+      "email": "bburroughs@coastalctdental.com",
+      "address": "112 Cross Rd, Waterford, CT 06385",
+      "note": "PM at Coastal Connecticut Dentistry — part of Resolute Dental Partners"
+    },
+    {
+      "id": "Master-CM116929",
+      "contactName": "Christine Lague",
+      "email": "clague@westerlydentists.com",
+      "address": "11 Wells Street, Westerly, RI",
+      "note": "PM at Wells Street Dentistry — part of Resolute Dental Partners"
+    }
+  ],
+
+  "dealer_overrides": []
+}
