@@ -4,6 +4,52 @@ const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY!;
 const GMAIL_CLIENT_ID = process.env.GMAIL_CLIENT_ID!;
 const GMAIL_CLIENT_SECRET = process.env.GMAIL_CLIENT_SECRET!;
 
+// ─── KERR PRODUCT INTELLIGENCE ───────────────────────────────────────────────
+// Used to help the AI make ONE natural, relevant product mention per email.
+// Covers: what the product does, legacy upgrade paths, and one key talking point.
+const KERR_PRODUCT_INTEL = `
+KERR PRODUCT LINES (for context only — use sparingly, one mention max per email):
+
+ADHESIVES:
+- OptiBond Solo Plus: Legacy total-etch adhesive. Still reliable but older workflow (etch + prime + bond = 3 steps). If a doctor hasn't ordered this year, they may have switched to a competitor's self-etch.
+  → Upgrade to: OptiBond Universal 360. Works total-etch, self-etch, or selective-etch. Light-cure primary but has dark-cure mode so light is optional. Rated #1 preferred bonding agent by Dental Advisor 2025. Reduces post-op sensitivity vs total-etch-only systems. Simplifies workflow significantly.
+- OptiBond Universal: Previous generation universal. Good but 360 is the current flagship.
+- OptiBond FL: Gold standard total-etch. Still preferred by some for high-stress restorations.
+- OptiBond eXTRa: Self-etch, simplified workflow.
+
+COMPOSITES:
+- Herculite XRV / Herculite Ultra: Classic microhybrid composites. Excellent esthetics, proven. Still very relevant.
+- Herculite Ultra Flow: Flowable version. Used for base/liner or small Class V.
+- Harmonize: Nano-optimized composite. Better polishability than Herculite. Natural chameleon effect.
+- SimpliShade: ONE shade composite — matches 95%+ of cases without shade selection. Major time saver for posterior work. If a doctor is buying Harmonize or Herculite but not SimpliShade, worth mentioning.
+- SimpliShade Bulk Flow: Bulk-fill flowable version of SimpliShade. One shade, one increment, no capping layer needed.
+- SonicFill 3: Sonic-activated bulk fill. Thins on activation for better adaptation. 4mm increments. Popular for posterior efficiency. If buying composites but not SonicFill, natural cross-sell.
+- Premise / Premise Flowable: Nano-filled. Good esthetics, especially anterior.
+- Point 4: Condensable nano-hybrid. Dense, predictable.
+- Revolution 2: Flowable. Reliable, widely used.
+- Flow-It ALC: Self-leveling flowable with auto-layer-curing. Good for deep margins.
+- Demi Plus: Bulk-fill hybrid. Simple posterior workflow.
+- Mojo: Universal nano-hybrid. Newer addition.
+
+CEMENTS:
+- TempBond / TempBond NE / TempBond Clear: Temporary cements. NE = non-eugenol (won't inhibit resin cure). Clear for esthetic temp coverage.
+- MaxCem Elite: Self-adhesive resin cement. Simple: clean, apply, cure. No separate bonding step. Fluoride releasing.
+- MaxCem Elite Chroma: Same as MaxCem Elite but color-changes from pink to tooth-colored on cure so you know it's set.
+- NX3 Nexus: Multi-mode resin cement. Premium option. More technique-sensitive but greater control.
+- Nexus RMGI: Resin-modified glass ionomer cement. Good for metal and PFM crowns where adhesive bonding isn't needed.
+- Breeze: Self-adhesive cement. Moisture-tolerant.
+
+INFECTION CONTROL:
+- CaviWipes / CaviWipes XL / CaviWipes 2.0 / CaviWipes1 / CaviWipes HP: Surface disinfectant wipes. Every practice needs these. If buying older versions, worth mentioning 2.0 or HP for faster kill time.
+- CaviCide / CaviCide1: Spray disinfectant. 1 = 1-minute contact time vs standard 3 min.
+- Empower / Empower Foam: Ultrasonic cleaning solution. If buying Empower, Foam version may suit their workflow better.
+
+MISC:
+- Gel Etchant: Phosphoric acid gel for total-etch. Goes with OptiBond FL/Solo Plus.
+- Bond-1: Simplified one-bottle bond system.
+- Simile: CAD/CAM composite blocks.
+`;
+
 async function refreshAccessToken(refreshToken: string): Promise<string> {
   const res = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
@@ -28,44 +74,38 @@ async function generateEmail(account: any): Promise<{ subject: string; body: str
   const tier = account.tier || "Standard";
   const products = account.topSkus?.map((s: any) => s.desc).filter(Boolean).join(", ") || "";
   const stoppedProducts = account.stoppedSkus?.map((s: any) => s.desc).filter(Boolean).join(", ") || "";
-
-  // Deep research intel if available
   const talkingPoints = account.talkingPoints?.slice(0,2).join("; ") || "";
-  const hooks = account.hooks?.slice(0,2).join("; ") || "";
-  const ownershipNote = account.ownershipNote || "";
+  const hooks = account.hooks?.slice(0,1).join("; ") || "";
 
-  const prompt = `You are Ken Scott, a Kerr Dental territory sales rep based in Connecticut covering CT/MA/RI/NY.
-You're writing a SHORT, personal email to a dental office that is down in purchases vs last year.
-This is from your PERSONAL Gmail so it should feel like a real person wrote it, not a marketing blast.
+  const prompt = `You are Ken Scott, a Kerr Dental territory sales rep in Connecticut (CT/MA/RI/NY).
+You're writing a SHORT personal email to a dental office that is down in purchases vs last year.
+This comes from your personal Gmail — it should sound like a real person, not a marketing blast.
 
-Account details:
-- Office: ${account.name}
-- City: ${account.city}, ${account.state || account.st || "CT"}
-- Primary distributor for this gap: ${dealer}
-- Account tier: ${tier}
+ACCOUNT:
+- Office: ${account.name}, ${account.city} ${account.state || account.st || "CT"}
+- Distributor: ${dealer} (reference ONLY this distributor)
+- Tier: ${tier}
 - Gap vs last year: $${gapDollars.toLocaleString()} down
-- Products they've been buying: ${products || "various Kerr products"}
-${stoppedProducts ? `- Products they stopped buying: ${stoppedProducts}` : ""}
-${talkingPoints ? `- Specific talking points from research: ${talkingPoints}` : ""}
-${hooks ? `- Relationship hooks found: ${hooks}` : ""}
-${ownershipNote ? `- Practice context: ${ownershipNote}` : ""}
+- Products currently buying: ${products || "various Kerr products"}
+${stoppedProducts ? `- Products they STOPPED buying this year: ${stoppedProducts}` : ""}
+${talkingPoints ? `- Practice intel (from research): ${talkingPoints}` : ""}
+${hooks ? `- Relationship hook: ${hooks}` : ""}
 - Days left in Q1: 9
 
-Write a GENUINE, SHORT email (4-6 sentences max). Rules:
-- Start with: "${greeting},"
-- If talking points or hooks are provided, weave ONE naturally into the email — make it feel like you know them
-- Reference the SPECIFIC distributor (${dealer}) naturally
-- Reference specific products they buy by name if available
-- Do NOT mention any other distributor
-- Do NOT mention any distributor rep by name
-- Sound like a real person, not a sales robot
-- Mention end of Q1 / March 31st deadline naturally
-- Sign off as: Ken Scott | Kerr Dental | 860-417-4071
-- Subject line should be casual and specific, NOT generic
+PRODUCT KNOWLEDGE (use to inform ONE natural product mention if relevant — do not recite this):
+${KERR_PRODUCT_INTEL}
 
-Return ONLY a JSON object like:
-{"subject": "...", "body": "..."}
-No markdown, no preamble.`;
+EMAIL RULES:
+1. Start with: "${greeting},"
+2. 4-6 sentences MAX. Be genuine, not scripted.
+3. If a stopped product has a clear upgrade path (e.g. Solo Plus → Universal 360), mention the upgrade ONCE, naturally, as a helpful heads-up — not a pitch. Frame it as "a lot of practices have been making the switch" or "worth a quick conversation."
+4. If practice intel or a relationship hook exists, weave ONE of those in naturally.
+5. Reference end of Q1 / March 31st once — not as pressure, as a helpful timing note.
+6. Reference ONLY ${dealer} as the distributor. Never name a competitor distributor or a rep by name.
+7. Sign off: Ken Scott | Kerr Dental | 860-417-4071
+8. Subject line: casual, specific to their products or situation. NOT generic.
+
+Return ONLY valid JSON: {"subject": "...", "body": "..."}`;
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -76,7 +116,7 @@ No markdown, no preamble.`;
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-20250514",
-      max_tokens: 500,
+      max_tokens: 600,
       messages: [{ role: "user", content: prompt }],
     }),
   });
@@ -88,7 +128,7 @@ No markdown, no preamble.`;
   } catch {
     return {
       subject: `Quick note from Ken — Kerr Dental`,
-      body: `${greeting},\n\nJust wanted to reach out as we wrap up Q1. I noticed your account through ${dealer} is running behind compared to last year and wanted to see if there's anything I can help with before March 31st.\n\nKen Scott | Kerr Dental | 860-417-4071`,
+      body: `${greeting},\n\nJust wanted to reach out as we wrap up Q1. I noticed your account through ${dealer} is running a bit behind compared to last year and wanted to see if there's anything I can help with before March 31st.\n\nKen Scott | Kerr Dental | 860-417-4071`,
     };
   }
 }
