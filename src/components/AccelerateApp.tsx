@@ -686,14 +686,33 @@ export default function App() {
       {uploadMsg && <div className="anim" style={{margin:"8px 16px",padding:"10px 14px",borderRadius:10,background:uploadMsg.startsWith("OK")?"rgba(52,211,153,.08)":"rgba(248,113,113,.08)",border:`1px solid ${uploadMsg.startsWith("OK")?"rgba(52,211,153,.15)":"rgba(248,113,113,.15)"}`,fontSize:12,color:uploadMsg.startsWith("OK")?T.green:uploadMsg.startsWith("ERR")?T.red:T.t3}}>{uploadMsg}</div>}
 
       {/* TAB CONTENT */}
-      {!view && tab==="today" && <TodayTab scored={scored} goAcct={a=>setView({type:"acct",data:a})} q1CY={q1CY} q1Gap={q1Gap} q1Att={q1Att} adjCount={adjs.length} totalAdj={totalAdjQ1} groups={groups||[]} goGroup={g=>setView({type:"group",data:g})}/>}
-      {!view && tab==="groups" && <GroupsTab groups={groups||[]} goGroup={g=>setView({type:"group",data:g})} filt={gFilt} setFilt={setGFilt} search={gSearch} setSearch={setGSearch}/>}
-      {!view && tab==="map" && <MapTab/>}
-      {!view && tab==="calc" && <DashTab groups={groups||[]} q1CY={q1CY} q1Att={q1Att} q1Gap={q1Gap} scored={scored} goAcct={a=>setView({type:"acct",data:a})}/>}
-      {!view && tab==="est" && <EstTab pct={estPct} setPct={setEstPct} q1CY={q1CY} groups={groups||[]} goAcct={a=>setView({type:"acct",data:a})}/>}
-      {!view && tab==="dealers" && <DealersTab scored={scored} groups={groups||[]} goAcct={a=>setView({type:"acct",data:a})} goGroup={g=>setView({type:"group",data:g})}/>}
-      {view?.type==="group" && <GroupDetail group={view.data} goMain={()=>setView(null)} goAcct={a=>setView({type:"acct",data:{...a,gName:fixGroupName(view.data),gId:view.data.id,gTier:view.data.tier},from:view.data})}/>}
-      {view?.type==="acct" && <AcctDetail acct={view.data} goBack={()=>view?.from?setView({type:"group",data:view.from}):setView(null)} adjs={adjs} setAdjs={setAdjs} groups={groups||[]} goGroup={g=>setView({type:"group",data:g})}/>}
+      {/* goSmart: always route child taps through the parent group when group has >1 loc.
+          Private practices (locs=1) and multi-dealer same-address offices go straight to AcctDetail
+          since the AcctDetail IS their combined summary. */}
+      {(() => {
+        const goSmartFn = (a: any, fromGroup?: any) => {
+          const parentGroup = (groups||[]).find((g:any) => g.id === (a.gId||a.id));
+          if (parentGroup && parentGroup.locs > 1) {
+            // Multi-location group — show group summary first, with this child's context
+            setView({type:"group", data: parentGroup});
+          } else {
+            // Single-location or private practice — AcctDetail IS the summary
+            setView({type:"acct", data: a, from: fromGroup});
+          }
+        };
+        const goGroupFn = (g:any) => setView({type:"group", data:g});
+        const goAcctFn = (a:any, from?:any) => setView({type:"acct", data:a, from});
+        return <>
+          {!view && tab==="today" && <TodayTab scored={scored} goAcct={goSmartFn} q1CY={q1CY} q1Gap={q1Gap} q1Att={q1Att} adjCount={adjs.length} totalAdj={totalAdjQ1} groups={groups||[]} goGroup={goGroupFn}/>}
+          {!view && tab==="groups" && <GroupsTab groups={groups||[]} goGroup={goGroupFn} filt={gFilt} setFilt={setGFilt} search={gSearch} setSearch={setGSearch}/>}
+          {!view && tab==="map" && <MapTab/>}
+          {!view && tab==="calc" && <DashTab groups={groups||[]} q1CY={q1CY} q1Att={q1Att} q1Gap={q1Gap} scored={scored} goAcct={goSmartFn}/>}
+          {!view && tab==="est" && <EstTab pct={estPct} setPct={setEstPct} q1CY={q1CY} groups={groups||[]} goAcct={goSmartFn}/>}
+          {!view && tab==="dealers" && <DealersTab scored={scored} groups={groups||[]} goAcct={goAcctFn} goGroup={goGroupFn}/>}
+          {view?.type==="group" && <GroupDetail group={view.data} goMain={()=>setView(null)} goAcct={(a:any)=>setView({type:"acct",data:{...a,gName:fixGroupName(view.data),gId:view.data.id,gTier:view.data.tier},from:view.data})}/>}
+          {view?.type==="acct" && <AcctDetail acct={view.data} goBack={()=>view?.from?setView({type:"group",data:view.from}):setView(null)} adjs={adjs} setAdjs={setAdjs} groups={groups||[]} goGroup={goGroupFn}/>}
+        </>;
+      })()}
 
       {/* NAV BAR */}
       <nav style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:960,zIndex:50,borderTop:`1px solid ${T.b1}`,background:"rgba(10,10,15,.92)",backdropFilter:"blur(32px)"}}>
@@ -1828,7 +1847,7 @@ function GroupDetail({group,goMain,goAcct}) {
     return m;
   });
 
-  const [editDist, setEditDist] = useState<string|null>(null);
+  const [selProduct, setSelProduct] = useState<string|null>(null);
   const [editName, setEditName] = useState("");
   const [editPhone, setEditPhone] = useState("");
   const [editNotes, setEditNotes] = useState("");
@@ -1875,6 +1894,57 @@ function GroupDetail({group,goMain,goAcct}) {
   },[group,qk]);
 
   const hasProducts = groupBuying.length>0 || groupStopped.length>0;
+
+  // ── Path 2: Product drill → which child accounts are up/down on this product ──
+  if (selProduct) {
+    const allProds = [...groupBuying, ...groupStopped];
+    const prod = allProds.find(p => p.name === selProduct);
+    const childBreakdown = (group.children||[]).map((c:any) => {
+      const p = (c.products||[]).find((pr:any) => pr.n === selProduct);
+      return { ...c, prodPY: p?(p[`py${qk}`]||0):0, prodCY: p?(p[`cy${qk}`]||0):0 };
+    }).filter((c:any) => c.prodPY > 0 || c.prodCY > 0)
+      .sort((a:any,b:any) => (b.prodPY-b.prodCY)-(a.prodPY-a.prodCY));
+
+    return <div style={{paddingBottom:80}}>
+      <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"10px 16px"}}>
+        <button onClick={()=>setSelProduct(null)} style={{background:"none",border:"none",color:T.blue,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:13,fontWeight:600,fontFamily:"inherit"}}><Back/> {fixGroupName(group)}</button>
+      </div>
+      <div style={{padding:"16px 16px 0"}}>
+        <div className="anim" style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
+          <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>{selProduct}</div>
+          <div style={{fontSize:11,color:T.t3,marginBottom:12}}>{fixGroupName(group)} · all locations</div>
+          {prod&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}>
+            <Stat l="PY" v={$$(prod.py)} c={T.t2}/>
+            <Stat l="CY" v={$$(prod.cy)} c={T.blue}/>
+            <Stat l="Gap" v={(prod.py-prod.cy)<=0?`+${$$(Math.abs(prod.py-prod.cy))}`:$$(prod.py-prod.cy)} c={(prod.py-prod.cy)<=0?T.green:T.red}/>
+            <Stat l="Locs" v={`${prod.locsCY.length}/${prod.locsPY.length}`} c={T.t3}/>
+          </div>}
+        </div>
+        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3,marginBottom:8}}>By Location</div>
+        {childBreakdown.length===0&&<div style={{fontSize:12,color:T.t4,textAlign:"center",padding:"20px 0"}}>No location data for this product.</div>}
+        {childBreakdown.map((c:any,i:number)=>{
+          const gap=c.prodPY-c.prodCY;
+          const isStopped=c.prodPY>0&&c.prodCY===0;
+          const isNew=c.prodPY===0&&c.prodCY>0;
+          return <button key={c.id} className="anim" onClick={()=>goAcct(c)}
+            style={{animationDelay:`${i*25}ms`,width:"100%",textAlign:"left",background:T.s1,
+              border:`1px solid ${isStopped?"rgba(248,113,113,.2)":gap>0?"rgba(251,191,36,.15)":T.b1}`,
+              borderRadius:12,padding:"11px 13px",marginBottom:7,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginBottom:2}}>{c.name}</div>
+              <div style={{fontSize:10,color:T.t3}}>{c.city}, {c.st}{c.dealer?<span style={{color:T.cyan}}> · {c.dealer}</span>:""}</div>
+              {isStopped&&<div style={{fontSize:9,color:T.red,marginTop:2,fontWeight:600}}>STOPPED · was {$$(c.prodPY)}</div>}
+              {isNew&&<div style={{fontSize:9,color:T.green,marginTop:2,fontWeight:600}}>NEW BUYER</div>}
+            </div>
+            <div style={{textAlign:"right",flexShrink:0,marginLeft:10}}>
+              <div style={{fontSize:11,fontWeight:700,color:isStopped?T.red:T.blue,fontFamily:"monospace"}}>{$$(c.prodCY)}</div>
+              {c.prodPY>0&&<div style={{fontSize:9,color:gap>0?T.red:T.green,fontFamily:"monospace"}}>{gap>0?"-":"+"}${Math.round(Math.abs(gap))}</div>}
+            </div>
+          </button>;
+        })}
+      </div>
+    </div>;
+  }
 
   return <div style={{paddingBottom:80}}>
     <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"10px 16px"}}>
@@ -1954,16 +2024,22 @@ function GroupDetail({group,goMain,goAcct}) {
 
       {/* GROUP PRODUCT ROLLUP */}
       {hasProducts&&<div className="anim" style={{animationDelay:"40ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
-        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue,marginBottom:12}}>Group Product Health</div>
+        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue,marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <span>Group Product Health</span>
+          <span style={{fontSize:9,color:T.t4,fontWeight:400,textTransform:"none",letterSpacing:0}}>Tap product to see by location</span>
+        </div>
 
         {/* Stopped across group */}
         {groupStopped.length>0&&<div style={{marginBottom:groupBuying.length>0?14:0}}>
           <div style={{fontSize:10,fontWeight:700,color:T.red,marginBottom:8}}>Stopped Buying ({groupStopped.length} products)</div>
           {groupStopped.map((p,i)=>(
-            <div key={i} style={{marginBottom:10,padding:"8px 10px",borderRadius:8,background:"rgba(248,113,113,.04)",border:"1px solid rgba(248,113,113,.08)"}}>
+            <div key={i} onClick={()=>setSelProduct(p.name)} style={{marginBottom:10,padding:"8px 10px",borderRadius:8,background:"rgba(248,113,113,.04)",border:"1px solid rgba(248,113,113,.08)",cursor:"pointer"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:p.locsDown.length>0?4:0}}>
                 <span style={{fontSize:12,fontWeight:600,color:T.t1}}>{p.name}</span>
-                <span className="m" style={{fontSize:10,color:T.red,flexShrink:0,marginLeft:8}}>Was {$$(p.py)} → $0</span>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <span className="m" style={{fontSize:10,color:T.red,flexShrink:0}}>Was {$$(p.py)} → $0</span>
+                  <Chev/>
+                </div>
               </div>
               {p.locsDown.length>0&&<div style={{fontSize:9,color:T.t4,lineHeight:1.5}}>
                 {p.locsDown.slice(0,3).map(l=>l.split(' ').slice(0,2).join(' ')).join(' · ')}
@@ -1979,13 +2055,14 @@ function GroupDetail({group,goMain,goAcct}) {
           {groupBuying.slice(0,8).map((p,i)=>{
             const mx=groupBuying[0]?.cy||1;
             const trend=p.py>0?p.cy/p.py:1;
-            return <div key={i} style={{marginBottom:8}}>
+            return <div key={i} onClick={()=>setSelProduct(p.name)} style={{marginBottom:8,cursor:"pointer"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
                 <span style={{fontSize:11,color:T.t2,flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</span>
-                <div style={{display:"flex",gap:8,flexShrink:0,marginLeft:8}}>
+                <div style={{display:"flex",gap:8,flexShrink:0,marginLeft:8,alignItems:"center"}}>
                   <span className="m" style={{fontSize:9,color:T.t4}}>{$$(p.py)}</span>
                   <span style={{fontSize:9,color:T.t4}}>→</span>
                   <span className="m" style={{fontSize:10,color:trend>=0.8?T.blue:T.amber,fontWeight:600}}>{$$(p.cy)}</span>
+                  <Chev/>
                 </div>
               </div>
               <div style={{height:4,borderRadius:2,background:T.s3,overflow:"hidden"}}>
