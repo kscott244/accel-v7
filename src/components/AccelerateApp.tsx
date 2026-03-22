@@ -1796,6 +1796,62 @@ function GroupDetail({group,goMain,goAcct}) {
   const py=group.pyQ?.[qk]||0;const cy=group.cyQ?.[qk]||0;
   const gap=py-cy;const ret=py>0?Math.round(cy/py*100):0;
 
+  // ── FSC (distributor rep) management at group level ──────────────
+  const fscKey = (dist:string) => `groupFSC:${group.id}:${dist}`;
+  const loadFSC = (dist:string) => {
+    try { return JSON.parse(localStorage.getItem(fscKey(dist))||"null"); } catch { return null; }
+  };
+  const saveFSC = (dist:string, data:any) => {
+    try { localStorage.setItem(fscKey(dist), JSON.stringify(data)); } catch {}
+  };
+  const removeFSC = (dist:string) => {
+    try { localStorage.removeItem(fscKey(dist)); } catch {}
+  };
+
+  // Detect which distributors are present in this group's children
+  const groupDists = useMemo(()=>{
+    const seen = new Set<string>();
+    (group.children||[]).forEach((c:any) => { if(c.dealer && c.dealer!=="Unknown") seen.add(c.dealer); });
+    return [...seen].sort();
+  },[group]);
+
+  // Build FSC map: dist → {name, phone, notes, source:"badger"|"manual"}
+  const [fscMap, setFscMap] = useState<Record<string,any>>(()=>{
+    const m:Record<string,any> = {};
+    groupDists.forEach(d => {
+      const manual = loadFSC(d);
+      if(manual) { m[d] = {...manual, source:"manual"}; return; }
+      // Fall back to Badger: find first child of this distributor with a dealerRep
+      const child = (group.children||[]).find((c:any) => c.dealer===d && BADGER[c.id]?.dealerRep);
+      if(child) { m[d] = {name: BADGER[child.id].dealerRep, source:"badger"}; }
+    });
+    return m;
+  });
+
+  const [editDist, setEditDist] = useState<string|null>(null);
+  const [editName, setEditName] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+
+  const openEdit = (dist:string) => {
+    const existing = fscMap[dist];
+    setEditName(existing?.name||"");
+    setEditPhone(existing?.phone||"");
+    setEditNotes(existing?.notes||"");
+    setEditDist(dist);
+  };
+  const saveEdit = () => {
+    if(!editDist) return;
+    const data = {name:editName.trim(), phone:editPhone.trim(), notes:editNotes.trim()};
+    saveFSC(editDist, data);
+    setFscMap(prev=>({...prev, [editDist]:{...data, source:"manual"}}));
+    setEditDist(null);
+  };
+  const deleteRep = (dist:string) => {
+    removeFSC(dist);
+    setFscMap(prev=>{ const n={...prev}; delete n[dist]; return n; });
+  };
+
   // Roll up products across all children
   const {groupBuying, groupStopped} = useMemo(()=>{
     const prodMap: Record<string,{py:number,cy:number,locsPY:string[],locsCY:string[],locsDown:string[]}> = {};
@@ -1838,6 +1894,63 @@ function GroupDetail({group,goMain,goAcct}) {
           <Stat l="PY" v={$$(py)} c={T.t2}/><Stat l="CY" v={$$(cy)} c={T.blue}/><Stat l="Gap" v={gap<=0?`+${$$(Math.abs(gap))}`:$$(gap)} c={gap<=0?T.green:T.red}/><Stat l="Ret" v={ret+"%"} c={ret>30?T.green:ret>15?T.amber:T.red}/>
         </div>
       </div>
+
+      {/* FSC / DISTRIBUTOR REPS */}
+      {groupDists.length>0&&<div className="anim" style={{animationDelay:"20ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan}}>FSC Contacts</div>
+          <div style={{fontSize:9,color:T.t4}}>Applies to all locations in this group</div>
+        </div>
+        {groupDists.map(dist=>{
+          const fsc = fscMap[dist];
+          const distColor = dist==="Schein"?"rgba(79,142,247,1)":dist==="Patterson"?"rgba(168,85,247,1)":dist==="Benco"?"rgba(34,211,153,1)":dist==="Darby"?"rgba(251,146,60,1)":"rgba(148,163,184,1)";
+          const childCount = (group.children||[]).filter((c:any)=>c.dealer===dist).length;
+          return <div key={dist} style={{marginBottom:8,padding:"10px 12px",borderRadius:10,background:T.s2,border:`1px solid ${T.b2}`}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,flex:1,minWidth:0}}>
+                <span style={{fontSize:10,fontWeight:700,color:distColor,background:`${distColor}18`,borderRadius:5,padding:"2px 7px",flexShrink:0}}>{dist}</span>
+                <span style={{fontSize:9,color:T.t4,flexShrink:0}}>{childCount} loc{childCount!==1?"s":""}</span>
+                {fsc
+                  ? <div style={{flex:1,minWidth:0}}>
+                      <span style={{fontSize:12,fontWeight:600,color:T.t1,display:"block",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fsc.name}</span>
+                      {fsc.phone&&<a href={`tel:${fsc.phone.replace(/\D/g,"")}`} style={{fontSize:10,color:T.cyan,textDecoration:"none"}}>{fsc.phone}</a>}
+                      {fsc.source==="badger"&&!fsc.phone&&<span style={{fontSize:9,color:T.t4,fontStyle:"italic"}}> from Badger</span>}
+                    </div>
+                  : <span style={{fontSize:11,color:T.t4,fontStyle:"italic"}}>No FSC assigned</span>
+                }
+              </div>
+              <div style={{display:"flex",gap:6,flexShrink:0,marginLeft:8}}>
+                {fsc?.phone&&<a href={`tel:${fsc.phone.replace(/\D/g,"")}`} style={{background:"rgba(34,211,153,.1)",border:"1px solid rgba(34,211,153,.2)",borderRadius:6,padding:"3px 8px",fontSize:10,fontWeight:600,color:T.green,textDecoration:"none",display:"flex",alignItems:"center"}}>Call</a>}
+                <button onClick={()=>openEdit(dist)} style={{background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.15)",borderRadius:6,padding:"3px 8px",fontSize:10,fontWeight:600,color:T.blue,cursor:"pointer",fontFamily:"inherit"}}>{fsc?"Edit":"+ Add"}</button>
+                {fsc?.source==="manual"&&<button onClick={()=>deleteRep(dist)} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:11,padding:"2px 4px"}}>✕</button>}
+              </div>
+            </div>
+            {fsc?.notes&&<div style={{marginTop:6,fontSize:10,color:T.t3,fontStyle:"italic",lineHeight:1.4}}>{fsc.notes}</div>}
+          </div>;
+        })}
+        {/* Edit modal */}
+        {editDist&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:200,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={e=>{if(e.target===e.currentTarget)setEditDist(null)}}>
+          <div style={{background:T.s1,borderRadius:"20px 20px 0 0",padding:24,width:"100%",maxWidth:480,paddingBottom:40}}>
+            <div style={{fontSize:13,fontWeight:700,marginBottom:16}}>FSC for {editDist}</div>
+            <div style={{marginBottom:10}}>
+              <div style={{fontSize:10,color:T.t3,marginBottom:4,fontWeight:600}}>Name *</div>
+              <input value={editName} onChange={e=>setEditName(e.target.value)} placeholder="Rep name" style={{width:"100%",background:T.s2,border:`1px solid ${T.b1}`,borderRadius:8,padding:"8px 10px",fontSize:13,color:T.t1,fontFamily:"inherit"}}/>
+            </div>
+            <div style={{marginBottom:10}}>
+              <div style={{fontSize:10,color:T.t3,marginBottom:4,fontWeight:600}}>Phone</div>
+              <input value={editPhone} onChange={e=>setEditPhone(e.target.value)} placeholder="(xxx) xxx-xxxx" type="tel" style={{width:"100%",background:T.s2,border:`1px solid ${T.b1}`,borderRadius:8,padding:"8px 10px",fontSize:13,color:T.t1,fontFamily:"inherit"}}/>
+            </div>
+            <div style={{marginBottom:16}}>
+              <div style={{fontSize:10,color:T.t3,marginBottom:4,fontWeight:600}}>Notes</div>
+              <textarea value={editNotes} onChange={e=>setEditNotes(e.target.value)} placeholder="Relationship notes, schedule, anything useful..." rows={3} style={{width:"100%",background:T.s2,border:`1px solid ${T.b1}`,borderRadius:8,padding:"8px 10px",fontSize:12,color:T.t1,fontFamily:"inherit",resize:"none"}}/>
+            </div>
+            <div style={{display:"flex",gap:10}}>
+              <button onClick={()=>setEditDist(null)} style={{flex:1,padding:"10px 0",borderRadius:10,fontSize:13,fontWeight:600,cursor:"pointer",border:`1px solid ${T.b1}`,background:T.s2,color:T.t3,fontFamily:"inherit"}}>Cancel</button>
+              <button onClick={saveEdit} disabled={!editName.trim()} style={{flex:2,padding:"10px 0",borderRadius:10,fontSize:13,fontWeight:700,cursor:editName.trim()?"pointer":"not-allowed",border:"none",background:editName.trim()?T.blue:"rgba(79,142,247,.3)",color:"#fff",fontFamily:"inherit"}}>Save FSC</button>
+            </div>
+          </div>
+        </div>}
+      </div>}
 
       {/* GROUP PRODUCT ROLLUP */}
       {hasProducts&&<div className="anim" style={{animationDelay:"40ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
