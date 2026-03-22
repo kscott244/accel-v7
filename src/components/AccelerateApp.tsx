@@ -2819,30 +2819,45 @@ function DealersTab({scored,goAcct}:{scored:any[],goAcct:(a:any)=>void}) {
     return null; // no distributor hint — rep could belong to any
   };
 
-  // For selected distributor: group accounts by rep
+  // For selected distributor: group accounts by rep.
+  // Rule: if a rep is linked to ANY child in a group, they own ALL children in that
+  // group that share the same distributor. e.g. Rich Foti (Schein) on one Dental
+  // Associates of CT child → owns every Schein child in that group.
   const repGroups = useMemo(()=>{
     if(!selDist) return null;
     const accts = distStats[selDist]?.accts || [];
-    const groups:Record<string,any[]> = {"__none__":[]};
-    accts.forEach(a=>{
-      // Only use child-level Badger entry (a.id) — never fall back to parent (a.gId)
-      // because the parent may have children across multiple distributors
-      const badger = (typeof BADGER !== "undefined" ? BADGER : {})[a.id];
+    const B = typeof BADGER !== "undefined" ? BADGER : {};
+
+    // Pass 1: build a map of groupId → rep name for this distributor.
+    // Walk every account in the territory (all distributors) to find Badger entries,
+    // so we catch cases where the rep was logged on a sibling with a different dealer.
+    const groupRepMap: Record<string,string> = {}; // gId → repName
+    scored.forEach(a => {
+      const badger = B[a.id];
       const rep = badger?.dealerRep;
-      if(isNoRep(rep)) {
-        groups["__none__"].push(a);
-        return;
-      }
+      if(isNoRep(rep)) return;
       const hint = repDistHint(rep!);
-      // If rep name contains a distributor hint that doesn't match this account's
-      // actual dealer, skip — the rep note was logged against the wrong child
-      if(hint && hint !== selDist) {
+      // Only register if rep's distributor matches selDist
+      if(hint && hint !== selDist) return;
+      if(!hint) {
+        // No distributor hint — only register if this account's own dealer matches
+        if(a.dealer !== selDist) return;
+      }
+      if(a.gId && !groupRepMap[a.gId]) {
+        groupRepMap[a.gId] = rep!.trim();
+      }
+    });
+
+    // Pass 2: assign each selDist account to its rep via groupRepMap, or __none__
+    const groups: Record<string,any[]> = {"__none__":[]};
+    accts.forEach(a => {
+      const rep = a.gId ? groupRepMap[a.gId] : undefined;
+      if(!rep) {
         groups["__none__"].push(a);
         return;
       }
-      const key = rep!.trim();
-      if(!groups[key]) groups[key]=[];
-      groups[key].push(a);
+      if(!groups[rep]) groups[rep] = [];
+      groups[rep].push(a);
     });
     return groups;
   },[selDist,scored,distStats]);
