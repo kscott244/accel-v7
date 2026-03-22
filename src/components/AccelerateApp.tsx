@@ -1946,7 +1946,7 @@ function GroupDetail({group,goMain,goAcct}) {
 
   // Detect which distributors are present in this group's children
   const groupDists = useMemo(()=>{
-    const seen = new Set<string>();
+    const seen = new Set();
     (group.children||[]).forEach((c:any) => { if(c.dealer && c.dealer!=="Unknown") seen.add(c.dealer); });
     return [...seen].sort();
   },[group]);
@@ -4184,7 +4184,7 @@ function OutreachTab({scored}:{scored:any[]}) {
 
   const allDownCount = scored.filter(a=>(a.combinedGap??a.q1_gap??0)<0).length;
   const withEmail = useMemo(()=>{
-    const seen = new Set<string>();
+    const seen = new Set();
     return scored.filter(a => {
       const gap = (a.combinedGap ?? a.q1_gap ?? 0);
       if(gap >= 0) return false;
