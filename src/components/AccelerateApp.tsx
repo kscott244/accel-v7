@@ -4060,6 +4060,9 @@ function OutreachTab({scored}:{scored:any[]}) {
   const [emailOnly, setEmailOnly] = useState(true);
   const [editIdx, setEditIdx] = useState<number|null>(null);
   const [editBody, setEditBody] = useState("");
+  const [researching, setResearching] = useState(false);
+  const [researchProgress, setResearchProgress] = useState<{done:number,total:number,current:string}|null>(null);
+  const [researchDone, setResearchDone] = useState<string[]>([]); // account ids researched this session
 
   useEffect(()=>{
     try { const t = localStorage.getItem("gmail_refresh_token"); if(t) setGmailToken(t); } catch {}
@@ -4076,8 +4079,66 @@ function OutreachTab({scored}:{scored:any[]}) {
     }
   }, []);
 
+
+  // Research top 25 down accounts via Deep Research API and save to contact cards
+  async function researchTop25() {
+    setResearching(true);
+    setResearchProgress({done:0, total:25, current:""});
+    setResearchDone([]);
+
+    const top25 = [...scored]
+      .filter(a => (a.combinedGap ?? a.q1_gap ?? 0) < 0)
+      .sort((a,b) => (a.combinedGap??a.q1_gap??0) - (b.combinedGap??b.q1_gap??0))
+      .slice(0, 25);
+
+    const found: string[] = [];
+    for(let i = 0; i < top25.length; i++) {
+      const a = top25[i];
+      setResearchProgress({done:i, total:top25.length, current:a.name});
+      try {
+        const badger = BADGER[a.id] || BADGER[a.gId] || null;
+        const res = await fetch("/api/deep-research", {
+          method: "POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({
+            name: a.name,
+            city: a.city,
+            state: a.st || a.state || "CT",
+            address: badger?.address || a.addr || "",
+            dealer: a.dealer || "",
+            doctor: a.doctor || badger?.doctor || "",
+            gName: a.gName || "",
+          })
+        });
+        const data = await res.json();
+        if(data?.intel) {
+          const intel = data.intel;
+          const contacts = {
+            contactName: intel.contactName || null,
+            phone: intel.phone || null,
+            email: intel.email || null,
+            website: intel.website || null,
+            savedAt: new Date().toISOString(),
+            practiceName: a.name,
+            talkingPoints: intel.talkingPoints || [],
+            hooks: intel.hooks || [],
+            ownershipNote: intel.ownershipNote || null,
+          };
+          const hasContact = contacts.contactName || contacts.phone || contacts.email || contacts.website;
+          if(hasContact) {
+            try { localStorage.setItem(`contact:${a.id}`, JSON.stringify(contacts)); } catch {}
+            found.push(a.id);
+          }
+        }
+      } catch(e) { /* skip */ }
+      await new Promise(r => setTimeout(r, 800));
+    }
+    setResearchDone(found);
+    setResearchProgress({done:25, total:25, current:""});
+    setResearching(false);
+  }
+
   const downAccounts = useMemo(()=>{
-    const seen = new Set<string>(); // deduplicate by email
     const results: any[] = [];
 
     // Sort by largest gap first
@@ -4141,9 +4202,27 @@ function OutreachTab({scored}:{scored:any[]}) {
   async function generatePreviews() {
     setLoading(true); setPreviews([]); setResults([]);
     try {
+      // Enrich each account with saved contact data from localStorage (Deep Research results)
+      const enriched = downAccounts.map(a => {
+        try {
+          const saved = localStorage.getItem(`contact:${a.id}`);
+          if(saved) {
+            const contacts = JSON.parse(saved);
+            return {
+              ...a,
+              email: a.email || contacts.email || null,
+              doctor: a.doctor || contacts.contactName || null,
+              talkingPoints: contacts.talkingPoints || [],
+              hooks: contacts.hooks || [],
+              ownershipNote: contacts.ownershipNote || null,
+            };
+          }
+        } catch {}
+        return a;
+      });
       const res = await fetch("/api/send-outreach", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({accounts: downAccounts, preview: true, refreshToken: null})
+        body: JSON.stringify({accounts: enriched, preview: true, refreshToken: null})
       });
       const data = await res.json();
       setPreviews(data.results || []);
@@ -4173,6 +4252,38 @@ function OutreachTab({scored}:{scored:any[]}) {
     <div style={{marginBottom:16}}>
       <div style={{fontSize:18,fontWeight:700,color:T.t1,marginBottom:4}}>AI Outreach</div>
       <div style={{fontSize:12,color:T.t3}}>Personalized emails to down accounts — AI writes each one based on their actual data</div>
+    </div>
+
+    {/* Research Top 25 */}
+    <div style={{background:T.s1,border:`1px solid ${researching?"rgba(167,139,250,.35)":researchDone.length>0?"rgba(52,211,153,.25)":T.b1}`,borderRadius:12,padding:12,marginBottom:12}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:researching||researchDone.length>0?8:0}}>
+        <div>
+          <div style={{fontSize:12,fontWeight:700,color:researchDone.length>0?T.green:T.t2}}>
+            {researchDone.length>0?`✅ Researched ${researchDone.length} accounts`:"🔬 Research Top 25 Down Accounts"}
+          </div>
+          <div style={{fontSize:10,color:T.t4,marginTop:2}}>
+            {researchDone.length>0?"Contact cards updated · emails + doctor names found":"AI searches the web for each practice — finds emails, doctor names, contact info"}
+          </div>
+        </div>
+        <button onClick={researchTop25} disabled={researching||scored.length===0}
+          style={{flexShrink:0,marginLeft:12,padding:"8px 14px",borderRadius:8,border:"none",
+            background:researching?T.s2:"rgba(167,139,250,.2)",
+            color:researching?T.t4:T.purple,fontSize:11,fontWeight:700,
+            cursor:researching?"not-allowed":"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>
+          {researching?"Running...":"Run Research"}
+        </button>
+      </div>
+      {researching&&researchProgress&&<div>
+        <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+          <span style={{fontSize:10,color:T.t3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>
+            {researchProgress.current ? `Researching: ${researchProgress.current}` : "Finishing up..."}
+          </span>
+          <span style={{fontSize:10,color:T.purple,flexShrink:0,marginLeft:8}}>{researchProgress.done}/{researchProgress.total}</span>
+        </div>
+        <div style={{height:4,background:T.s2,borderRadius:2,overflow:"hidden"}}>
+          <div style={{height:"100%",background:T.purple,borderRadius:2,width:`${(researchProgress.done/researchProgress.total)*100}%`,transition:"width .3s"}}/>
+        </div>
+      </div>}
     </div>
 
     <div style={{background:T.s1,border:`1px solid ${gmailToken?T.green:T.b1}`,borderRadius:12,padding:12,marginBottom:12,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
