@@ -1021,9 +1021,112 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
     .sort((a,b) => (b.cyQ?.["1"]||0) - (a.cyQ?.["1"]||0))
     .slice(0,5);
 
-  // ── Section 3: Action List split
+  // ── Section 3: Group-first action list
+  // Collapse scored children by group, compute group-level gap/score
+  const scoredGroups = useMemo(() => {
+    const gMap: Record<string,any> = {};
+    scored.forEach(a => {
+      if(!a.gId) return;
+      if(!gMap[a.gId]) gMap[a.gId] = {gId:a.gId, gName:a.gName||a.gId, gTier:a.gTier||"", children:[], totalPY:0, totalCY:0, maxScore:0};
+      const g = gMap[a.gId];
+      g.children.push(a);
+      g.totalPY += a.py || 0;
+      g.totalCY += a.cy || 0;
+      if((a.score||0) > g.maxScore) g.maxScore = a.score;
+    });
+    return Object.values(gMap)
+      .map((g:any) => ({
+        ...g,
+        totalGap: g.totalPY - g.totalCY,
+        totalRet: g.totalPY > 0 ? g.totalCY / g.totalPY : 0,
+        children: [...g.children].sort((a:any,b:any) => (b.gap||0) - (a.gap||0)),
+      }))
+      .filter((g:any) => g.totalGap > 0 || g.maxScore >= 20)
+      .sort((a:any,b:any) => b.totalGap - a.totalGap);
+  }, [scored]);
+
+  const hotGroups = scoredGroups.filter((g:any) => g.maxScore >= 50).slice(0,12);
+  const followGroups = scoredGroups.filter((g:any) => g.maxScore >= 20 && g.maxScore < 50).slice(0,12);
   const hot = scored.filter(a => a.score >= 50).slice(0,10);
   const followUp = scored.filter(a => a.score >= 20 && a.score < 50).slice(0,10);
+
+  // ── Group-first action card for Today tab
+  const GroupActionCard = ({g, i, isHot, goAcct, goGroup, groups}: any) => {
+    const [expanded, setExpanded] = useState(false);
+    const gap = g.totalGap;
+    const ret = Math.round(g.totalRet * 100);
+    const worstChildren = g.children.filter((c:any) => (c.gap||0) > 0).slice(0,5);
+    const topChild = worstChildren[0];
+    // Find full group object for goGroup
+    const fullGroup = (groups||[]).find((gr:any) => gr.id === g.gId);
+    return (
+      <div className="anim" style={{animationDelay:`${i*25}ms`,background:T.s1,
+        border:`1px solid ${isHot?"rgba(248,113,113,.18)":T.b1}`,
+        borderRadius:14,padding:"12px 14px",marginBottom:8}}>
+        {/* Group header row */}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+          <div style={{flex:1,minWidth:0,cursor:"pointer"}} onClick={()=>fullGroup&&goGroup(fullGroup)}>
+            <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:2}}>
+              <span style={{fontSize:10,fontWeight:700,color:isHot?T.red:T.amber,
+                background:isHot?"rgba(248,113,113,.08)":"rgba(251,191,36,.08)",
+                borderRadius:4,padding:"2px 6px"}}>{g.maxScore}pt</span>
+              <span style={{fontSize:10,color:T.t4}}>{g.children.length} loc{g.children.length>1?"s":""}</span>
+              {isAccelTier(g.gTier)&&<span style={{fontSize:9,color:T.amber}}>{normalizeTier(g.gTier)}</span>}
+            </div>
+            <div style={{fontSize:13,fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",color:T.t1}}>{g.gName}</div>
+          </div>
+          <div style={{textAlign:"right",flexShrink:0,marginLeft:12}}>
+            <div className="m" style={{fontSize:13,fontWeight:700,color:gap>0?T.red:T.green}}>{gap>0?`-${$$(gap)}`:$$(Math.abs(gap))}</div>
+            <div className="m" style={{fontSize:10,color:T.t4}}>{ret}% ret</div>
+          </div>
+        </div>
+        {/* Top hurting child — always visible */}
+        {topChild&&<div style={{borderTop:`1px solid ${T.b2}`,paddingTop:6,marginTop:2}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer"}}
+            onClick={()=>goAcct({...topChild,gName:g.gName,gId:g.gId,gTier:g.gTier})}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:"flex",alignItems:"center",gap:4}}>
+                <span style={{fontSize:8,color:T.red,fontWeight:700}}>▼</span>
+                <span style={{fontSize:11,fontWeight:600,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{topChild.name}</span>
+                {topChild.dealer&&topChild.dealer!=="Unknown"&&<span style={{fontSize:9,color:T.cyan,flexShrink:0}}>· {topChild.dealer}</span>}
+              </div>
+              {/* Down products on worst child */}
+              {(topChild.products||[]).filter((p:any)=>(p.py1||p.pyQ?.["1"]||0)>100&&(p.cy1||p.cyQ?.["1"]||0)===0).slice(0,3).map((p:any,j:number)=>(
+                <span key={j} style={{fontSize:8,color:T.red,background:"rgba(248,113,113,.06)",borderRadius:3,padding:"1px 4px",marginRight:3,border:"1px solid rgba(248,113,113,.1)"}}>{p.n?.split(" ")[0]} $0</span>
+              ))}
+            </div>
+            <div style={{flexShrink:0,marginLeft:8,textAlign:"right"}}>
+              <span className="m" style={{fontSize:11,fontWeight:700,color:T.red}}>-{$$((topChild.gap||0))}</span>
+              <Chev/>
+            </div>
+          </div>
+        </div>}
+        {/* Expand/collapse remaining children */}
+        {worstChildren.length>1&&<>
+          <button onClick={()=>setExpanded(!expanded)}
+            style={{width:"100%",marginTop:6,background:"none",border:"none",cursor:"pointer",
+              fontSize:10,color:T.t4,textAlign:"left",padding:"2px 0",fontFamily:"inherit",
+              display:"flex",alignItems:"center",gap:4}}>
+            <span style={{color:T.blue}}>{expanded?"▲ Hide":"▼ Show"} {worstChildren.length-1} more location{worstChildren.length>2?"s":""}</span>
+          </button>
+          {expanded&&worstChildren.slice(1).map((c:any,j:number)=>(
+            <div key={c.id} style={{borderTop:`1px solid ${T.b2}`,paddingTop:5,marginTop:5,
+              display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer"}}
+              onClick={()=>goAcct({...c,gName:g.gName,gId:g.gId,gTier:g.gTier})}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:11,fontWeight:500,color:T.t2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.name}</div>
+                {c.dealer&&c.dealer!=="Unknown"&&<span style={{fontSize:9,color:T.cyan}}>{c.dealer}</span>}
+              </div>
+              <div style={{flexShrink:0,marginLeft:8,display:"flex",alignItems:"center",gap:4}}>
+                <span className="m" style={{fontSize:11,fontWeight:600,color:T.red}}>-{$$(c.gap||0)}</span>
+                <Chev/>
+              </div>
+            </div>
+          ))}
+        </>}
+      </div>
+    );
+  };
 
   const AcctCard = ({a, i, showHot=false}) => {
     const dispGap = a.hasSiblings ? a.combinedGap : a.gap;
@@ -1471,25 +1574,25 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
       </>}
     </div>
 
-    {/* ── SECTION 3: ACTION LIST ── */}
+    {/* ── SECTION 3: GROUP-FIRST ACTION LIST ── */}
     <div>
-      {hot.length>0&&<>
-        <SectionHeader label="Hot" color={T.red} count={`${hot.length} account${hot.length>1?"s":""}`} pulse={true}/>
-        <div style={{fontSize:10,color:T.t4,marginBottom:10}}>Score 50+ · High urgency · Call today</div>
-        <div className="today-grid">
-          {hot.map((a,i)=><AcctCard key={a.id} a={a} i={i} showHot={true}/>)}
+      {hotGroups.length>0&&<>
+        <SectionHeader label="Hot" color={T.red} count={`${hotGroups.length} group${hotGroups.length>1?"s":""}`} pulse={true}/>
+        <div style={{fontSize:10,color:T.t4,marginBottom:10}}>Highest urgency · Act this week</div>
+        <div>
+          {hotGroups.map((g:any,i:number)=><GroupActionCard key={g.gId} g={g} i={i} isHot={true} goAcct={goAcct} goGroup={goGroup} groups={groups}/>)}
         </div>
       </>}
-      {followUp.length>0&&<>
-        <div style={{marginTop:hot.length>0?4:0}}>
-          <SectionHeader label="Follow Up" color={T.amber} count={`${followUp.length} account${followUp.length>1?"s":""}`}/>
-          <div style={{fontSize:10,color:T.t4,marginBottom:10}}>Score 20-49 · Worth a call this week</div>
-          <div className="today-grid">
-            {followUp.map((a,i)=><AcctCard key={a.id} a={a} i={i}/>)}
+      {followGroups.length>0&&<>
+        <div style={{marginTop:hotGroups.length>0?4:0}}>
+          <SectionHeader label="Follow Up" color={T.amber} count={`${followGroups.length} group${followGroups.length>1?"s":""}`}/>
+          <div style={{fontSize:10,color:T.t4,marginBottom:10}}>Worth a call this week</div>
+          <div>
+            {followGroups.map((g:any,i:number)=><GroupActionCard key={g.gId} g={g} i={i} isHot={false} goAcct={goAcct} goGroup={goGroup} groups={groups}/>)}
           </div>
         </div>
       </>}
-      {hot.length===0&&followUp.length===0&&(
+      {hotGroups.length===0&&followGroups.length===0&&(
         <div style={{padding:"24px 0",textAlign:"center",color:T.t4,fontSize:12}}>No scored accounts — upload a CSV to get started.</div>
       )}
     </div>
