@@ -33,11 +33,122 @@ let DEALERS: Record<string, string> = {};
 let WEEK_ROUTES: any = { routes: {}, unplaced: [] };
 let BADGER: Record<string, any> = {};
 let PARENT_NAMES: Record<string, string> = {};
+let PATCHES: any = { group_creates:[], group_detaches:[], name_overrides:[], contact_overrides:[], dealer_overrides:[] };
 try { DEALER_LOOKUP = require("@/data/dealer-lookup").DEALER_LOOKUP; } catch(e) {}
 try { DEALERS = require("@/data/dealers").DEALERS; } catch(e) {}
 try { WEEK_ROUTES = require("@/data/week-routes.json"); } catch(e) {}
 try { BADGER = require("@/data/badger-lookup.json"); } catch(e) {}
 try { PARENT_NAMES = require("@/data/parent-names.json"); } catch(e) {}
+try { PATCHES = require("@/data/patches.json"); } catch(e) {}
+
+// ─── APPLY PATCHES ───────────────────────────────────────────────────────────
+// Applies all manual corrections on top of any data source (preloaded or CSV).
+// Add new corrections to src/data/patches.json — they survive any data rebuild.
+function applyPatches(grps: any[]): any[] {
+  if (!grps || !PATCHES) return grps;
+  let result = [...grps];
+
+  // 1. NAME OVERRIDES — fix bad MDM names
+  const nameMap: Record<string,string> = {};
+  (PATCHES.name_overrides||[]).forEach((o:any) => { nameMap[o.id] = o.name; });
+  if (Object.keys(nameMap).length > 0) {
+    result = result.map(g => ({
+      ...g,
+      name: nameMap[g.id] || g.name,
+      children: (g.children||[]).map((c:any) => ({
+        ...c,
+        name: nameMap[c.id] || c.name,
+      }))
+    }));
+  }
+
+  // 2. CONTACT OVERRIDES — inject emails/contacts into BADGER at runtime
+  (PATCHES.contact_overrides||[]).forEach((o:any) => {
+    if (!BADGER[o.id]) BADGER[o.id] = {};
+    if (o.contactName && !BADGER[o.id].contactName) BADGER[o.id].contactName = o.contactName;
+    if (o.email && !BADGER[o.id].email) BADGER[o.id].email = o.email;
+    if (o.address && !BADGER[o.id].address) BADGER[o.id].address = o.address;
+  });
+
+  // 3. GROUP DETACHES — remove child from wrong parent, make standalone
+  (PATCHES.group_detaches||[]).forEach((detach:any) => {
+    const childId = detach.childId;
+    let detachedChild: any = null;
+    result = result.map(g => {
+      if (g.id !== detach.fromGroupId) return g;
+      const kept = (g.children||[]).filter((c:any) => {
+        if (c.id === childId) { detachedChild = c; return false; }
+        return true;
+      });
+      return { ...g, children: kept, locs: kept.length };
+    });
+    // Create standalone group for detached child
+    if (detachedChild && !result.find(g => g.id === detach.newGroupId)) {
+      const standalone = {
+        id: detach.newGroupId,
+        name: detach.newGroupName || detachedChild.name,
+        tier: detachedChild.tier || "Standard",
+        class2: detachedChild.class2 || "Private Practice",
+        locs: 1,
+        pyQ: detachedChild.pyQ || {},
+        cyQ: detachedChild.cyQ || {},
+        children: [{ ...detachedChild, gId: detach.newGroupId, gName: detach.newGroupName || detachedChild.name }],
+      };
+      result.push(standalone);
+    }
+  });
+
+  // 4. GROUP CREATES — create new parent groups and pull children in
+  (PATCHES.group_creates||[]).forEach((create:any) => {
+    if (result.find(g => g.id === create.id)) return; // already exists
+    const childIdSet = new Set(create.childIds || []);
+    const children: any[] = [];
+    let totalPY: Record<string,number> = {};
+    let totalCY: Record<string,number> = {};
+
+    // Pull matching children from existing groups
+    result = result.map(g => {
+      const kept: any[] = [];
+      (g.children||[]).forEach((c:any) => {
+        if (childIdSet.has(c.id)) {
+          children.push({ ...c, gId: create.id, gName: create.name });
+          // Roll up financials
+          Object.entries(c.pyQ||{}).forEach(([q,v]:any) => { totalPY[q] = (totalPY[q]||0) + v; });
+          Object.entries(c.cyQ||{}).forEach(([q,v]:any) => { totalCY[q] = (totalCY[q]||0) + v; });
+        } else {
+          kept.push(c);
+        }
+      });
+      return { ...g, children: kept, locs: kept.length };
+    });
+
+    // Add any childIds that weren't found (e.g. new accounts like Coastal CT)
+    create.childIds.forEach((cid:string) => {
+      if (!children.find(c => c.id === cid)) {
+        children.push({
+          id: cid, name: nameMap[cid] || cid, gId: create.id, gName: create.name,
+          pyQ: {}, cyQ: {}, products: [], tier: "Standard", class2: "Private Practice",
+        });
+      }
+    });
+
+    if (children.length > 0) {
+      result.unshift({
+        id: create.id,
+        name: create.name,
+        tier: create.tier || "Standard",
+        class2: create.class2 || "Private Practice",
+        dsoName: create.dsoName || create.name,
+        locs: children.length,
+        pyQ: totalPY,
+        cyQ: totalCY,
+        children,
+      });
+    }
+  });
+
+  return result;
+}
 
 // ─── DESIGN TOKENS ───────────────────────────────────────────────
 const T = {
@@ -555,7 +666,7 @@ function AppInner() {
       const saved = localStorage.getItem("accel_data");
       if (saved) {
         const parsed = JSON.parse(saved);
-        setGroups(applyGroupOverrides(hydrateDealer(parsed.groups)));
+        setGroups(applyGroupOverrides(applyPatches(hydrateDealer(parsed.groups))));
         setDataSource(`CSV uploaded ${parsed.generated}`);
         setLoading(false);
         return;
@@ -565,7 +676,7 @@ function AppInner() {
     // Load pre-loaded data
     try {
       const { PRELOADED } = require("@/data/preloaded-data");
-      setGroups(applyGroupOverrides(hydrateDealer(PRELOADED.groups)));
+      setGroups(applyGroupOverrides(applyPatches(hydrateDealer(PRELOADED.groups))));
       setDataSource(`Pre-loaded ${PRELOADED.generated}`);
     } catch(e) {
       setGroups([]);
@@ -585,7 +696,7 @@ function AppInner() {
         const text = ev.target.result;
         const rows = parseCSV(text);
         const result = processCSVData(rows);
-        setGroups(applyGroupOverrides(result.groups));
+        setGroups(applyGroupOverrides(applyPatches(result.groups)));
         setDataSource(`CSV uploaded ${result.generated}`);
         localStorage.setItem("accel_data", JSON.stringify(result));
         setUploadMsg(`OK Loaded ${result.groups.length} groups from CSV`);
