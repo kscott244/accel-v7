@@ -2504,6 +2504,8 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
           products: buying.slice(0,5).map(p=>p.n),
           doctor: badger?.doctor || "",
           gName: acct.gName || "",
+          acctId: acct.id,
+          ownership: badger?.ownership || null,
           gap: Math.round(gap),
           retentionPct: Math.round(ret*100),
           Q1_PY: Math.round(pyVal),
@@ -2518,17 +2520,17 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
       if (data?.intel) {
         setDrIntel(data.intel);
         setDrState("done");
-        // Save contact info to persistent storage
+        // Save contact info to persistent storage (localStorage + auto-committed to patches.json by API)
         const contacts = {
-          contactName: data.intel.contactName || null,
-          phone: data.intel.phone || null,
-          email: data.intel.email || null,
+          contactName: data.intel.contacts?.[0]?.name || data.intel.contactName || null,
+          phone: data.intel.contacts?.[0]?.phone || data.intel.phone || null,
+          email: data.intel.contacts?.[0]?.email || data.intel.email || null,
           website: data.intel.website || null,
+          contacts: data.intel.contacts || [],
           savedAt: new Date().toISOString(),
           practiceName: acct.name,
         };
-        // Only save if we actually found something
-        const hasContact = contacts.contactName || contacts.phone || contacts.email || contacts.website;
+        const hasContact = contacts.contactName || contacts.phone || contacts.email || contacts.website || contacts.contacts.length > 0;
         if (hasContact) {
           try { localStorage.setItem(storageKey, JSON.stringify(contacts)); } catch {}
           setSavedContacts(contacts);
@@ -2808,39 +2810,68 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
             {badger.phone}
           </a>
         </div>}
-        {/* Saved Research Contacts — merged into Field Intel card */}
-        {savedContacts&&(savedContacts.contactName||savedContacts.phone||savedContacts.email||savedContacts.website)&&<div style={{marginTop:12,paddingTop:10,borderTop:`1px solid ${T.b2}`}}>
+        {/* Saved Research Contacts — with hierarchy */}
+        {savedContacts&&(savedContacts.contactName||savedContacts.contacts?.length>0)&&<div style={{marginTop:12,paddingTop:10,borderTop:`1px solid ${T.b2}`}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-            <div style={{fontSize:9,textTransform:"uppercase",color:T.t3,letterSpacing:"1px"}}>Research Contacts</div>
+            <div style={{fontSize:9,textTransform:"uppercase",color:T.t3,letterSpacing:"1px"}}>Contacts</div>
             <div style={{fontSize:8,color:T.t4}}>{savedContacts.savedAt?new Date(savedContacts.savedAt).toLocaleDateString():""}</div>
           </div>
-          <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
-            {savedContacts.contactName&&<div><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:1}}>Contact</div><div style={{fontSize:11,fontWeight:600,color:T.t1}}>{savedContacts.contactName}</div></div>}
-            {savedContacts.phone&&<div><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:1}}>Direct #</div><a href={`tel:${savedContacts.phone}`} style={{fontSize:11,fontWeight:600,color:T.green,textDecoration:"none"}}>{savedContacts.phone}</a></div>}
-            {savedContacts.email&&<div><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:1}}>Email</div><a href={`mailto:${savedContacts.email}`} style={{fontSize:11,fontWeight:600,color:T.cyan,textDecoration:"none"}}>{savedContacts.email}</a></div>}
-            {savedContacts.website&&<div><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:1}}>Web</div><a href={savedContacts.website} target="_blank" rel="noreferrer" style={{fontSize:11,fontWeight:600,color:T.blue,textDecoration:"none"}}>Visit →</a></div>}
-          </div>
+          {/* Primary contact always visible */}
+          {(savedContacts.contacts?.length>0?savedContacts.contacts:[{name:savedContacts.contactName,email:savedContacts.email,phone:savedContacts.phone,role:"",tier:1}]).slice(0,1).map((c:any,i:number)=>(
+            <div key={i} style={{marginBottom:4}}>
+              <div style={{fontSize:11,fontWeight:700,color:T.t1}}>{c.name}</div>
+              {c.role&&<div style={{fontSize:9,color:T.t4,marginBottom:2}}>{c.role}</div>}
+              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                {c.email&&<a href={`mailto:${c.email}`} style={{fontSize:10,color:T.cyan,textDecoration:"none"}}>{c.email}</a>}
+                {c.phone&&<a href={`tel:${c.phone}`} style={{fontSize:10,color:T.green,textDecoration:"none"}}>{c.phone}</a>}
+              </div>
+            </div>
+          ))}
+          {/* Additional contacts collapsed */}
+          {savedContacts.contacts?.length>1&&savedContacts.contacts.slice(1).map((c:any,i:number)=>(
+            <div key={i} style={{borderTop:`1px solid ${T.b3}`,paddingTop:4,marginTop:4}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
+                <div style={{fontSize:10,fontWeight:600,color:T.t2}}>{c.name}</div>
+                <div style={{fontSize:9,color:T.t4}}>{c.role}</div>
+              </div>
+              <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:1}}>
+                {c.email&&<a href={`mailto:${c.email}`} style={{fontSize:9,color:T.cyan,textDecoration:"none"}}>{c.email}</a>}
+                {c.phone&&<a href={`tel:${c.phone}`} style={{fontSize:9,color:T.green,textDecoration:"none"}}>{c.phone}</a>}
+              </div>
+            </div>
+          ))}
+          {savedContacts.website&&<div style={{marginTop:4}}><a href={savedContacts.website} target="_blank" rel="noreferrer" style={{fontSize:9,color:T.blue,textDecoration:"none"}}>🌐 {savedContacts.website.replace(/^https?:\/\//,"")}</a></div>}
         </div>}
       </div>}
 
       {/* SAVED CONTACTS — standalone card when no Badger data */}
-      {!badger&&savedContacts&&(savedContacts.contactName||savedContacts.phone||savedContacts.email||savedContacts.website)&&<div className="anim" style={{animationDelay:"50ms",background:T.s1,border:`1px solid rgba(34,211,238,.15)`,borderRadius:16,padding:16,marginBottom:12}}>
+      {!badger&&savedContacts&&(savedContacts.contactName||savedContacts.contacts?.length>0)&&<div className="anim" style={{animationDelay:"50ms",background:T.s1,border:`1px solid rgba(34,211,238,.15)`,borderRadius:16,padding:16,marginBottom:12}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
           <div style={{display:"flex",alignItems:"center",gap:6}}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={T.cyan} strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan}}>Saved Contacts</span>
+            <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan}}>Contacts</span>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <div style={{fontSize:9,color:T.t4}}>{savedContacts.savedAt?new Date(savedContacts.savedAt).toLocaleDateString():""}</div>
             <button onClick={()=>{try { localStorage.removeItem(storageKey); } catch {} setSavedContacts(null);}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:13,lineHeight:1,padding:2}}>✕</button>
           </div>
         </div>
-        <div style={{display:"flex",flexWrap:"wrap",gap:10}}>
-          {savedContacts.contactName&&<div><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:1}}>Contact</div><div style={{fontSize:12,fontWeight:600,color:T.t1}}>{savedContacts.contactName}</div></div>}
-          {savedContacts.phone&&<div><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:1}}>Direct #</div><a href={`tel:${savedContacts.phone}`} style={{fontSize:12,fontWeight:600,color:T.green,textDecoration:"none"}}>{savedContacts.phone}</a></div>}
-          {savedContacts.email&&<div><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:1}}>Email</div><a href={`mailto:${savedContacts.email}`} style={{fontSize:12,fontWeight:600,color:T.cyan,textDecoration:"none"}}>{savedContacts.email}</a></div>}
-          {savedContacts.website&&<div><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:1}}>Website</div><a href={savedContacts.website} target="_blank" rel="noreferrer" style={{fontSize:12,fontWeight:600,color:T.blue,textDecoration:"none"}}>Visit →</a></div>}
-        </div>
+        {/* All contacts in hierarchy order */}
+        {(savedContacts.contacts?.length>0?savedContacts.contacts:[{name:savedContacts.contactName,email:savedContacts.email,phone:savedContacts.phone,role:"",tier:1}]).map((c:any,i:number)=>(
+          <div key={i} style={{borderTop:i>0?`1px solid ${T.b2}`:"none",paddingTop:i>0?8:0,marginTop:i>0?8:0}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:2}}>
+              <div style={{fontSize:12,fontWeight:700,color:i===0?T.t1:T.t2}}>{c.name}</div>
+              {c.role&&<div style={{fontSize:9,color:T.t4,background:T.s2,borderRadius:4,padding:"1px 6px"}}>{c.role}</div>}
+            </div>
+            <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+              {c.email&&<a href={`mailto:${c.email}`} style={{fontSize:11,color:T.cyan,textDecoration:"none"}}>{c.email}</a>}
+              {c.phone&&<a href={`tel:${c.phone}`} style={{fontSize:11,color:T.green,textDecoration:"none"}}>{c.phone}</a>}
+            </div>
+          </div>
+        ))}
+        {savedContacts.website&&<div style={{marginTop:8,paddingTop:8,borderTop:`1px solid ${T.b2}`}}>
+          <a href={savedContacts.website} target="_blank" rel="noreferrer" style={{fontSize:11,color:T.blue,textDecoration:"none"}}>🌐 {savedContacts.website.replace(/^https?:\/\//,"")}</a>
+        </div>}
       </div>}
 
       {/* PARENT GROUP SUMMARY */}
