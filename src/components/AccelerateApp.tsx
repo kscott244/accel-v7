@@ -147,6 +147,25 @@ function applyPatches(grps: any[]): any[] {
     }
   });
 
+  // 5. DEALER OVERRIDES — patch dealer, groupId, name, city, address on individual children
+  (PATCHES.dealer_overrides||[]).forEach((o:any) => {
+    result = result.map(g => ({
+      ...g,
+      children: (g.children||[]).map((c:any) => {
+        if (c.id !== o.id) return c;
+        return {
+          ...c,
+          dealer: o.dealer !== undefined ? o.dealer : c.dealer,
+          gId:    o.groupId !== undefined ? o.groupId : c.gId,
+          gName:  o.groupName !== undefined ? o.groupName : c.gName,
+          name:   o.name !== undefined ? o.name : c.name,
+          city:   o.city !== undefined ? o.city : c.city,
+          st:     o.st !== undefined ? o.st : c.st,
+        };
+      })
+    }));
+  });
+
   return result;
 }
 
@@ -2342,6 +2361,9 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup}) {
   const [savedContacts,setSavedContacts]=useState<any>(null);
   const [showMoveModal,setShowMoveModal]=useState(false);
   const [moveSearch,setMoveSearch]=useState("");
+  const [createGroupMode,setCreateGroupMode]=useState(false);
+  const [createGroupName,setCreateGroupName]=useState("");
+  const [createGroupSaving,setCreateGroupSaving]=useState(false);
   const [groupOverride,setGroupOverride]=useState<any>(null);
   const [actLog,setActLog]=useState<any[]>([]);
   const [actType,setActType]=useState("visit");
@@ -2767,8 +2789,34 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
                 <Chev/>
               </button>
             ))}
-            {!moveSearch.trim()&&<div style={{padding:"20px 0",textAlign:"center",color:T.t4,fontSize:12}}>Type a group name to search</div>}
+            {!moveSearch.trim()&&!createGroupMode&&<div style={{padding:"20px 0",textAlign:"center",color:T.t4,fontSize:12}}>Type a group name to search</div>}
           </div>
+          {/* CREATE NEW GROUP */}
+          {!createGroupMode&&<button onClick={()=>{setCreateGroupMode(true);setCreateGroupName("");setMoveSearch("");}} style={{width:"100%",marginTop:10,padding:"10px 0",borderRadius:10,border:`1px dashed ${T.blue}`,background:"rgba(79,142,247,.06)",color:T.blue,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>＋ Create new group with this account</button>}
+          {createGroupMode&&<div style={{marginTop:10,padding:14,background:T.s2,borderRadius:12,border:`1px solid rgba(79,142,247,.2)`}}>
+            <div style={{fontSize:11,fontWeight:700,color:T.blue,marginBottom:10}}>＋ New Group</div>
+            <input autoFocus value={createGroupName} onChange={e=>setCreateGroupName(e.target.value)}
+              placeholder="Group name, e.g. Abra Dental"
+              style={{width:"100%",padding:"9px 12px",borderRadius:8,border:`1px solid ${T.b1}`,background:T.bg,color:T.t1,fontSize:12,fontFamily:"inherit",boxSizing:"border-box",marginBottom:10}}/>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>{setCreateGroupMode(false);setCreateGroupName("");}} style={{flex:1,padding:"9px 0",borderRadius:8,border:`1px solid ${T.b1}`,background:"transparent",color:T.t3,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>Cancel</button>
+              <button disabled={!createGroupName.trim()||createGroupSaving} onClick={async()=>{
+                if(!createGroupName.trim()) return;
+                setCreateGroupSaving(true);
+                const id = `Master-CUSTOM-${Date.now()}`;
+                try {
+                  const res = await fetch("/api/save-patch",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"create_group",payload:{id,name:createGroupName.trim(),class2:"Emerging DSO",childIds:[acct.id],tier:"Standard"}})});
+                  const data = await res.json();
+                  if(data.success) {
+                    // Also apply local group override so it shows immediately
+                    applyGroupOverride({id,name:createGroupName.trim(),locs:1,tier:"Standard",class2:"Emerging DSO"});
+                    setCreateGroupMode(false); setCreateGroupName(""); setShowMoveModal(false); setMoveSearch("");
+                  }
+                } catch(e) {}
+                setCreateGroupSaving(false);
+              }} style={{flex:2,padding:"9px 0",borderRadius:8,border:"none",background:createGroupName.trim()&&!createGroupSaving?T.blue:T.s3,color:"#fff",fontSize:12,fontWeight:700,cursor:createGroupName.trim()&&!createGroupSaving?"pointer":"not-allowed",fontFamily:"inherit"}}>{createGroupSaving?"Saving…":"Create Group"}</button>
+            </div>
+          </div>}
         </div>
       </div>}
 
