@@ -1,7 +1,31 @@
 "use client";
 // @ts-nocheck
 
-import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect, Component } from "react";
+
+// ─── ERROR BOUNDARY ───────────────────────────────────────────────
+class ErrorBoundary extends Component<{children:any},{err:any,info:any}> {
+  constructor(p:any){super(p);this.state={err:null,info:null};}
+  static getDerivedStateFromError(e:any){return{err:e};}
+  componentDidCatch(e:any,i:any){this.setState({err:e,info:i});}
+  render(){
+    if(this.state.err){
+      return <div style={{padding:20,background:"#1a0a0a",color:"#f87171",fontFamily:"monospace",fontSize:12,minHeight:"100vh"}}>
+        <div style={{fontWeight:700,fontSize:14,marginBottom:8}}>💥 Crash caught — error details:</div>
+        <div style={{background:"#2a0a0a",padding:12,borderRadius:8,marginBottom:8,wordBreak:"break-all"}}>
+          {String(this.state.err)}
+        </div>
+        <div style={{color:"#a0a0b8",fontSize:10,whiteSpace:"pre-wrap",overflow:"auto",maxHeight:400}}>
+          {this.state.info?.componentStack}
+        </div>
+        <button onClick={()=>this.setState({err:null,info:null})} style={{marginTop:12,padding:"8px 16px",background:"#4f8ef7",color:"#fff",border:"none",borderRadius:8,cursor:"pointer",fontFamily:"inherit"}}>
+          Try Again
+        </button>
+      </div>;
+    }
+    return this.props.children;
+  }
+}
 
 // Dealer data — loads if available, gracefully degrades if not
 let DEALER_LOOKUP: Record<string, any> = {};
@@ -445,6 +469,9 @@ const SKU = [
 // MAIN APP
 // ═════════════════════════════════════════════════════════════════
 export default function App() {
+  return <ErrorBoundary><AppInner/></ErrorBoundary>;
+}
+function AppInner() {
   const [tab, setTab] = useState("today");
   const [view, setView] = useState(null);
   const [adjs, setAdjs] = useState([]);
