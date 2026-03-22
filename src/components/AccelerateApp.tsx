@@ -1921,7 +1921,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
         {(()=>{const h=getHealthStatus(ret,gap,cyVal,pyVal);return <div style={{display:"inline-flex",alignItems:"center",marginTop:6,fontSize:10,fontWeight:700,color:h.color,background:h.bg,border:`1px solid ${h.border}`,borderRadius:999,padding:"3px 10px",letterSpacing:".2px"}}>{h.label}</div>;})()}
         <div style={{fontSize:10,color:T.t4,marginTop:2,display:"flex",gap:8,flexWrap:"wrap"}}>
           {acct.gName&&<span>Group: {groupOverride?groupOverride.targetGroupName:acct.gName}</span>}
-          {acct.dealer&&acct.dealer!=="Unknown"&&<span style={{color:T.cyan}}>Dealer: {acct.dealer}</span>}
+          {acct.dealer&&acct.dealer!=="Unknown"&&<span style={{color:T.cyan}}>Dealer: {acct.dealer}{acct.dealerFlag&&<span title="Dealer assignment flagged for review — rep data conflicts with Tableau export" style={{marginLeft:4,fontSize:9,color:T.amber,fontWeight:700,cursor:"help"}}>⚠?</span>}</span>}
         </div>
 
         {/* QUARTER SELECTOR */}
@@ -2944,6 +2944,7 @@ function DealersTab({scored,goAcct}:{scored:any[],goAcct:(a:any)=>void}) {
               <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
                 <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
                 <span style={{flexShrink:0,fontSize:8,fontWeight:700,borderRadius:4,padding:"1px 5px",background:chip.bg,color:chip.color}}>{a.visitPriority}</span>
+                {a.dealerFlag&&<span style={{flexShrink:0,fontSize:8,fontWeight:700,color:T.amber,background:"rgba(251,191,36,.1)",borderRadius:4,padding:"1px 5px",border:"1px solid rgba(251,191,36,.25)"}}>⚠ verify</span>}
               </div>
               <div style={{fontSize:10,color:T.t3}}>{a.city}, {a.st}</div>
             </div>
