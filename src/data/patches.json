@@ -19,6 +19,20 @@
         "Master-CM1994205",
         "Master-CM231113"
       ]
+    },
+    {
+      "id": "Master-CM175757",
+      "name": "ABRA DENTAL",
+      "class2": "DSO",
+      "tier": "Standard",
+      "childIds": [
+        "Master-CM491938",
+        "Master-CM988055",
+        "Master-CM705315",
+        "Master-CM830415",
+        "Master-CM9814079"
+      ],
+      "note": "All 4 CT locations acquired by Abra Dental NJ. Revenue ~$14.5K gross Q1 PY all via Schein. Benco child (Master-CM9814079) ~$492 FY \u2014 same Stamford address. Rich Foti was CT Schein rep, NJ rep took over post-acquisition. Dr. Helene Strazza (Norwalk + Danbury) only active buyer 2026."
     }
   ],
   "group_detaches": [
@@ -89,5 +103,17 @@
       "dealerRep": "NJ Schein rep (Rich Foti was CT rep pre-acquisition)"
     }
   ],
-  "dealer_overrides": []
+  "dealer_overrides": [
+    {
+      "id": "Master-CM9814079",
+      "dealer": "Benco",
+      "groupId": "Master-CM175757",
+      "groupName": "ABRA DENTAL",
+      "name": "ALL ABOUT KIDS PEDIATRIC DENTISTRY",
+      "city": "Stamford",
+      "st": "CT",
+      "address": "127 Greyrock Pl, Stamford, CT",
+      "note": "Benco child account for Abra Dental Stamford location. ~$492 FY PY. Same address as Master-CM491938 (Schein). Add to group so Benco orders are visible if they resume."
+    }
+  ]
 }
