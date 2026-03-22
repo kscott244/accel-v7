@@ -733,10 +733,9 @@ export default function App() {
 
 // ─── TODAY TAB ────────────────────────────────────────────────────
 function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGroup}) {
-  const [scope, setScope] = useState<string>("1");
-  useEffect(() => {
-    try { const s = localStorage.getItem("today_scope"); if (s) setScope(s); } catch {}
-  }, []);
+  const [scope, setScope] = useState<string>(() => {
+    try { return localStorage.getItem("today_scope") || "1"; } catch { return "1"; }
+  });
   const setAndSaveScope = (s: string) => {
     setScope(s);
     try { localStorage.setItem("today_scope", s); } catch {}
@@ -790,16 +789,14 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
       .sort((a:any,b:any) => b.totalGap - a.totalGap);
   }, [scopedScored, scope]);
   const [search, setSearch] = useState("");
-  const [odDone, setOdDone] = useState<Record<string,{outcome:string,amt:number,note?:string}>>({});
-  useEffect(() => {
-    try { const v = localStorage.getItem("overdrive_done"); if (v) setOdDone(JSON.parse(v)); } catch {}
-  }, []);
+  const [odDone, setOdDone] = useState<Record<string,{outcome:string,amt:number,note?:string}>>(() => {
+    try { return JSON.parse(localStorage.getItem("overdrive_done") || "{}"); } catch { return {}; }
+  });
   const [odNotePrompt, setOdNotePrompt] = useState<{id:string,outcome:string,amt:number}|null>(null);
   const [odNoteText, setOdNoteText] = useState("");
-  const [odOpen, setOdOpen] = useState<boolean>(true);
-  useEffect(() => {
-    try { const v = localStorage.getItem("overdrive_open"); if (v !== null) setOdOpen(v !== "false"); } catch {}
-  }, []);
+  const [odOpen, setOdOpen] = useState<boolean>(() => {
+    try { return localStorage.getItem("overdrive_open") !== "false"; } catch { return true; }
+  });
   const [tripAnchor, setTripAnchor] = useState<any>(null);
   const toggleOd = () => {
     const next = !odOpen;
@@ -1928,17 +1925,17 @@ function GroupDetail({group,goMain,goAcct}) {
   },[group]);
 
   // Build FSC map: dist → {name, phone, notes, source:"badger"|"manual"}
-  const [fscMap, setFscMap] = useState<Record<string,any>>({});
-  useEffect(() => {
+  const [fscMap, setFscMap] = useState<Record<string,any>>(()=>{
     const m:Record<string,any> = {};
     groupDists.forEach(d => {
       const manual = loadFSC(d);
       if(manual) { m[d] = {...manual, source:"manual"}; return; }
+      // Fall back to Badger: find first child of this distributor with a dealerRep
       const child = (group.children||[]).find((c:any) => c.dealer===d && BADGER[c.id]?.dealerRep);
       if(child) { m[d] = {name: BADGER[child.id].dealerRep, source:"badger"}; }
     });
-    setFscMap(m);
-  }, [group.id]);
+    return m;
+  });
 
   const [selProduct, setSelProduct] = useState<string|null>(null);
   const [editName, setEditName] = useState("");
@@ -3424,10 +3421,9 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
   const [newRepName,setNewRepName] = useState("");
   const [newRepPhone,setNewRepPhone] = useState("");
   const [newRepNotes,setNewRepNotes] = useState("");
-  const [manualReps,setManualReps] = useState<Record<string,any[]>>({});
-  useEffect(() => {
-    try { const v = localStorage.getItem("dealer_manual_reps"); if (v) setManualReps(JSON.parse(v)); } catch {}
-  }, []);
+  const [manualReps,setManualReps] = useState<Record<string,any[]>>(()=>{
+    try { return JSON.parse(localStorage.getItem("dealer_manual_reps")||"{}"); } catch { return {}; }
+  });
 
   const saveManualReps = (updated:Record<string,any[]>) => {
     setManualReps(updated);
@@ -4024,7 +4020,7 @@ function EstTab({pct,setPct,q1CY,groups,goAcct}) {
 }
 
 // ─────────────────────────────────────────────
-// OUTREACH TAB — AI-personalized Gmail outreach
+// OUTREACH TAB
 // ─────────────────────────────────────────────
 function OutreachTab({scored}:{scored:any[]}) {
   const [gmailToken, setGmailToken] = useState<string|null>(null);
@@ -4037,35 +4033,28 @@ function OutreachTab({scored}:{scored:any[]}) {
   const [editIdx, setEditIdx] = useState<number|null>(null);
   const [editBody, setEditBody] = useState("");
 
-  // Load token from localStorage on mount (safe for SSR)
   useEffect(()=>{
-    const stored = localStorage.getItem("gmail_refresh_token");
-    if (stored) setGmailToken(stored);
+    try { const t = localStorage.getItem("gmail_refresh_token"); if(t) setGmailToken(t); } catch {}
   }, []);
 
-  // Handle Gmail OAuth callback — pick up tokens from URL
   useEffect(()=>{
     const p = new URLSearchParams(window.location.search);
     const status = p.get("gmail");
     const rt = p.get("refresh_token");
-    const at = p.get("access_token");
-    if (status==="connected" && rt) {
+    if(status==="connected" && rt) {
       localStorage.setItem("gmail_refresh_token", rt);
-      if (at) localStorage.setItem("gmail_access_token", at);
       setGmailToken(rt);
-      // Clean URL
       window.history.replaceState({}, "", window.location.pathname);
     }
   }, []);
 
-  // Down accounts with emails
   const downAccounts = useMemo(()=>{
     return scored
       .filter(a => {
         const gap = (a.combinedGap ?? a.q1_gap ?? 0);
-        if (gap >= 0) return false; // not down
-        if (Math.abs(gap) < minGap) return false;
-        if (emailOnly && !a.email) return false;
+        if(gap >= 0) return false;
+        if(Math.abs(gap) < minGap) return false;
+        if(emailOnly && !a.email) return false;
         return true;
       })
       .sort((a,b) => (a.combinedGap??a.q1_gap??0) - (b.combinedGap??b.q1_gap??0))
@@ -4075,82 +4064,58 @@ function OutreachTab({scored}:{scored:any[]}) {
   const allDownCount = scored.filter(a=>(a.combinedGap??a.q1_gap??0)<0).length;
   const withEmail = scored.filter(a=>(a.combinedGap??a.q1_gap??0)<0 && a.email).length;
 
+  const $f = (n:number) => "$"+Math.abs(n).toLocaleString(undefined,{maximumFractionDigits:0});
+
   async function generatePreviews() {
-    setLoading(true);
-    setPreviews([]);
-    setResults([]);
+    setLoading(true); setPreviews([]); setResults([]);
     try {
       const res = await fetch("/api/send-outreach", {
-        method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({ accounts: downAccounts, preview: true, refreshToken: null })
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({accounts: downAccounts, preview: true, refreshToken: null})
       });
       const data = await res.json();
       setPreviews(data.results || []);
-    } catch(e:any) {
-      alert("Error generating previews: " + e.message);
-    } finally {
-      setLoading(false);
-    }
+    } catch(e:any) { alert("Error: " + e.message); }
+    finally { setLoading(false); }
   }
 
   async function sendAll() {
-    if (!gmailToken) { alert("Connect Gmail first"); return; }
-    setSending(true);
-    setResults([]);
+    if(!gmailToken) { alert("Connect Gmail first"); return; }
+    setSending(true); setResults([]);
     try {
-      // Use previews if available (with any edits), else send fresh
       const accountsToSend = previews.length > 0
-        ? previews.filter(p=>p.email).map(p=>({...downAccounts.find(a=>a.id===p.id)||{}, _subject: p.subject, _body: p.body}))
+        ? previews.filter(p=>p.email).map(p=>({...downAccounts.find(a=>a.id===p.id)||{}, _subject:p.subject, _body:p.body}))
         : downAccounts;
-
       const res = await fetch("/api/send-outreach", {
-        method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({
-          accounts: accountsToSend,
-          refreshToken: gmailToken,
-          preview: false
-        })
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({accounts: accountsToSend, refreshToken: gmailToken, preview: false})
       });
       const data = await res.json();
       setResults(data.results || []);
-      if (data.error) alert("Error: " + data.error);
-    } catch(e:any) {
-      alert("Send error: " + e.message);
-    } finally {
-      setSending(false);
-    }
+      if(data.error) alert("Error: " + data.error);
+    } catch(e:any) { alert("Send error: " + e.message); }
+    finally { setSending(false); }
   }
 
-  const $f = (n:number) => "$"+Math.abs(n).toLocaleString(undefined,{maximumFractionDigits:0});
-
   return <div style={{padding:"16px 12px 80px",maxWidth:680,margin:"0 auto"}}>
-    {/* Header */}
     <div style={{marginBottom:16}}>
       <div style={{fontSize:18,fontWeight:700,color:T.t1,marginBottom:4}}>AI Outreach</div>
       <div style={{fontSize:12,color:T.t3}}>Personalized emails to down accounts — AI writes each one based on their actual data</div>
     </div>
 
-    {/* Gmail connection status */}
     <div style={{background:T.s1,border:`1px solid ${gmailToken?T.green:T.b1}`,borderRadius:12,padding:12,marginBottom:12,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
       <div>
         <div style={{fontSize:12,fontWeight:700,color:gmailToken?T.green:T.t2}}>{gmailToken?"✅ Gmail Connected":"📧 Gmail Not Connected"}</div>
-        <div style={{fontSize:10,color:T.t4,marginTop:2}}>{gmailToken?"Emails will send from your Gmail automatically":"Connect once to enable auto-send"}</div>
+        <div style={{fontSize:10,color:T.t4,marginTop:2}}>{gmailToken?"Emails send from your Gmail automatically":"Connect once to enable auto-send"}</div>
       </div>
       {gmailToken
         ? <button onClick={()=>{localStorage.removeItem("gmail_refresh_token");setGmailToken(null);}} style={{fontSize:10,color:T.t4,background:"none",border:`1px solid ${T.b1}`,borderRadius:6,padding:"4px 8px",cursor:"pointer",fontFamily:"inherit"}}>Disconnect</button>
-        : <button onClick={()=>window.location.href="/api/gmail-auth"} style={{fontSize:12,fontWeight:700,color:"#fff",background:T.blue,border:"none",borderRadius:8,padding:"8px 14px",cursor:"pointer",fontFamily:"inherit"}}>Connect Gmail</button>
+        : <button onClick={()=>{ window.location.href="/api/gmail-auth"; }} style={{fontSize:12,fontWeight:700,color:"#fff",background:T.blue,border:"none",borderRadius:8,padding:"8px 14px",cursor:"pointer",fontFamily:"inherit"}}>Connect Gmail</button>
       }
     </div>
 
-    {/* Stats */}
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
-      {[
-        {l:"Down Accounts",v:allDownCount,c:T.red},
-        {l:"Have Email",v:withEmail,c:T.blue},
-        {l:"In Queue",v:downAccounts.length,c:T.amber},
-      ].map(s=>(
+      {[{l:"Down Accounts",v:allDownCount,c:T.red},{l:"Have Email",v:withEmail,c:T.blue},{l:"In Queue",v:downAccounts.length,c:T.amber}].map(s=>(
         <div key={s.l} style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:10,padding:"10px 8px",textAlign:"center"}}>
           <div style={{fontSize:20,fontWeight:800,color:s.c}}>{s.v}</div>
           <div style={{fontSize:9,color:T.t4,marginTop:2,textTransform:"uppercase",letterSpacing:.5}}>{s.l}</div>
@@ -4158,50 +4123,42 @@ function OutreachTab({scored}:{scored:any[]}) {
       ))}
     </div>
 
-    {/* Filters */}
     <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:10,padding:12,marginBottom:12}}>
       <div style={{fontSize:11,fontWeight:700,color:T.t2,marginBottom:10}}>Filter Queue</div>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
         <span style={{fontSize:11,color:T.t3}}>Min gap: {$f(minGap)}</span>
-        <input type="range" min={0} max={5000} step={250} value={minGap} onChange={e=>setMinGap(+e.target.value)}
-          style={{width:140,accentColor:T.blue}}/>
+        <input type="range" min={0} max={5000} step={250} value={minGap} onChange={e=>setMinGap(+e.target.value)} style={{width:140,accentColor:T.blue}}/>
       </div>
       <div style={{display:"flex",alignItems:"center",gap:8}}>
-        <button onClick={()=>setEmailOnly(!emailOnly)}
-          style={{width:18,height:18,borderRadius:4,border:`2px solid ${emailOnly?T.blue:T.b1}`,background:emailOnly?T.blue:"transparent",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+        <button onClick={()=>setEmailOnly(!emailOnly)} style={{width:18,height:18,borderRadius:4,border:`2px solid ${emailOnly?T.blue:T.b1}`,background:emailOnly?T.blue:"transparent",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
           {emailOnly&&<span style={{color:"#fff",fontSize:10}}>✓</span>}
         </button>
         <span style={{fontSize:11,color:T.t3}}>Email addresses only ({withEmail} accounts)</span>
       </div>
     </div>
 
-    {/* Actions */}
     <div style={{display:"flex",gap:8,marginBottom:16}}>
       <button onClick={generatePreviews} disabled={loading||downAccounts.length===0}
         style={{flex:1,padding:"11px 0",borderRadius:10,border:`1px solid ${T.blue}`,background:"transparent",color:T.blue,fontSize:12,fontWeight:700,cursor:downAccounts.length>0?"pointer":"not-allowed",opacity:downAccounts.length>0?1:.4,fontFamily:"inherit"}}>
-        {loading?"✍️ Writing emails...":"✍️ Preview Emails ("+downAccounts.length+")"}
+        {loading?"✍️ Writing...":"✍️ Preview ("+downAccounts.length+")"}
       </button>
       <button onClick={sendAll} disabled={sending||!gmailToken||downAccounts.length===0}
         style={{flex:1,padding:"11px 0",borderRadius:10,border:"none",background:(!gmailToken||downAccounts.length===0)?T.s2:T.blue,color:"#fff",fontSize:12,fontWeight:700,cursor:(!gmailToken||downAccounts.length===0)?"not-allowed":"pointer",fontFamily:"inherit"}}>
-        {sending?"📤 Sending...":"🚀 Send All Now"}
+        {sending?"📤 Sending...":"🚀 Send All"}
       </button>
     </div>
 
-    {/* Send results */}
     {results.length>0&&<div style={{background:T.s1,border:`1px solid ${T.green}`,borderRadius:10,padding:12,marginBottom:12}}>
-      <div style={{fontSize:12,fontWeight:700,color:T.green,marginBottom:8}}>
-        ✅ Sent {results.filter(r=>r.status==="sent").length} emails · {results.filter(r=>r.status==="skipped").length} skipped · {results.filter(r=>r.status==="error").length} errors
+      <div style={{fontSize:12,fontWeight:700,color:T.green}}>
+        ✅ Sent {results.filter(r=>r.status==="sent").length} · Skipped {results.filter(r=>r.status==="skipped").length} · Errors {results.filter(r=>r.status==="error").length}
       </div>
       {results.filter(r=>r.status==="error").map((r,i)=>(
         <div key={i} style={{fontSize:10,color:T.red,marginTop:4}}>⚠ {r.name}: {r.reason}</div>
       ))}
     </div>}
 
-    {/* Email previews */}
     {previews.length>0&&<div>
-      <div style={{fontSize:11,fontWeight:700,color:T.t2,marginBottom:8,textTransform:"uppercase",letterSpacing:.5}}>
-        Email Previews — Review Before Sending
-      </div>
+      <div style={{fontSize:11,fontWeight:700,color:T.t2,marginBottom:8,textTransform:"uppercase",letterSpacing:.5}}>Preview — Review Before Sending</div>
       {previews.map((p,i)=>(
         <div key={i} style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:10,padding:12,marginBottom:8}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
@@ -4209,29 +4166,20 @@ function OutreachTab({scored}:{scored:any[]}) {
               <div style={{fontSize:12,fontWeight:700,color:T.t1}}>{p.name}</div>
               <div style={{fontSize:10,color:T.t4}}>{p.email||"no email"}</div>
             </div>
-            <button onClick={()=>{setEditIdx(editIdx===i?null:i);setEditBody(p.body);}}
-              style={{fontSize:10,color:T.blue,background:"none",border:`1px solid ${T.blue}`,borderRadius:6,padding:"3px 8px",cursor:"pointer",fontFamily:"inherit"}}>
+            <button onClick={()=>{setEditIdx(editIdx===i?null:i);setEditBody(p.body);}} style={{fontSize:10,color:T.blue,background:"none",border:`1px solid ${T.blue}`,borderRadius:6,padding:"3px 8px",cursor:"pointer",fontFamily:"inherit"}}>
               {editIdx===i?"Close":"Edit"}
             </button>
           </div>
-          <div style={{fontSize:10,color:T.t3,marginBottom:4}}>
-            <span style={{color:T.t4}}>Subject: </span>{p.subject}
-          </div>
+          <div style={{fontSize:10,color:T.t3,marginBottom:4}}><span style={{color:T.t4}}>Subject: </span>{p.subject}</div>
           {editIdx===i
-            ? <textarea value={editBody} onChange={e=>{setEditBody(e.target.value);previews[i].body=e.target.value;}}
-                style={{width:"100%",minHeight:120,background:T.bg,border:`1px solid ${T.blue}`,borderRadius:6,padding:8,color:T.t1,fontSize:10,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
-            : <div style={{fontSize:10,color:T.t2,whiteSpace:"pre-wrap",lineHeight:1.6,maxHeight:80,overflow:"hidden",maskImage:"linear-gradient(to bottom,#fff 60%,transparent)"}}>{p.body}</div>
+            ? <textarea value={editBody} onChange={e=>{setEditBody(e.target.value); previews[i].body=e.target.value;}} style={{width:"100%",minHeight:120,background:T.bg,border:`1px solid ${T.blue}`,borderRadius:6,padding:8,color:T.t1,fontSize:10,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
+            : <div style={{fontSize:10,color:T.t2,whiteSpace:"pre-wrap",lineHeight:1.6,maxHeight:80,overflow:"hidden"}}>{p.body}</div>
           }
         </div>
       ))}
     </div>}
 
-    {/* Empty state */}
-    {downAccounts.length===0&&scored.length>0&&<div style={{textAlign:"center",padding:"40px 0",color:T.t4,fontSize:12}}>
-      No down accounts match current filters. Try lowering the minimum gap.
-    </div>}
-    {scored.length===0&&<div style={{textAlign:"center",padding:"40px 0",color:T.t4,fontSize:12}}>
-      Upload a CSV to get started.
-    </div>}
+    {scored.length===0&&<div style={{textAlign:"center",padding:"40px 0",color:T.t4,fontSize:12}}>Upload a CSV to get started.</div>}
+    {scored.length>0&&downAccounts.length===0&&<div style={{textAlign:"center",padding:"40px 0",color:T.t4,fontSize:12}}>No down accounts match filters. Try lowering the minimum gap.</div>}
   </div>;
 }
