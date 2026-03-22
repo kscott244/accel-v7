@@ -2999,9 +2999,6 @@ function DealersTab({scored,goAcct}:{scored:any[],goAcct:(a:any)=>void}) {
     </div>;
   }
 
-  // ── Top-level: 4 distributor cards ──
-  return <div style={{padding:"16px 16px 0",paddingBottom:80}}>
-    <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t4,marginBottom:12}}>Dealer Dashboard</div>
   // ── Top-level: 4 distributor cards + All Other ──
   return <div style={{padding:"16px 16px 0",paddingBottom:80}}>
     {/* Territory total summary */}
