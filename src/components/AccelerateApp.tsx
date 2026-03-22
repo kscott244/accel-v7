@@ -100,21 +100,32 @@ function applyPatches(grps: any[]): any[] {
 
   // 4. GROUP CREATES — create new parent groups and pull children in
   (PATCHES.group_creates||[]).forEach((create:any) => {
-    if (result.find(g => g.id === create.id)) return; // already exists
     const childIdSet = new Set(create.childIds || []);
     const children: any[] = [];
     let totalPY: Record<string,number> = {};
     let totalCY: Record<string,number> = {};
 
-    // Pull matching children from existing groups
+    // Remove this group if it already exists (we'll rebuild it with full child data)
+    result = result.filter(g => g.id !== create.id);
+
+    // Pull matching children from ALL groups (including their full standalone records)
+    // Prefer the richest version of each child (has products, has city, etc.)
+    const seenChildIds = new Set<string>();
     result = result.map(g => {
       const kept: any[] = [];
       (g.children||[]).forEach((c:any) => {
         if (childIdSet.has(c.id)) {
-          children.push({ ...c, gId: create.id, gName: create.name });
-          // Roll up financials
-          Object.entries(c.pyQ||{}).forEach(([q,v]:any) => { totalPY[q] = (totalPY[q]||0) + v; });
-          Object.entries(c.cyQ||{}).forEach(([q,v]:any) => { totalCY[q] = (totalCY[q]||0) + v; });
+          const existing = children.find(x => x.id === c.id);
+          if (!existing) {
+            // First time seeing this child — take it
+            children.push({ ...c, gId: create.id, gName: create.name });
+            seenChildIds.add(c.id);
+          } else if ((c.products||[]).length > (existing.products||[]).length) {
+            // Found a richer version (has more products) — upgrade
+            const idx = children.findIndex(x => x.id === c.id);
+            children[idx] = { ...c, gId: create.id, gName: create.name };
+          }
+          // Either way remove from current group
         } else {
           kept.push(c);
         }
@@ -122,7 +133,13 @@ function applyPatches(grps: any[]): any[] {
       return { ...g, children: kept, locs: kept.length };
     });
 
-    // Add any childIds that weren't found (e.g. new accounts like Coastal CT)
+    // Recompute rollup from final children set
+    children.forEach((c:any) => {
+      Object.entries(c.pyQ||{}).forEach(([q,v]:any) => { totalPY[q] = (totalPY[q]||0) + v; });
+      Object.entries(c.cyQ||{}).forEach(([q,v]:any) => { totalCY[q] = (totalCY[q]||0) + v; });
+    });
+
+    // Add any childIds not found anywhere
     create.childIds.forEach((cid:string) => {
       if (!children.find(c => c.id === cid)) {
         children.push({
