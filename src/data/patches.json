@@ -1,8 +1,7 @@
 {
   "_comment": "Manual data corrections. Applied on top of any CSV or preloaded data. Never overwritten by data rebuilds.",
   "_version": "1.0",
-  "_lastUpdated": "2026-03-23",
-
+  "_lastUpdated": "2026-03-22",
   "group_creates": [
     {
       "id": "Master-RDP-001",
@@ -22,7 +21,6 @@
       ]
     }
   ],
-
   "group_detaches": [
     {
       "childId": "Master-CM300371",
@@ -32,12 +30,18 @@
       "reason": "Bad MDM parent assignment — Aspen Torrington incorrectly parented under Columbia Dental"
     }
   ],
-
   "name_overrides": [
-    { "id": "Master-CM116929", "name": "WELLS STREET DENTISTRY", "reason": "TRIS CARTA is wrong — Wells Street Dentistry, Westerly RI" },
-    { "id": "Master-CM17699391", "name": "FLANDERS DENTAL STUDIO", "reason": "CENTER FOR DENTAL EXCELLENCE is old name — now Flanders Dental Studio (Resolute)" }
+    {
+      "id": "Master-CM116929",
+      "name": "WELLS STREET DENTISTRY",
+      "reason": "TRIS CARTA is wrong — Wells Street Dentistry, Westerly RI"
+    },
+    {
+      "id": "Master-CM17699391",
+      "name": "FLANDERS DENTAL STUDIO",
+      "reason": "CENTER FOR DENTAL EXCELLENCE is old name — now Flanders Dental Studio (Resolute)"
+    }
   ],
-
   "contact_overrides": [
     {
       "id": "Master-CM231113",
@@ -52,8 +56,31 @@
       "email": "clague@westerlydentists.com",
       "address": "11 Wells Street, Westerly, RI",
       "note": "PM at Wells Street Dentistry — part of Resolute Dental Partners"
+    },
+    {
+      "id": "Master-CM413476",
+      "contactName": "Dr. Sheikh M. Ilyas",
+      "email": "info@newenglanddentalllc.com",
+      "phone": "(203) 790-0111",
+      "contacts": [
+        {
+          "name": "Dr. Sheikh M. Ilyas",
+          "role": "Owner/DDS",
+          "email": "info@newenglanddentalllc.com",
+          "phone": "(203) 790-0111",
+          "tier": 1
+        },
+        {
+          "name": "Dr. Hamed Vaziri",
+          "role": "Associate Dentist",
+          "email": null,
+          "phone": "(203) 790-0111",
+          "tier": 2
+        }
+      ],
+      "website": "https://newenglanddentalllc.com",
+      "note": "Auto-saved from Deep Research 3/22/2026"
     }
   ],
-
   "dealer_overrides": []
 }
