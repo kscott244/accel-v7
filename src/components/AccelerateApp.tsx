@@ -1946,9 +1946,9 @@ function GroupDetail({group,goMain,goAcct}) {
 
   // Detect which distributors are present in this group's children
   const groupDists = useMemo(()=>{
-    const seen = new Set();
-    (group.children||[]).forEach((c:any) => { if(c.dealer && c.dealer!=="Unknown") seen.add(c.dealer); });
-    return [...seen].sort();
+    const emailDedupeSet = new Set();
+    (group.children||[]).forEach((c:any) => { if(c.dealer && c.dealer!=="Unknown") emailDedupeSet.add(c.dealer); });
+    return [...emailDedupeSet].sort();
   },[group]);
 
   // Build FSC map: dist → {name, phone, notes, source:"badger"|"manual"}
@@ -4158,8 +4158,8 @@ function OutreachTab({scored}:{scored:any[]}) {
       if(emailOnly && !email) continue;
 
       // Deduplicate — if we already queued an email to this address, skip
-      if(email && seen.has(email)) continue;
-      if(email) seen.add(email);
+      if(email && emailDedupeSet.has(email)) continue;
+      if(email) emailDedupeSet.add(email);
 
       // Determine primary dealer = dealer with largest gap
       // For multi-dealer accounts use combinedGap dealer breakdown if available
@@ -4184,15 +4184,15 @@ function OutreachTab({scored}:{scored:any[]}) {
 
   const allDownCount = scored.filter(a=>(a.combinedGap??a.q1_gap??0)<0).length;
   const withEmail = useMemo(()=>{
-    const seen = new Set();
+    const emailDedupeSet = new Set();
     return scored.filter(a => {
       const gap = (a.combinedGap ?? a.q1_gap ?? 0);
       if(gap >= 0) return false;
       const badger = BADGER[a.id] || BADGER[a.gId] || null;
       const email = a.email || badger?.email || null;
       if(!email) return false;
-      if(seen.has(email)) return false;
-      seen.add(email);
+      if(emailDedupeSet.has(email)) return false;
+      emailDedupeSet.add(email);
       return true;
     }).length;
   }, [scored]);
