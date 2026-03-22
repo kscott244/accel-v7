@@ -4140,8 +4140,8 @@ function OutreachTab({scored}:{scored:any[]}) {
 
   const downAccounts = useMemo(()=>{
     const acctQueue: any[] = [];
+    const dedupe = new Set();
 
-    // Sort by largest gap first
     const sorted = [...scored]
       .filter(a => {
         const gap = (a.combinedGap ?? a.q1_gap ?? 0);
@@ -4150,19 +4150,14 @@ function OutreachTab({scored}:{scored:any[]}) {
       .sort((a,b) => (a.combinedGap??a.q1_gap??0) - (b.combinedGap??b.q1_gap??0));
 
     for (const a of sorted) {
-      // Get email + doctor from BADGER (populated from Badger CSV)
       const badger = BADGER[a.id] || BADGER[a.gId] || null;
       const email = a.email || badger?.email || null;
       const doctor = a.doctor || badger?.doctor || null;
 
       if(emailOnly && !email) continue;
+      if(email && dedupe.has(email)) continue;
+      if(email) dedupe.add(email);
 
-      // Deduplicate — if we already queued an email to this address, skip
-      if(email && outreachDedupeSet.has(email)) continue;
-      if(email) outreachDedupeSet.add(email);
-
-      // Determine primary dealer = dealer with largest gap
-      // For multi-dealer accounts use combinedGap dealer breakdown if available
       const primaryDealer = a.dealer || "your distributor";
 
       acctQueue.push({
@@ -4170,7 +4165,6 @@ function OutreachTab({scored}:{scored:any[]}) {
         email,
         doctor,
         primaryDealer,
-        // Pass dealer-specific products for context
         topSkus: a.products?.filter((p:any) => (p.py1||0) > 0)
           .sort((x:any,y:any) => (y.py1||0)-(x.py1||0))
           .slice(0,3)
@@ -4184,15 +4178,15 @@ function OutreachTab({scored}:{scored:any[]}) {
 
   const allDownCount = scored.filter(a=>(a.combinedGap??a.q1_gap??0)<0).length;
   const withEmail = useMemo(()=>{
-    const withEmailSet = new Set();
+    const seenEmails = new Set();
     return scored.filter(a => {
       const gap = (a.combinedGap ?? a.q1_gap ?? 0);
       if(gap >= 0) return false;
       const badger = BADGER[a.id] || BADGER[a.gId] || null;
       const email = a.email || badger?.email || null;
       if(!email) return false;
-      if(withEmailSet.has(email)) return false;
-      outreachDedupeSet.add(email);
+      if(seenEmails.has(email)) return false;
+      seenEmails.add(email);
       return true;
     }).length;
   }, [scored]);
