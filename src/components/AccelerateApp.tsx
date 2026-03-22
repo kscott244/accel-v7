@@ -1560,6 +1560,30 @@ function GroupDetail({group,goMain,goAcct}) {
   const py=group.pyQ?.[qk]||0;const cy=group.cyQ?.[qk]||0;
   const gap=py-cy;const ret=py>0?Math.round(cy/py*100):0;
 
+  // Roll up products across all children
+  const {groupBuying, groupStopped} = useMemo(()=>{
+    const prodMap: Record<string,{py:number,cy:number,locsPY:string[],locsCY:string[],locsDown:string[]}> = {};
+    (group.children||[]).forEach((c:any)=>{
+      (c.products||[]).forEach((p:any)=>{
+        const pPy = p[`py${qk}`]||0;
+        const pCy = p[`cy${qk}`]||0;
+        if(Math.abs(pPy)<10 && Math.abs(pCy)<10) return;
+        if(!prodMap[p.n]) prodMap[p.n]={py:0,cy:0,locsPY:[],locsCY:[],locsDown:[]};
+        prodMap[p.n].py += pPy;
+        prodMap[p.n].cy += pCy;
+        if(pPy>50) prodMap[p.n].locsPY.push(c.name);
+        if(pCy>0) prodMap[p.n].locsCY.push(c.name);
+        if(pPy>50 && pCy===0) prodMap[p.n].locsDown.push(c.name);
+      });
+    });
+    const allProds = Object.entries(prodMap).map(([name,v])=>({name,...v}));
+    const groupBuying = allProds.filter(p=>p.cy>0).sort((a,b)=>b.cy-a.cy);
+    const groupStopped = allProds.filter(p=>p.py>100&&p.cy===0).sort((a,b)=>b.py-a.py);
+    return {groupBuying, groupStopped};
+  },[group,qk]);
+
+  const hasProducts = groupBuying.length>0 || groupStopped.length>0;
+
   return <div style={{paddingBottom:80}}>
     <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"10px 16px"}}>
       <button onClick={goMain} style={{background:"none",border:"none",color:T.blue,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:13,fontWeight:600,fontFamily:"inherit"}}><Back/> Groups</button>
@@ -1578,6 +1602,54 @@ function GroupDetail({group,goMain,goAcct}) {
           <Stat l="PY" v={$$(py)} c={T.t2}/><Stat l="CY" v={$$(cy)} c={T.blue}/><Stat l="Gap" v={gap<=0?`+${$$(Math.abs(gap))}`:$$(gap)} c={gap<=0?T.green:T.red}/><Stat l="Ret" v={ret+"%"} c={ret>30?T.green:ret>15?T.amber:T.red}/>
         </div>
       </div>
+
+      {/* GROUP PRODUCT ROLLUP */}
+      {hasProducts&&<div className="anim" style={{animationDelay:"40ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
+        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue,marginBottom:12}}>Group Product Health</div>
+
+        {/* Stopped across group */}
+        {groupStopped.length>0&&<div style={{marginBottom:groupBuying.length>0?14:0}}>
+          <div style={{fontSize:10,fontWeight:700,color:T.red,marginBottom:8}}>Stopped Buying ({groupStopped.length} products)</div>
+          {groupStopped.map((p,i)=>(
+            <div key={i} style={{marginBottom:10,padding:"8px 10px",borderRadius:8,background:"rgba(248,113,113,.04)",border:"1px solid rgba(248,113,113,.08)"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:p.locsDown.length>0?4:0}}>
+                <span style={{fontSize:12,fontWeight:600,color:T.t1}}>{p.name}</span>
+                <span className="m" style={{fontSize:10,color:T.red,flexShrink:0,marginLeft:8}}>Was {$$(p.py)} → $0</span>
+              </div>
+              {p.locsDown.length>0&&<div style={{fontSize:9,color:T.t4,lineHeight:1.5}}>
+                {p.locsDown.slice(0,3).map(l=>l.split(' ').slice(0,2).join(' ')).join(' · ')}
+                {p.locsDown.length>3&&<span> +{p.locsDown.length-3} more</span>}
+              </div>}
+            </div>
+          ))}
+        </div>}
+
+        {/* Buying across group */}
+        {groupBuying.length>0&&<div>
+          <div style={{fontSize:10,fontWeight:700,color:T.green,marginBottom:8}}>Currently Buying ({groupBuying.length} products)</div>
+          {groupBuying.slice(0,8).map((p,i)=>{
+            const mx=groupBuying[0]?.cy||1;
+            const trend=p.py>0?p.cy/p.py:1;
+            return <div key={i} style={{marginBottom:8}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
+                <span style={{fontSize:11,color:T.t2,flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</span>
+                <div style={{display:"flex",gap:8,flexShrink:0,marginLeft:8}}>
+                  <span className="m" style={{fontSize:9,color:T.t4}}>{$$(p.py)}</span>
+                  <span style={{fontSize:9,color:T.t4}}>→</span>
+                  <span className="m" style={{fontSize:10,color:trend>=0.8?T.blue:T.amber,fontWeight:600}}>{$$(p.cy)}</span>
+                </div>
+              </div>
+              <div style={{height:4,borderRadius:2,background:T.s3,overflow:"hidden"}}>
+                <div className="bar-g" style={{animationDelay:`${i*40}ms`,height:"100%",borderRadius:2,width:`${Math.min(p.cy/mx*100,100)}%`,background:trend>=0.8?`linear-gradient(90deg,${T.blue},${T.cyan})`:T.amber}}/>
+              </div>
+              {p.locsDown.length>0&&<div style={{fontSize:9,color:T.amber,marginTop:2}}>
+                ⚠ {p.locsDown.slice(0,2).map(l=>l.split(' ').slice(0,2).join(' ')).join(', ')} stopped
+              </div>}
+            </div>;
+          })}
+        </div>}
+      </div>}
+
       <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3,marginBottom:8}}>Locations ({group.children.length})</div>
       {group.children.map((c,i)=>{
         const cPy=c.pyQ?.[qk]||0;const cCy=c.cyQ?.[qk]||0;const cGap=cPy-cCy;const cRet=cPy>0?Math.round(cCy/cPy*100):0;
