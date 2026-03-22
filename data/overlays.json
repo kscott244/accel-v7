@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 2,
+  "lastUpdated": "2026-03-22T00:00:00.000Z",
+  "migratedFrom": "patches.json v1.0",
+  "groups": {
+    "Master-RDP-001": {
+      "id": "Master-RDP-001",
+      "name": "RESOLUTE DENTAL PARTNERS",
+      "tier": "Standard",
+      "class2": "Emerging DSO",
+      "dsoName": "Resolute Dental Partners",
+      "website": "https://resolutedentalpartners.com",
+      "note": "Dr. Toback CEO. Steve D Patterson account. ~$14K FY PY. Graniteville growing fast after lunch and learn.",
+      "childIds": [
+        "Master-CM17699391",
+        "Master-CM116929",
+        "Master-CM220635",
+        "Master-CM9814196",
+        "Master-CM1994205",
+        "Master-CM231113"
+      ],
+      "createdAt": "2026-03-22T00:00:00.000Z",
+      "updatedAt": "2026-03-22T00:00:00.000Z"
+    }
+  },
+  "groupDetaches": [
+    {
+      "childId": "Master-CM300371",
+      "fromGroupId": "Master-CM048310",
+      "newGroupId": "Master-CM300371-standalone",
+      "newGroupName": "ASPEN DENTAL",
+      "reason": "Bad MDM parent assignment — Aspen Torrington incorrectly parented under Columbia Dental"
+    }
+  ],
+  "groupMoves": {},
+  "nameOverrides": {
+    "Master-CM116929": "WELLS STREET DENTISTRY",
+    "Master-CM17699391": "FLANDERS DENTAL STUDIO"
+  },
+  "contacts": {
+    "Master-CM231113": {
+      "contactName": "Brittany Burroughs",
+      "email": "bburroughs@coastalctdental.com",
+      "phone": null,
+      "address": "112 Cross Rd, Waterford, CT 06385",
+      "website": null,
+      "contacts": [],
+      "note": "PM at Coastal Connecticut Dentistry — part of Resolute Dental Partners",
+      "savedAt": "2026-03-22T00:00:00.000Z"
+    },
+    "Master-CM116929": {
+      "contactName": "Christine Lague",
+      "email": "clague@westerlydentists.com",
+      "phone": null,
+      "address": "11 Wells Street, Westerly, RI",
+      "website": null,
+      "contacts": [],
+      "note": "PM at Wells Street Dentistry — part of Resolute Dental Partners",
+      "savedAt": "2026-03-22T00:00:00.000Z"
+    },
+    "Master-CM413476": {
+      "contactName": "Dr. Sheikh M. Ilyas",
+      "email": "info@newenglanddentalllc.com",
+      "phone": "(203) 790-0111",
+      "address": null,
+      "website": "https://newenglanddentalllc.com",
+      "contacts": [
+        { "name": "Dr. Sheikh M. Ilyas", "role": "Owner/DDS", "email": "info@newenglanddentalllc.com", "phone": "(203) 790-0111", "tier": 1 },
+        { "name": "Dr. Hamed Vaziri", "role": "Associate Dentist", "email": null, "phone": "(203) 790-0111", "tier": 2 }
+      ],
+      "note": "Auto-saved from Deep Research 3/22/2026",
+      "savedAt": "2026-03-22T00:00:00.000Z"
+    }
+  },
+  "fscReps": {},
+  "activityLogs": {},
+  "research": {},
+  "dealerOverrides": {}
+}
