@@ -2796,8 +2796,22 @@ function DealersTab({scored,goAcct}:{scored:any[],goAcct:(a:any)=>void}) {
 
   // Extract distributor hint from a freeform rep string
   // e.g. "Dave R - Benco" → "Benco", "Jeff T - Schein" → "Schein", "Lyndon" → null
+  // Manual rep→distributor overrides for reps whose names contain no distributor hint.
+  // Key = rep name lowercased (partial match ok), Value = distributor.
+  // Add new entries here as you identify them in the field.
+  const REP_DIST_OVERRIDES: Record<string,string> = {
+    "vincent parrillo": "Patterson",
+    // Add more below as needed, e.g.:
+    // "john smith": "Benco",
+  };
+
   const repDistHint = (rep:string): string|null => {
-    const r = rep.toLowerCase();
+    const r = rep.toLowerCase().trim();
+    // Check manual overrides first (exact or partial match)
+    for(const [key, dist] of Object.entries(REP_DIST_OVERRIDES)) {
+      if(r.includes(key) || key.includes(r)) return dist;
+    }
+    // Then check for distributor name embedded in rep string
     if(r.includes("schein") || r.includes("henry schein")) return "Schein";
     if(r.includes("patterson")) return "Patterson";
     if(r.includes("benco")) return "Benco";
