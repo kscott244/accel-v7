@@ -4023,7 +4023,7 @@ function EstTab({pct,setPct,q1CY,groups,goAcct}) {
 // OUTREACH TAB — AI-personalized Gmail outreach
 // ─────────────────────────────────────────────
 function OutreachTab({scored}:{scored:any[]}) {
-  const [gmailToken, setGmailToken] = React.useState<string|null>(()=>localStorage.getItem("gmail_refresh_token"));
+  const [gmailToken, setGmailToken] = React.useState<string|null>(null);
   const [previews, setPreviews] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [sending, setSending] = React.useState(false);
@@ -4032,6 +4032,12 @@ function OutreachTab({scored}:{scored:any[]}) {
   const [emailOnly, setEmailOnly] = React.useState(true);
   const [editIdx, setEditIdx] = React.useState<number|null>(null);
   const [editBody, setEditBody] = React.useState("");
+
+  // Load token from localStorage on mount (safe for SSR)
+  React.useEffect(()=>{
+    const stored = localStorage.getItem("gmail_refresh_token");
+    if (stored) setGmailToken(stored);
+  }, []);
 
   // Handle Gmail OAuth callback — pick up tokens from URL
   React.useEffect(()=>{
