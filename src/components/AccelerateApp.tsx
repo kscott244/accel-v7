@@ -2820,45 +2820,79 @@ function DealersTab({scored,goAcct}:{scored:any[],goAcct:(a:any)=>void}) {
   };
 
   // For selected distributor: group accounts by rep.
-  // Rule: if a rep is linked to ANY child in a group, they own ALL children in that
-  // group that share the same distributor. e.g. Rich Foti (Schein) on one Dental
-  // Associates of CT child → owns every Schein child in that group.
+  // Rules:
+  // 1. Rep on any child in a group → owns ALL same-distributor siblings in that group.
+  // 2. Rep logged on wrong-distributor child (e.g. Lyndon-Benco on a Schein child):
+  //    a. If a correct-distributor sibling exists → use it (sibling resolution).
+  //    b. If no correct sibling exists → trust the rep's hint, include the account
+  //       under the rep for the correct distributor (don't silently drop it).
   const repGroups = useMemo(()=>{
     if(!selDist) return null;
-    const accts = distStats[selDist]?.accts || [];
     const B = typeof BADGER !== "undefined" ? BADGER : {};
 
-    // Pass 1: build a map of groupId → rep name for this distributor.
-    // Walk every account in the territory (all distributors) to find Badger entries,
-    // so we catch cases where the rep was logged on a sibling with a different dealer.
+    // Pass 1: scan ALL scored accounts to build groupId → repName for selDist.
+    // Also collect "orphan" accounts: rep hint = selDist but account.dealer ≠ selDist
+    // and no correct sibling found → still include under the rep.
     const groupRepMap: Record<string,string> = {}; // gId → repName
+    const orphanAccts: Record<string, any[]> = {}; // repName → accounts[]
+
+    // Build a quick lookup: gId → all accounts in that group with dealer = selDist
+    const groupHasCorrectDealer: Record<string,boolean> = {};
+    scored.forEach(a => {
+      if(a.dealer === selDist && a.gId) groupHasCorrectDealer[a.gId] = true;
+    });
+
     scored.forEach(a => {
       const badger = B[a.id];
       const rep = badger?.dealerRep;
       if(isNoRep(rep)) return;
       const hint = repDistHint(rep!);
-      // Only register if rep's distributor matches selDist
+
+      // Only process reps whose distributor = selDist
       if(hint && hint !== selDist) return;
-      if(!hint) {
-        // No distributor hint — only register if this account's own dealer matches
-        if(a.dealer !== selDist) return;
-      }
-      if(a.gId && !groupRepMap[a.gId]) {
-        groupRepMap[a.gId] = rep!.trim();
+      if(!hint && a.dealer !== selDist) return; // no-hint rep on wrong dealer — skip
+
+      const repKey = rep!.trim();
+
+      if(a.dealer === selDist) {
+        // Account is already in the right distributor — register group directly
+        if(a.gId && !groupRepMap[a.gId]) groupRepMap[a.gId] = repKey;
+      } else if(hint === selDist) {
+        // Rep hint matches selDist but account.dealer doesn't
+        if(a.gId && groupHasCorrectDealer[a.gId]) {
+          // Correct-distributor sibling exists — group registration handles it
+          if(!groupRepMap[a.gId]) groupRepMap[a.gId] = repKey;
+        } else {
+          // No correct sibling — trust the rep, include this account as an orphan
+          if(!orphanAccts[repKey]) orphanAccts[repKey] = [];
+          // Only add if not already there
+          if(!orphanAccts[repKey].find((x:any) => x.id === a.id)) {
+            orphanAccts[repKey].push(a);
+          }
+        }
       }
     });
 
-    // Pass 2: assign each selDist account to its rep via groupRepMap, or __none__
+    // Pass 2: assign each selDist account to its rep, or __none__
     const groups: Record<string,any[]> = {"__none__":[]};
-    accts.forEach(a => {
+    const distAccts = distStats[selDist]?.accts || [];
+    distAccts.forEach(a => {
       const rep = a.gId ? groupRepMap[a.gId] : undefined;
-      if(!rep) {
-        groups["__none__"].push(a);
-        return;
-      }
+      if(!rep) { groups["__none__"].push(a); return; }
       if(!groups[rep]) groups[rep] = [];
       groups[rep].push(a);
     });
+
+    // Pass 3: merge orphan accounts under their rep (deduplicate)
+    Object.entries(orphanAccts).forEach(([repKey, accts]) => {
+      if(!groups[repKey]) groups[repKey] = [];
+      accts.forEach((a:any) => {
+        if(!groups[repKey].find((x:any) => x.id === a.id)) {
+          groups[repKey].push(a);
+        }
+      });
+    });
+
     return groups;
   },[selDist,scored,distStats]);
 
