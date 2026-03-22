@@ -83,12 +83,10 @@
     },
     {
       "id": "Master-CM175757",
-      "note": "Abra Dental Group \u2014 4 CT locations acquired by Abra Dental NJ. Rep ownership is PER DEALER per child account. Darby child accounts = Darby rep. Danbury Schein child (Master-CM705315) = NJ Schein rep post-acquisition (Rich Foti was CT Schein rep before). Ryan Mastej at Patterson owns any Patterson child accounts only.",
-      "dealerNotes": {
-        "Schein": "NJ Schein rep took over Master-CM705315 (Danbury) post-acquisition. Rich Foti was original CT rep.",
-        "Darby": "Darby rep owns Stamford, Norwalk, Derby locations",
-        "Patterson": "Ryan Mastej \u2014 owns any Patterson child accounts"
-      }
+      "contactName": "Dr. Helene Strazza",
+      "note": "Abra Dental Group \u2014 4 CT locations acquired by Abra Dental NJ. ALL revenue flows through Schein (~$14.5K gross Q1 PY). Schein CT rep was Rich Foti \u2014 NJ Schein rep took control post-acquisition. Dr. Helene Strazza (Norwalk + Danbury) is the only active buyer in 2026. Best entry point is direct relationship with Dr. Strazza. YoY down 88%.",
+      "dealer": "Schein",
+      "dealerRep": "NJ Schein rep (Rich Foti was CT rep pre-acquisition)"
     }
   ],
   "dealer_overrides": []
