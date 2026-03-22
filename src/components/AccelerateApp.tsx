@@ -4023,24 +4023,24 @@ function EstTab({pct,setPct,q1CY,groups,goAcct}) {
 // OUTREACH TAB — AI-personalized Gmail outreach
 // ─────────────────────────────────────────────
 function OutreachTab({scored}:{scored:any[]}) {
-  const [gmailToken, setGmailToken] = React.useState<string|null>(null);
-  const [previews, setPreviews] = React.useState<any[]>([]);
-  const [loading, setLoading] = React.useState(false);
-  const [sending, setSending] = React.useState(false);
-  const [results, setResults] = React.useState<any[]>([]);
-  const [minGap, setMinGap] = React.useState(500);
-  const [emailOnly, setEmailOnly] = React.useState(true);
-  const [editIdx, setEditIdx] = React.useState<number|null>(null);
-  const [editBody, setEditBody] = React.useState("");
+  const [gmailToken, setGmailToken] = useState<string|null>(null);
+  const [previews, setPreviews] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [results, setResults] = useState<any[]>([]);
+  const [minGap, setMinGap] = useState(500);
+  const [emailOnly, setEmailOnly] = useState(true);
+  const [editIdx, setEditIdx] = useState<number|null>(null);
+  const [editBody, setEditBody] = useState("");
 
   // Load token from localStorage on mount (safe for SSR)
-  React.useEffect(()=>{
+  useEffect(()=>{
     const stored = localStorage.getItem("gmail_refresh_token");
     if (stored) setGmailToken(stored);
   }, []);
 
   // Handle Gmail OAuth callback — pick up tokens from URL
-  React.useEffect(()=>{
+  useEffect(()=>{
     const p = new URLSearchParams(window.location.search);
     const status = p.get("gmail");
     const rt = p.get("refresh_token");
@@ -4055,7 +4055,7 @@ function OutreachTab({scored}:{scored:any[]}) {
   }, []);
 
   // Down accounts with emails
-  const downAccounts = React.useMemo(()=>{
+  const downAccounts = useMemo(()=>{
     return scored
       .filter(a => {
         const gap = (a.combinedGap ?? a.q1_gap ?? 0);
