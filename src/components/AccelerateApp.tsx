@@ -733,9 +733,10 @@ export default function App() {
 
 // ─── TODAY TAB ────────────────────────────────────────────────────
 function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGroup}) {
-  const [scope, setScope] = useState<string>(() => {
-    try { return localStorage.getItem("today_scope") || "1"; } catch { return "1"; }
-  });
+  const [scope, setScope] = useState<string>("1");
+  useEffect(() => {
+    try { const s = localStorage.getItem("today_scope"); if (s) setScope(s); } catch {}
+  }, []);
   const setAndSaveScope = (s: string) => {
     setScope(s);
     try { localStorage.setItem("today_scope", s); } catch {}
@@ -789,14 +790,16 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
       .sort((a:any,b:any) => b.totalGap - a.totalGap);
   }, [scopedScored, scope]);
   const [search, setSearch] = useState("");
-  const [odDone, setOdDone] = useState<Record<string,{outcome:string,amt:number,note?:string}>>(() => {
-    try { return JSON.parse(localStorage.getItem("overdrive_done") || "{}"); } catch { return {}; }
-  });
+  const [odDone, setOdDone] = useState<Record<string,{outcome:string,amt:number,note?:string}>>({});
+  useEffect(() => {
+    try { const v = localStorage.getItem("overdrive_done"); if (v) setOdDone(JSON.parse(v)); } catch {}
+  }, []);
   const [odNotePrompt, setOdNotePrompt] = useState<{id:string,outcome:string,amt:number}|null>(null);
   const [odNoteText, setOdNoteText] = useState("");
-  const [odOpen, setOdOpen] = useState<boolean>(() => {
-    try { return localStorage.getItem("overdrive_open") !== "false"; } catch { return true; }
-  });
+  const [odOpen, setOdOpen] = useState<boolean>(true);
+  useEffect(() => {
+    try { const v = localStorage.getItem("overdrive_open"); if (v !== null) setOdOpen(v !== "false"); } catch {}
+  }, []);
   const [tripAnchor, setTripAnchor] = useState<any>(null);
   const toggleOd = () => {
     const next = !odOpen;
@@ -1925,17 +1928,17 @@ function GroupDetail({group,goMain,goAcct}) {
   },[group]);
 
   // Build FSC map: dist → {name, phone, notes, source:"badger"|"manual"}
-  const [fscMap, setFscMap] = useState<Record<string,any>>(()=>{
+  const [fscMap, setFscMap] = useState<Record<string,any>>({});
+  useEffect(() => {
     const m:Record<string,any> = {};
     groupDists.forEach(d => {
       const manual = loadFSC(d);
       if(manual) { m[d] = {...manual, source:"manual"}; return; }
-      // Fall back to Badger: find first child of this distributor with a dealerRep
       const child = (group.children||[]).find((c:any) => c.dealer===d && BADGER[c.id]?.dealerRep);
       if(child) { m[d] = {name: BADGER[child.id].dealerRep, source:"badger"}; }
     });
-    return m;
-  });
+    setFscMap(m);
+  }, [group.id]);
 
   const [selProduct, setSelProduct] = useState<string|null>(null);
   const [editName, setEditName] = useState("");
@@ -3421,9 +3424,10 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
   const [newRepName,setNewRepName] = useState("");
   const [newRepPhone,setNewRepPhone] = useState("");
   const [newRepNotes,setNewRepNotes] = useState("");
-  const [manualReps,setManualReps] = useState<Record<string,any[]>>(()=>{
-    try { return JSON.parse(localStorage.getItem("dealer_manual_reps")||"{}"); } catch { return {}; }
-  });
+  const [manualReps,setManualReps] = useState<Record<string,any[]>>({});
+  useEffect(() => {
+    try { const v = localStorage.getItem("dealer_manual_reps"); if (v) setManualReps(JSON.parse(v)); } catch {}
+  }, []);
 
   const saveManualReps = (updated:Record<string,any[]>) => {
     setManualReps(updated);
