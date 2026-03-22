@@ -1080,8 +1080,8 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
             <div className="m" style={{fontSize:10,color:T.t4}}>{ret}% ret</div>
           </div>
         </div>
-        {/* Top hurting child — always visible */}
-        {topChild&&<div style={{borderTop:`1px solid ${T.b2}`,paddingTop:6,marginTop:2}}>
+        {/* Top hurting child — only show when group has multiple locations */}
+        {topChild&&g.children.length>1&&<div style={{borderTop:`1px solid ${T.b2}`,paddingTop:6,marginTop:2}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer"}}
             onClick={()=>goAcct({...topChild,gName:g.gName,gId:g.gId,gTier:g.gTier})}>
             <div style={{flex:1,minWidth:0}}>
