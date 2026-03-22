@@ -21,18 +21,18 @@ async function refreshAccessToken(refreshToken: string): Promise<string> {
 }
 
 async function generateEmail(account: any): Promise<{ subject: string; body: string }> {
-  // Determine the primary dealer for this email (largest gap dealer)
   const dealer = account.primaryDealer || account.dealer || "your distributor";
   const doctorName = account.doctor || null;
   const greeting = doctorName ? `Hi ${doctorName}` : "Hi there";
-  
-  // Gap info
   const gapDollars = Math.abs(account.combinedGap || account.gap || 0);
   const tier = account.tier || "Standard";
-  
-  // Products - split by dealer if available
   const products = account.topSkus?.map((s: any) => s.desc).filter(Boolean).join(", ") || "";
   const stoppedProducts = account.stoppedSkus?.map((s: any) => s.desc).filter(Boolean).join(", ") || "";
+
+  // Deep research intel if available
+  const talkingPoints = account.talkingPoints?.slice(0,2).join("; ") || "";
+  const hooks = account.hooks?.slice(0,2).join("; ") || "";
+  const ownershipNote = account.ownershipNote || "";
 
   const prompt = `You are Ken Scott, a Kerr Dental territory sales rep based in Connecticut covering CT/MA/RI/NY.
 You're writing a SHORT, personal email to a dental office that is down in purchases vs last year.
@@ -45,19 +45,23 @@ Account details:
 - Account tier: ${tier}
 - Gap vs last year: $${gapDollars.toLocaleString()} down
 - Products they've been buying: ${products || "various Kerr products"}
-${stoppedProducts ? `- Products they stopped buying this quarter: ${stoppedProducts}` : ""}
+${stoppedProducts ? `- Products they stopped buying: ${stoppedProducts}` : ""}
+${talkingPoints ? `- Specific talking points from research: ${talkingPoints}` : ""}
+${hooks ? `- Relationship hooks found: ${hooks}` : ""}
+${ownershipNote ? `- Practice context: ${ownershipNote}` : ""}
 - Days left in Q1: 9
 
 Write a GENUINE, SHORT email (4-6 sentences max). Rules:
 - Start with: "${greeting},"
-- Reference the SPECIFIC distributor (${dealer}) naturally — e.g. "through ${dealer}" or "on your ${dealer} account"
+- If talking points or hooks are provided, weave ONE naturally into the email — make it feel like you know them
+- Reference the SPECIFIC distributor (${dealer}) naturally
 - Reference specific products they buy by name if available
-- Do NOT mention any other distributor — only ${dealer}
-- Do NOT mention any distributor rep by name — just the distributor
+- Do NOT mention any other distributor
+- Do NOT mention any distributor rep by name
 - Sound like a real person, not a sales robot
 - Mention end of Q1 / March 31st deadline naturally
 - Sign off as: Ken Scott | Kerr Dental | 860-417-4071
-- Subject line should be casual and specific to their products, NOT generic
+- Subject line should be casual and specific, NOT generic
 
 Return ONLY a JSON object like:
 {"subject": "...", "body": "..."}
@@ -84,29 +88,19 @@ No markdown, no preamble.`;
   } catch {
     return {
       subject: `Quick note from Ken — Kerr Dental`,
-      body: `${greeting},\n\nJust wanted to reach out as we wrap up Q1. I noticed your account through ${dealer} is running behind compared to last year and wanted to see if there's anything I can help with before March 31st.\n\nLet me know if you have a few minutes.\n\nKen Scott | Kerr Dental | 860-417-4071`,
+      body: `${greeting},\n\nJust wanted to reach out as we wrap up Q1. I noticed your account through ${dealer} is running behind compared to last year and wanted to see if there's anything I can help with before March 31st.\n\nKen Scott | Kerr Dental | 860-417-4071`,
     };
   }
 }
 
 async function sendGmail(accessToken: string, to: string, subject: string, body: string): Promise<void> {
-  const message = [
-    `To: ${to}`,
-    `Subject: ${subject}`,
-    `Content-Type: text/plain; charset=utf-8`,
-    ``,
-    body,
-  ].join("\n");
-
-  const encoded = Buffer.from(message).toString("base64")
-    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-
+  const message = [`To: ${to}`, `Subject: ${subject}`, `Content-Type: text/plain; charset=utf-8`, ``, body].join("\n");
+  const encoded = Buffer.from(message).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
   const res = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
     method: "POST",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
     body: JSON.stringify({ raw: encoded }),
   });
-
   if (!res.ok) {
     const err = await res.json();
     throw new Error(`Gmail send failed: ${JSON.stringify(err)}`);
