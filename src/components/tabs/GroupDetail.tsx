@@ -5,10 +5,12 @@ import { T } from "@/lib/tokens";
 import { $$, $f, pc } from "@/lib/format";
 import { getTierLabel } from "@/lib/tier";
 
+let SCHEIN_REPS: {fsc:any[], es:any[]} = {fsc:[], es:[]};
 let BADGER: Record<string, any> = {};
 let PARENT_NAMES: Record<string, string> = {};
 try { BADGER = require("@/data/badger-lookup.json"); } catch(e) {}
 try { PARENT_NAMES = require("@/data/parent-names.json"); } catch(e) {}
+try { SCHEIN_REPS = require("@/data/schein-ct-reps.json"); } catch(e) {}
 
 let OVERLAYS_REF: any = { nameOverrides:{}, contacts:{}, fscReps:{}, activityLogs:{}, research:{}, dealerOverrides:{}, groups:{}, groupDetaches:[], groupMoves:{}, groupContacts:{}, groupNotes:{} };
 
@@ -100,6 +102,20 @@ function GroupDetail({group,goMain,goAcct,overlays,saveOverlays}) {
   const [editName, setEditName] = useState("");
   const [editPhone, setEditPhone] = useState("");
   const [editNotes, setEditNotes] = useState("");
+
+  const [rosterSearch, setRosterSearch] = useState("");
+  const filteredRoster = rosterSearch.trim().length > 0
+    ? [...SCHEIN_REPS.fsc, ...SCHEIN_REPS.es].filter(r =>
+        r.name.toLowerCase().includes(rosterSearch.toLowerCase()))
+    : [...SCHEIN_REPS.fsc, ...SCHEIN_REPS.es];
+
+  const pickFromRoster = (rep:any) => {
+    setEditName(rep.name);
+    setEditPhone(rep.phone);
+    // pre-fill email as notes hint
+    setEditNotes(rep.email);
+    setRosterSearch("");
+  };
 
   const openEdit = (dist:string) => {
     const existing = fscMap[dist];
@@ -317,6 +333,23 @@ function GroupDetail({group,goMain,goAcct,overlays,saveOverlays}) {
             <div style={{marginBottom:10}}>
               <div style={{fontSize:10,color:T.t3,marginBottom:4,fontWeight:600}}>Name *</div>
               <input value={editName} onChange={e=>setEditName(e.target.value)} placeholder="Rep name" style={{width:"100%",background:T.s2,border:`1px solid ${T.b1}`,borderRadius:8,padding:"8px 10px",fontSize:13,color:T.t1,fontFamily:"inherit"}}/>
+            </div>
+            {/* Quick-pick from Schein CT roster */}
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:10,color:T.t3,marginBottom:6,fontWeight:600}}>Pick from Schein CT Roster</div>
+              <input value={rosterSearch} onChange={e=>setRosterSearch(e.target.value)}
+                placeholder="Search FSC or ES by name…"
+                style={{width:"100%",background:T.s2,border:,borderRadius:8,padding:"7px 10px",fontSize:12,color:T.t1,fontFamily:"inherit",marginBottom:6}}/>
+              {rosterSearch.trim().length > 0 && <div style={{maxHeight:160,overflowY:"auto",borderRadius:8,border:,background:T.s2}}>
+                {filteredRoster.length === 0 && <div style={{padding:"10px",fontSize:11,color:T.t4}}>No matches</div>}
+                {filteredRoster.map((r:any,i:number)=>(
+                  <button key={i} onClick={()=>pickFromRoster(r)}
+                    style={{width:"100%",textAlign:"left",padding:"8px 12px",background:"none",border:"none",borderBottom:,color:T.t1,cursor:"pointer",fontFamily:"inherit"}}>
+                    <div style={{fontSize:12,fontWeight:600}}>{r.name}</div>
+                    <div style={{fontSize:10,color:T.t4}}>{r.phone}</div>
+                  </button>
+                ))}
+              </div>}
             </div>
             <div style={{marginBottom:10}}>
               <div style={{fontSize:10,color:T.t3,marginBottom:4,fontWeight:600}}>Phone</div>
