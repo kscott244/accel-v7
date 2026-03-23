@@ -1,91 +1,145 @@
-# Accelerate v7 — Roadmap
+# ROADMAP — accel-v7
 
-## Overview
-
-Evolve accel-v7 from a single-file static-data field tool into a scalable rep operating system — without breaking what already works.
-
----
-
-## Phase 1 — Foundation Audit + Documentation ✅
-**Status: COMPLETE**
-
-- Audit repo structure, data flow, persistence model
-- Create `docs/ARCHITECTURE.md`, `ROADMAP.md`, `CURRENT_PHASE.md`, `IDEAS_BACKLOG.md`
-- Identify legacy dead code vs active code
-- Document current limitations
-- No code changes to app behavior
+> Last updated: March 22, 2026
+> Phased plan from current state to long-term platform.
 
 ---
 
-## Phase 2 — Stability + Dead Code Cleanup
-**Status: NEXT**
+## Phase Overview
 
-Scope:
-- Remove legacy v6 code that is not imported by AccelerateApp (cards/, charts/, layout/, ui/, lib/, old page.tsx data paths)
-- Remove `@ts-nocheck` and fix the worst type errors (not full strict mode — just eliminate crash vectors)
-- Promote session-only data to durable storage where it matters (manual adjustments → overlays)
-- Verify all tabs render correctly after cleanup
-- Keep the single-file AccelerateApp.tsx structure for now
-
-Completion criteria:
-- No unused files in repo
-- Manual sale adjustments persist across refresh
-- Zero runtime crashes on any tab
-- All existing features still work
+| Phase | Name | Status | Description |
+|-------|------|--------|-------------|
+| 1 | Foundation Audit + Docs | ✅ Complete | Audit repo, document architecture, establish project docs, define roadmap |
+| 2 | Stabilize + Consolidate | 🔲 Next | Retire patches.json, add deploy verification, fix remaining edge cases |
+| 3 | Decompose the Monolith | 🔲 Planned | Extract tabs from AccelerateApp.tsx into separate files, enable TypeScript |
+| 4 | Data Pipeline Upgrade | 🔲 Planned | Improve CSV import, add data validation, weekly upload workflow |
+| 5 | Intelligence Layer | 🔲 Future | Enhanced scoring, AI briefings, gap-closing scenarios, route optimization |
+| 6 | Multi-Quarter / Q2+ | 🔲 Future | Support quarter transitions, historical tracking, goal updates |
 
 ---
 
-## Phase 3 — Component Extraction
-**Status: PLANNED**
+## Phase 1 — Foundation Audit + Docs ✅ Complete
 
-Scope:
-- Split AccelerateApp.tsx into separate files per tab/component
-- Extract shared primitives (AccountId, Stat, Pill, Bar, theme) into `components/shared/`
-- Create a proper data context or store so components don't rely on module-level variables
-- Maintain identical UI behavior
-
-Completion criteria:
-- AccelerateApp.tsx is an orchestrator under 500 lines
-- Each tab is its own file
-- Shared components are reusable
-- No visual changes
+**Delivered**:
+- Full repo audit — file tree, data flow, API routes, component structure, deployment pipeline
+- `docs/ARCHITECTURE.md` — current + target architecture with accurate metrics
+- `docs/ROADMAP.md` — this file
+- `docs/CURRENT_PHASE.md` — active phase tracker
+- `docs/IDEAS_BACKLOG.md` — organized idea capture
 
 ---
 
-## Phase 4 — Dynamic Data Layer
-**Status: PLANNED**
+## Phase 2 — Stabilize + Consolidate
 
-Scope:
-- Replace static `preloaded-data.ts` with a real data pipeline (Supabase, or server-side CSV processing)
-- CSV upload writes to database instead of generating a static TS file
-- App loads data via API at runtime instead of bundling 1.7MB in JS
-- Week routes become editable and persist to database
-- Activity logs move from localStorage to durable storage
+**Goal**: Clean up the dual overlay systems, add deploy confidence, fix remaining rough edges. No new features.
 
-Completion criteria:
-- App loads in < 2 seconds (vs current ~4-5s with 1.7MB bundle)
-- CSV upload refreshes data without code push
-- All user data is durable, not localStorage
+**What's already been fixed** (these were originally Phase 2 items but got done during recent feature work):
+- ✅ Error boundary debug code removed (commit `73da0e0`)
+- ✅ Nav bar consolidated: 5 main tabs + More menu (commit `e1a6baf`)
+- ✅ Dealers tab single-location fix (commit `ae5ae27`)
+- ✅ GROUP CREATES / Resolute products fix (commit `58f54a6`)
+- ✅ Overlay persistence hardened — survives cache clear + CSV upload (commit `d2f20df`)
 
----
+**What remains for Phase 2**:
+1. **Retire patches.json** — migrate any remaining data into overlays.json, remove `save-patch` API route, remove patches.json reads from applyOverlays()
+2. **Add build hash to UI** — small version/hash badge (e.g., in More menu) so Ken can verify deploys without checking network tab
+3. **Audit overlay edge cases** — stress test: what happens when an overlay references a Master-CM ID that no longer exists in base data? Graceful handling or silent failure?
+4. **Cache-busting strategy** — consider adding `next.config.js` cache headers or a service worker update prompt
 
-## Phase 5 — Platform Features
-**Status: FUTURE**
+**Does NOT include**: New features, tab decomposition, AI enhancements.
 
-Potential scope (see IDEAS_BACKLOG.md for full list):
-- Tier upgrade tracker ("$X from Silver")
-- Editable week route planner with day buckets
-- Push notifications / overnight alerts
-- Multi-rep support (if Kerr wants to roll out)
-- Dashboard export / PDF reports for QBRs
-- CRM integration (Salesforce, HubSpot)
+**Completion criteria**: Single overlay system, deploy verification visible in UI, no known data integrity edge cases.
 
 ---
 
-## Principles
+## Phase 3 — Decompose the Monolith
 
-1. **Ship weekly, not monthly** — small pushes, always deployable
-2. **Don't rewrite what works** — the selling tools (Today, Overdrive, Groups, Dealers) are proven
-3. **Mobile-first always** — Ken uses this on his phone in the field
-4. **Data durability over features** — losing data is worse than missing a feature
-5. **One-user first, multi-user later** — don't over-engineer auth/permissions yet
+**Goal**: Break AccelerateApp.tsx (5,377 lines) into maintainable, typed components without breaking anything.
+
+**Approach**: Extract one tab at a time. Each extraction is a standalone commit.
+
+**Order of extraction** (lowest risk first):
+1. Extract shared logic first:
+   - Design tokens (T object) → `src/lib/tokens.ts`
+   - Scoring engine → `src/lib/scoring.ts`
+   - CSV processor → `src/lib/csv-processor.ts`
+   - Overlay logic → `src/lib/overlays.ts`
+   - Shared micro-components (Pill, Stat, Bar, AccountId, icons) → `src/components/shared/`
+2. Then extract tabs:
+   - `MapTab` → `src/components/tabs/MapTab.tsx` (self-contained)
+   - `EstTab` → `src/components/tabs/EstTab.tsx` (simple)
+   - `DashTab` → `src/components/tabs/DashTab.tsx`
+   - `GroupsTab` + `GroupDetail` → `src/components/tabs/GroupsTab.tsx`
+   - `DealersTab` → `src/components/tabs/DealersTab.tsx`
+   - `OutreachTab` → `src/components/tabs/OutreachTab.tsx`
+   - `AdminTab` → `src/components/tabs/AdminTab.tsx`
+   - `TodayTab` → `src/components/tabs/TodayTab.tsx` (most complex, last)
+   - `AcctDetail` → `src/components/tabs/AcctDetail.tsx`
+
+**Completion criteria**: AccelerateApp.tsx under 500 lines (shell + routing + state + imports). All tabs in separate files. TypeScript enabled.
+
+---
+
+## Phase 4 — Data Pipeline Upgrade
+
+**Goal**: Make weekly data refresh reliable and self-service.
+
+**Scope**:
+1. Improved CSV import with column auto-detection for Ken's Tableau export format
+2. Data validation dashboard — show what changed since last upload
+3. Diff view: "15 new accounts, 3 removed, 47 with changed CY numbers"
+4. Overlay integrity check — flag overlays referencing accounts no longer in base data
+5. One-click "Upload New Week" flow in Admin tab
+
+**Completion criteria**: Ken can upload a new Tableau export weekly with confidence.
+
+---
+
+## Phase 5 — Intelligence Layer
+
+**Goal**: Make the app smarter about recommending actions.
+
+**Scope**:
+1. Enhanced scoring engine with configurable weights
+2. "Top 10 This Week" auto-generated from scoring + geography + calendar
+3. Gap-closing scenario modeling ("convert these 12 accounts = $X")
+4. Distributor-level trend detection
+5. Product-level opportunity identification
+6. Weekly AI briefing refinement
+
+**Completion criteria**: Ken opens the app Monday morning and sees a useful, personalized action plan.
+
+---
+
+## Phase 6 — Multi-Quarter / Q2+
+
+**Goal**: Transition from Q1-only to an ongoing operating system.
+
+**Scope**:
+1. Quarter selector — switch between Q1, Q2, etc.
+2. Historical tracking — "Q1 2026 final: $X"
+3. Goal management — update targets per quarter
+4. Year-over-year comparisons
+5. Territory change tracking (accounts gained/lost)
+
+**Completion criteria**: App works for Q2 2026 without hardcoded Q1 changes.
+
+---
+
+## Dependencies
+
+```
+Phase 1 (Foundation Audit) ✅
+  └─► Phase 2 (Stabilize)
+       ├─► Phase 3 (Decompose) ── can run in parallel with Phase 4
+       └─► Phase 4 (Data Pipeline)
+            └─► Phase 5 (Intelligence)
+                 └─► Phase 6 (Multi-Quarter)
+```
+
+## Timeline Guidance
+
+- **Phase 2**: 1 session, focused cleanup
+- **Phase 3**: Biggest investment (multiple sessions), highest long-term payoff
+- **Phase 4-6**: Post-Q1 work — Q1 ends March 31, 2026
+- During Q1 crunch, prioritize bug fixes and usability over architecture
