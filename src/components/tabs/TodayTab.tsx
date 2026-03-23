@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { T, Q1_TARGET, DAYS_LEFT, HOME_LAT, HOME_LNG } from "@/lib/tokens";
 import { normalizeTier, isAccelTier } from "@/lib/tier";
-import { $f, pc, scoreAccount } from "@/lib/format";
+import { $$, $f, pc, scoreAccount } from "@/lib/format";
 
 let BADGER: Record<string, any> = {};
 try { BADGER = require("@/data/badger-lookup.json"); } catch(e) {}
