@@ -326,6 +326,20 @@ const Pill = ({l,v,c}) => <div><span style={{fontSize:9,textTransform:"uppercase
 const Stat = ({l,v,c}) => <div style={{background:T.s2,borderRadius:8,padding:"8px 10px",textAlign:"center"}}><div style={{fontSize:9,textTransform:"uppercase",color:T.t3,marginBottom:2}}>{l}</div><div className="m" style={{fontSize:14,fontWeight:700,color:c}}>{v}</div></div>;
 const Bar = ({pct, color}) => <div style={{width:"100%",height:6,borderRadius:3,background:T.s3,overflow:"hidden"}}><div className="bar-g" style={{height:"100%",borderRadius:3,width:`${Math.min(Math.max(pct,0),100)}%`,background:color||`linear-gradient(90deg,${T.blue},${T.cyan})`}}/></div>;
 
+// ─── SHARED ACCOUNT IDENTITY — one place to change account name display globally ───
+// Shows child account name as primary, parent group name below in muted text when available.
+// size: "sm" (10-11px), "md" (12-13px default), "lg" (15-16px)
+const AccountId = ({name, gName, size="md", color}:{name:string, gName?:string, size?:"sm"|"md"|"lg", color?:string}) => {
+  const showParent = gName && gName !== name && gName.toLowerCase() !== name.toLowerCase();
+  const fs = size==="sm"?11:size==="lg"?15:12;
+  const fw = size==="sm"?500:size==="lg"?700:600;
+  const pfs = size==="sm"?9:size==="lg"?11:10;
+  return <div style={{minWidth:0,overflow:"hidden"}}>
+    <div style={{fontSize:fs,fontWeight:fw,color:color||T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{name}</div>
+    {showParent&&<div style={{fontSize:pfs,color:T.cyan,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginTop:1}}>↳ {gName}</div>}
+  </div>;
+};
+
 // ─── SCORING ENGINE ──────────────────────────────────────────────
 function scoreAccount(a, q) {
   let s = 0; const r = []; // r = [{label, pts}]
@@ -1538,7 +1552,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
             {a.adjCount>0&&<span style={{fontSize:9,color:T.green,background:"rgba(52,211,153,.08)",borderRadius:4,padding:"2px 5px"}}>+adj</span>}
             {a.hasSiblings&&<span style={{fontSize:8,color:T.cyan,background:"rgba(34,211,238,.08)",border:`1px solid rgba(34,211,238,.2)`,borderRadius:4,padding:"1px 5px",fontWeight:700}}>+{a.siblingCount} dealer{a.siblingCount>1?"s":""}</span>}
           </div>
-          <div style={{fontSize:13,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
+          <AccountId name={a.name} gName={a.gName} size="md"/>
           <div style={{fontSize:10,color:T.t3,marginTop:2}}>{a.city}, {a.st} · {isAccelTier(a.gTier||a.tier)?<span style={{color:T.amber}}>{normalizeTier(a.gTier||a.tier)}</span>:"Private"}</div>
         </div>
         <div style={{textAlign:"right",flexShrink:0,marginLeft:12}}>
@@ -1586,7 +1600,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
             border:`1px solid ${T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:8,cursor:"pointer"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
             <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:13,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
+              <AccountId name={a.name} gName={a.gName} size="md"/>
               <div style={{fontSize:10,color:T.t3,marginTop:2}}>
                 {a.addr ? a.addr + ', ' : ''}{a.city}, {a.st}
                 {a.gName&&a.gName!==a.name&&<span style={{color:T.t4}}> · {a.gName}</span>}
@@ -1931,7 +1945,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
                       <span style={{fontSize:9,fontWeight:700,color:isAnchor?T.amber:T.t4,background:isAnchor?"rgba(251,191,36,.1)":T.s1,borderRadius:4,padding:"1px 5px"}}>{isAnchor?"ANCHOR":`STOP ${i+1}`}</span>
                       {done&&<span style={{fontSize:9,fontWeight:700,color:done.outcome==="lost"?T.red:T.green}}>{done.outcome==="lost"?"✗ Lost":`✓ ${done.outcome}`}</span>}
                     </div>
-                    <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
+                    <AccountId name={a.name} gName={a.gName} size="md"/>
                     <div style={{fontSize:10,color:T.t3,marginTop:1}}>{a.city}, {a.st} · {Math.round(a.miles||0)}mi from home</div>
                     <div style={{fontSize:10,color:T.t3,marginTop:1}}>Ask <span style={{color:T.amber,fontWeight:600}}>{$f(a.ask)}</span> · {Math.round((a.prob||0)*100)}% likely</div>
                     {done?.note&&<div style={{fontSize:9,color:T.t4,marginTop:3,fontStyle:"italic"}}>"{done.note}"</div>}
@@ -1989,7 +2003,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
               width:"100%",textAlign:"left",padding:"9px 12px",marginBottom:6,borderRadius:10,background:T.s2,
               border:"1px solid rgba(52,211,153,.15)",cursor:"pointer"}}>
             <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
+              <AccountId name={a.name} gName={a.gName} size="md"/>
               <div style={{fontSize:10,color:T.t3}}>{a.city}, {a.st}</div>
             </div>
             <div style={{display:"flex",alignItems:"center",gap:10,flexShrink:0,marginLeft:12}}>
@@ -2011,7 +2025,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
               width:"100%",textAlign:"left",padding:"9px 12px",marginBottom:6,borderRadius:10,background:T.s2,
               border:"1px solid rgba(251,191,36,.15)",cursor:"pointer"}}>
             <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
+              <AccountId name={a.name} gName={a.gName} size="md"/>
               <div style={{fontSize:10,color:T.t3}}>{a.city}, {a.st} · <span style={{color:T.amber}}>{tier}</span></div>
             </div>
             <div style={{display:"flex",alignItems:"center",gap:10,flexShrink:0,marginLeft:12}}>
@@ -2066,8 +2080,8 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
               onClick={()=>goAcct(a)}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
                 <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:13,fontWeight:700,color:T.t1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{a.name}</div>
-                  <div style={{fontSize:10,color:T.t3,marginTop:1}}>{a.gName&&a.gName!==a.name?`${a.gName} · `:""}{ a.city||""}{a.dealer?<span style={{color:T.t4}}> · {a.dealer}</span>:""}</div>
+                  <AccountId name={a.name} gName={a.gName} size="md"/>
+                  <div style={{fontSize:10,color:T.t3,marginTop:1}}>{ a.city||""}{a.dealer?<span style={{color:T.t4}}> · {a.dealer}</span>:""}</div>
                 </div>
                 <div style={{textAlign:"right",flexShrink:0,marginLeft:10}}>
                   <div style={{fontSize:13,fontWeight:700,color:T.amber}} className="m">−${Math.round(a.gap).toLocaleString()}</div>
@@ -2327,7 +2341,7 @@ function GroupDetail({group,goMain,goAcct,overlays,saveOverlays}) {
               border:`1px solid ${isStopped?"rgba(248,113,113,.2)":gap>0?"rgba(251,191,36,.15)":T.b1}`,
               borderRadius:12,padding:"11px 13px",marginBottom:7,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginBottom:2}}>{c.name}</div>
+              <AccountId name={c.name} size="md"/>
               <div style={{fontSize:10,color:T.t3}}>{c.city}, {c.st}{c.dealer?<span style={{color:T.cyan}}> · {c.dealer}</span>:""}</div>
               {isStopped&&<div style={{fontSize:9,color:T.red,marginTop:2,fontWeight:600}}>STOPPED · was {$$(c.prodPY)}</div>}
               {isNew&&<div style={{fontSize:9,color:T.green,marginTop:2,fontWeight:600}}>NEW BUYER</div>}
@@ -2842,7 +2856,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
       {/* ACCOUNT HEADER */}
       <div className="anim" style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-          <div style={{fontSize:16,fontWeight:700,flex:1,minWidth:0,paddingRight:8}}>{acct.name}</div>
+          <div style={{flex:1,minWidth:0,paddingRight:8}}><AccountId name={acct.name} gName={acct.gName} size="lg"/></div>
           <button onClick={()=>setShowMoveModal(true)} style={{flexShrink:0,background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.18)",borderRadius:8,padding:"4px 9px",fontSize:10,fontWeight:600,color:T.blue,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>Move →</button>
         </div>
         <div style={{fontSize:11,color:T.t3,marginTop:2}}>{acct.city}, {acct.st} · <span style={{color:isAccel?T.amber:T.t3}}>{acctType}</span> · Last {acct.last}d ago</div>
@@ -3520,7 +3534,7 @@ function DashTab({groups, q1CY, q1Att, q1Gap, scored, goAcct}) {
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:3}}>
               <div style={{flex:1,minWidth:0,display:"flex",alignItems:"center",gap:5}}>
                 <span className="m" style={{fontSize:9,color:T.t4}}>#{i+1}</span>
-                <span style={{fontSize:11,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</span>
+                <span style={{fontSize:11,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}><AccountId name={a.name} size="sm"/></span>
                 <span style={{fontSize:9,color:T.t3}}>{a.city}, {a.st}</span>
               </div>
               <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0,marginLeft:8}}>
@@ -4018,7 +4032,7 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
               borderRadius:12,padding:"11px 13px",marginBottom:7,cursor:"pointer"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
               <div style={{display:"flex",alignItems:"center",gap:6,flex:1,minWidth:0}}>
-                <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
+                <AccountId name={a.name} gName={a.gName} size="md"/>
                 <span style={{flexShrink:0,fontSize:8,fontWeight:700,borderRadius:4,padding:"1px 5px",background:chip.bg,color:chip.color}}>{a.visitPriority}</span>
                 {a.dealerFlag&&<span style={{flexShrink:0,fontSize:8,fontWeight:700,color:T.amber,background:"rgba(251,191,36,.1)",borderRadius:4,padding:"1px 5px",border:"1px solid rgba(251,191,36,.25)"}}>⚠ verify</span>}
               </div>
@@ -4353,7 +4367,7 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:5}}>
                   <div style={{display:"flex",alignItems:"center",gap:7,flex:1,minWidth:0}}>
                     <span style={{fontSize:13,fontWeight:800,color:T.purple,flexShrink:0,width:20}}>{i+1}</span>
-                    <div style={{fontSize:13,fontWeight:700,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
+                    <AccountId name={a.name} size="md"/>
                     <span style={{flexShrink:0,fontSize:8,fontWeight:700,borderRadius:4,padding:"2px 5px",background:`${chipColor}20`,color:chipColor}}>{a.visitPriority}</span>
                   </div>
                   <span style={{fontSize:13,fontWeight:700,color:T.red,fontFamily:"'JetBrains Mono',monospace",flexShrink:0,marginLeft:8}}>-{$$(a.gap)}</span>
@@ -4536,7 +4550,7 @@ function EstTab({pct,setPct,q1CY,groups,goAcct}) {
             borderRadius:12,padding:"10px 12px",marginBottom:7,cursor:"pointer"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
             <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
+              <AccountId name={a.name} gName={a.gName} size="md"/>
               <div style={{fontSize:10,color:T.t3,marginTop:1}}>{a.city}, {a.st}
                 {a.gName&&a.gName!==a.name&&<span style={{color:T.t4}}> · {a.gName}</span>}
               </div>
@@ -5062,8 +5076,8 @@ function AdminTab({groups, scored, overlays, saveOverlays}:{groups:any[], scored
                 return <button key={a.id} onClick={()=>{setChildIds([...childIds,a.id]);setChildIdInput("");}}
                   style={{display:"flex",width:"100%",textAlign:"left",padding:"10px 12px",background:i%2===0?"transparent":"rgba(255,255,255,.02)",border:"none",borderBottom:i<results.length-1?`1px solid ${T.b1}`:"none",cursor:"pointer",fontFamily:"inherit",alignItems:"center",gap:10}}>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:12,fontWeight:600,color:T.t1,marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
-                    <div style={{fontSize:10,color:T.t3}}>{a.city}{a.st?`, ${a.st}`:""}{a.gName?` · ${a.gName}`:""}</div>
+                    <AccountId name={a.name} gName={a.gName} size="md"/>
+                    <div style={{fontSize:10,color:T.t3}}>{a.city}{a.st?`, ${a.st}`:""}</div>
                     <div style={{fontSize:9,color:T.t4,marginTop:1}}>{a.dealer||"Unknown"} · PY {$$(py)} / CY {$$(cy)}</div>
                   </div>
                   <div style={{flexShrink:0,background:"rgba(79,142,247,.1)",border:"1px solid rgba(79,142,247,.2)",borderRadius:8,padding:"4px 10px",fontSize:10,fontWeight:700,color:T.blue}}>+ Add</div>
@@ -5079,7 +5093,7 @@ function AdminTab({groups, scored, overlays, saveOverlays}:{groups:any[], scored
               const py=acct?.pyQ?.["1"]||0, cy=acct?.cyQ?.["1"]||0;
               return <div key={id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",background:T.s2,borderRadius:8,marginBottom:4,border:`1px solid ${T.b1}`}}>
                 <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:11,fontWeight:600,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{acct?acct.name:id}</div>
+                  <AccountId name={acct?acct.name:id} gName={acct?.gName} size="sm"/>
                   <div style={{fontSize:9,color:T.t3}}>{acct?`${acct.city||""} · ${acct.dealer||"Unknown"} · PY ${$$(py)}`:id}</div>
                 </div>
                 <button onClick={()=>setChildIds(childIds.filter(x=>x!==id))} style={{background:"rgba(248,113,113,.1)",border:"1px solid rgba(248,113,113,.2)",borderRadius:6,color:T.red,cursor:"pointer",fontSize:10,fontWeight:600,padding:"3px 8px",fontFamily:"inherit",flexShrink:0}}>Remove</button>
