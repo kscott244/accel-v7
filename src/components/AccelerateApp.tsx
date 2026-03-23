@@ -342,7 +342,7 @@ function AppInner() {
       ...g,
       children: g.children?.map(c => ({
         ...c,
-        dealer: c.dealer || DEALERS[c.id] || PARENT_DEALERS[g.id] || "All Other"
+        dealer: (c.dealer && c.dealer !== "Unknown" && c.dealer !== "All Other") ? c.dealer : (DEALERS[c.id] || PARENT_DEALERS[g.id] || "All Other")
       }))
     }));
   };
