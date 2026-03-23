@@ -199,6 +199,30 @@ function GroupDetail({group,goMain,goAcct,overlays,saveOverlays}) {
     setTimeout(()=>setNoteSaved(false), 2000);
   };
 
+  // Distributor revenue breakdown for this group
+  const distBreakdown = useMemo(()=>{
+    const map: Record<string,{cy:number,py:number,locs:number}> = {};
+    (group.children||[]).forEach((c:any)=>{
+      const d = c.dealer && c.dealer!=="Unknown" ? c.dealer : "Unknown";
+      if(!map[d]) map[d]={cy:0,py:0,locs:0};
+      map[d].cy += c.cyQ?.[qk]||0;
+      map[d].py += c.pyQ?.[qk]||0;
+      map[d].locs++;
+    });
+    const totalCY = Object.values(map).reduce((s,v)=>s+v.cy,0);
+    const totalPY = Object.values(map).reduce((s,v)=>s+v.py,0);
+    return {
+      rows: Object.entries(map)
+        .map(([dist,v])=>({
+          dist, ...v,
+          cyPct: totalCY>0 ? v.cy/totalCY : 0,
+          pyPct: totalPY>0 ? v.py/totalPY : 0,
+        }))
+        .sort((a,b)=>b.cy-a.cy),
+      totalCY, totalPY,
+    };
+  },[group,qk]);
+
   // Roll up products across all children
   const {groupBuying, groupStopped} = useMemo(()=>{
     const prodMap: Record<string,{py:number,cy:number,locsPY:string[],locsCY:string[],locsDown:string[]}> = {};
@@ -292,6 +316,45 @@ function GroupDetail({group,goMain,goAcct,overlays,saveOverlays}) {
           <Stat l="PY" v={$$(py)} c={T.t2}/><Stat l="CY" v={$$(cy)} c={T.blue}/><Stat l="Gap" v={gap<=0?`+${$$(Math.abs(gap))}`:$$(gap)} c={gap<=0?T.green:T.red}/><Stat l="Ret" v={ret+"%"} c={ret>30?T.green:ret>15?T.amber:T.red}/>
         </div>
       </div>
+
+      {/* DISTRIBUTOR SPLIT */}
+      {distBreakdown.rows.length>0&&<div className="anim" style={{animationDelay:"15ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
+        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.orange,marginBottom:12}}>Distributor Split</div>
+        {distBreakdown.rows.map((row,i)=>{
+          const DIST_COLOR: Record<string,string> = {
+            Schein:"#4f8ef7",Patterson:"#a78bfa",Benco:"#22d3ee",Darby:"#fbbf24",Unknown:"#7878a0"
+          };
+          const c = DIST_COLOR[row.dist] || "#7878a0";
+          const shareDelta = row.cyPct - row.pyPct; // gaining or losing share vs PY
+          const trend = row.py > 0 ? row.cy/row.py : null;
+          return <div key={row.dist} style={{marginBottom:i<distBreakdown.rows.length-1?12:0}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+              <div style={{display:"flex",alignItems:"center",gap:6}}>
+                <span style={{fontSize:11,fontWeight:700,color:c,background:`${c}18`,borderRadius:5,padding:"2px 8px"}}>{row.dist}</span>
+                <span style={{fontSize:9,color:T.t4}}>{row.locs} loc{row.locs!==1?"s":""}</span>
+                {shareDelta > 0.03 && <span style={{fontSize:9,color:T.green,fontWeight:600}}>▲ gaining share</span>}
+                {shareDelta < -0.03 && <span style={{fontSize:9,color:T.red,fontWeight:600}}>▼ losing share</span>}
+              </div>
+              <div style={{textAlign:"right"}}>
+                <span className="m" style={{fontSize:13,fontWeight:700,color:T.t1}}>{$$(row.cy)}</span>
+                <span style={{fontSize:9,color:T.t4,marginLeft:5}}>{Math.round(row.cyPct*100)}%</span>
+                {trend!==null&&<span style={{fontSize:9,color:trend>=0.9?T.green:trend>=0.7?T.amber:T.red,marginLeft:6,fontWeight:600}}>{Math.round(trend*100)}%</span>}
+              </div>
+            </div>
+            {/* CY share bar */}
+            <div style={{height:6,borderRadius:3,background:T.s3,overflow:"hidden",marginBottom:2}}>
+              <div className="bar-g" style={{animationDelay:`${i*60}ms`,height:"100%",borderRadius:3,width:`${row.cyPct*100}%`,background:`linear-gradient(90deg,${c},${c}99)`}}/>
+            </div>
+            {/* PY ghost bar for comparison */}
+            <div style={{display:"flex",alignItems:"center",gap:4}}>
+              <div style={{flex:1,height:3,borderRadius:2,background:T.s3,overflow:"hidden"}}>
+                <div style={{height:"100%",borderRadius:2,width:`${row.pyPct*100}%`,background:`${c}40`}}/>
+              </div>
+              <span style={{fontSize:8,color:T.t4,flexShrink:0}}>{$$(row.py)} PY</span>
+            </div>
+          </div>;
+        })}
+      </div>}
 
       {/* FSC / DISTRIBUTOR REPS */}
       {groupDists.length>0&&<div className="anim" style={{animationDelay:"20ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
