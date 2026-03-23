@@ -3797,6 +3797,10 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
   const [newRepName,setNewRepName] = useState("");
   const [newRepPhone,setNewRepPhone] = useState("");
   const [newRepNotes,setNewRepNotes] = useState("");
+  const [cocallDist, setCocallDist] = useState<string|null>(null);
+  const [cocallOpen, setCocallOpen] = useState<boolean>(() => {
+    try { return localStorage.getItem("cocall_open") === "true"; } catch { return false; }
+  });
   const [manualReps,setManualReps] = useState<Record<string,any[]>>(()=>{
     try { return JSON.parse(localStorage.getItem("dealer_manual_reps")||"{}"); } catch { return {}; }
   });
@@ -4223,12 +4227,6 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
       </div>
     </div>;
   }
-
-  // ── FSC Co-call Planner state ──
-  const [cocallDist, setCocallDist] = useState<string|null>(null);
-  const [cocallOpen, setCocallOpen] = useState<boolean>(() => {
-    try { return localStorage.getItem("cocall_open") === "true"; } catch { return false; }
-  });
 
   // ── Top-level: 4 distributor cards + All Other ──
   return <div style={{padding:"16px 16px 0",paddingBottom:80}}>
