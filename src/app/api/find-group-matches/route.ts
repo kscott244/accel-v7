@@ -13,9 +13,13 @@ export async function POST(req: NextRequest) {
     if (!apiKey) return NextResponse.json({ error: "No API key" }, { status: 500 });
 
     // Build a condensed account list (cap at 500 to stay within context)
-    const accountList = accounts.slice(0, 500).map((a: any, i: number) =>
-      `${i+1}. ID:${a.id} | "${a.name}" | ${a.city}, ${a.st}${a.address ? " | " + a.address : ""}`
-    ).join("\n");
+    const accountList = accounts.slice(0, 500).map((a: any, i: number) => {
+      let line = `${i+1}. ID:${a.id} | "${a.name}" | ${a.city}, ${a.st}`;
+      if (a.address) line += ` | ${a.address}`;
+      if (a.doctor) line += ` | Doctor: ${a.doctor}`;
+      if (a.email) line += ` | Email: ${a.email}`;
+      return line;
+    }).join("\n");
 
     const prompt = `You are a dental territory intelligence assistant. A sales rep has just run deep research on one of their accounts and received intelligence that suggests it may be part of a multi-location group. Your job is to identify which OTHER accounts in their territory are likely the same practice or same ownership group.
 
@@ -36,13 +40,17 @@ TASK: Identify which accounts from the list above are likely the SAME PRACTICE o
 - Shared practice name or partial name (e.g. "Atwill", "Conroy")
 - Addresses mentioned in the research intel matching accounts in the list
 - Cities mentioned in the research as locations of this group
-- Doctor names from the intel matching account names
+- Doctor name from the research matching the Doctor field of an account (even if account name is completely different)
+- Email domain matching — e.g. if research identifies "newenglanddentalllc.com" and an account has that email domain, it's a match
+- Account email containing the practice name from research
 
 RULES:
 - Only return accounts you are CONFIDENT belong to the same group
 - Do NOT match on generic dental words like "dental", "associates", "care", "family"
 - Do NOT match just because they are in the same city — the city must be specifically mentioned as a location of THIS group in the research
-- A match requires at least ONE specific signal: shared name keyword, specific address, or explicit city mention for THIS group
+- A match requires at least ONE specific signal: shared name keyword, specific address, explicit city mention for THIS group, matching doctor name, or matching email domain
+- STRONG SIGNALS (any one is sufficient): doctor name matches the owner found in research; email domain matches the researched practice's domain; address matches a location mentioned in the research
+- EXAMPLE: If research says "Dr. Ilyas owns the Danbury location" and an account in Danbury has Doctor: "Dr. Ilyas" or email containing "newenglanddental" — that IS a match even if the account name is completely different
 - Return empty array if no confident matches found
 
 Return ONLY valid JSON, no markdown:
