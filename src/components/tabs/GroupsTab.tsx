@@ -36,9 +36,37 @@ export default function GroupsTab({groups,goGroup,filt,setFilt,search,setSearch}
     return l;
   },[enriched,filt,search,isDealerFilt]);
 
-  // Dealer split: top spend + hurting
-  const dealerTop=useMemo(()=>isDealerFilt?[...list].filter(g=>g._cy1>0).sort((a,b)=>b._cy1-a._cy1).slice(0,10):[],[list,isDealerFilt]);
-  const dealerHurt=useMemo(()=>isDealerFilt?[...list].filter(g=>g._gap>0).sort((a,b)=>(b._gap-(b._ret*100))-(a._gap-(a._ret*100))).slice(0,10):[],[list,isDealerFilt]);
+  // Top (growing/strong) + Hurting — used by both dealer and standard views
+  const topList=useMemo(()=>[...list].filter(g=>g._cy1>0&&g._ret>=0.7&&g._py1>0).sort((a,b)=>b._cy1-a._cy1).slice(0,15),[list]);
+  const hurtList=useMemo(()=>[...list].filter(g=>g._gap>500&&g._ret<0.6).sort((a,b)=>b._gap-a._gap).slice(0,15),[list]);
+  // Dealer split aliases
+  const dealerTop=useMemo(()=>isDealerFilt?topList:[],[topList,isDealerFilt]);
+  const dealerHurt=useMemo(()=>isDealerFilt?hurtList:[],[hurtList,isDealerFilt]);
+
+  // Compact half-width card for two-column layout
+  const MiniCard=({g,i,side}:{g:any,i:number,side:"top"|"hurt"})=>{
+    const isTop=side==="top";
+    const border=isTop?"rgba(52,211,153,.2)":"rgba(248,113,113,.2)";
+    const retColor=g._ret>0.7?T.green:g._ret>0.4?T.amber:T.red;
+    return <button onClick={()=>goGroup(g)} style={{width:"100%",textAlign:"left",background:T.s1,border:`1px solid ${border}`,borderRadius:12,padding:"10px 12px",marginBottom:8,cursor:"pointer"}}>
+      <div style={{fontSize:11,fontWeight:600,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginBottom:4}}>{fixGroupName(g)}</div>
+      <div style={{fontSize:9,color:T.t4,marginBottom:6}}>{g._locs} loc{g._locs!==1?"s":""}{isDealerFilt?<span style={{color:T.cyan}}> · {filt}</span>:""}</div>
+      <div style={{display:"flex",flexDirection:"column",gap:3}}>
+        <div style={{display:"flex",justifyContent:"space-between"}}>
+          <span style={{fontSize:9,color:T.t3}}>CY</span>
+          <span className="m" style={{fontSize:11,fontWeight:700,color:isTop?T.green:T.blue}}>{$$(g._cy1)}</span>
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between"}}>
+          <span style={{fontSize:9,color:T.t3}}>PY</span>
+          <span className="m" style={{fontSize:11,fontWeight:600,color:T.t3}}>{$$(g._py1)}</span>
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",marginTop:2,paddingTop:4,borderTop:`1px solid ${T.b2}`}}>
+          <span style={{fontSize:9,color:T.t3}}>{isTop?"Ret":"Gap"}</span>
+          <span className="m" style={{fontSize:11,fontWeight:700,color:isTop?retColor:T.red}}>{isTop?Math.round(g._ret*100)+"%":$$(g._gap)}</span>
+        </div>
+      </div>
+    </button>;
+  };
 
   const GroupCard=({g,i,accent}:{g:any,i:number,accent?:string})=>{
     const isUrgent=g._gap>5000&&g._ret<0.2;
@@ -100,18 +128,46 @@ export default function GroupsTab({groups,goGroup,filt,setFilt,search,setSearch}
         : dealerHurt.map((g,i)=><GroupCard key={g.id} g={g} i={i} accent="rgba(248,113,113,.15)"/>)
       }
     </> : <>
-      {/* ── STANDARD LIST VIEW ── */}
-      <div style={{marginBottom:8,fontSize:10,color:T.t4}}>
+      {/* ── TWO-COLUMN VIEW ── */}
+      <div style={{marginBottom:10,fontSize:10,color:T.t4}}>
         {filt==="All"
           ? `${list.length} total · ${enriched.filter(g=>g.locs>=2).length} multi-location · ${enriched.filter(g=>g.locs===1).length} single`
-          : filt==="Multi-Location"
-          ? `${list.length} groups · 2+ locations`
-          : filt==="Private"
-          ? `${list.length} single-location accounts`
+          : filt==="Multi-Location" ? `${list.length} groups · 2+ locations`
+          : filt==="Private" ? `${list.length} single-location accounts`
           : `${list.length} groups`}
       </div>
-      {list.slice(0,50).map((g,i)=><GroupCard key={g.id} g={g} i={i}/>)}
-      {list.length>50&&<div style={{textAlign:"center",padding:16,fontSize:11,color:T.t4}}>Showing top 50 of {list.length} groups. Use search to find more.</div>}
+
+      {/* Column headers */}
+      <div style={{display:"flex",gap:8,marginBottom:8}}>
+        <div style={{flex:1,display:"flex",alignItems:"center",gap:6}}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={T.green} strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.green}}>Top Accounts</span>
+        </div>
+        <div style={{flex:1,display:"flex",alignItems:"center",gap:6}}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={T.red} strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.red}}>Hurting You</span>
+        </div>
+      </div>
+
+      {/* Two columns */}
+      <div style={{display:"flex",gap:8,alignItems:"flex-start"}}>
+        <div style={{flex:1}}>
+          {topList.length===0
+            ? <div style={{fontSize:11,color:T.t4,padding:"10px 12px",background:T.s1,borderRadius:12}}>No growing accounts</div>
+            : topList.map((g,i)=><MiniCard key={g.id} g={g} i={i} side="top"/>)}
+        </div>
+        <div style={{flex:1}}>
+          {hurtList.length===0
+            ? <div style={{fontSize:11,color:T.t4,padding:"10px 12px",background:T.s1,borderRadius:12}}>No significant gaps</div>
+            : hurtList.map((g,i)=><MiniCard key={g.id} g={g} i={i} side="hurt"/>)}
+        </div>
+      </div>
+
+      {/* Full list below if searching */}
+      {search&&<>
+        <div style={{marginTop:16,marginBottom:8,fontSize:10,fontWeight:700,color:T.t3,textTransform:"uppercase",letterSpacing:"1px"}}>All Results</div>
+        {list.slice(0,50).map((g,i)=><GroupCard key={g.id} g={g} i={i}/>)}
+      </>}
     </>}
   </div>;
 }
