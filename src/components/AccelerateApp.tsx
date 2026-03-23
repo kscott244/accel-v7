@@ -328,6 +328,11 @@ function AppInner() {
     }
   };
 
+  // Re-apply group overrides after a move — triggers re-render so parent group shows new child
+  const reapplyGroupOverrides = () => {
+    setGroups(prev => prev ? applyGroupOverrides([...prev]) : prev);
+  };
+
   // Hydrate dealer info onto groups (handles preloaded data that was built without dealer field)
   const hydrateDealer = (grps) => {
     if (!grps) return grps;
@@ -688,7 +693,7 @@ function AppInner() {
           {!view && tab==="outreach" && <OutreachTab scored={scored}/>}
           {!view && tab==="admin" && <AdminTab groups={groups||[]} scored={scored} overlays={overlays} saveOverlays={saveOverlays}/>}
           {view?.type==="group" && <GroupDetail group={view.data} goMain={()=>setView(null)} overlays={overlays} saveOverlays={saveOverlays} goAcct={(a:any)=>setView({type:"acct",data:{...a,gName:fixGroupName(view.data),gId:view.data.id,gTier:view.data.tier},from:view.data})}/>}
-          {view?.type==="acct" && <AcctDetail acct={view.data} goBack={()=>view?.from?setView({type:"group",data:view.from}):setView(null)} adjs={adjs} setAdjs={setAdjs} groups={groups||[]} goGroup={goGroupFn} overlays={overlays} saveOverlays={saveOverlays} goAcct={(s:any)=>setView({type:"acct",data:{...s,gId:view.data.gId,gName:view.data.gName},from:view?.from})}/>}
+          {view?.type==="acct" && <AcctDetail acct={view.data} goBack={()=>view?.from?setView({type:"group",data:view.from}):setView(null)} adjs={adjs} setAdjs={setAdjs} groups={groups||[]} goGroup={goGroupFn} overlays={overlays} saveOverlays={saveOverlays} reapplyGroupOverrides={reapplyGroupOverrides} goAcct={(s:any)=>setView({type:"acct",data:{...s,gId:view.data.gId,gName:view.data.gName},from:view?.from})}/>}
         </>;
       })()}
 

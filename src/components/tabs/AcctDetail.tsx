@@ -42,7 +42,7 @@ const AccountId = ({name, gName, size="md", color}:{name:string, gName?:string, 
   </div>;
 };
 
-function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup,overlays,saveOverlays,goAcct=null}) {
+function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup,overlays,saveOverlays,reapplyGroupOverrides=null,goAcct=null}) {
   const [q,setQ]=useState("1");
   const [showForm,setShowForm]=useState(false);
   const [toast,setToast]=useState(null);
@@ -125,6 +125,8 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup,overlays,saveOverla
     setMoveSearch("");
     setToast({msg:`Moved to ${fixGroupName(targetGroup)}`, color:T.green});
     setTimeout(()=>setToast(null), 3000);
+    // Re-render parent group cards immediately
+    reapplyGroupOverrides?.();
     // Persist to overlays durably
     if (saveOverlays) {
       const next = { ...OVERLAYS_REF, groupMoves: { ...(OVERLAYS_REF.groupMoves||{}), [acct.id]: override } };
