@@ -271,15 +271,20 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
           const intelText = [...(intel.hooks||[]), intel.ownershipNote||"", ...(intel.talkingPoints||[])].join(" ").toLowerCase();
           const isMulti = intelText.includes("location") || intelText.includes("site") || intelText.includes("office") || intelText.includes("dso") || intelText.includes("group practice") || intelText.includes("multiple");
           if (isMulti) {
-            // Build condensed account list for Opus
+            // Build condensed account list for Opus — include Badger doctor/email as key signals
             const allAccts = (groups||[]).flatMap((g:any) =>
-              (g.children||[]).map((c:any) => ({
-                id: c.id,
-                name: c.name,
-                city: c.city,
-                st: c.st,
-                address: c.address||""
-              }))
+              (g.children||[]).map((c:any) => {
+                const b = BADGER[c.id] || {};
+                return {
+                  id: c.id,
+                  name: c.name,
+                  city: c.city,
+                  st: c.st,
+                  address: c.addr || c.address || b.address || "",
+                  doctor: b.doctor || "",
+                  email: b.email || c.email || "",
+                };
+              })
             ).filter((c:any) => c.id !== acct.id);
 
             setGroupSuggestions([{id:"__searching__", name:"Searching for related accounts…", city:"", st:"", matchReason:""}]);
@@ -288,7 +293,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 intel,
-                acct: { name: acct.name, city: acct.city, st: acct.st, address: acct.addr||acct.address||"" },
+                acct: { name: acct.name, city: acct.city, st: acct.st, address: acct.addr||acct.address||"", doctor: BADGER[acct.id]?.doctor||"", email: BADGER[acct.id]?.email||acct.email||"" },
                 accounts: allAccts
               })
             })
