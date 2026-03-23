@@ -338,13 +338,13 @@ function GroupDetail({group,goMain,goAcct,overlays,saveOverlays}) {
             <div style={{marginBottom:12}}>
               <div style={{fontSize:10,color:T.t3,marginBottom:6,fontWeight:600}}>Pick from Schein CT Roster</div>
               <input value={rosterSearch} onChange={e=>setRosterSearch(e.target.value)}
-                placeholder="Search FSC or ES by name…"
-                style={{width:"100%",background:T.s2,border:,borderRadius:8,padding:"7px 10px",fontSize:12,color:T.t1,fontFamily:"inherit",marginBottom:6}}/>
-              {rosterSearch.trim().length > 0 && <div style={{maxHeight:160,overflowY:"auto",borderRadius:8,border:,background:T.s2}}>
+                placeholder="Search FSC or ES by name"
+                style={{width:"100%",background:T.s2,border:"1px solid "+T.b1,borderRadius:8,padding:"7px 10px",fontSize:12,color:T.t1,fontFamily:"inherit",marginBottom:6}}/>
+              {rosterSearch.trim().length > 0 && <div style={{maxHeight:160,overflowY:"auto",borderRadius:8,border:"1px solid "+T.b1,background:T.s2}}>
                 {filteredRoster.length === 0 && <div style={{padding:"10px",fontSize:11,color:T.t4}}>No matches</div>}
                 {filteredRoster.map((r:any,i:number)=>(
                   <button key={i} onClick={()=>pickFromRoster(r)}
-                    style={{width:"100%",textAlign:"left",padding:"8px 12px",background:"none",border:"none",borderBottom:,color:T.t1,cursor:"pointer",fontFamily:"inherit"}}>
+                    style={{width:"100%",textAlign:"left",padding:"8px 12px",background:"none",border:"none",borderBottom:"1px solid "+T.b2,color:T.t1,cursor:"pointer",fontFamily:"inherit"}}>
                     <div style={{fontSize:12,fontWeight:600}}>{r.name}</div>
                     <div style={{fontSize:10,color:T.t4}}>{r.phone}</div>
                   </button>
