@@ -235,7 +235,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
   };
 
   const runDeepResearch = async () => {
-    setDrState("loading"); setDrIntel(null);
+    setDrState("loading"); setDrIntel(null); setGroupSuggestions([]);
     try {
       const res = await fetch("/api/deep-research", {
         method:"POST",
@@ -282,6 +282,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
               }))
             ).filter((c:any) => c.id !== acct.id);
 
+            setGroupSuggestions([{id:"__searching__", name:"Searching for related accounts…", city:"", st:"", matchReason:""}]);
             fetch("/api/find-group-matches", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -293,8 +294,8 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
             })
             .then(r => r.json())
             .then(result => {
+              console.log("[find-group-matches] result:", JSON.stringify(result));
               if (result.matches?.length > 0) {
-                // Map matched IDs back to full account objects
                 const matchedIds = new Set(result.matches.map((m:any) => m.id));
                 const reasonMap: Record<string,string> = {};
                 result.matches.forEach((m:any) => { reasonMap[m.id] = m.reason; });
@@ -302,10 +303,13 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
                   (g.children||[]).map((c:any) => ({...c, gId:g.id}))
                 ).filter((c:any) => matchedIds.has(c.id))
                   .map((c:any) => ({...c, matchReason: reasonMap[c.id]||""}));
-                if (matched.length > 0) setGroupSuggestions(matched);
+                setGroupSuggestions(matched.length > 0 ? matched : []);
+              } else {
+                // No matches found — clear the searching indicator
+                setGroupSuggestions([]);
               }
             })
-            .catch(() => {}); // silent fail — don't block research
+            .catch(() => { setGroupSuggestions([]); }); // clear on error
           }
         } catch(e) {}
         // Save contact info to persistent overlay storage (committed to overlays.json via API)
@@ -409,8 +413,13 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
               <span style={{fontSize:11,color:T.t1,lineHeight:1.5}}>{p}</span>
             </div>)}
           </div>}
+          {/* SEARCHING INDICATOR */}
+          {groupSuggestions.length > 0 && groupSuggestions[0]?.id === "__searching__" && <div style={{marginTop:12,padding:"10px 12px",borderRadius:10,background:"rgba(79,142,247,.05)",border:"1px solid rgba(79,142,247,.15)",display:"flex",alignItems:"center",gap:8}}>
+            <div style={{width:12,height:12,borderRadius:"50%",border:"2px solid rgba(79,142,247,.3)",borderTopColor:T.blue,animation:"spin 0.8s linear infinite",flexShrink:0}}/>
+            <div style={{fontSize:11,color:T.t3}}>Searching for related accounts…</div>
+          </div>}
           {/* AUTO-LINK SUGGESTION */}
-          {groupSuggestions.length > 0 && <div style={{marginTop:12,padding:"10px 12px",borderRadius:10,background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.2)"}}>
+          {groupSuggestions.length > 0 && groupSuggestions[0]?.id !== "__searching__" && <div style={{marginTop:12,padding:"10px 12px",borderRadius:10,background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.2)"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
               <div>
                 <div style={{fontSize:10,fontWeight:700,color:T.blue}}>🔗 Related Accounts Found</div>
