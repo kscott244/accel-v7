@@ -1,148 +1,192 @@
-# Accelerate v7 — Architecture
+# ARCHITECTURE — accel-v7
 
-## Current Architecture (as of March 2026)
+> Last updated: March 22, 2026
+> Source of truth for how the app is built, what lives where, and the constraints we operate under.
 
-### Runtime Stack
-- **Framework:** Next.js 14+ (App Router)
-- **Hosting:** Vercel (`accel-v7.vercel.app/accelerate`)
-- **UI:** Single-file React component (`AccelerateApp.tsx`, ~5,400 lines)
-- **Styling:** Inline styles with a shared theme object `T` (dark mode only)
-- **State:** React useState/useMemo, no external state library
-- **Persistence:** GitHub API (overlays.json) + localStorage (cache/session)
+---
 
-### File Map
+## 1. High-Level Overview
+
+accel-v7 is a **Next.js 14 sales intelligence app** for Ken Scott, Kerr Dental field rep covering CT/MA/RI/NY. It is deployed on Vercel and backed by GitHub as both the code repo and the data persistence layer.
+
+**Stack**: Next.js 14 + React 18 + TypeScript + Tailwind CSS + Recharts
+**Repo**: `kscott244/accel-v7` (branch: `master`)
+**Live**: `https://accel-v7.vercel.app/accelerate`
+**Vercel project**: `prj_z3qFU5wVT4XCZOypcv448v1pN6Um`
+
+---
+
+## 2. Two App Architectures (Coexisting)
+
+The repo contains **two parallel UI systems**:
+
+### 2a. The "Accelerate" Monolith — `src/components/AccelerateApp.tsx`
+- **5,377 lines**, single file, `@ts-nocheck`
+- 18 function components defined inside this one file
+- 8 tab components: TodayTab, GroupsTab, DealersTab, DashTab, MapTab, EstTab, OutreachTab, AdminTab
+- 2 detail views: GroupDetail, AcctDetail
+- 101 useState hooks across all components
+- Navigation: 5 bottom tabs (Today, Groups, Dealers, Dash, More) + overflow menu (Route, Close, Outreach, Admin)
+- Owns its own data loading, tab navigation, state management, view stack
+- Has its own inline CSS via style objects (not Tailwind)
+- Mounted at `/accelerate` via `src/app/accelerate/page.tsx`
+- **This is the primary working app that Ken uses daily**
+
+### 2b. The Component-Based Pages — `src/app/*/page.tsx`
+- Separate route-based pages: `/` (Territory), `/groups`, `/route`, `/dashboard`, `/plan`
+- Use `AppShell` layout with `TopBar`, `TabBar`, `GlobalSearch`
+- Import typed data from `src/data/index.ts` and types from `src/types/index.ts`
+- Use Tailwind CSS and smaller component files under `src/components/cards/`, `src/components/charts/`
+- **These pages exist but are secondary — not feature-complete compared to AccelerateApp.tsx**
+
+### Why Both Exist
+AccelerateApp.tsx grew organically through rapid iteration. The component pages were an earlier attempt at a cleaner architecture but have not kept pace with feature work. All recent development (Admin, Outreach, Deep Research, Dealers, Co-Call Planner, Duplicate Review) landed in the monolith.
+
+---
+
+## 3. Data Layer
+
+### 3a. Static Data Files (committed to repo, bundled at build time)
+
+| File | Size | Purpose |
+|------|------|---------|
+| `src/data/preloaded-data.ts` | 1.7MB | All account/group data from Tableau export. Primary data source for AccelerateApp.tsx. |
+| `src/data/groups.json` | 1.0MB | Group-level rollups (used by component-based pages) |
+| `src/data/offices.json` | 1.5MB | Office-level flat list (used by component-based pages) |
+| `src/data/dealers.ts` | 253KB | Dealer assignments keyed by Master-CM ID |
+| `src/data/badger-lookup.json` | 252KB | Contact info, lat/lng, addresses (Badger enrichment) |
+| `src/data/parent-names.json` | 46KB | Parent name lookup |
+| `src/data/patches.json` | 2.7KB | **Legacy** patch system — still read by applyOverlays() but new writes go to overlays.json |
+| `src/data/products.json` | 8KB | Product catalog |
+| `src/data/gap-accounts.json` | 2.3KB | Gap account list |
+| `src/data/week-routes.json` | 13KB | Pre-planned weekly routes |
+| `src/data/territory-summary.json` | 731B | Territory-level aggregates |
+
+**Key fact**: `preloaded-data.ts` is the canonical data source. It contains ~984 priority office locations with PY/CY credited wholesale, products, tiers, signals, etc. Updated via CSV upload processed by `processCSVData()` inside AccelerateApp.tsx.
+
+### 3b. Overlays — `data/overlays.json` (runtime, persisted to GitHub via API)
+
+Runtime user corrections that survive CSV re-uploads:
+- **Custom groups**: Resolute Dental Partners, merged duplicates (Dental Care Stamford, Dental Associates Farmington)
+- **Group detaches**: Aspen Dental from Columbia Dental
+- **Name overrides**: Wells Street Dentistry, Flanders Dental Studio
+- **Contacts**: contact name, email, phone, address, Deep Research results
+- **FSC rep assignments**: per-dealer-per-group FSC contact info
+- **Activity logs**: visit logs, notes, follow-up dates
+- **Dealer overrides**: correct dealer assignments (e.g., Abra Dental → Schein)
+
+**Loaded**: On app mount via `GET /api/load-overlay`
+**Saved**: On user action via `POST /api/save-overlay` (commits JSON to GitHub)
+**Applied**: `applyOverlays()` runs on every data load, merging overlays on top of base static data
+
+### 3c. Dual Overlay Systems (technical debt)
+
+Both `src/data/patches.json` (legacy) and `data/overlays.json` (current) exist. The `save-patch` API route still works. `applyOverlays()` reads from both. New writes go to overlays.json via `save-overlay`. Consolidation needed — retire patches.json and save-patch route.
+
+### 3d. Data Flow
 
 ```
-src/
-  app/
-    accelerate/page.tsx      ← Active app entry point (imports AccelerateApp)
-    page.tsx                 ← Legacy v6 page (uses old component tree — unused)
-    api/
-      ai-briefing/route.ts   ← Claude API: account briefing
-      deep-research/route.ts ← Claude API + web search: contact/intel lookup
-      gmail-auth/route.ts    ← OAuth start for Gmail
-      gmail-callback/route.ts← OAuth callback for Gmail
-      load-overlay/route.ts  ← GET overlays.json from GitHub
-      save-overlay/route.ts  ← PUT overlays.json to GitHub
-      save-patch/route.ts    ← Legacy: save patches.json (superseded by overlays)
-      send-outreach/route.ts ← Send AI-generated emails via Gmail API
-  components/
-    AccelerateApp.tsx        ← THE APP: all tabs, all logic (~5,400 lines)
-    cards/                   ← Legacy v6 components (NOT imported by AccelerateApp)
-    charts/                  ← Legacy v6 charts (NOT imported)
-    layout/                  ← Legacy v6 layout (NOT imported)
-    ui/                      ← Legacy v6 primitives (NOT imported)
-  data/
-    preloaded-data.ts        ← Primary data source (1.7MB, exported as PRELOADED)
-    dealers.ts               ← Dealer assignments per Master-CM ID (253KB)
-    badger-lookup.json       ← Contact info, lat/lng, addresses (252KB)
-    groups.json              ← Legacy group data (1MB, used by old page.tsx)
-    offices.json             ← Legacy office data (1.5MB, used by old page.tsx)
-    patches.json             ← Legacy patches (superseded by overlays.json)
-    week-routes.json         ← Static weekly route data (13KB, 15 accounts)
-    products.json            ← Product catalog (8KB)
-    index.ts                 ← Legacy data exports (used by old page.tsx)
-  lib/
-    insights.ts              ← Legacy insights engine (not used by AccelerateApp)
-    utils.ts                 ← Legacy utils (not used by AccelerateApp)
-  types/
-    index.ts                 ← TypeScript types (partially used)
-data/
-  overlays.json              ← Durable user overrides (groups, contacts, FSC, etc.)
+Tableau CSV export
+    ↓ (manual upload in Admin tab or preloaded on build)
+processCSVData() → builds groups array with children, PY/CY, products, tiers
+    ↓
+hydrateDealer() → merges dealer info from dealers.ts
+    ↓
+applyOverlays() → merges overlays (name overrides, contacts, custom groups, detaches, dealer overrides)
+    ↓
+applyGroupOverrides() → applies local/runtime group corrections
+    ↓
+groups[] state in AppInner component
+    ↓ (passed as props to every tab)
+scoreAccount() → scored[] array (adds urgency score, reasons, health status)
+    ↓
+Tab components render the data
 ```
 
-### Data Flow
+---
+
+## 4. API Routes
+
+| Route | Method | Purpose |
+|-------|--------|---------|
+| `/api/load-overlay` | GET | Fetch `data/overlays.json` from GitHub |
+| `/api/save-overlay` | POST | Commit updated overlays to GitHub |
+| `/api/save-patch` | POST | Legacy: commit to `src/data/patches.json` (should be retired) |
+| `/api/deep-research` | POST | AI-powered contact/account research |
+| `/api/send-outreach` | POST | Generate + send AI outreach emails via Gmail |
+| `/api/gmail-auth` | GET | OAuth flow for Gmail |
+| `/api/gmail-callback` | GET | OAuth callback |
+| `/api/ai-briefing` | POST | AI-generated daily briefing |
+
+All GitHub-writing routes use `GITHUB_PAT` from Vercel env vars.
+
+---
+
+## 5. State Management
+
+AccelerateApp.tsx uses **React hooks in a single component tree**:
+- 101 `useState` hooks across all components in the file
+- `useMemo` for computed data (scored accounts, filtered lists, aggregates)
+- `useCallback` for navigation functions (goAcct, goGroup, goBack)
+- `useRef` for scroll position, file inputs
+- `useEffect` for overlay loading on mount, localStorage sync
+
+**No global state management** (no Redux, Zustand, Context). All state lives in `AppInner()` and is passed as props to tab components defined in the same file. Some tabs define their own local state (DealersTab has co-call state, AcctDetail has research/move/activity state).
+
+---
+
+## 6. Deployment Pipeline
 
 ```
-preloaded-data.ts (static, 1.7MB)
-  ↓ require() at module load
-  ↓
-applyOverlays() ← overlays.json (fetched from GitHub API at mount)
-  ↓
-hydrateDealer() ← dealers.ts (static dealer assignments)
-  ↓
-applyGroupOverrides() ← overlays.groupMoves
-  ↓
-groups[] state (React useState)
-  ↓
-scored[] = allChildren.map(scoreAccount) ← scoring engine
-  ↓
-All tabs consume scored[] and groups[]
+Developer (Claude) edits file via GitHub Contents API
+    ↓ (fetch SHA → edit → brace/paren balance check → PUT)
+GitHub commit on master branch
+    ↓ (Vercel webhook triggers)
+Vercel build + deploy (~55 seconds)
+    ↓
+Live at accel-v7.vercel.app/accelerate
 ```
 
-### Persistence Model
+**Push pattern**: Every code change goes through the GitHub Contents API. Fetch current SHA, apply edit, validate brace/paren balance (delta must = 0), PUT new content. Wait ~55s, verify live site has new JS chunk hash.
 
-| Data | Storage | Durability |
-|------|---------|------------|
-| Account/group base data | `preloaded-data.ts` (static in repo) | Permanent until CSV re-upload |
-| User overlays (groups, contacts, FSC, detaches, moves, names) | `data/overlays.json` via GitHub API | Durable — survives cache clear |
-| Overlay cache | `localStorage:overlay_cache` | Session — fast load fallback |
-| Activity logs | `localStorage:actlog:{id}` + overlays | Hybrid — localStorage first, syncs to overlays |
-| Overdrive outcomes | `localStorage:overdrive_done` | Session only |
-| Manual adjustments | React state (`adjs`) | Session only — lost on refresh |
-| Gmail token | `localStorage:gmail_refresh_token` | Session only |
-| Dismissed dupes | `localStorage:dupe_dismissed` | Session only |
+---
 
-### Component Structure (inside AccelerateApp.tsx)
+## 7. Architectural Constraints
 
-All components are defined in a single file. No imports between them — they share module-level variables.
+1. **AccelerateApp.tsx is 5,377 lines.** All 8 tabs, detail views, data processing, inline styles in one file. Primary technical debt.
+2. **`@ts-nocheck` disables TypeScript.** The monolith bypasses the type system entirely.
+3. **No test coverage.** Zero tests. Changes verified manually on live site.
+4. **GitHub as database.** Overlays persist by committing JSON. Works for single-user, no concurrency/transactions/indexing.
+5. **1.7MB static data bundled at build time.** Acceptable for single-user app but makes builds slower.
+6. **Browser caching causes stale deploys.** Users sometimes need hard refresh or `?v=N` parameter.
+7. **No environment separation.** Production only — no staging, no preview branches.
+8. **Single-user assumption.** No auth, no multi-tenancy. This is Ken's personal tool.
+9. **Dual overlay systems.** patches.json + overlays.json both active. Consolidation needed.
 
-| Component | Lines | Role |
-|-----------|-------|------|
-| `applyOverlays()` | ~100 | Apply user overrides to base data |
-| `scoreAccount()` | ~30 | Priority scoring engine |
-| `parseCSV()` / `processCSVData()` | ~200 | CSV upload and processing |
-| `AppInner()` | ~400 | Main app shell: data loading, state, routing, nav |
-| `TodayTab` | ~1,000 | Overdrive engine, group action cards, search |
-| `GroupsTab` | ~100 | Group list with search/filter |
-| `GroupDetail` | ~300 | Group detail: FSC contacts, product health, locations |
-| `AcctDetail` | ~800 | Account detail: contacts, AI briefing, deep research, activity log, sale calculator |
-| `SaleCalculator` | ~80 | SKU search + tier-aware credit calculation |
-| `DashTab` | ~200 | Territory stats, tier revenue, standalone calculator |
-| `MapTab` | ~200 | Leaflet map, static week routes, Google Maps links |
-| `DealersTab` | ~700 | Distributor drill: dist → rep → group → account + FSC co-call planner |
-| `EstTab` | ~100 | Q1 completion estimator with PY repeat slider |
-| `OutreachTab` | ~300 | Gmail AI email queue with research + batch send |
-| `AdminTab` | ~300 | Group create/edit, detach, rename, contacts, duplicate review |
-| `AccountId` | ~15 | Shared name display (child + parent group) |
+---
 
-### Shared Primitives
+## 8. What's Strong
 
-| Name | Role |
-|------|------|
-| `AccountId` | Account name + parent group name display |
-| `Stat` | Labeled stat box (PY, CY, Gap, Ret) |
-| `Pill` | Inline label + value |
-| `Bar` | Animated progress bar |
-| `Back` / `Chev` | Navigation icons |
-| `$$` / `$f` | Currency formatters |
-| `T` | Theme color constants |
+- **Data model works.** Groups → children → products hierarchy is solid. Overlay system (base data + runtime corrections) is elegant and proven.
+- **Scoring engine is smart.** Multi-factor urgency scoring produces genuinely useful daily prioritization.
+- **Real integrations work.** Gmail outreach, AI Deep Research, GitHub persistence — production features, not stubs.
+- **The app ships value.** Ken uses this daily. 8 tabs of real functionality, FSC co-call planner, duplicate review, activity logging.
+- **Overlay persistence is reliable.** Contacts, groups, dealer corrections all survive CSV re-uploads and browser cache clears.
+- **Nav was recently consolidated.** 5 main tabs + More menu — mobile-friendly.
 
-### External Integrations
+---
 
-| Service | Purpose | Auth |
-|---------|---------|------|
-| GitHub API | Read/write overlays.json | `GITHUB_PAT` env var |
-| Anthropic Claude API | AI briefing + deep research + outreach emails | `ANTHROPIC_API_KEY` env var |
-| Gmail API | Send outreach emails | OAuth2 (user-initiated) |
-| Leaflet/OSM | Map rendering in Route tab | None (public tiles) |
-| Google Maps | Route links (opens externally) | None (URL scheme) |
+## 9. Target Architecture (Future State)
 
-## Design Principles
+Long-term direction: **decompose AccelerateApp.tsx** into the component-based architecture that already exists in skeleton form.
 
-1. **Mobile-first** — designed for phone use in the field
-2. **Offline-tolerant** — localStorage cache means app loads even if API is slow
-3. **Single-file simplicity** — one file means one push, one deploy, no build coordination
-4. **Data survives** — overlays.json is separate from base data, survives CSV re-uploads
-5. **No auth required** — the app is open (acceptable for single-user field tool)
+1. Extract each tab into its own file under `src/components/tabs/`
+2. Extract shared logic: scoring engine, overlay processing, CSV parser, design tokens
+3. Move shared state to a lightweight context or store
+4. Enable TypeScript checking (remove @ts-nocheck)
+5. Keep the overlay system — it's the right pattern
+6. Keep GitHub-backed persistence — it works for single-user
+7. Keep the CSV import flow — it matches Ken's actual Tableau workflow
+8. Retire patches.json, consolidate to overlays.json only
 
-## Known Architectural Limitations
-
-1. **5,400-line monolith** — all components in one file. Any edit risks breaking unrelated tabs.
-2. **Static data baked in** — preloaded-data.ts is 1.7MB compiled into the JS bundle. No database.
-3. **No TypeScript strictness** — `@ts-nocheck` at top, `any` types throughout.
-4. **Manual adjustments are session-only** — sale calculator additions lost on refresh.
-5. **Legacy dead code** — old page.tsx, cards/, charts/, layout/, ui/, lib/ are unused but still in repo.
-6. **Week routes are static** — week-routes.json has 15 hardcoded accounts, not editable from app.
-7. **No multi-user support** — single overlays.json, no user auth, no conflict resolution.
-8. **localStorage for critical data** — activity logs, overdrive outcomes, Gmail tokens are browser-only.
+Decomposition should happen incrementally, one tab at a time, with zero downtime and zero feature regression.
