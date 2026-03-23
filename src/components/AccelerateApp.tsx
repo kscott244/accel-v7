@@ -3183,14 +3183,14 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
           const pPy=Math.abs(p[`py${qk}`]||0);const pCy=Math.abs(p[`cy${qk}`]||0);
           const mx=Math.max(...products.map(x=>Math.abs(x[`py${qk}`]||0)),1);
           return <div key={i} style={{marginBottom:10}}>
-            <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:11,color:T.t2}}>{p.n}</span><span className="m" style={{fontSize:10,color:pCy===0&&pPy>100?T.red:T.t3}}>{$$(pCy)} / {$$(pPy)}</span></div>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:11,color:T.t2}}>{p.n}</span><span className="m" style={{fontSize:10,color:pCy===0&&pPy>100?T.red:T.t3}}>{$$(pPy)} / {$$(pCy)}</span></div>
             <div style={{position:"relative",height:12,borderRadius:3,background:T.s3,overflow:"hidden"}}>
               <div style={{position:"absolute",top:0,left:0,height:"50%",width:`${pPy/mx*100}%`,background:"rgba(255,255,255,.08)"}}/>
               <div className="bar-g" style={{animationDelay:`${i*60}ms`,position:"absolute",bottom:0,left:0,height:"50%",width:`${pCy/mx*100}%`,background:pCy===0?T.red:`linear-gradient(90deg,${T.blue},${T.cyan})`}}/>
             </div>
           </div>;
         })}
-        <div style={{display:"flex",gap:12,marginTop:8,fontSize:9,color:T.t4}}><span>▬ PY (top)</span><span style={{color:T.blue}}>▬ CY (bottom)</span></div>
+        <div style={{display:"flex",gap:12,marginTop:8,fontSize:9,color:T.t4}}><span>▬ PY</span><span style={{color:T.blue}}>▬ CY</span></div>
       </div>
 
       {/* MANUAL SALE */}
