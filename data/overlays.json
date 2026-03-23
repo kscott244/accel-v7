@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-23T04:16:23.167Z",
+  "lastUpdated": "2026-03-23T06:07:31.078Z",
   "migratedFrom": "patches.json v1.0",
   "groups": {
     "Master-RDP-001": {
@@ -140,6 +140,30 @@
       ],
       "savedAt": "2026-03-23T04:16:22.935Z",
       "practiceName": "ALL ABOUT KIDS PEDIATRIC DENTISTRY"
+    },
+    "Master-CM9835082": {
+      "contactName": "Dr. Yulian Aminov",
+      "phone": "(203) 367-0400",
+      "email": null,
+      "website": "https://downtowndentalct.com",
+      "contacts": [
+        {
+          "name": "Dr. Yulian Aminov",
+          "role": "Owner/DDS",
+          "email": null,
+          "phone": "(203) 367-0400",
+          "tier": 1
+        },
+        {
+          "name": "Dr. Sanetta Aminov",
+          "role": "Owner/DDS",
+          "email": null,
+          "phone": "(203) 367-0400",
+          "tier": 1
+        }
+      ],
+      "savedAt": "2026-03-23T06:07:30.485Z",
+      "practiceName": "DOWNTOWN DDS"
     }
   },
   "fscReps": {},
