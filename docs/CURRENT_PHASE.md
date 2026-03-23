@@ -12,49 +12,52 @@
 7. **Patched `src/components/AccelerateApp.tsx`** — All 6 tab bodies replaced with imports
 8. **AccelerateApp.tsx reduced from 4,406 → 674 lines** (−3,732 lines, −85%)
 
-### Each extracted tab file includes
-- "use client" + @ts-nocheck header
-- Self-contained imports from @/lib/tokens, @/lib/tier, @/lib/format, @/data/sku-data
-- Inline primitives (Pill, Stat, Bar, AccountId, Chev, Back, fixGroupName) as needed
-- Module-level data bootstrap (BADGER, DEALERS, OVERLAYS_REF) via local try/require
-- Named export default matching the component name
+### Phase 5 Hotfixes (March 23, 2026 — applied after initial extraction)
+These were discovered post-deploy and fixed in the same phase:
 
-### Commits
-- ecf7bf0 — Phase 5: extract TodayTab, GroupDetail, AcctDetail, DealersTab, OutreachTab, AdminTab — AccelerateApp 4406→674 lines
+- **Missing `$$` import** in , ,  —  formatter was not carried over when tabs were extracted from the monolith. Caused  on load.
+  - Commits: , , 
 
+- **118 stub children with no `pyQ`** in `preloaded-data.ts` — accounts in MDM with zero order history were passed to `scoreAccount()` with undefined revenue data, crashing the render. Fixed in `extractLeaves()` in `AccelerateApp.tsx` with safe defaults.
+  - Commit: 
 
----
+- **Broken `Master-RDP-001` overlay group** — custom group created via the group-merge feature had a stub child (FLANDERS DENTAL STUDIO) with no revenue data. Removed from `data/overlays.json`.
+  - Commit: 
 
-## Hotfix — Data Boundary Normalization ✅ Complete
+- **ErrorBoundary now shows actual error text** — added error message display to the crash screen so future issues can be diagnosed without needing browser DevTools.
+  - Commit:  *(can be reverted once stable)*
 
-### What Was Done
-- **`src/data/index.ts`**: Replaced `as unknown as Office[]` raw cast with `normalizeOffice()` mapper function
-  - `tier` → `accelLevel`
-  - `q1py` → `q1_2025`, `q1cy` → `q1_2026`, `q1gap` → `q1_gap`
-  - `prods[0].l` → `topProduct` (derived, empty string if absent)
-  - Safe empty/zero defaults for all fields not present in raw export: `daysSince`, `mainDoctor`, `phone`, `zone`, `lastVisit`, `lastVisitNote`, etc.
-  - No fake/misleading values invented
-- **`src/components/cards/DailyBriefing.tsx`**: Added `safeBriefing()` wrapper around `generateBriefing()` so any unexpected exception returns a minimal safe shape instead of propagating to the ErrorBoundary
-- Root cause: `offices.json` uses Tableau export field names; new UI components expected the normalized `Office` type shape
+- **localStorage key bump** — renamed `accel_data` → `accel_data_v2` and `overlay_cache` → `overlay_cache_v2` to bust stale cached data on all devices.
+  - Commit: 
 
-### Commit
-- `f4f3b4b` — fix: normalize offices.json at data boundary to match Office type
+### Completion Criteria — All Met ✅
+- All major tabs extracted into separate files ✅
+- AccelerateApp.tsx reduced to shell + routing + state ✅
+- App loads and renders correctly on mobile ✅
+- All commits deployed and verified green on Vercel ✅
 
-### Last Updated
-March 23, 2026
+### Final Commits
+-  — Phase 5: extract tabs (initial)
+-  — fix: $$ import TodayTab
+-  — fix: $$ import GroupDetail
+-  — fix: $$ import DealersTab
+-  — fix: guard 118 stub children in extractLeaves
+-  — fix: remove broken Master-RDP-001 from overlay groups
 
 ---
 
 ## Previously Completed
 
+### Hotfix — Data Boundary Normalization ✅ Complete
+- **`src/data/index.ts`**: Replaced raw cast with `normalizeOffice()` mapper
+- Commit: `f4f3b4b`
+
 ### Phase 4 — Extract Tab Components ✅ Complete
 - Created GroupsTab, EstTab, MapTab, DashTab
-- AccelerateApp.tsx reduced from 5,052 → 4,400 lines
-- Commit: e65991019c31
+- Commit: `e659910`
 
 ### Phase 3 — Decompose the Monolith ✅ Complete
 - Extracted tokens.ts, tier.ts, format.ts, csv.ts
-- AccelerateApp.tsx reduced from 5,388 → 5,053 lines
 
 ### Phase 2 — Stabilize + Consolidate ✅ Complete
 ### Phase 1 — Foundation Audit + Docs ✅ Complete
