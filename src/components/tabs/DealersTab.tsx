@@ -249,39 +249,38 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
     const ret = totalPY > 0 ? Math.round(totalCY/totalPY*100) : 0;
     // ── SCHEIN TEAM DIRECTORY ──
   if (mainTab === "team") {
-    const allReps = [...SCHEIN_REPS.fsc.map((r:any)=>({...r,type:"FSC"})), ...SCHEIN_REPS.es.map((r:any)=>({...r,type:"ES"}))];
     return <div style={{paddingBottom:80}}>
-      <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"12px 16px"}}>
+      <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:"1px solid "+T.b3,padding:"12px 16px"}}>
         <div style={{display:"flex",gap:6}}>
-          <button onClick={()=>setMainTab("dealers")} style={{flex:1,padding:"7px 0",borderRadius:8,fontSize:11,fontWeight:700,cursor:"pointer",border:`1px solid ${T.b2}`,background:T.s2,color:T.t3,fontFamily:"inherit"}}>Dealers</button>
+          <button onClick={()=>setMainTab("dealers")} style={{flex:1,padding:"7px 0",borderRadius:8,fontSize:11,fontWeight:700,cursor:"pointer",border:"1px solid "+T.b2,background:T.s2,color:T.t3,fontFamily:"inherit"}}>Dealers</button>
           <button onClick={()=>setMainTab("team")} style={{flex:1,padding:"7px 0",borderRadius:8,fontSize:11,fontWeight:700,cursor:"pointer",border:"1px solid rgba(79,142,247,.3)",background:"rgba(79,142,247,.15)",color:T.blue,fontFamily:"inherit"}}>Schein Team</button>
         </div>
       </div>
       <div style={{padding:"16px"}}>
         <div style={{fontSize:10,color:T.t4,marginBottom:14}}>Henry Schein · CT Territory Roster</div>
-        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan,marginBottom:10}}>FSC — Field Sales Consultants ({SCHEIN_REPS.fsc.length})</div>
+        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan,marginBottom:10}}>{"FSC — Field Sales Consultants ("+SCHEIN_REPS.fsc.length+")"}</div>
         {SCHEIN_REPS.fsc.map((r:any,i:number)=>(
-          <div key={i} style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:"12px 14px",marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div key={i} style={{background:T.s1,border:"1px solid "+T.b1,borderRadius:12,padding:"12px 14px",marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:13,fontWeight:700,color:T.t1}}>{r.name}</div>
               <div style={{fontSize:10,color:T.t4,marginTop:1}}>{r.email}</div>
             </div>
             <div style={{display:"flex",gap:8,alignItems:"center",flexShrink:0,marginLeft:12}}>
               <span style={{fontSize:11,fontFamily:"monospace",color:T.t3}}>{r.phone}</span>
-              <a href={`tel:${r.phone.replace(/[^0-9]/g,"")}`} style={{background:"rgba(34,211,153,.1)",border:"1px solid rgba(34,211,153,.25)",borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:700,color:T.green,textDecoration:"none"}}>Call</a>
+              <a href={"tel:"+r.phone.replace(/[^0-9]/g,"")} style={{background:"rgba(34,211,153,.1)",border:"1px solid rgba(34,211,153,.25)",borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:700,color:T.green,textDecoration:"none"}}>Call</a>
             </div>
           </div>
         ))}
-        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.amber,marginBottom:10,marginTop:20}}>ES — Equipment Specialists ({SCHEIN_REPS.es.length})</div>
+        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.amber,marginBottom:10,marginTop:20}}>{"ES — Equipment Specialists ("+SCHEIN_REPS.es.length+")"}</div>
         {SCHEIN_REPS.es.map((r:any,i:number)=>(
-          <div key={i} style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:"12px 14px",marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div key={i} style={{background:T.s1,border:"1px solid "+T.b1,borderRadius:12,padding:"12px 14px",marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:13,fontWeight:700,color:T.t1}}>{r.name}</div>
               <div style={{fontSize:10,color:T.t4,marginTop:1}}>{r.email}</div>
             </div>
             <div style={{display:"flex",gap:8,alignItems:"center",flexShrink:0,marginLeft:12}}>
               <span style={{fontSize:11,fontFamily:"monospace",color:T.t3}}>{r.phone}</span>
-              <a href={`tel:${r.phone.replace(/[^0-9]/g,"")}`} style={{background:"rgba(34,211,153,.1)",border:"1px solid rgba(34,211,153,.25)",borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:700,color:T.green,textDecoration:"none"}}>Call</a>
+              <a href={"tel:"+r.phone.replace(/[^0-9]/g,"")} style={{background:"rgba(34,211,153,.1)",border:"1px solid rgba(34,211,153,.25)",borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:700,color:T.green,textDecoration:"none"}}>Call</a>
             </div>
           </div>
         ))}
