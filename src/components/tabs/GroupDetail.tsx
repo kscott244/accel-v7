@@ -10,7 +10,7 @@ let PARENT_NAMES: Record<string, string> = {};
 try { BADGER = require("@/data/badger-lookup.json"); } catch(e) {}
 try { PARENT_NAMES = require("@/data/parent-names.json"); } catch(e) {}
 
-let OVERLAYS_REF: any = { nameOverrides:{}, contacts:{}, fscReps:{}, activityLogs:{}, research:{}, dealerOverrides:{}, groups:{}, groupDetaches:[], groupMoves:{} };
+let OVERLAYS_REF: any = { nameOverrides:{}, contacts:{}, fscReps:{}, activityLogs:{}, research:{}, dealerOverrides:{}, groups:{}, groupDetaches:[], groupMoves:{}, groupContacts:{}, groupNotes:{} };
 
 const BAD_GROUP_NAMES = new Set(["STANDARD","Standard","HOUSE ACCOUNTS","House Accounts","SILVER","GOLD","PLATINUM","DIAMOND","TOP 100","Silver","Gold","Platinum","Diamond","Top 100",""]);
 const cleanParentName = (name) => { if (!name) return ""; return name.replace(/\s*:\s*Master-CM\d+$/i, "").trim(); };
@@ -118,6 +118,69 @@ function GroupDetail({group,goMain,goAcct,overlays,saveOverlays}) {
   const deleteRep = (dist:string) => {
     removeFSC(dist);
     setFscMap(prev=>{ const n={...prev}; delete n[dist]; return n; });
+  };
+
+  // ── Group-level contacts (not tied to distributor) ──
+  const [groupContacts, setGroupContacts] = useState<any[]>(()=>{
+    // Load from overlays (durable) or localStorage fallback
+    const fromOverlay = overlays?.groupContacts?.[group.id];
+    if (fromOverlay?.length) return fromOverlay;
+    try { return JSON.parse(localStorage.getItem(`grpContacts:${group.id}`)||"[]"); } catch { return []; }
+  });
+  const [showContactForm, setShowContactForm] = useState(false);
+  const [editContact, setEditContact] = useState<any>(null);
+  const [cName, setCName] = useState("");
+  const [cRole, setCRole] = useState("");
+  const [cPhone, setCPhone] = useState("");
+  const [cEmail, setCEmail] = useState("");
+  const [cNotes, setCNotes] = useState("");
+
+  const openContactForm = (c?:any) => {
+    setEditContact(c||null);
+    setCName(c?.name||""); setCRole(c?.role||""); setCPhone(c?.phone||"");
+    setCEmail(c?.email||""); setCNotes(c?.notes||"");
+    setShowContactForm(true);
+  };
+  const saveContact = () => {
+    if (!cName.trim()) return;
+    const entry = { id: editContact?.id||Date.now(), name:cName.trim(), role:cRole.trim(), phone:cPhone.trim(), email:cEmail.trim(), notes:cNotes.trim(), savedAt:new Date().toISOString() };
+    const updated = editContact
+      ? groupContacts.map(c => c.id===editContact.id ? entry : c)
+      : [...groupContacts, entry];
+    setGroupContacts(updated);
+    try { localStorage.setItem(`grpContacts:${group.id}`, JSON.stringify(updated)); } catch {}
+    if (saveOverlays) {
+      const next = { ...OVERLAYS_REF, groupContacts: { ...(OVERLAYS_REF.groupContacts||{}), [group.id]: updated } };
+      saveOverlays(next);
+    }
+    setShowContactForm(false);
+  };
+  const deleteContact = (id:number) => {
+    const updated = groupContacts.filter(c => c.id !== id);
+    setGroupContacts(updated);
+    try { localStorage.setItem(`grpContacts:${group.id}`, JSON.stringify(updated)); } catch {}
+    if (saveOverlays) {
+      const next = { ...OVERLAYS_REF, groupContacts: { ...(OVERLAYS_REF.groupContacts||{}), [group.id]: updated } };
+      saveOverlays(next);
+    }
+  };
+
+  // ── Group-level notes ──
+  const [groupNote, setGroupNote] = useState<string>(()=>{
+    const fromOverlay = overlays?.groupNotes?.[group.id];
+    if (fromOverlay) return fromOverlay;
+    try { return localStorage.getItem(`grpNote:${group.id}`)||""; } catch { return ""; }
+  });
+  const [noteSaved, setNoteSaved] = useState(false);
+  const saveNote = (val:string) => {
+    setGroupNote(val);
+    try { localStorage.setItem(`grpNote:${group.id}`, val); } catch {}
+    if (saveOverlays) {
+      const next = { ...OVERLAYS_REF, groupNotes: { ...(OVERLAYS_REF.groupNotes||{}), [group.id]: val } };
+      saveOverlays(next);
+    }
+    setNoteSaved(true);
+    setTimeout(()=>setNoteSaved(false), 2000);
   };
 
   // Roll up products across all children
@@ -271,6 +334,78 @@ function GroupDetail({group,goMain,goAcct,overlays,saveOverlays}) {
         </div>}
       </div>}
 
+      {/* GROUP CONTACTS */}
+      <div className="anim" style={{animationDelay:"30ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:groupContacts.length>0?12:0}}>
+          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.purple}}>Group Contacts</div>
+          <button onClick={()=>openContactForm()} style={{background:"rgba(167,139,250,.1)",border:"1px solid rgba(167,139,250,.2)",borderRadius:7,padding:"3px 10px",fontSize:10,fontWeight:700,color:T.purple,cursor:"pointer",fontFamily:"inherit"}}>+ Add</button>
+        </div>
+        {groupContacts.length===0&&<div style={{fontSize:11,color:T.t4,paddingTop:8}}>No contacts yet. Add distributor reps, DSO contacts, or anyone relevant to this group.</div>}
+        {groupContacts.map((c:any,i:number)=>(
+          <div key={c.id} style={{borderTop:i>0?`1px solid ${T.b2}`:"none",paddingTop:i>0?10:0,marginTop:i>0?10:0}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:12,fontWeight:700,color:T.t1}}>{c.name}</div>
+                {c.role&&<div style={{fontSize:10,color:T.purple,marginTop:1}}>{c.role}</div>}
+                <div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:4}}>
+                  {c.phone&&<a href={`tel:${c.phone.replace(/\D/g,"")}`} style={{fontSize:11,color:T.cyan,textDecoration:"none"}}>{c.phone}</a>}
+                  {c.email&&<a href={`mailto:${c.email}`} style={{fontSize:11,color:T.blue,textDecoration:"none"}}>{c.email}</a>}
+                </div>
+                {c.notes&&<div style={{fontSize:10,color:T.t3,marginTop:4,fontStyle:"italic",lineHeight:1.4}}>{c.notes}</div>}
+              </div>
+              <div style={{display:"flex",gap:6,flexShrink:0,marginLeft:10}}>
+                {c.phone&&<a href={`tel:${c.phone.replace(/\D/g,"")}`} style={{background:"rgba(34,211,153,.1)",border:"1px solid rgba(34,211,153,.2)",borderRadius:6,padding:"3px 8px",fontSize:10,fontWeight:600,color:T.green,textDecoration:"none"}}>Call</a>}
+                <button onClick={()=>openContactForm(c)} style={{background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.15)",borderRadius:6,padding:"3px 8px",fontSize:10,fontWeight:600,color:T.blue,cursor:"pointer",fontFamily:"inherit"}}>Edit</button>
+                <button onClick={()=>deleteContact(c.id)} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:12,padding:"2px 4px"}}>✕</button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* GROUP NOTES */}
+      <div className="anim" style={{animationDelay:"35ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.amber}}>Group Notes</div>
+          {noteSaved&&<span style={{fontSize:9,color:T.green}}>✓ Saved</span>}
+        </div>
+        <textarea
+          value={groupNote}
+          onChange={e=>setGroupNote(e.target.value)}
+          onBlur={e=>saveNote(e.target.value)}
+          placeholder={`Notes about ${fixGroupName(group)} as a whole — competitive intel, buying patterns, key relationships, anything that applies to all locations...`}
+          rows={4}
+          style={{width:"100%",background:T.s2,border:`1px solid ${T.b1}`,borderRadius:8,padding:"10px 12px",fontSize:12,color:T.t1,fontFamily:"inherit",resize:"none",lineHeight:1.5,outline:"none",boxSizing:"border-box"}}
+        />
+        <button onClick={()=>saveNote(groupNote)} style={{marginTop:8,background:"rgba(251,191,36,.1)",border:"1px solid rgba(251,191,36,.2)",borderRadius:8,padding:"6px 16px",fontSize:11,fontWeight:600,color:T.amber,cursor:"pointer",fontFamily:"inherit"}}>Save Note</button>
+      </div>
+
+      {/* ADD/EDIT CONTACT MODAL */}
+      {showContactForm&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:200,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={e=>{if(e.target===e.currentTarget)setShowContactForm(false)}}>
+        <div style={{background:T.s1,borderRadius:"20px 20px 0 0",padding:24,width:"100%",maxWidth:480,paddingBottom:40}}>
+          <div style={{fontSize:13,fontWeight:700,marginBottom:16}}>{editContact?"Edit Contact":"Add Group Contact"}</div>
+          {[
+            {label:"Name *",val:cName,set:setCName,ph:"e.g. Gabrielle Martin",type:"text"},
+            {label:"Role / Title",val:cRole,set:setCRole,ph:"e.g. Special Markets Rep — RI",type:"text"},
+            {label:"Phone",val:cPhone,set:setCPhone,ph:"(xxx) xxx-xxxx",type:"tel"},
+            {label:"Email",val:cEmail,set:setCEmail,ph:"email@schein.com",type:"email"},
+          ].map(({label,val,set,ph,type})=>(
+            <div key={label} style={{marginBottom:10}}>
+              <div style={{fontSize:10,color:T.t3,marginBottom:4,fontWeight:600}}>{label}</div>
+              <input value={val} onChange={e=>set(e.target.value)} placeholder={ph} type={type} style={{width:"100%",background:T.s2,border:`1px solid ${T.b1}`,borderRadius:8,padding:"8px 10px",fontSize:13,color:T.t1,fontFamily:"inherit"}}/>
+            </div>
+          ))}
+          <div style={{marginBottom:16}}>
+            <div style={{fontSize:10,color:T.t3,marginBottom:4,fontWeight:600}}>Notes</div>
+            <textarea value={cNotes} onChange={e=>setCNotes(e.target.value)} placeholder="Relationship context, how they can help, best time to reach..." rows={3} style={{width:"100%",background:T.s2,border:`1px solid ${T.b1}`,borderRadius:8,padding:"8px 10px",fontSize:12,color:T.t1,fontFamily:"inherit",resize:"none"}}/>
+          </div>
+          <div style={{display:"flex",gap:10}}>
+            <button onClick={()=>setShowContactForm(false)} style={{flex:1,padding:"10px 0",borderRadius:10,fontSize:13,fontWeight:600,cursor:"pointer",border:`1px solid ${T.b1}`,background:T.s2,color:T.t3,fontFamily:"inherit"}}>Cancel</button>
+            <button onClick={saveContact} disabled={!cName.trim()} style={{flex:2,padding:"10px 0",borderRadius:10,fontSize:13,fontWeight:700,cursor:cName.trim()?"pointer":"not-allowed",border:"none",background:cName.trim()?T.purple:"rgba(167,139,250,.3)",color:"#fff",fontFamily:"inherit"}}>Save Contact</button>
+          </div>
+        </div>
+      </div>}
+
       {/* GROUP PRODUCT ROLLUP */}
       {hasProducts&&<div className="anim" style={{animationDelay:"40ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
         <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue,marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -350,3 +485,4 @@ function GroupDetail({group,goMain,goAcct,overlays,saveOverlays}) {
 
 
 export default GroupDetail;
+
