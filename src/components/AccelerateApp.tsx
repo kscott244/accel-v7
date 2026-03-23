@@ -4078,7 +4078,11 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
           const isDown=gap>0;
           const chip=PRI_CHIP[g.maxVisitPriority]||PRI_CHIP["ON TRACK"];
           const borderColor=isDown?"rgba(248,113,113,.2)":"rgba(52,211,153,.15)";
-          return <button key={g.gId} className="anim" onClick={()=>setSelGroup(g.gId)}
+          return <button key={g.gId} className="anim" onClick={()=>{
+            // Single-location groups: skip the intermediate children list, go straight to account detail
+            if(g.children.length===1) { goAcct(g.children[0]); return; }
+            setSelGroup(g.gId);
+          }}
             style={{animationDelay:`${i*20}ms`,width:"100%",textAlign:"left",background:T.s1,
               border:`1px solid ${borderColor}`,
               borderRadius:12,padding:"11px 13px",marginBottom:7,cursor:"pointer"}}>
