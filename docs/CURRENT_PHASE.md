@@ -22,6 +22,27 @@
 ### Commits
 - ecf7bf0 — Phase 5: extract TodayTab, GroupDetail, AcctDetail, DealersTab, OutreachTab, AdminTab — AccelerateApp 4406→674 lines
 
+
+---
+
+## Hotfix — Data Boundary Normalization ✅ Complete
+
+### What Was Done
+- **`src/data/index.ts`**: Replaced `as unknown as Office[]` raw cast with `normalizeOffice()` mapper function
+  - `tier` → `accelLevel`
+  - `q1py` → `q1_2025`, `q1cy` → `q1_2026`, `q1gap` → `q1_gap`
+  - `prods[0].l` → `topProduct` (derived, empty string if absent)
+  - Safe empty/zero defaults for all fields not present in raw export: `daysSince`, `mainDoctor`, `phone`, `zone`, `lastVisit`, `lastVisitNote`, etc.
+  - No fake/misleading values invented
+- **`src/components/cards/DailyBriefing.tsx`**: Added `safeBriefing()` wrapper around `generateBriefing()` so any unexpected exception returns a minimal safe shape instead of propagating to the ErrorBoundary
+- Root cause: `offices.json` uses Tableau export field names; new UI components expected the normalized `Office` type shape
+
+### Commit
+- `f4f3b4b` — fix: normalize offices.json at data boundary to match Office type
+
+### Last Updated
+March 23, 2026
+
 ---
 
 ## Previously Completed
