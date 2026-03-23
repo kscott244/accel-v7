@@ -50,6 +50,9 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup,overlays,saveOverla
   const [aiText,setAiText]=useState("");
   const [drState,setDrState]=useState("idle");
   const [drIntel,setDrIntel]=useState<any>(null);
+  const [groupSuggestions,setGroupSuggestions]=useState<any[]>([]);
+  const [suggestModal,setSuggestModal]=useState(false);
+  const [suggestSelected,setSuggestSelected]=useState<Set<string>>(new Set());
   const [savedContacts,setSavedContacts]=useState<any>(null);
   const [showMoveModal,setShowMoveModal]=useState(false);
   const [moveSearch,setMoveSearch]=useState("");
@@ -262,6 +265,45 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
       if (data?.intel) {
         setDrIntel(data.intel);
         setDrState("done");
+        // Auto-suggest group members based on cities/doctor found in research
+        try {
+          const intel = data.intel;
+          const intelText = [
+            ...(intel.hooks||[]),
+            intel.ownershipNote||"",
+            intel.statusNote||"",
+            ...(intel.talkingPoints||[]),
+          ].join(" ").toLowerCase();
+          // Only suggest if research indicates multi-location
+          const isMulti = intelText.includes("location") || intelText.includes("site") || intelText.includes("office") || intelText.includes("dso") || intelText.includes("group practice");
+          if (isMulti) {
+            // Extract city names — look for "City, ST" pattern or "(City ST)" pattern
+            const cityMatches = new Set<string>();
+            const cityRe = /([A-Z][a-z]+(?:\s[A-Z][a-z]+)*),?\s+(CT|MA|RI|NY|NH|VT|ME)/g;
+            const rawText = [intel.ownershipNote||"", ...(intel.hooks||[]), ...(intel.talkingPoints||[])].join(" ");
+            let m;
+            while ((m = cityRe.exec(rawText)) !== null) cityMatches.add(m[1].toLowerCase());
+            // Also get doctor last name from contacts
+            const doctorContact = (intel.contacts||[]).find((c:any) => c.tier === 1);
+            const doctorLast = doctorContact?.name?.split(" ").pop()?.toLowerCase() || "";
+            // Search all accounts across all groups
+            const allAccts = (groups||[]).flatMap((g:any) =>
+              (g.children||[]).map((c:any) => ({...c, gId:g.id, gName:g.name, tier:g.tier}))
+            );
+            const suggestions = allAccts.filter((c:any) => {
+              if (c.id === acct.id) return false; // skip self
+              if (c.gId === acct.gId && acct.gId) return false; // already grouped
+              const cityMatch = cityMatches.size > 0 && c.city && [...cityMatches].some(city => c.city.toLowerCase().includes(city));
+              const nameMatch = acct.name && c.name && (
+                c.name.toLowerCase().includes(acct.name.toLowerCase().split(" ")[0]) ||
+                acct.name.toLowerCase().includes(c.name.toLowerCase().split(" ")[0])
+              );
+              const doctorMatch = doctorLast && c.name && c.name.toLowerCase().includes(doctorLast);
+              return cityMatch || doctorMatch || nameMatch;
+            }).slice(0,8);
+            if (suggestions.length > 0) setGroupSuggestions(suggestions);
+          }
+        } catch(e) {}
         // Save contact info to persistent overlay storage (committed to overlays.json via API)
         const contacts = {
           contactName: data.intel.contacts?.[0]?.name || data.intel.contactName || null,
@@ -362,6 +404,25 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
               <span style={{color:T.blue,fontWeight:700,fontSize:10,marginTop:1,flexShrink:0}}>{i+1}.</span>
               <span style={{fontSize:11,color:T.t1,lineHeight:1.5}}>{p}</span>
             </div>)}
+          </div>}
+          {/* AUTO-LINK SUGGESTION */}
+          {groupSuggestions.length > 0 && <div style={{marginTop:12,padding:"10px 12px",borderRadius:10,background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.2)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+              <div>
+                <div style={{fontSize:10,fontWeight:700,color:T.blue}}>🔗 Related Accounts Found</div>
+                <div style={{fontSize:9,color:T.t4,marginTop:1}}>Research indicates this may be a multi-location group</div>
+              </div>
+              <button onClick={()=>{setSuggestSelected(new Set(groupSuggestions.map((s:any)=>s.id)));setSuggestModal(true);}}
+                style={{background:"rgba(79,142,247,.15)",border:"1px solid rgba(79,142,247,.3)",borderRadius:8,padding:"4px 10px",fontSize:10,fontWeight:700,color:T.blue,cursor:"pointer",fontFamily:"inherit"}}>
+                Link Accounts
+              </button>
+            </div>
+            {groupSuggestions.slice(0,3).map((s:any)=>(
+              <div key={s.id} style={{fontSize:10,color:T.t2,marginTop:3,paddingLeft:4}}>
+                · {s.name} — {s.city}, {s.st}
+              </div>
+            ))}
+            {groupSuggestions.length > 3 && <div style={{fontSize:9,color:T.t4,marginTop:2,paddingLeft:4}}>+{groupSuggestions.length-3} more</div>}
           </div>}
           {drIntel.searchedAt&&<div style={{fontSize:9,color:T.t4,marginTop:8,textAlign:"right"}}>Researched {new Date(drIntel.searchedAt).toLocaleTimeString()}</div>}
         </div>}
@@ -836,6 +897,83 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
         </div>;
       })()}
     </div>
+
+    {/* GROUP LINK MODAL */}
+    {suggestModal&&<div style={{position:"fixed",inset:0,zIndex:210,background:"rgba(0,0,0,.75)",backdropFilter:"blur(8px)",display:"flex",alignItems:"flex-end"}} onClick={()=>setSuggestModal(false)}>
+      <div style={{width:"100%",background:T.s1,borderRadius:"20px 20px 0 0",padding:20,maxHeight:"80vh",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+          <div>
+            <div style={{fontSize:14,fontWeight:700}}>Link into a Group</div>
+            <div style={{fontSize:10,color:T.t4,marginTop:2}}>Select accounts to merge with <strong style={{color:T.t1}}>{acct.name}</strong></div>
+          </div>
+          <button onClick={()=>setSuggestModal(false)} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:18}}>✕</button>
+        </div>
+        <div style={{overflowY:"auto",flex:1,margin:"12px 0"}}>
+          {/* Current account — always included */}
+          <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:10,background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.2)",marginBottom:6}}>
+            <div style={{width:18,height:18,borderRadius:4,background:T.blue,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              <span style={{fontSize:11,color:"#fff",fontWeight:700}}>✓</span>
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:12,fontWeight:700,color:T.blue}}>{acct.name}</div>
+              <div style={{fontSize:10,color:T.t4}}>{acct.city}, {acct.st} · this account</div>
+            </div>
+          </div>
+          {groupSuggestions.map((s:any)=>{
+            const sel = suggestSelected.has(s.id);
+            return <div key={s.id} onClick={()=>{
+              const next = new Set(suggestSelected);
+              sel ? next.delete(s.id) : next.add(s.id);
+              setSuggestSelected(next);
+            }} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:10,
+              background:sel?"rgba(52,211,153,.06)":T.s2,
+              border:"1px solid "+(sel?"rgba(52,211,153,.25)":T.b2),
+              marginBottom:6,cursor:"pointer"}}>
+              <div style={{width:18,height:18,borderRadius:4,background:sel?T.green:T.s3,border:"1px solid "+(sel?"rgba(52,211,153,.4)":T.b1),display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                {sel&&<span style={{fontSize:11,color:"#fff",fontWeight:700}}>✓</span>}
+              </div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:12,fontWeight:600,color:T.t1}}>{s.name}</div>
+                <div style={{fontSize:10,color:T.t4}}>{s.city}, {s.st}{s.dealer&&s.dealer!=="Unknown"?" · "+s.dealer:""}</div>
+              </div>
+              <div style={{fontSize:11,fontFamily:"monospace",color:T.t3,flexShrink:0}}>{$$(s.pyQ?.["1"]||0)}</div>
+            </div>;
+          })}
+        </div>
+        <div style={{fontSize:10,color:T.t4,marginBottom:10}}>
+          {suggestSelected.size} of {groupSuggestions.length} related accounts selected · will be grouped with this account
+        </div>
+        <button
+          disabled={suggestSelected.size===0}
+          onClick={()=>{
+            if(suggestSelected.size===0) return;
+            const newGroupId = "Master-MERGE-"+acct.id;
+            // Derive a clean group name from the account name
+            const baseName = acct.name.replace(/\s+(dental|dentistry|associates|dds|dmd|llc|pc|pllc).*/i,"").trim();
+            const childIds = [acct.id, ...Array.from(suggestSelected)];
+            if(saveOverlays){
+              const groupEntry = {
+                id: newGroupId,
+                name: baseName,
+                tier: acct.gTier||acct.tier||"Standard",
+                class2: "Private Practice",
+                childIds,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              };
+              const next = {...OVERLAYS_REF, groups:{...(OVERLAYS_REF.groups||{}), [newGroupId]: groupEntry}};
+              saveOverlays(next);
+            }
+            setSuggestModal(false);
+            setGroupSuggestions([]);
+            setToast(99);
+            setTimeout(()=>setToast(null),4000);
+          }}
+          style={{width:"100%",background:suggestSelected.size>0?"linear-gradient(90deg,"+T.blue+","+T.cyan+")":"rgba(79,142,247,.3)",border:"none",borderRadius:10,padding:"12px 0",fontSize:13,fontWeight:700,color:"#fff",cursor:suggestSelected.size>0?"pointer":"not-allowed",fontFamily:"inherit"}}>
+          Create Group ({suggestSelected.size + 1} accounts)
+        </button>
+      </div>
+    </div>}
   </div>;
 }
 
