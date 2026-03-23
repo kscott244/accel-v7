@@ -10,16 +10,12 @@ class ErrorBoundary extends Component<{children:any},{err:any,info:any}> {
   componentDidCatch(e:any,i:any){this.setState({err:e,info:i});}
   render(){
     if(this.state.err){
-      return <div style={{padding:20,background:"#1a0a0a",color:"#f87171",fontFamily:"monospace",fontSize:12,minHeight:"100vh"}}>
-        <div style={{fontWeight:700,fontSize:14,marginBottom:8}}>💥 Crash caught — error details:</div>
-        <div style={{background:"#2a0a0a",padding:12,borderRadius:8,marginBottom:8,wordBreak:"break-all"}}>
-          {String(this.state.err)}
-        </div>
-        <div style={{color:"#a0a0b8",fontSize:10,whiteSpace:"pre-wrap",overflow:"auto",maxHeight:400}}>
-          {this.state.info?.componentStack}
-        </div>
-        <button onClick={()=>this.setState({err:null,info:null})} style={{marginTop:12,padding:"8px 16px",background:"#4f8ef7",color:"#fff",border:"none",borderRadius:8,cursor:"pointer",fontFamily:"inherit"}}>
-          Try Again
+      return <div style={{padding:40,background:"#0a0a0f",color:"#e2e2ea",fontFamily:"'DM Sans',sans-serif",minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center"}}>
+        <div style={{fontSize:32,marginBottom:12}}>⚡</div>
+        <div style={{fontSize:16,fontWeight:700,marginBottom:8}}>Something went wrong</div>
+        <div style={{fontSize:13,color:"#6b6b80",marginBottom:20,maxWidth:320}}>Accelerate hit an unexpected error. Tap below to reload.</div>
+        <button onClick={()=>this.setState({err:null,info:null})} style={{padding:"10px 24px",background:"#4f8ef7",color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:600}}>
+          Reload App
         </button>
       </div>;
     }
@@ -27,14 +23,13 @@ class ErrorBoundary extends Component<{children:any},{err:any,info:any}> {
   }
 }
 
-// Dealer data — loads if available, gracefully degrades if not
-let DEALER_LOOKUP: Record<string, any> = {};
+// Static data — loads if available, gracefully degrades if not
 let DEALERS: Record<string, string> = {};
 let WEEK_ROUTES: any = { routes: {}, unplaced: [] };
 let BADGER: Record<string, any> = {};
 let PARENT_NAMES: Record<string, string> = {};
 // DEALERS, BADGER, WEEK_ROUTES remain static base data
-try { DEALER_LOOKUP = require("@/data/dealer-lookup").DEALER_LOOKUP; } catch(e) {}
+
 try { DEALERS = require("@/data/dealers").DEALERS; } catch(e) {}
 try { WEEK_ROUTES = require("@/data/week-routes.json"); } catch(e) {}
 try { BADGER = require("@/data/badger-lookup.json"); } catch(e) {}
@@ -198,7 +193,7 @@ const T = {
 };
 
 const Q1_TARGET = 778915;
-const Q_TARGETS = { 1: 778915, 2: 798328, 3: 793897, 4: 786954 };
+
 const FY_TARGET = 3158094;
 const DAYS_LEFT = Math.max(0, Math.ceil((new Date(2026, 2, 31).getTime() - new Date().getTime()) / 86400000));
 // Thomaston CT home base coordinates — used for distance scoring in Overdrive
@@ -772,7 +767,7 @@ function AppInner() {
               setGroups(prev => prev ? applyGroupOverrides(applyOverlays(prev.map((g:any) => ({...g})))) : prev);
             }
           }
-        }).catch(() => {});
+        }).catch(() => { /* Overlay fetch failed — using cached data */ });
       } catch {}
       setOverlays(loadedOverlays);
 
