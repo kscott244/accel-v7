@@ -2,13 +2,13 @@
   "nameOverrides": {},
   "contacts": {
     "Master-CM145846": {
-      "contactName": "William R. Conroy Jr., DDS",
+      "contactName": "William R. Conroy, Jr., DDS",
       "phone": "(508) 695-7031",
       "email": "atwillconroy@yahoo.com",
       "website": "https://www.atwill-conroydental.com",
       "contacts": [
         {
-          "name": "William R. Conroy Jr., DDS",
+          "name": "William R. Conroy, Jr., DDS",
           "role": "Owner/DDS",
           "email": "atwillconroy@yahoo.com",
           "phone": "(508) 695-7031",
@@ -16,27 +16,27 @@
         },
         {
           "name": "Kristofer Haggarty, DMD",
-          "role": "Associate DDS",
+          "role": "Associate Doctor/Director",
           "email": null,
           "phone": "(508) 695-7031",
           "tier": 2
         },
         {
           "name": "Bakhoum M. Girgis, DMD",
-          "role": "Associate DDS",
+          "role": "Associate Doctor",
           "email": null,
           "phone": "(508) 695-7031",
           "tier": 2
         },
         {
           "name": "Thomas Hernon, DMD",
-          "role": "Associate DDS",
+          "role": "Associate Doctor",
           "email": null,
           "phone": "(508) 695-7031",
           "tier": 2
         }
       ],
-      "savedAt": "2026-03-23T14:37:07.669Z",
+      "savedAt": "2026-03-23T14:45:05.170Z",
       "practiceName": "ATWILL CONROY DENTAL ASSOCIATES"
     }
   },
@@ -47,5 +47,5 @@
   "groups": {},
   "groupDetaches": [],
   "groupMoves": {},
-  "lastUpdated": "2026-03-23T14:37:09.538Z"
+  "lastUpdated": "2026-03-23T14:45:07.000Z"
 }
