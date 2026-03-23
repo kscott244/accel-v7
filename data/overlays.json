@@ -1,37 +1,25 @@
 {
   "nameOverrides": {},
-  "contacts": {
-    "Master-CM081003": {
-      "contactName": "Dr. Sheikh M. Ilyas",
-      "phone": "(203) 790-0111",
-      "email": "info@newenglanddentalllc.com",
-      "website": "https://www.newenglanddentalllc.com",
-      "contacts": [
-        {
-          "name": "Dr. Sheikh M. Ilyas",
-          "role": "Owner/DDS – General Practice & Implants",
-          "email": "info@newenglanddentalllc.com",
-          "phone": "(203) 790-0111",
-          "tier": 1
-        },
-        {
-          "name": "Dr. Haissam Ramadan",
-          "role": "Endodontist – likely referring/associated provider",
-          "email": null,
-          "phone": "(203) 826-9299",
-          "tier": 2
-        }
-      ],
-      "savedAt": "2026-03-23T19:09:06.430Z",
-      "practiceName": "HAISSAM RAMADAN DMD"
-    }
-  },
+  "contacts": {},
   "fscReps": {},
   "activityLogs": {},
   "research": {},
   "dealerOverrides": {},
-  "groups": {},
+  "groups": {
+    "Master-CUSTOM-1774303905517": {
+      "id": "Master-CUSTOM-1774303905517",
+      "name": "New England Dental LLC",
+      "class2": "Emerging DSO",
+      "childIds": [
+        "Master-CM081003",
+        "Master-CM413476"
+      ],
+      "tier": "Standard",
+      "createdAt": "2026-03-23T22:11:45.517Z",
+      "updatedAt": "2026-03-23T22:11:45.517Z"
+    }
+  },
   "groupDetaches": [],
   "groupMoves": {},
-  "lastUpdated": "2026-03-23T19:09:01.049Z"
+  "lastUpdated": "2026-03-23T22:11:45.569Z"
 }
