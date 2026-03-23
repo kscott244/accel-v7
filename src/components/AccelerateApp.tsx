@@ -302,7 +302,7 @@ function AppInner() {
     // 1. Update in-memory immediately
     setOverlays(next);
     // 2. Cache to localStorage
-    try { localStorage.setItem("overlay_cache", JSON.stringify(next)); } catch {}
+    try { localStorage.setItem("overlay_cache_v2", JSON.stringify(next)); } catch {}
     // 3. Write to GitHub durably
     setOverlaySaveStatus("saving");
     setOverlaySaveError(null);
@@ -406,7 +406,7 @@ function AppInner() {
       let loadedOverlays = EMPTY_OVERLAYS;
       try {
         // Try localStorage cache first (fast)
-        const cached = localStorage.getItem("overlay_cache");
+        const cached = localStorage.getItem("overlay_cache_v2");
         if (cached) {
           loadedOverlays = JSON.parse(cached);
         }
@@ -416,7 +416,7 @@ function AppInner() {
             const { overlays: fresh } = await res.json();
             if (fresh) {
               setOverlays(fresh);
-              try { localStorage.setItem("overlay_cache", JSON.stringify(fresh)); } catch {}
+              try { localStorage.setItem("overlay_cache_v2", JSON.stringify(fresh)); } catch {}
               // Reapply overlays onto current groups with fresh data
               setGroups(prev => prev ? applyGroupOverrides(applyOverlays(prev.map((g:any) => ({...g})))) : prev);
             }
@@ -427,7 +427,7 @@ function AppInner() {
 
       // ── Load Base Data ──
       try {
-        const saved = localStorage.getItem("accel_data");
+        const saved = localStorage.getItem("accel_data_v2");
         if (saved) {
           const parsed = JSON.parse(saved);
           setGroups(applyGroupOverrides(applyOverlays(hydrateDealer(parsed.groups))));
@@ -476,7 +476,7 @@ function AppInner() {
         // Apply overlays on top of new base data
         setGroups(applyGroupOverrides(applyOverlays(hydrateDealer(result.groups))));
         setDataSource(`CSV uploaded ${result.generated}`);
-        localStorage.setItem("accel_data", JSON.stringify(result));
+        localStorage.setItem("accel_data_v2", JSON.stringify(result));
 
         const warn = missingIds.length > 0 ? ` ⚠ ${missingIds.length} overlay account(s) not found in new data` : "";
         setUploadMsg(`OK Loaded ${result.groups.length} groups from CSV${warn}`);
