@@ -1,43 +1,43 @@
 {
   "nameOverrides": {},
   "contacts": {
-    "Master-CM145846": {
-      "contactName": "William R. Conroy Jr., DDS",
-      "phone": "(508) 695-7031",
-      "email": "atwillconroy@yahoo.com",
-      "website": "https://www.atwill-conroydental.com",
+    "Master-CM189283": {
+      "contactName": "William R. Conroy, DDS",
+      "phone": "(401) 351-3090",
+      "email": null,
+      "website": "https://www.atwill-conroydentalprovidence.com",
       "contacts": [
         {
-          "name": "William R. Conroy Jr., DDS",
-          "role": "Owner/DDS",
-          "email": "atwillconroy@yahoo.com",
-          "phone": "(508) 695-7031",
+          "name": "William R. Conroy, DDS",
+          "role": "Owner/DDS – Lead Doctor",
+          "email": null,
+          "phone": "(401) 351-3090",
           "tier": 1
         },
         {
           "name": "Kristofer Haggarty, DMD",
-          "role": "Associate DDS / Director (BBB-listed)",
+          "role": "Associate Doctor",
           "email": null,
-          "phone": "(508) 695-7031",
+          "phone": "(401) 351-3090",
           "tier": 2
         },
         {
           "name": "Bakhoum M. Girgis, DMD",
-          "role": "Associate DDS",
+          "role": "Associate Doctor",
           "email": null,
-          "phone": "(508) 695-7031",
+          "phone": "(401) 351-3090",
           "tier": 2
         },
         {
           "name": "Thomas Hernon, DMD",
-          "role": "Associate DDS",
+          "role": "Associate Doctor",
           "email": null,
-          "phone": "(508) 695-7031",
+          "phone": "(401) 351-3090",
           "tier": 2
         }
       ],
-      "savedAt": "2026-03-23T14:52:26.329Z",
-      "practiceName": "ATWILL CONROY DENTAL ASSOCIATES"
+      "savedAt": "2026-03-23T14:55:11.290Z",
+      "practiceName": "OFC OF ANTHONY PHILIP ALESSANDRO DDS"
     }
   },
   "fscReps": {},
@@ -47,5 +47,5 @@
   "groups": {},
   "groupDetaches": [],
   "groupMoves": {},
-  "lastUpdated": "2026-03-23T14:52:28.365Z"
+  "lastUpdated": "2026-03-23T14:55:13.128Z"
 }
