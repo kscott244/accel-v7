@@ -12,7 +12,7 @@
 | 1 | Foundation Audit + Docs | ✅ Complete | Audit repo, document architecture, establish project docs, define roadmap |
 | 2 | Stabilize + Consolidate | ✅ Complete | Retire patches.json, add deploy verification, fix remaining edge cases |
 | 3 | Decompose the Monolith | ✅ Complete | Extracted all tabs + lib modules — AccelerateApp.tsx 5,377 → ~680 lines |
-| 4 | Data Pipeline Upgrade | 🔲 Next | CSV diff view, validation, weekly upload workflow |
+| 4 | Data Pipeline Upgrade | ✅ Complete | CSV diff view on upload, full overlay integrity check across all sections |
 | 5 | Intelligence Layer | ⚠️ Partial | AI briefing, Deep Research, find-group-matches built — enhanced scoring + weekly change detection remain |
 | 6 | Foundation Hardening | ✅ Complete | Zero TS errors, 34 tests for scoring + CSV processor, updated docs |
 | 7 | Multi-Quarter / Q2+ | 🔲 Future | Quarter selector, historical tracking, goal management |

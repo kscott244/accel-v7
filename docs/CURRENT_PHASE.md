@@ -1,6 +1,22 @@
 # CURRENT PHASE — accel-v7
 
-## Active: Phase 6 — Foundation Hardening ✅ Complete
+## Active: Phase 7 — Data Pipeline Upgrade ✅ Complete
+
+### What Was Done (Phase 7)
+1. **`src/lib/dataDiff.ts`** — new module: `diffDatasets()` compares prev vs new groups (added/removed accounts, changed CY revenue, added/removed groups); `checkOverlayIntegrity()` checks all overlay sections (contacts, activity logs, name overrides, FSC assignments, custom groups) for orphaned account references
+2. **CSV upload diff view** — `handleUpload` now loads previous dataset before overwriting, computes diff, and shows: `847 groups · +23 new · −5 removed · ~118 updated · ⚠ 2 overlay refs orphaned (contacts, activity logs)`
+3. **Extended overlay integrity check** — previously only checked `groups.childIds`; now checks all five overlay sections
+4. **16 new tests** in `src/__tests__/dataDiff.test.ts` — 50 total passing
+
+### Completion Criteria — All Met ✅
+- Upload message shows diff vs previous data ✅
+- All overlay sections checked for orphaned refs ✅
+- `npm run test` 50 tests passing ✅
+- `npm run build` clean ✅
+
+---
+
+## Previously Completed: Phase 6 — Foundation Hardening ✅ Complete
 
 ### What Was Done (Phase 6)
 1. **Fixed all 18 TypeScript errors** — tsconfig target es2020 + downlevelIteration, AdminTab `$$` import, AccelerateApp ArrayBuffer cast, SKU search String() casts, TodayTab SectionHeader count default, GroupDetail Set type param, csv.ts Array.from()

@@ -200,6 +200,7 @@ import {
 } from "@/lib/tier";
 import { $$, $f, pc, scoreAccount, getHealthStatus } from "@/lib/format";
 import { parseCSV, parseCSVLine, processCSVData, setDealers } from "@/lib/csv";
+import { diffDatasets, checkOverlayIntegrity } from "@/lib/dataDiff";
 
 import { SKU } from "@/data/sku-data";
 import GroupsTab from "@/components/tabs/GroupsTab";
@@ -471,25 +472,39 @@ function AppInner() {
         const rows = parseCSV(text);
         const result = processCSVData(rows);
 
-        // Build set of all child IDs in new base data for conflict checking
-        const newChildIds = new Set(result.groups.flatMap((g:any) => (g.children||[]).map((c:any) => c.id)));
+        // Load previous dataset for diff (before overwriting)
+        let prevGroups: any[] = [];
+        try {
+          const prev = localStorage.getItem("accel_data_v2");
+          if (prev) prevGroups = JSON.parse(prev).groups || [];
+        } catch {}
 
-        // Check for overlay conflicts (group children that no longer exist in new data)
-        const missingIds: string[] = [];
-        Object.values(OVERLAYS_REF.groups||{}).forEach((grp:any) => {
-          (grp.childIds||[]).forEach((cid:string) => {
-            if (!newChildIds.has(cid)) missingIds.push(cid);
-          });
-        });
+        // Diff new vs previous
+        const diff = diffDatasets(prevGroups, result.groups);
+        const isFirstUpload = prevGroups.length === 0;
+
+        // Check all overlay sections for orphaned references
+        const integrity = checkOverlayIntegrity(OVERLAYS_REF, result.groups);
 
         // Apply overlays on top of new base data
         setGroups(applyGroupOverrides(applyOverlays(hydrateDealer(result.groups))));
         setDataSource(`CSV uploaded ${result.generated}`);
         localStorage.setItem("accel_data_v2", JSON.stringify(result));
 
-        const warn = missingIds.length > 0 ? ` ⚠ ${missingIds.length} overlay account(s) not found in new data` : "";
-        setUploadMsg(`OK Loaded ${result.groups.length} groups from CSV${warn}`);
-        setTimeout(() => setUploadMsg(null), missingIds.length > 0 ? 8000 : 4000);
+        // Build upload message
+        let msg = `OK ${result.groups.length} groups`;
+        if (!isFirstUpload) {
+          const parts: string[] = [];
+          if (diff.addedAccounts)   parts.push(`+${diff.addedAccounts} new`);
+          if (diff.removedAccounts) parts.push(`−${diff.removedAccounts} removed`);
+          if (diff.changedRevenue)  parts.push(`~${diff.changedRevenue} updated`);
+          if (parts.length) msg += ` · ${parts.join(" · ")}`;
+        }
+        if (integrity.missingIds.length > 0) {
+          msg += ` · ⚠ ${integrity.missingIds.length} overlay ref${integrity.missingIds.length > 1 ? "s" : ""} orphaned (${integrity.affectedSections.join(", ")})`;
+        }
+        setUploadMsg(msg);
+        setTimeout(() => setUploadMsg(null), integrity.missingIds.length > 0 ? 10000 : 5000);
       } catch(err: any) {
         setUploadMsg(`ERR Error: ${err.message}`);
         setTimeout(() => setUploadMsg(null), 5000);
