@@ -60,15 +60,17 @@ function AdminTab({groups, scored, overlays, saveOverlays}:{groups:any[], scored
     setTimeout(()=>setToast(null), 3500);
   };
 
-  // Search helper — find accounts by name/ID
+  // Search helper — find accounts by name, address, city, state, or ID
   const searchAccounts = (q:string) => {
     if(!q || q.length < 2) return [];
     const ql = q.toLowerCase();
     return scored.filter(a =>
       a.name?.toLowerCase().includes(ql) ||
       a.id?.toLowerCase().includes(ql) ||
-      a.city?.toLowerCase().includes(ql)
-    ).slice(0,8);
+      a.city?.toLowerCase().includes(ql) ||
+      a.st?.toLowerCase().includes(ql) ||
+      a.addr?.toLowerCase().includes(ql)
+    ).slice(0,25);
   };
 
   // Search groups
