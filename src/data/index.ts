@@ -17,8 +17,87 @@ import weekRoutesData from "./week-routes.json";
 import gapAccountsData from "./gap-accounts.json";
 import territorySummaryData from "./territory-summary.json";
 
+// ═══════════════════════════════════════════════════════════
+// RAW OFFICE NORMALIZER
+// offices.json uses legacy field names from the Tableau export.
+// This mapper translates them to the Office type at the data boundary
+// so all downstream components receive a consistent shape.
+// Fields not present in the raw data get safe empty/zero defaults —
+// no fake values are invented here.
+// ═══════════════════════════════════════════════════════════
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function normalizeOffice(raw: any): Office {
+  // Top product: use first entry from prods[] if available
+  const topProduct: string = raw.prods?.[0]?.l ?? "";
+
+  return {
+    // ── Identity ──────────────────────────────────────────
+    name:        raw.name        ?? "",
+    parent:      raw.parent      ?? "",
+    parent_id:   raw.parent_id   ?? "",
+    childMdmId:  raw.childMdmId  ?? raw.parent_id ?? "",
+    isPrivate:   raw.isPrivate   ?? false,
+    isExpansion: raw.isExpansion ?? false,
+
+    // ── Address ───────────────────────────────────────────
+    addr:  raw.addr  ?? "",
+    city:  raw.city  ?? "",
+    state: raw.state ?? "",
+    zip:   raw.zip   ?? "",
+
+    // ── Account metadata ──────────────────────────────────
+    acctType: raw.acctType ?? "",
+    opco:     raw.opco     ?? "",
+    class2:   raw.class2   ?? "",
+    email:    raw.email    ?? "",
+
+    // ── Revenue ───────────────────────────────────────────
+    py:    raw.py    ?? 0,
+    cy:    raw.cy    ?? 0,
+    gap:   raw.gap   ?? 0,
+    score: raw.score ?? 0,
+
+    // ── Q1 figures: raw uses q1py/q1cy, type expects q1_2025/q1_2026 ──
+    q1_2025: raw.q1py ?? 0,
+    q1_2026: raw.q1cy ?? 0,
+    q1_gap:  raw.q1gap ?? 0,
+
+    // ── Signals ───────────────────────────────────────────
+    q1_signal:     raw.q1_signal     ?? "INACTIVE",
+    visitPriority: raw.visitPriority ?? "MONITOR",
+    bucket:        (raw.bucket as Bucket) ?? "PROTECT",
+
+    // ── Accelerate tier: raw uses "tier", type uses "accelLevel" ──
+    accelLevel: raw.tier ?? "",
+
+    // ── Derived / enriched fields (not in raw export) ─────
+    // These are genuinely absent — safe defaults, not guesses.
+    topProduct,
+    mainDoctor:    "",
+    phone:         "",
+    cell:          "",
+    daysSince:     undefined,
+    avgInterval:   undefined,
+    lastVisit:     "",
+    lastVisitNote: "",
+    zone:          "",
+    creditEff:     undefined,
+    pm:            "",
+    dealerRep:     "",
+    dealer:        "",
+    badgerNotes:   "",
+    accelOpp:      "",
+    route:         "",
+    followup:      "",
+    lat:           undefined,
+    lng:           undefined,
+    activity:      "",
+  };
+}
+
 export const GROUPS: Group[] = groupsData as unknown as Group[];
-export const OFFICES: Office[] = officesData as unknown as Office[];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const OFFICES: Office[] = (officesData as any[]).map(normalizeOffice);
 export const PRODUCTS: Product[] = productsData as unknown as Product[];
 export const WEEK_ROUTES: WeekRoutes = weekRoutesData as unknown as WeekRoutes;
 export const GAP_ACCOUNTS: GapAccount[] = gapAccountsData as unknown as GapAccount[];

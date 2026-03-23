@@ -13,8 +13,29 @@ interface BriefingProps {
   onSelectOffice: (office: Office) => void;
 }
 
+function safeBriefing() {
+  try {
+    return generateBriefing();
+  } catch (e) {
+    console.error("[DailyBriefing] generateBriefing failed:", e);
+    const now = new Date();
+    return {
+      greeting: "Good morning",
+      dateLabel: now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }),
+      dayOfWeek: now.toLocaleDateString("en-US", { weekday: "long" }),
+      zone: "",
+      quotaSnap: { pct: 0, credited: 0, target: 0, gap: 0, daysLeft: 0, dailyNeeded: 0 },
+      todayStops: 0,
+      criticalAlerts: [],
+      opportunities: [],
+      positives: [],
+      topCallbacks: [],
+    };
+  }
+}
+
 export function DailyBriefing({ onOpenSearch, onSelectOffice }: BriefingProps) {
-  const briefing = useMemo(() => generateBriefing(), []);
+  const briefing = useMemo(() => safeBriefing(), []);
   const todayStops = WEEK_ROUTES.routes[briefing.dayOfWeek] || [];
 
   const { quotaSnap } = briefing;
