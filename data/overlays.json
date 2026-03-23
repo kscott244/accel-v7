@@ -1,44 +1,20 @@
 {
   "nameOverrides": {},
-  "contacts": {
-    "Master-CM413476": {
-      "contactName": "Dr. Sheikh M. Ilyas",
-      "phone": "(203) 790-0111",
-      "email": "info@newenglanddentalllc.com",
-      "website": "https://newenglanddentalllc.com",
-      "contacts": [
-        {
-          "name": "Dr. Sheikh M. Ilyas",
-          "role": "Owner/DDS — General & Implant Dentist",
-          "email": "info@newenglanddentalllc.com",
-          "phone": "(203) 790-0111",
-          "tier": 1
-        },
-        {
-          "name": "Dr. Atheena Antony",
-          "role": "Associate DDS — General Dentist",
-          "email": null,
-          "phone": null,
-          "tier": 2
-        },
-        {
-          "name": "Dr. Matthew Hariprasad",
-          "role": "Associate DDS — General & Restorative Dentist",
-          "email": null,
-          "phone": null,
-          "tier": 2
-        }
-      ],
-      "savedAt": "2026-03-23T16:04:58.648Z",
-      "practiceName": "NEW ENGLAND DENTAL"
-    }
-  },
+  "contacts": {},
   "fscReps": {},
   "activityLogs": {},
   "research": {},
   "dealerOverrides": {},
   "groups": {},
   "groupDetaches": [],
-  "groupMoves": {},
-  "lastUpdated": "2026-03-23T16:05:00.666Z"
+  "groupMoves": {
+    "Master-CM1994205": {
+      "childId": "Master-CM1994205",
+      "childName": "GRANITEVILLE DENTAL SOLUTIONS",
+      "targetGroupId": "Master-CM887688",
+      "targetGroupName": "RESOLUTE DENTAL PARTNERS L",
+      "savedAt": "2026-03-23T18:20:00.455Z"
+    }
+  },
+  "lastUpdated": "2026-03-23T18:20:03.318Z"
 }
