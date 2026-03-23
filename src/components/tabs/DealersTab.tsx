@@ -2,6 +2,7 @@
 // @ts-nocheck
 import { useState, useMemo } from "react";
 import { T } from "@/lib/tokens";
+import { $$, $f, pc } from "@/lib/format";
 
 let BADGER: Record<string, any> = {};
 let DEALERS: Record<string, string> = {};
