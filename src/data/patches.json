@@ -1,5 +1,5 @@
 {
-  "_comment": "Manual data corrections. Applied on top of any CSV or preloaded data. Never overwritten by data rebuilds.",
+  "_comment": "DEPRECATED \u2014 All data migrated to data/overlays.json (March 2026). This file is archived. Do not write to it. The save-patch API route has been removed.",
   "_version": "1.0",
   "_lastUpdated": "2026-03-22",
   "group_creates": [
@@ -27,19 +27,19 @@
       "fromGroupId": "Master-CM048310",
       "newGroupId": "Master-CM300371-standalone",
       "newGroupName": "ASPEN DENTAL",
-      "reason": "Bad MDM parent assignment — Aspen Torrington incorrectly parented under Columbia Dental"
+      "reason": "Bad MDM parent assignment \u2014 Aspen Torrington incorrectly parented under Columbia Dental"
     }
   ],
   "name_overrides": [
     {
       "id": "Master-CM116929",
       "name": "WELLS STREET DENTISTRY",
-      "reason": "TRIS CARTA is wrong — Wells Street Dentistry, Westerly RI"
+      "reason": "TRIS CARTA is wrong \u2014 Wells Street Dentistry, Westerly RI"
     },
     {
       "id": "Master-CM17699391",
       "name": "FLANDERS DENTAL STUDIO",
-      "reason": "CENTER FOR DENTAL EXCELLENCE is old name — now Flanders Dental Studio (Resolute)"
+      "reason": "CENTER FOR DENTAL EXCELLENCE is old name \u2014 now Flanders Dental Studio (Resolute)"
     }
   ],
   "contact_overrides": [
@@ -48,14 +48,14 @@
       "contactName": "Brittany Burroughs",
       "email": "bburroughs@coastalctdental.com",
       "address": "112 Cross Rd, Waterford, CT 06385",
-      "note": "PM at Coastal Connecticut Dentistry — part of Resolute Dental Partners"
+      "note": "PM at Coastal Connecticut Dentistry \u2014 part of Resolute Dental Partners"
     },
     {
       "id": "Master-CM116929",
       "contactName": "Christine Lague",
       "email": "clague@westerlydentists.com",
       "address": "11 Wells Street, Westerly, RI",
-      "note": "PM at Wells Street Dentistry — part of Resolute Dental Partners"
+      "note": "PM at Wells Street Dentistry \u2014 part of Resolute Dental Partners"
     },
     {
       "id": "Master-CM413476",
@@ -82,5 +82,7 @@
       "note": "Auto-saved from Deep Research 3/22/2026"
     }
   ],
-  "dealer_overrides": []
+  "dealer_overrides": [],
+  "_deprecated": true,
+  "_migratedTo": "data/overlays.json"
 }
