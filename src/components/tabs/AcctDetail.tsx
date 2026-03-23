@@ -284,8 +284,14 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
             let m;
             while ((m = cityRe.exec(rawText)) !== null) cityMatches.add(m[1].toLowerCase());
             // Also get doctor last name from contacts
+            // Strip credentials to get real last name (e.g. "William R. Conroy Jr., DDS" → "Conroy")
             const doctorContact = (intel.contacts||[]).find((c:any) => c.tier === 1);
-            const doctorLast = doctorContact?.name?.split(" ").pop()?.toLowerCase() || "";
+            const cleanDoctorName = (doctorContact?.name||"")
+              .replace(/(DDS|DMD|MD|Jr\.?|Sr\.?|II|III|IV|PhD)\.?,?/gi, "")
+              .trim();
+            // Get last meaningful word — skip empty tokens
+            const nameParts = cleanDoctorName.split(/\s+/).filter((p:string) => p.length > 1);
+            const doctorLast = nameParts.length > 0 ? nameParts[nameParts.length-1].toLowerCase() : "";
             // Search all accounts across all groups
             const allAccts = (groups||[]).flatMap((g:any) =>
               (g.children||[]).map((c:any) => ({...c, gId:g.id, gName:g.name, tier:g.tier}))
@@ -293,12 +299,17 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
             const suggestions = allAccts.filter((c:any) => {
               if (c.id === acct.id) return false; // skip self
               if (c.gId === acct.gId && acct.gId) return false; // already grouped
-              const cityMatch = cityMatches.size > 0 && c.city && [...cityMatches].some(city => c.city.toLowerCase().includes(city));
-              const nameMatch = acct.name && c.name && (
-                c.name.toLowerCase().includes(acct.name.toLowerCase().split(" ")[0]) ||
-                acct.name.toLowerCase().includes(c.name.toLowerCase().split(" ")[0])
+              // City match — must be at least 4 chars to avoid false positives
+              const cityMatch = cityMatches.size > 0 && c.city && [...cityMatches].some(
+                city => city.length >= 4 && c.city.toLowerCase().includes(city)
               );
-              const doctorMatch = doctorLast && c.name && c.name.toLowerCase().includes(doctorLast);
+              // Doctor last name match — must be at least 4 chars (no "Jr", "DDS" etc.)
+              const doctorMatch = doctorLast.length >= 4 && c.name &&
+                c.name.toLowerCase().includes(doctorLast);
+              // Practice name match — only if first word is 5+ chars (not "the", "dr", etc.)
+              const firstWord = acct.name.toLowerCase().split(" ")[0];
+              const nameMatch = firstWord.length >= 5 && c.name &&
+                c.name.toLowerCase().includes(firstWord);
               return cityMatch || doctorMatch || nameMatch;
             }).slice(0,8);
             if (suggestions.length > 0) setGroupSuggestions(suggestions);
