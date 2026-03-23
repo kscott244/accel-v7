@@ -500,9 +500,12 @@ function AppInner() {
           // This is a wrapper node — recurse into its children
           return extractLeaves(g, c.children);
         }
-        // Skip stub children that have no pyQ — they crash scoreAccount downstream
-        if (!c.pyQ) return [];
-        return [{ ...c, gName: fixGroupName(g), gId: g.id, gTier: g.tier }];
+        // Skip any stub/expansion child that has no revenue data
+        // These are accounts in the MDM system with no actual orders
+        if (!c.pyQ && !c.cyQ) return [];
+        // Ensure pyQ and cyQ always exist as objects so downstream code never crashes
+        const safeC = { ...c, pyQ: c.pyQ || {}, cyQ: c.cyQ || {}, products: c.products || [] };
+        return [{ ...safeC, gName: fixGroupName(g), gId: g.id, gTier: g.tier }];
       });
     };
     return groups.flatMap(g => extractLeaves(g, g.children || []));
