@@ -1,6 +1,6 @@
 # ROADMAP — accel-v7
 
-> Last updated: March 22, 2026
+> Last updated: March 23, 2026
 > Phased plan from current state to long-term platform.
 
 ---
@@ -10,8 +10,8 @@
 | Phase | Name | Status | Description |
 |-------|------|--------|-------------|
 | 1 | Foundation Audit + Docs | ✅ Complete | Audit repo, document architecture, establish project docs, define roadmap |
-| 2 | Stabilize + Consolidate | 🔲 Next | Retire patches.json, add deploy verification, fix remaining edge cases |
-| 3 | Decompose the Monolith | 🔲 Planned | Extract tabs from AccelerateApp.tsx into separate files, enable TypeScript |
+| 2 | Stabilize + Consolidate | ✅ Complete | Retire patches.json, add deploy verification, fix remaining edge cases |
+| 3 | Decompose the Monolith | 🔲 Next | Extract tabs from AccelerateApp.tsx into separate files, enable TypeScript |
 | 4 | Data Pipeline Upgrade | 🔲 Planned | Improve CSV import, add data validation, weekly upload workflow |
 | 5 | Intelligence Layer | 🔲 Future | Enhanced scoring, AI briefings, gap-closing scenarios, route optimization |
 | 6 | Multi-Quarter / Q2+ | 🔲 Future | Support quarter transitions, historical tracking, goal updates |
@@ -29,7 +29,7 @@
 
 ---
 
-## Phase 2 — Stabilize + Consolidate
+## Phase 2 — Stabilize + Consolidate ✅ Complete
 
 **Goal**: Clean up the dual overlay systems, add deploy confidence, fix remaining rough edges. No new features.
 
@@ -40,11 +40,11 @@
 - ✅ GROUP CREATES / Resolute products fix (commit `58f54a6`)
 - ✅ Overlay persistence hardened — survives cache clear + CSV upload (commit `d2f20df`)
 
-**What remains for Phase 2**:
-1. **Retire patches.json** — migrate any remaining data into overlays.json, remove `save-patch` API route, remove patches.json reads from applyOverlays()
-2. **Add build hash to UI** — small version/hash badge (e.g., in More menu) so Ken can verify deploys without checking network tab
-3. **Audit overlay edge cases** — stress test: what happens when an overlay references a Master-CM ID that no longer exists in base data? Graceful handling or silent failure?
-4. **Cache-busting strategy** — consider adding `next.config.js` cache headers or a service worker update prompt
+**Completed March 23, 2026**:
+1. ✅ **Retired patches.json** — deleted save-patch API route, updated stale comments, marked patches.json as deprecated archive
+2. ✅ **Added build hash to UI** — commit SHA badge in More menu (uses NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA)
+3. ✅ **Audited overlay edge cases** — all 5 scenarios verified safe, added inline documentation
+4. ✅ **Cache-busting headers** — next.config.js sets no-cache on API routes and app page
 
 **Does NOT include**: New features, tab decomposition, AI enhancements.
 
