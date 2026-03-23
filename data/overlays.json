@@ -1,27 +1,8 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-23T06:07:31.078Z",
+  "lastUpdated": "2026-03-23T08:00:00Z",
   "migratedFrom": "patches.json v1.0",
   "groups": {
-    "Master-RDP-001": {
-      "id": "Master-RDP-001",
-      "name": "RESOLUTE DENTAL PARTNERS",
-      "tier": "Standard",
-      "class2": "Emerging DSO",
-      "dsoName": "Resolute Dental Partners",
-      "website": "https://resolutedentalpartners.com",
-      "note": "Dr. Toback CEO. Steve D Patterson account. ~$14K FY PY. Graniteville growing fast after lunch and learn.",
-      "childIds": [
-        "Master-CM17699391",
-        "Master-CM116929",
-        "Master-CM220635",
-        "Master-CM9814196",
-        "Master-CM1994205",
-        "Master-CM231113"
-      ],
-      "createdAt": "2026-03-22T00:00:00.000Z",
-      "updatedAt": "2026-03-22T00:00:00.000Z"
-    },
     "Master-MERGE-CM122852": {
       "id": "Master-MERGE-CM122852",
       "name": "DENTAL CARE OF STAMFORD",
@@ -55,7 +36,7 @@
       "fromGroupId": "Master-CM048310",
       "newGroupId": "Master-CM300371-standalone",
       "newGroupName": "ASPEN DENTAL",
-      "reason": "Bad MDM parent assignment — Aspen Torrington incorrectly parented under Columbia Dental"
+      "reason": "Bad MDM parent assignment \u2014 Aspen Torrington incorrectly parented under Columbia Dental"
     }
   ],
   "groupMoves": {},
@@ -72,7 +53,7 @@
       "address": "112 Cross Rd, Waterford, CT 06385",
       "website": null,
       "contacts": [],
-      "note": "PM at Coastal Connecticut Dentistry — part of Resolute Dental Partners",
+      "note": "PM at Coastal Connecticut Dentistry \u2014 part of Resolute Dental Partners",
       "savedAt": "2026-03-22T00:00:00.000Z"
     },
     "Master-CM116929": {
@@ -82,7 +63,7 @@
       "address": "11 Wells Street, Westerly, RI",
       "website": null,
       "contacts": [],
-      "note": "PM at Wells Street Dentistry — part of Resolute Dental Partners",
+      "note": "PM at Wells Street Dentistry \u2014 part of Resolute Dental Partners",
       "savedAt": "2026-03-22T00:00:00.000Z"
     },
     "Master-CM413476": {
