@@ -4336,20 +4336,41 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
             {distAccts.map((a:any,i:number)=>{
               const py=a.pyQ?.["1"]||0, cy=a.cyQ?.["1"]||0;
               const chipColor = a.visitPriority==="NOW"?"#f87171":a.visitPriority==="SOON"?"#fbbf24":"#34d399";
+              // Find parent group totals for this distributor
+              const parentGroup = (groups||[]).find((g:any)=>g.id===a.gId);
+              const isMultiLoc = parentGroup && parentGroup.children && parentGroup.children.length > 1;
+              const gPY = isMultiLoc ? (parentGroup.pyQ?.["1"]||0) : 0;
+              const gCY = isMultiLoc ? (parentGroup.cyQ?.["1"]||0) : 0;
+              const gGap = gPY - gCY;
+              const gLocs = isMultiLoc ? parentGroup.children.length : 0;
+              // Count how many of this group's locations are on this distributor
+              const distLocs = isMultiLoc ? parentGroup.children.filter((c:any)=>c.dealer===cocallDist).length : 0;
               return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
-                style={{animationDelay:`${i*25}ms`,width:"100%",textAlign:"left",background:T.s2,border:`1px solid ${a.gap>2000?"rgba(248,113,113,.15)":T.b1}`,borderRadius:10,padding:"10px 12px",marginBottom:6,cursor:"pointer",fontFamily:"inherit"}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
-                  <div style={{display:"flex",alignItems:"center",gap:6,flex:1,minWidth:0}}>
-                    <span style={{fontSize:11,fontWeight:800,color:T.purple,flexShrink:0,width:18}}>{i+1}</span>
-                    <div style={{fontSize:12,fontWeight:600,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
-                    <span style={{flexShrink:0,fontSize:7,fontWeight:700,borderRadius:3,padding:"1px 4px",background:`${chipColor}20`,color:chipColor}}>{a.visitPriority}</span>
+                style={{animationDelay:`${i*25}ms`,width:"100%",textAlign:"left",background:T.s2,border:`1px solid ${a.gap>2000?"rgba(248,113,113,.15)":T.b1}`,borderRadius:12,padding:"12px 14px",marginBottom:8,cursor:"pointer",fontFamily:"inherit"}}>
+                {/* Row 1: Rank + Name + Priority + Gap */}
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:5}}>
+                  <div style={{display:"flex",alignItems:"center",gap:7,flex:1,minWidth:0}}>
+                    <span style={{fontSize:13,fontWeight:800,color:T.purple,flexShrink:0,width:20}}>{i+1}</span>
+                    <div style={{fontSize:13,fontWeight:700,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
+                    <span style={{flexShrink:0,fontSize:8,fontWeight:700,borderRadius:4,padding:"2px 5px",background:`${chipColor}20`,color:chipColor}}>{a.visitPriority}</span>
                   </div>
-                  <span style={{fontSize:12,fontWeight:700,color:T.red,fontFamily:"'JetBrains Mono',monospace",flexShrink:0,marginLeft:8}}>-{$$(a.gap)}</span>
+                  <span style={{fontSize:13,fontWeight:700,color:T.red,fontFamily:"'JetBrains Mono',monospace",flexShrink:0,marginLeft:8}}>-{$$(a.gap)}</span>
                 </div>
-                <div style={{paddingLeft:24}}>
-                  <div style={{fontSize:10,color:T.t3}}>{a.city}{a.gName&&a.gName!==a.name?` · ${a.gName.slice(0,25)}`:""} · PY {$$(py)} → CY {$$(cy)}</div>
-                  {a.deadProducts?.length>0&&<div style={{fontSize:9,color:T.amber,marginTop:2}}>Lost: {a.deadProducts.slice(0,3).map((p:any)=>p.n).join(", ")}</div>}
+                {/* Row 2: Location details + PY/CY */}
+                <div style={{paddingLeft:27,marginBottom:isMultiLoc?6:0}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <div style={{fontSize:10,color:T.t3}}>{a.city}{a.st?`, ${a.st}`:""}</div>
+                    <div style={{fontSize:10,color:T.t3,fontFamily:"'JetBrains Mono',monospace"}}>PY {$$(py)} → CY {$$(cy)}</div>
+                  </div>
+                  {a.deadProducts?.length>0&&<div style={{fontSize:9,color:T.amber,marginTop:3}}>Lost: {a.deadProducts.slice(0,3).map((p:any)=>p.n).join(", ")}</div>}
                 </div>
+                {/* Row 3: Parent group context — only for multi-location groups */}
+                {isMultiLoc&&<div style={{paddingLeft:27,marginTop:4,paddingTop:6,borderTop:`1px solid ${T.b1}`}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <div style={{fontSize:9,color:T.cyan}}>↳ {a.gName?.slice(0,30)} · {gLocs} locs{distLocs<gLocs?` (${distLocs} ${cocallDist})`:""}</div>
+                    <div style={{fontSize:9,color:T.cyan,fontFamily:"'JetBrains Mono',monospace"}}>Group: PY {$$(gPY)} → CY {$$(gCY)}{gGap>0?<span style={{color:"#f87171"}}> (-{$$(gGap)})</span>:""}</div>
+                  </div>
+                </div>}
               </button>;
             })}
 
