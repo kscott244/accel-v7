@@ -1,79 +1,101 @@
-# CURRENT PHASE — accel-v7
+# Current Phase: Phase 1 — Foundation Audit + Documentation
 
-## Active: Phase 1 — Foundation Audit + Docs ✅ Complete
+## Status: COMPLETE ✅
 
-### What Was Done
-1. Full repo audit — file tree, data flow, API routes, component structure, deployment pipeline
-2. Created `docs/ARCHITECTURE.md` — current architecture, data layer, constraints, target state
-3. Created `docs/ROADMAP.md` — 6-phase plan from current state to long-term platform
-4. Created `docs/CURRENT_PHASE.md` — this file
-5. Created `docs/IDEAS_BACKLOG.md` — organized capture of future ideas
+## What was done
+- Full repo audit: structure, data flow, persistence, API routes, component inventory
+- Identified active code (AccelerateApp.tsx + API routes + overlays) vs legacy dead code (cards/, charts/, layout/, ui/, lib/, old page.tsx)
+- Documented architecture, data flow, and persistence model
+- Created phased roadmap from current state to platform
+- Created ideas backlog to capture future features
 
-### What Exists in the App (Accurate as of March 22, 2026)
-
-**AccelerateApp.tsx** (5,377 lines, the primary working app):
-- 8 tabs: Today, Groups, Dealers, Dash, Route/Map, Close/Estimator, Outreach, Admin
-- Scoring engine with multi-factor urgency ranking
-- CSV import/processor for Tableau exports
-- Overlay system (runtime corrections persisted to GitHub via API)
-- Group detail + Account detail views
-- Activity logging (localStorage + overlay persistence)
-- Deep Research (AI-powered contact hierarchy)
-- Gmail outreach (73 emails, Kerr product intelligence, dealer-aware)
-- FSC Co-Call Planner in Dealers tab
-- Admin: create groups, detach accounts, fix names, add contacts, duplicate review
-- Sale calculator with tier/chargeback awareness
-- Overdrive outcome tracking (win/½/✗ with notes)
-
-**Component-based pages** (secondary, partially built):
-- `/` Territory, `/groups`, `/route`, `/dashboard`, `/plan`
-- Use AppShell with TopBar, TabBar, GlobalSearch
-- Have proper TypeScript types
-- Not feature-complete compared to AccelerateApp.tsx
-
-**API routes**: load-overlay, save-overlay, save-patch, deep-research, send-outreach, gmail-auth, gmail-callback, ai-briefing
-
-**Data**: ~984 priority offices, 1.7MB preloaded data, overlays.json for runtime corrections
-
----
-
-## Next Up: Phase 2 — Stabilize & Harden
+## What Phase 2 should be
+**Stability + Dead Code Cleanup**
 
 ### Scope
-1. Remove error boundary debug code
-2. Consolidate patches.json + overlays.json into one system
-3. Fix Dealers tab single-location gap
-4. Address nav bar crowding (8 tabs)
-5. Add deploy verification (build hash in UI)
-6. Audit applyOverlays() edge cases
+1. Delete unused legacy files:
+   - `src/components/cards/` (all files)
+   - `src/components/charts/` (all files)
+   - `src/components/layout/` (all files)
+   - `src/components/ui/` (all files)
+   - `src/lib/insights.ts`
+   - `src/lib/utils.ts`
+   - `src/data/index.ts` (legacy data exports)
+   - `src/data/groups.json` (legacy, superseded by preloaded-data.ts)
+   - `src/data/offices.json` (legacy, superseded by preloaded-data.ts)
+   - `src/data/patches.json` (legacy, superseded by overlays.json)
+   - `src/app/page.tsx` (legacy v6 page — replace with redirect to /accelerate)
+   - `src/app/dashboard/`, `src/app/groups/`, `src/app/plan/`, `src/app/route/`, `src/app/territory/` (old route dirs if empty)
 
-### Entry Criteria
-- Phase 1 docs complete ✅
+2. Persist manual adjustments:
+   - Sale calculator additions (`adjs` state) currently lost on refresh
+   - Save to overlays.json under a new `manualAdjustments` key
+   - Load on mount alongside other overlays
 
-### Completion Criteria
-- Zero known bugs in the live app
-- Single overlay system (patches.json retired or merged)
-- Deploy verification visible in UI
-- Nav bar usable on mobile
+3. Light type safety:
+   - Remove `@ts-nocheck`
+   - Add minimal type annotations to the top 5 crash-risk functions
+   - Do NOT attempt full strict TypeScript — just eliminate the silent crash vectors
 
-### What Phase 2 Does NOT Include
-- New features
-- Tab decomposition (that's Phase 3)
-- AI enhancements (that's Phase 5)
-- Multi-quarter support (that's Phase 6)
+4. Verify all 8 functional tabs still work after cleanup
+
+### Completion criteria
+- `git ls-files` shows no unused legacy code
+- Manual sale adjustments survive page refresh
+- All tabs render without crashes
+- No visual changes to the app
+
+### Risks
+- Deleting the old `page.tsx` might break the root `/` URL — redirect to `/accelerate`
+- Some legacy data files might be imported by API routes — check before deleting
+- `@ts-nocheck` removal may surface many errors — fix only the ones that crash at runtime
+
+## Ready-to-paste prompt for Phase 2
+See bottom of this file.
 
 ---
 
-## Known Issues (To Address in Phase 2)
+## Phase 2 Handoff Prompt
 
-1. **Error boundary debug code still visible** — leftover from development
-2. **Nav bar has 8 tabs** — too crowded on mobile, needs consolidation or "More" menu
-3. **Single-location accounts missing in Dealers tab** — under some reps, standalone accounts don't surface
-4. **Two overlay systems** — `patches.json` (legacy) and `overlays.json` (current) both exist; should consolidate
-5. **Browser caching causes stale deploys** — users need hard refresh after deploys
-6. **Group merge/duplicate tool incomplete** — analysis was started, no UI shipped
+```
+Continue this project using the Project Description instructions as the operating rules.
 
----
+Your task in this chat is:
 
-## Last Updated
-March 22, 2026
+PHASE 2 ONLY — STABILITY + DEAD CODE CLEANUP
+
+Context:
+- Phase 1 (Foundation Audit + Documentation) is complete
+- Read docs/ARCHITECTURE.md, docs/ROADMAP.md, docs/CURRENT_PHASE.md first
+- Repo: kscott244/accel-v7 | GitHub PAT: [USE_PROJECT_PAT]
+- Live: https://accel-v7.vercel.app/accelerate
+- Main file: src/components/AccelerateApp.tsx
+- Push pattern: fetch SHA → edit → brace/paren balance check → PUT via Python urllib → wait 55s → verify on production
+
+What to do in Phase 2:
+1. Read docs/ARCHITECTURE.md and docs/CURRENT_PHASE.md to understand the repo
+2. Delete all legacy/unused files identified in CURRENT_PHASE.md
+3. Replace root page.tsx with a redirect to /accelerate
+4. Persist manual sale adjustments (adjs state) to overlays.json so they survive refresh
+5. Remove @ts-nocheck and fix only crash-risk type errors (do not attempt full strict TS)
+6. Verify all tabs still render
+7. Update docs/CURRENT_PHASE.md to mark Phase 2 complete and define Phase 3 scope
+
+Important:
+- Do not restructure AccelerateApp.tsx (that is Phase 3)
+- Do not change any UI behavior
+- Do not add new features
+- Delete files one batch at a time, verifying the build after each
+- If a file deletion causes a build error, restore it and note why
+
+At the end of Phase 2, output:
+1. What files were deleted
+2. What was changed
+3. What was preserved and why
+4. What to test
+5. Risks/notes
+6. A ready-to-paste prompt for Phase 3
+
+Do not continue into Phase 3 in this chat.
+Start now.
+```
