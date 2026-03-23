@@ -183,6 +183,13 @@ function applyOverlays(grps: any[]): any[] {
   return result;
 }
 
+// ─── OVERLAY EDGE CASES (Phase 2 audit, verified March 2026) ──────────
+// - Stale childIds in group_creates: handled — stub entries created (line ~166)
+// - groupDetaches referencing missing fromGroupId: safe — forEach silently skips
+// - Contact overlays for non-existent IDs: safe — creates BADGER entry, harmless
+// - nameOverrides for IDs not in any group: safe — map has unused entries
+// - Empty overlays object: safe — all sections default to {} or []
+
 // ─── DESIGN TOKENS ───────────────────────────────────────────────
 const T = {
   bg: "#0a0a0f", s1: "#12121a", s2: "#1a1a25", s3: "#222230", s4: "#2a2a3a",
@@ -1009,6 +1016,9 @@ function AppInner() {
               <div style={{textAlign:"left"}}><div style={{fontSize:13,fontWeight:600}}>{t.l}</div><div style={{fontSize:10,color:T.t4}}>{t.desc}</div></div>
             </button>
           ))}
+          <div style={{borderTop:`1px solid ${T.b1}`,margin:"4px 16px 0",padding:"8px 0 4px",display:"flex",justifyContent:"center"}}>
+            <span style={{fontSize:9,color:T.t4,letterSpacing:".5px",fontFamily:"monospace"}}>{(process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA||"dev").slice(0,7)}</span>
+          </div>
         </div>
       </div>}
 
@@ -2730,7 +2740,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
       if (data?.intel) {
         setDrIntel(data.intel);
         setDrState("done");
-        // Save contact info to persistent storage (localStorage + auto-committed to patches.json by API)
+        // Save contact info to persistent overlay storage (committed to overlays.json via API)
         const contacts = {
           contactName: data.intel.contacts?.[0]?.name || data.intel.contactName || null,
           phone: data.intel.contacts?.[0]?.phone || data.intel.phone || null,
@@ -4901,8 +4911,8 @@ function OutreachTab({scored}:{scored:any[]}) {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// ADMIN TAB — Edit patches.json directly from the app
-// All changes commit to GitHub automatically. No data lost on CSV reload.
+// ADMIN TAB — Manage overlays (groups, names, contacts, detaches)
+// All changes commit to overlays.json on GitHub automatically. No data lost on CSV reload.
 // ─────────────────────────────────────────────────────────────────
 function AdminTab({groups, scored, overlays, saveOverlays}:{groups:any[], scored:any[], overlays:any, saveOverlays:any}) {
   const [section, setSection] = useState<string>("groups"); // groups | detach | names | contacts
@@ -5013,7 +5023,7 @@ function AdminTab({groups, scored, overlays, saveOverlays}:{groups:any[], scored
 
     {/* ── GROUPS SECTION ── */}
     {section==="groups"&&<div>
-      {/* Existing patch groups */}
+      {/* Existing custom groups */}
       {(Object.values(overlays?.groups||{})).length>0&&<div style={{marginBottom:16}}>
         <div style={{fontSize:11,fontWeight:700,color:T.t3,textTransform:"uppercase",letterSpacing:.5,marginBottom:8}}>Existing Custom Groups</div>
         {(Object.values(overlays?.groups||{})).map((g:any)=>(
@@ -5105,7 +5115,7 @@ function AdminTab({groups, scored, overlays, saveOverlays}:{groups:any[], scored
         <button onClick={()=>{
           if(!newGroupName.trim()||childIds.length===0){showToast("❌ Need a name and at least one account",false);return;}
           const id = editingGroup?.id || `Master-CUSTOM-${Date.now()}`;
-          // Save group to overlays (durable) instead of old save-patch
+          // Save group to overlays (durable)
         if (saveOverlays) {
           const grp = {id,name:newGroupName.trim(),class2:newGroupClass,childIds,tier:"Standard",createdAt:editingGroup?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
           const next = { ...OVERLAYS_REF, groups: { ...(OVERLAYS_REF.groups||{}), [id]: grp } };
