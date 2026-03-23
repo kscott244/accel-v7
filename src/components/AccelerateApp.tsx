@@ -13,7 +13,8 @@ class ErrorBoundary extends Component<{children:any},{err:any,info:any}> {
       return <div style={{padding:40,background:"#0a0a0f",color:"#e2e2ea",fontFamily:"'DM Sans',sans-serif",minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center"}}>
         <div style={{fontSize:32,marginBottom:12}}>⚡</div>
         <div style={{fontSize:16,fontWeight:700,marginBottom:8}}>Something went wrong</div>
-        <div style={{fontSize:13,color:"#6b6b80",marginBottom:20,maxWidth:320}}>Accelerate hit an unexpected error. Tap below to reload.</div>
+        <div style={{fontSize:13,color:"#6b6b80",marginBottom:12,maxWidth:320}}>Accelerate hit an unexpected error. Tap below to reload.</div>
+        <div style={{fontSize:11,color:"#ff6b6b",marginBottom:16,maxWidth:360,wordBreak:"break-all",background:"rgba(255,100,100,.08)",border:"1px solid rgba(255,100,100,.2)",borderRadius:8,padding:"8px 12px",textAlign:"left"}}>{String(this.state.err)}<br/><br/>{this.state.info?.componentStack?.slice(0,300)}</div>
         <button onClick={()=>this.setState({err:null,info:null})} style={{padding:"10px 24px",background:"#4f8ef7",color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:600}}>
           Reload App
         </button>
