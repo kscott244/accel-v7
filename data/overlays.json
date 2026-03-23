@@ -6,20 +6,23 @@
   "research": {},
   "dealerOverrides": {},
   "groups": {
-    "Master-CUSTOM-1774303905517": {
-      "id": "Master-CUSTOM-1774303905517",
-      "name": "New England Dental LLC",
+    "Master-CUSTOM-1774306072819": {
+      "id": "Master-CUSTOM-1774306072819",
+      "name": "Downtown Dental CT",
       "class2": "Emerging DSO",
       "childIds": [
-        "Master-CM081003",
-        "Master-CM413476"
+        "Master-CM9835082",
+        "Master-CM17706065",
+        "Master-CM215822",
+        "Master-CM1757799"
       ],
       "tier": "Standard",
-      "createdAt": "2026-03-23T22:11:45.517Z",
-      "updatedAt": "2026-03-23T22:11:45.517Z"
+      "groupType": "multi",
+      "createdAt": "2026-03-23T22:47:52.819Z",
+      "updatedAt": "2026-03-23T22:47:52.819Z"
     }
   },
   "groupDetaches": [],
   "groupMoves": {},
-  "lastUpdated": "2026-03-23T22:11:45.569Z"
+  "lastUpdated": "2026-03-23T22:47:53.287Z"
 }
