@@ -1,38 +1,6 @@
 {
   "nameOverrides": {},
-  "contacts": {
-    "Master-CM258928": {
-      "contactName": "Philip R. Mascia, DDS",
-      "phone": "203-775-3344",
-      "email": null,
-      "website": "https://www.danburyendo.com",
-      "contacts": [
-        {
-          "name": "Philip R. Mascia, DDS",
-          "role": "Owner / Lead Endodontist",
-          "email": null,
-          "phone": "203-775-3344",
-          "tier": 1
-        },
-        {
-          "name": "Ruchika Joon, DDS",
-          "role": "Associate Endodontist (Diplomate, American Board of Endodontics)",
-          "email": null,
-          "phone": "203-775-3344",
-          "tier": 2
-        },
-        {
-          "name": "Austin A. Ramsey, DDS",
-          "role": "Associate Endodontist (Board-Eligible)",
-          "email": null,
-          "phone": "203-775-3344",
-          "tier": 2
-        }
-      ],
-      "savedAt": "2026-03-23T13:38:53.558Z",
-      "practiceName": "GREATER DANBURY CENTER FOR ENDODONTICS"
-    }
-  },
+  "contacts": {},
   "fscReps": {},
   "activityLogs": {},
   "research": {},
@@ -40,5 +8,19 @@
   "groups": {},
   "groupDetaches": [],
   "groupMoves": {},
-  "lastUpdated": "2026-03-23T13:38:53.815Z"
+  "groupContacts": {
+    "Master-CM94845": [
+      {
+        "id": 1774274765876,
+        "name": "Gabrielle Giroux",
+        "role": "Henry Schein : Special Markets",
+        "phone": "857-265-8603",
+        "email": "gabrielle.giroux@henryschein.com",
+        "notes": "",
+        "savedAt": "2026-03-23T14:06:05.876Z"
+      }
+    ]
+  },
+  "groupNotes": {},
+  "lastUpdated": "2026-03-23T14:06:07.123Z"
 }
