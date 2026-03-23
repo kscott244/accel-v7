@@ -4,10 +4,12 @@ import { useState, useMemo } from "react";
 import { T } from "@/lib/tokens";
 import { $$, $f, pc } from "@/lib/format";
 
+let SCHEIN_REPS: {fsc:any[], es:any[]} = {fsc:[], es:[]};
 let BADGER: Record<string, any> = {};
 let DEALERS: Record<string, string> = {};
 try { BADGER = require("@/data/badger-lookup.json"); } catch(e) {}
 try { DEALERS = require("@/data/dealers").DEALERS; } catch(e) {}
+try { SCHEIN_REPS = require("@/data/schein-ct-reps.json"); } catch(e) {}
 
 let OVERLAYS_REF: any = { nameOverrides:{}, contacts:{}, fscReps:{}, activityLogs:{}, research:{}, dealerOverrides:{}, groups:{}, groupDetaches:[], groupMoves:{} };
 
@@ -52,6 +54,7 @@ function isNoRep(s:string|undefined):boolean {
 const PRI_ORDER:Record<string,number> = {NOW:0,SOON:1,"ON TRACK":2,PROTECT:3,PIPELINE:4};
 
 function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],goAcct:(a:any)=>void,goGroup:(g:any)=>void}) {
+  const [mainTab, setMainTab] = useState<"dealers"|"team">("dealers");
   const [selDist,setSelDist] = useState<string|null>(null);
   const [selRep,setSelRep]  = useState<string|null>(null); // null = all reps view
   const [selGroup,setSelGroup] = useState<string|null>(null); // gId of selected group in rep drill-down
@@ -244,8 +247,54 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
     const totalCY = selGroupData.totalCY;
     const gap = totalPY - totalCY;
     const ret = totalPY > 0 ? Math.round(totalCY/totalPY*100) : 0;
+    // ── SCHEIN TEAM DIRECTORY ──
+  if (mainTab === "team") {
+    const allReps = [...SCHEIN_REPS.fsc.map((r:any)=>({...r,type:"FSC"})), ...SCHEIN_REPS.es.map((r:any)=>({...r,type:"ES"}))];
     return <div style={{paddingBottom:80}}>
+      <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"12px 16px"}}>
+        <div style={{display:"flex",gap:6}}>
+          <button onClick={()=>setMainTab("dealers")} style={{flex:1,padding:"7px 0",borderRadius:8,fontSize:11,fontWeight:700,cursor:"pointer",border:`1px solid ${T.b2}`,background:T.s2,color:T.t3,fontFamily:"inherit"}}>Dealers</button>
+          <button onClick={()=>setMainTab("team")} style={{flex:1,padding:"7px 0",borderRadius:8,fontSize:11,fontWeight:700,cursor:"pointer",border:"1px solid rgba(79,142,247,.3)",background:"rgba(79,142,247,.15)",color:T.blue,fontFamily:"inherit"}}>Schein Team</button>
+        </div>
+      </div>
+      <div style={{padding:"16px"}}>
+        <div style={{fontSize:10,color:T.t4,marginBottom:14}}>Henry Schein · CT Territory Roster</div>
+        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan,marginBottom:10}}>FSC — Field Sales Consultants ({SCHEIN_REPS.fsc.length})</div>
+        {SCHEIN_REPS.fsc.map((r:any,i:number)=>(
+          <div key={i} style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:"12px 14px",marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:13,fontWeight:700,color:T.t1}}>{r.name}</div>
+              <div style={{fontSize:10,color:T.t4,marginTop:1}}>{r.email}</div>
+            </div>
+            <div style={{display:"flex",gap:8,alignItems:"center",flexShrink:0,marginLeft:12}}>
+              <span style={{fontSize:11,fontFamily:"monospace",color:T.t3}}>{r.phone}</span>
+              <a href={`tel:${r.phone.replace(/[^0-9]/g,"")}`} style={{background:"rgba(34,211,153,.1)",border:"1px solid rgba(34,211,153,.25)",borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:700,color:T.green,textDecoration:"none"}}>Call</a>
+            </div>
+          </div>
+        ))}
+        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.amber,marginBottom:10,marginTop:20}}>ES — Equipment Specialists ({SCHEIN_REPS.es.length})</div>
+        {SCHEIN_REPS.es.map((r:any,i:number)=>(
+          <div key={i} style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:"12px 14px",marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:13,fontWeight:700,color:T.t1}}>{r.name}</div>
+              <div style={{fontSize:10,color:T.t4,marginTop:1}}>{r.email}</div>
+            </div>
+            <div style={{display:"flex",gap:8,alignItems:"center",flexShrink:0,marginLeft:12}}>
+              <span style={{fontSize:11,fontFamily:"monospace",color:T.t3}}>{r.phone}</span>
+              <a href={`tel:${r.phone.replace(/[^0-9]/g,"")}`} style={{background:"rgba(34,211,153,.1)",border:"1px solid rgba(34,211,153,.25)",borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:700,color:T.green,textDecoration:"none"}}>Call</a>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>;
+  }
+
+  return <div style={{paddingBottom:80}}>
       <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"10px 16px",display:"flex",alignItems:"center",gap:10}}>
+        <div style={{display:"flex",gap:6,marginBottom:0}}>
+          <button onClick={()=>setMainTab("dealers")} style={{flex:1,padding:"5px 0",borderRadius:7,fontSize:10,fontWeight:700,cursor:"pointer",border:"1px solid rgba(79,142,247,.25)",background:"rgba(79,142,247,.12)",color:T.blue,fontFamily:"inherit"}}>Dealers</button>
+          <button onClick={()=>setMainTab("team")} style={{flex:1,padding:"5px 0",borderRadius:7,fontSize:10,fontWeight:700,cursor:"pointer",border:`1px solid ${T.b2}`,background:T.s2,color:T.t3,fontFamily:"inherit"}}>Schein Team</button>
+        </div>
         <button onClick={()=>setSelGroup(null)} style={{background:"none",border:"none",color:T.blue,cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"inherit",display:"flex",alignItems:"center",gap:4}}><Back/> {selRep==="__none__"?"No Rep":selRep}</button>
       </div>
       <div style={{padding:"16px 16px 0"}}>
