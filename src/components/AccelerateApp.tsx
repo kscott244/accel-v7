@@ -26,12 +26,14 @@ class ErrorBoundary extends Component<{children:any},{err:any,info:any}> {
 
 // Static data — loads if available, gracefully degrades if not
 let DEALERS: Record<string, string> = {};
+let PARENT_DEALERS: Record<string, string> = {};
 let WEEK_ROUTES: any = { routes: {}, unplaced: [] };
 let BADGER: Record<string, any> = {};
 let PARENT_NAMES: Record<string, string> = {};
-// DEALERS, BADGER, WEEK_ROUTES remain static base data
+// DEALERS, PARENT_DEALERS, BADGER, WEEK_ROUTES remain static base data
 
 try { DEALERS = require("@/data/dealers").DEALERS; } catch(e) {}
+try { PARENT_DEALERS = require("@/data/parentDealers").PARENT_DEALERS; } catch(e) {}
 try { WEEK_ROUTES = require("@/data/week-routes.json"); } catch(e) {}
 try { BADGER = require("@/data/badger-lookup.json"); } catch(e) {}
 try { PARENT_NAMES = require("@/data/parent-names.json"); } catch(e) {}
@@ -340,7 +342,7 @@ function AppInner() {
       ...g,
       children: g.children?.map(c => ({
         ...c,
-        dealer: c.dealer || DEALERS[c.id] || "All Other"
+        dealer: c.dealer || DEALERS[c.id] || PARENT_DEALERS[g.id] || "All Other"
       }))
     }));
   };
