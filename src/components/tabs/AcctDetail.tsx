@@ -288,7 +288,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 intel,
-                acct: { name: acct.name, city: acct.city, st: acct.st, address: acct.address||"" },
+                acct: { name: acct.name, city: acct.city, st: acct.st, address: acct.addr||acct.address||"" },
                 accounts: allAccts
               })
             })
@@ -467,6 +467,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
           <button onClick={()=>setShowMoveModal(true)} style={{flexShrink:0,background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.18)",borderRadius:8,padding:"4px 9px",fontSize:10,fontWeight:600,color:T.blue,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>Move →</button>
         </div>
         <div style={{fontSize:11,color:T.t3,marginTop:2}}>{acct.city}, {acct.st} · <span style={{color:isAccel?T.amber:T.t3}}>{acctType}</span> · Last {acct.last}d ago</div>
+        {(acct.addr||acct.address)&&<div style={{fontSize:10,color:T.t4,marginTop:1}}>📍 {acct.addr||acct.address}{acct.zip?", "+acct.zip:""}</div>}
         {groupOverride&&<div style={{marginTop:4,fontSize:10,color:T.amber,display:"flex",alignItems:"center",gap:4}}>
           <span>⚠ Overridden → {groupOverride.targetGroupName}</span>
           <button onClick={()=>{try { localStorage.removeItem(overrideKey); } catch {} setGroupOverride(null);}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:11,padding:"0 2px"}}>✕</button>
