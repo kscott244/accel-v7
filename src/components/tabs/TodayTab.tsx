@@ -552,7 +552,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
         <Chev/>
       </div>
       <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
-        {a.reasons.slice(0,4).map((r,j)=><span key={j} style={{display:"inline-flex",alignItems:"center",gap:4,fontSize:9,color:T.t2,background:"rgba(255,255,255,.06)",borderRadius:4,padding:"2px 7px",border:"1px solid rgba(255,255,255,.14)",fontWeight:500}}>{r.label}<span style={{color:T.amber,fontWeight:700,fontFamily:"'JetBrains Mono',monospace"}}>+{r.pts}</span></span>)}
+        {(a.reasons||[]).slice(0,4).map((r,j)=><span key={j} style={{display:"inline-flex",alignItems:"center",gap:4,fontSize:9,color:T.t2,background:"rgba(255,255,255,.06)",borderRadius:4,padding:"2px 7px",border:"1px solid rgba(255,255,255,.14)",fontWeight:500}}>{r.label}<span style={{color:T.amber,fontWeight:700,fontFamily:"'JetBrains Mono',monospace"}}>+{r.pts}</span></span>)}
       </div>
     </button>
   );};
