@@ -4823,6 +4823,7 @@ function AdminTab({groups, scored, overlays, saveOverlays}:{groups:any[], scored
       {sectionBtn("detach","✂️ Detach")}
       {sectionBtn("names","✏️ Names")}
       {sectionBtn("contacts","📇 Contacts")}
+      {sectionBtn("dupes","🔗 Dupes")}
     </div>
 
     {/* ── GROUPS SECTION ── */}
@@ -5085,6 +5086,107 @@ function AdminTab({groups, scored, overlays, saveOverlays}:{groups:any[], scored
           </button>
         </div>}
       </div>
+    </div>}
+
+    {/* ── DUPLICATES REVIEW SECTION ── */}
+    {section==="dupes"&&<div>
+      <div style={{fontSize:14,fontWeight:700,color:T.t1,marginBottom:4}}>Duplicate Review</div>
+      <div style={{fontSize:11,color:T.t3,marginBottom:14}}>Accounts at the same address in different groups. Merge the ones that are the same office — skip shared buildings with different practices.</div>
+      {(()=>{
+        // Build address-matched candidates from live scored data
+        const normAddr = (a:string) => {
+          if(!a) return '';
+          let n = a.toLowerCase().trim();
+          n = n.replace(/\b\d{5}(-\d{4})?\b/g,'');
+          n = n.replace(/,?\s*(ct|ma|ri|ny|nj|pa)\s*$/,'');
+          n = n.replace(/street/g,'st').replace(/avenue/g,'ave').replace(/road/g,'rd');
+          n = n.replace(/drive/g,'dr').replace(/boulevard/g,'blvd').replace(/turnpike/g,'tpke');
+          return n.replace(/[,\s]+$/,'').replace(/\s+/g,' ').trim();
+        };
+        const B = typeof BADGER!=='undefined'?BADGER:{};
+        const addrMap: Record<string,any[]> = {};
+        scored.forEach((a:any)=>{
+          const addr = B[a.id]?.address || '';
+          const na = normAddr(addr);
+          if(na && na.length > 5) {
+            if(!addrMap[na]) addrMap[na] = [];
+            addrMap[na].push({...a, addr});
+          }
+        });
+
+        // Filter to addresses with accounts in different groups
+        const dismissed: Record<string,boolean> = (() => { try { return JSON.parse(localStorage.getItem("dupe_dismissed")||"{}"); } catch { return {}; } })();
+        const merged: Record<string,boolean> = {};
+        // Check which are already merged in overlays
+        Object.values(overlays?.groups||{}).forEach((g:any) => {
+          (g.childIds||[]).forEach((cid:string) => { merged[cid] = true; });
+        });
+
+        const candidates = Object.entries(addrMap)
+          .filter(([addr, accts]) => {
+            if(accts.length < 2) return false;
+            const gids = new Set(accts.map((a:any) => a.gId));
+            if(gids.size <= 1) return false;
+            // Skip if already merged
+            if(accts.every((a:any) => merged[a.id])) return false;
+            // Skip dismissed
+            if(dismissed[addr]) return false;
+            return true;
+          })
+          .map(([addr, accts]) => ({
+            addr,
+            accts: accts.sort((a:any,b:any) => (b.pyQ?.["1"]||0) - (a.pyQ?.["1"]||0)),
+            totalPY: accts.reduce((s:number,a:any) => s+(a.pyQ?.["1"]||0), 0),
+            totalCY: accts.reduce((s:number,a:any) => s+(a.cyQ?.["1"]||0), 0),
+          }))
+          .filter(c => Math.abs(c.totalPY) + Math.abs(c.totalCY) > 50)
+          .sort((a,b) => (b.totalPY+b.totalCY) - (a.totalPY+a.totalCY));
+
+        if(candidates.length === 0) return <div style={{fontSize:12,color:T.t4,textAlign:"center",padding:"30px 0"}}>No duplicate candidates found. All address matches have been reviewed or merged.</div>;
+
+        return <div>
+          <div style={{fontSize:10,color:T.t4,marginBottom:10}}>{candidates.length} address{candidates.length!==1?"es":""} with potential duplicates</div>
+          {candidates.map((c:any, ci:number) => (
+            <div key={c.addr} className="anim" style={{animationDelay:`${ci*30}ms`,background:T.s1,border:`1px solid ${T.b1}`,borderRadius:14,padding:14,marginBottom:10}}>
+              <div style={{fontSize:10,color:T.cyan,marginBottom:8,fontWeight:600}}>📍 {c.addr}</div>
+              {c.accts.map((a:any) => {
+                const py=a.pyQ?.["1"]||0, cy=a.cyQ?.["1"]||0;
+                const isDSO = (groups||[]).find((g:any)=>g.id===a.gId)?.locs > 1;
+                return <div key={a.id} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",background:T.s2,borderRadius:8,marginBottom:4}}>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:11,fontWeight:600,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}{isDSO?<span style={{fontSize:9,color:T.purple,marginLeft:4}}>DSO</span>:""}</div>
+                    <div style={{fontSize:9,color:T.t3}}>{a.dealer||"Unknown"} · PY {$$(py)} / CY {$$(cy)} · {a.gName?.slice(0,25)}</div>
+                  </div>
+                </div>;
+              })}
+              <div style={{display:"flex",gap:6,marginTop:8}}>
+                <button onClick={()=>{
+                  // Merge all accounts at this address into one group
+                  const primary = c.accts.reduce((best:any,a:any) => ((a.pyQ?.["1"]||0)+(a.cyQ?.["1"]||0)) > ((best.pyQ?.["1"]||0)+(best.cyQ?.["1"]||0)) ? a : best, c.accts[0]);
+                  const childIds = c.accts.map((a:any) => a.id);
+                  const id = `Master-MERGE-${primary.id.split("-").pop()}`;
+                  if(saveOverlays) {
+                    const grp = {id, name: primary.name, class2: "Private Practice", tier: "Standard",
+                      childIds, note: `Merged: same address (${c.addr}). ${c.accts.length} accounts from different dealers.`,
+                      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()};
+                    const next = {...OVERLAYS_REF, groups:{...(OVERLAYS_REF.groups||{}), [id]: grp}};
+                    saveOverlays(next).then((ok:boolean) => { if(ok) showToast(`✅ Merged ${c.accts.length} accounts as "${primary.name}"`); else showToast("❌ Merge failed",false); });
+                  }
+                }} style={{flex:1,padding:"8px 0",borderRadius:8,border:"none",background:T.blue,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                  Merge ({c.accts.length} accounts)
+                </button>
+                <button onClick={()=>{
+                  const updated = {...dismissed, [c.addr]: true};
+                  try { localStorage.setItem("dupe_dismissed", JSON.stringify(updated)); } catch {}
+                  showToast("Skipped — won't show again");
+                }} style={{padding:"8px 14px",borderRadius:8,border:`1px solid ${T.b1}`,background:"transparent",color:T.t3,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
+                  Skip
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>;
+      })()}
     </div>}
   </div>;
 }
