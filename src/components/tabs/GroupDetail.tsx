@@ -1,0 +1,351 @@
+"use client";
+// @ts-nocheck
+import { useState, useMemo } from "react";
+import { T } from "@/lib/tokens";
+import { getTierLabel } from "@/lib/tier";
+
+let BADGER: Record<string, any> = {};
+let PARENT_NAMES: Record<string, string> = {};
+try { BADGER = require("@/data/badger-lookup.json"); } catch(e) {}
+try { PARENT_NAMES = require("@/data/parent-names.json"); } catch(e) {}
+
+let OVERLAYS_REF: any = { nameOverrides:{}, contacts:{}, fscReps:{}, activityLogs:{}, research:{}, dealerOverrides:{}, groups:{}, groupDetaches:[], groupMoves:{} };
+
+const BAD_GROUP_NAMES = new Set(["STANDARD","Standard","HOUSE ACCOUNTS","House Accounts","SILVER","GOLD","PLATINUM","DIAMOND","TOP 100","Silver","Gold","Platinum","Diamond","Top 100",""]);
+const cleanParentName = (name) => { if (!name) return ""; return name.replace(/\s*:\s*Master-CM\d+$/i, "").trim(); };
+const fixGroupName = (g) => {
+  if (!g) return "Unknown";
+  const authName = PARENT_NAMES[g.id];
+  if (authName && !BAD_GROUP_NAMES.has(authName)) return authName;
+  const cleaned = cleanParentName(g.name);
+  if (cleaned && !BAD_GROUP_NAMES.has(cleaned)) return cleaned;
+  if (g.children?.length === 1) return g.children[0].name;
+  if (g.children?.length > 1) return `${g.children[0].name} (+${g.children.length-1})`;
+  return cleaned || g.id || "Unknown";
+};
+
+const Pill = ({l,v,c}) => <div><span style={{fontSize:9,textTransform:"uppercase",color:T.t3}}>{l} </span><span className="m" style={{fontSize:12,fontWeight:700,color:c}}>{v}</span></div>;
+const Stat = ({l,v,c}) => <div style={{background:T.s2,borderRadius:8,padding:"8px 10px",textAlign:"center"}}><div style={{fontSize:9,textTransform:"uppercase",color:T.t3,marginBottom:2}}>{l}</div><div className="m" style={{fontSize:14,fontWeight:700,color:c}}>{v}</div></div>;
+const Back = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>;
+const Chev = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{opacity:.4,flexShrink:0}}><path d="M9 18l6-6-6-6"/></svg>;
+const AccountId = ({name, gName, size="md", color}:{name:string, gName?:string, size?:"sm"|"md"|"lg", color?:string}) => {
+  const showParent = gName && gName !== name && gName.toLowerCase() !== name.toLowerCase();
+  const fs = size==="sm"?11:size==="lg"?15:12;
+  const fw = size==="sm"?500:size==="lg"?700:600;
+  const pfs = size==="sm"?9:size==="lg"?11:10;
+  return <div style={{minWidth:0,overflow:"hidden"}}>
+    <div style={{fontSize:fs,fontWeight:fw,color:color||T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{name}</div>
+    {showParent&&<div style={{fontSize:pfs,color:T.cyan,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginTop:1}}>↳ {gName}</div>}
+  </div>;
+};
+
+function GroupDetail({group,goMain,goAcct,overlays,saveOverlays}) {
+  const [q,setQ]=useState("1");
+  const qk=q;
+  const py=group.pyQ?.[qk]||0;const cy=group.cyQ?.[qk]||0;
+  const gap=py-cy;const ret=py>0?Math.round(cy/py*100):0;
+
+  // ── FSC (distributor rep) management at group level ──────────────
+  const fscKey = (dist:string) => `groupFSC:${group.id}:${dist}`;
+  const loadFSC = (dist:string) => {
+    try { return JSON.parse(localStorage.getItem(fscKey(dist))||"null"); } catch { return null; }
+  };
+  const saveFSC = (dist:string, data:any) => {
+    try { localStorage.setItem(fscKey(dist), JSON.stringify(data)); } catch {}
+    // Persist to overlays durably
+    if (saveOverlays) {
+      const groupFSC = { ...(OVERLAYS_REF.fscReps?.[group.id] || {}), [dist]: data };
+      const next = { ...OVERLAYS_REF, fscReps: { ...(OVERLAYS_REF.fscReps||{}), [group.id]: groupFSC } };
+      saveOverlays(next);
+    }
+  };
+  const removeFSC = (dist:string) => {
+    try { localStorage.removeItem(fscKey(dist)); } catch {}
+    // Remove from overlays durably
+    if (saveOverlays) {
+      const groupFSC = { ...(OVERLAYS_REF.fscReps?.[group.id] || {}) };
+      delete groupFSC[dist];
+      const next = { ...OVERLAYS_REF, fscReps: { ...(OVERLAYS_REF.fscReps||{}), [group.id]: groupFSC } };
+      saveOverlays(next);
+    }
+  };
+
+  // Detect which distributors are present in this group's children
+  const groupDists = useMemo(()=>{
+    const distDedupeSet = new Set();
+    (group.children||[]).forEach((c:any) => { if(c.dealer && c.dealer!=="Unknown") distDedupeSet.add(c.dealer); });
+    return [...distDedupeSet].sort();
+  },[group]);
+
+  // Build FSC map: dist → {name, phone, notes, source:"badger"|"manual"}
+  const [fscMap, setFscMap] = useState<Record<string,any>>(()=>{
+    const m:Record<string,any> = {};
+    groupDists.forEach(d => {
+      // Priority 1: overlays.fscReps (durable — survives cache clear)
+      const fromOverlay = overlays?.fscReps?.[group.id]?.[d];
+      if (fromOverlay) { m[d] = {...fromOverlay, source:"overlay"}; return; }
+      // Priority 2: localStorage (fast cache for recent saves)
+      const manual = loadFSC(d);
+      if(manual) { m[d] = {...manual, source:"manual"}; return; }
+      // Priority 3: Badger Maps data
+      const child = (group.children||[]).find((c:any) => c.dealer===d && BADGER[c.id]?.dealerRep);
+      if(child) { m[d] = {name: BADGER[child.id].dealerRep, source:"badger"}; }
+    });
+    return m;
+  });
+
+  const [selProduct, setSelProduct] = useState<string|null>(null);
+  const [editDist, setEditDist] = useState<string|null>(null);
+  const [editName, setEditName] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+
+  const openEdit = (dist:string) => {
+    const existing = fscMap[dist];
+    setEditName(existing?.name||"");
+    setEditPhone(existing?.phone||"");
+    setEditNotes(existing?.notes||"");
+    setEditDist(dist);
+  };
+  const saveEdit = () => {
+    if(!editDist) return;
+    const data = {name:editName.trim(), phone:editPhone.trim(), notes:editNotes.trim()};
+    saveFSC(editDist, data);
+    setFscMap(prev=>({...prev, [editDist]:{...data, source:"manual"}}));
+    setEditDist(null);
+  };
+  const deleteRep = (dist:string) => {
+    removeFSC(dist);
+    setFscMap(prev=>{ const n={...prev}; delete n[dist]; return n; });
+  };
+
+  // Roll up products across all children
+  const {groupBuying, groupStopped} = useMemo(()=>{
+    const prodMap: Record<string,{py:number,cy:number,locsPY:string[],locsCY:string[],locsDown:string[]}> = {};
+    (group.children||[]).forEach((c:any)=>{
+      (c.products||[]).forEach((p:any)=>{
+        const pPy = p[`py${qk}`]||0;
+        const pCy = p[`cy${qk}`]||0;
+        if(Math.abs(pPy)<10 && Math.abs(pCy)<10) return;
+        if(!prodMap[p.n]) prodMap[p.n]={py:0,cy:0,locsPY:[],locsCY:[],locsDown:[]};
+        prodMap[p.n].py += pPy;
+        prodMap[p.n].cy += pCy;
+        if(pPy>50) prodMap[p.n].locsPY.push(c.name);
+        if(pCy>0) prodMap[p.n].locsCY.push(c.name);
+        if(pPy>50 && pCy===0) prodMap[p.n].locsDown.push(c.name);
+      });
+    });
+    const allProds = Object.entries(prodMap).map(([name,v])=>({name,...v}));
+    const groupBuying = allProds.filter(p=>p.cy>0).sort((a,b)=>b.cy-a.cy);
+    const groupStopped = allProds.filter(p=>p.py>100&&p.cy===0).sort((a,b)=>b.py-a.py);
+    return {groupBuying, groupStopped};
+  },[group,qk]);
+
+  const hasProducts = groupBuying.length>0 || groupStopped.length>0;
+
+  // ── Path 2: Product drill → which child accounts are up/down on this product ──
+  if (selProduct) {
+    const allProds = [...groupBuying, ...groupStopped];
+    const prod = allProds.find(p => p.name === selProduct);
+    const childBreakdown = (group.children||[]).map((c:any) => {
+      const p = (c.products||[]).find((pr:any) => pr.n === selProduct);
+      return { ...c, prodPY: p?(p[`py${qk}`]||0):0, prodCY: p?(p[`cy${qk}`]||0):0 };
+    }).filter((c:any) => c.prodPY > 0 || c.prodCY > 0)
+      .sort((a:any,b:any) => (b.prodPY-b.prodCY)-(a.prodPY-a.prodCY));
+
+    return <div style={{paddingBottom:80}}>
+      <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"10px 16px"}}>
+        <button onClick={()=>setSelProduct(null)} style={{background:"none",border:"none",color:T.blue,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:13,fontWeight:600,fontFamily:"inherit"}}><Back/> {fixGroupName(group)}</button>
+      </div>
+      <div style={{padding:"16px 16px 0"}}>
+        <div className="anim" style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
+          <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>{selProduct}</div>
+          <div style={{fontSize:11,color:T.t3,marginBottom:12}}>{fixGroupName(group)} · all locations</div>
+          {prod&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}>
+            <Stat l="PY" v={$$(prod.py)} c={T.t2}/>
+            <Stat l="CY" v={$$(prod.cy)} c={T.blue}/>
+            <Stat l="Gap" v={(prod.py-prod.cy)<=0?`+${$$(Math.abs(prod.py-prod.cy))}`:$$(prod.py-prod.cy)} c={(prod.py-prod.cy)<=0?T.green:T.red}/>
+            <Stat l="Locs" v={`${prod.locsCY.length}/${prod.locsPY.length}`} c={T.t3}/>
+          </div>}
+        </div>
+        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3,marginBottom:8}}>By Location</div>
+        {childBreakdown.length===0&&<div style={{fontSize:12,color:T.t4,textAlign:"center",padding:"20px 0"}}>No location data for this product.</div>}
+        {childBreakdown.map((c:any,i:number)=>{
+          const gap=c.prodPY-c.prodCY;
+          const isStopped=c.prodPY>0&&c.prodCY===0;
+          const isNew=c.prodPY===0&&c.prodCY>0;
+          return <button key={c.id} className="anim" onClick={()=>goAcct(c)}
+            style={{animationDelay:`${i*25}ms`,width:"100%",textAlign:"left",background:T.s1,
+              border:`1px solid ${isStopped?"rgba(248,113,113,.2)":gap>0?"rgba(251,191,36,.15)":T.b1}`,
+              borderRadius:12,padding:"11px 13px",marginBottom:7,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{flex:1,minWidth:0}}>
+              <AccountId name={c.name} size="md"/>
+              <div style={{fontSize:10,color:T.t3}}>{c.city}, {c.st}{c.dealer?<span style={{color:T.cyan}}> · {c.dealer}</span>:""}</div>
+              {isStopped&&<div style={{fontSize:9,color:T.red,marginTop:2,fontWeight:600}}>STOPPED · was {$$(c.prodPY)}</div>}
+              {isNew&&<div style={{fontSize:9,color:T.green,marginTop:2,fontWeight:600}}>NEW BUYER</div>}
+            </div>
+            <div style={{textAlign:"right",flexShrink:0,marginLeft:10}}>
+              <div style={{fontSize:11,fontWeight:700,color:isStopped?T.red:T.blue,fontFamily:"monospace"}}>{$$(c.prodCY)}</div>
+              {c.prodPY>0&&<div style={{fontSize:9,color:gap>0?T.red:T.green,fontFamily:"monospace"}}>{gap>0?"-":"+"}${Math.round(Math.abs(gap))}</div>}
+            </div>
+          </button>;
+        })}
+      </div>
+    </div>;
+  }
+
+  return <div style={{paddingBottom:80}}>
+    <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"10px 16px"}}>
+      <button onClick={goMain} style={{background:"none",border:"none",color:T.blue,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:13,fontWeight:600,fontFamily:"inherit"}}><Back/> Groups</button>
+    </div>
+    <div style={{padding:"16px 16px 0"}}>
+      <div className="anim" style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
+        <div style={{fontSize:16,fontWeight:700,marginBottom:4}}>{fixGroupName(group)}</div>
+        <div style={{fontSize:11,color:T.t3,marginBottom:12}}>{group.locs} locations · {getTierLabel(group.tier,group.class2)}</div>
+        {/* Quarter selector */}
+        <div style={{display:"flex",gap:4,marginBottom:12}}>
+          {["1","2","3","4","FY"].map(qr=>(
+            <button key={qr} onClick={()=>setQ(qr)} style={{flex:1,padding:"6px 0",borderRadius:8,fontSize:11,fontWeight:600,cursor:"pointer",border:`1px solid ${q===qr?"rgba(79,142,247,.25)":T.b2}`,background:q===qr?"rgba(79,142,247,.12)":T.s2,color:q===qr?T.blue:T.t3,fontFamily:"inherit"}}>{qr==="FY"?"FY":`Q${qr}`}</button>
+          ))}
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}>
+          <Stat l="PY" v={$$(py)} c={T.t2}/><Stat l="CY" v={$$(cy)} c={T.blue}/><Stat l="Gap" v={gap<=0?`+${$$(Math.abs(gap))}`:$$(gap)} c={gap<=0?T.green:T.red}/><Stat l="Ret" v={ret+"%"} c={ret>30?T.green:ret>15?T.amber:T.red}/>
+        </div>
+      </div>
+
+      {/* FSC / DISTRIBUTOR REPS */}
+      {groupDists.length>0&&<div className="anim" style={{animationDelay:"20ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan}}>FSC Contacts</div>
+          <div style={{fontSize:9,color:T.t4}}>Applies to all locations in this group</div>
+        </div>
+        {groupDists.map(dist=>{
+          const fsc = fscMap[dist];
+          const distColor = dist==="Schein"?"rgba(79,142,247,1)":dist==="Patterson"?"rgba(168,85,247,1)":dist==="Benco"?"rgba(34,211,153,1)":dist==="Darby"?"rgba(251,146,60,1)":"rgba(148,163,184,1)";
+          const childCount = (group.children||[]).filter((c:any)=>c.dealer===dist).length;
+          return <div key={dist} style={{marginBottom:8,padding:"10px 12px",borderRadius:10,background:T.s2,border:`1px solid ${T.b2}`}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,flex:1,minWidth:0}}>
+                <span style={{fontSize:10,fontWeight:700,color:distColor,background:`${distColor}18`,borderRadius:5,padding:"2px 7px",flexShrink:0}}>{dist}</span>
+                <span style={{fontSize:9,color:T.t4,flexShrink:0}}>{childCount} loc{childCount!==1?"s":""}</span>
+                {fsc
+                  ? <div style={{flex:1,minWidth:0}}>
+                      <span style={{fontSize:12,fontWeight:600,color:T.t1,display:"block",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fsc.name}</span>
+                      {fsc.phone&&<a href={`tel:${fsc.phone.replace(/\D/g,"")}`} style={{fontSize:10,color:T.cyan,textDecoration:"none"}}>{fsc.phone}</a>}
+                      {fsc.source==="badger"&&!fsc.phone&&<span style={{fontSize:9,color:T.t4,fontStyle:"italic"}}> from Badger</span>}
+                    </div>
+                  : <span style={{fontSize:11,color:T.t4,fontStyle:"italic"}}>No FSC assigned</span>
+                }
+              </div>
+              <div style={{display:"flex",gap:6,flexShrink:0,marginLeft:8}}>
+                {fsc?.phone&&<a href={`tel:${fsc.phone.replace(/\D/g,"")}`} style={{background:"rgba(34,211,153,.1)",border:"1px solid rgba(34,211,153,.2)",borderRadius:6,padding:"3px 8px",fontSize:10,fontWeight:600,color:T.green,textDecoration:"none",display:"flex",alignItems:"center"}}>Call</a>}
+                <button onClick={()=>openEdit(dist)} style={{background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.15)",borderRadius:6,padding:"3px 8px",fontSize:10,fontWeight:600,color:T.blue,cursor:"pointer",fontFamily:"inherit"}}>{fsc?"Edit":"+ Add"}</button>
+                {fsc?.source==="manual"&&<button onClick={()=>deleteRep(dist)} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:11,padding:"2px 4px"}}>✕</button>}
+              </div>
+            </div>
+            {fsc?.notes&&<div style={{marginTop:6,fontSize:10,color:T.t3,fontStyle:"italic",lineHeight:1.4}}>{fsc.notes}</div>}
+          </div>;
+        })}
+        {/* Edit modal */}
+        {editDist&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:200,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={e=>{if(e.target===e.currentTarget)setEditDist(null)}}>
+          <div style={{background:T.s1,borderRadius:"20px 20px 0 0",padding:24,width:"100%",maxWidth:480,paddingBottom:40}}>
+            <div style={{fontSize:13,fontWeight:700,marginBottom:16}}>FSC for {editDist}</div>
+            <div style={{marginBottom:10}}>
+              <div style={{fontSize:10,color:T.t3,marginBottom:4,fontWeight:600}}>Name *</div>
+              <input value={editName} onChange={e=>setEditName(e.target.value)} placeholder="Rep name" style={{width:"100%",background:T.s2,border:`1px solid ${T.b1}`,borderRadius:8,padding:"8px 10px",fontSize:13,color:T.t1,fontFamily:"inherit"}}/>
+            </div>
+            <div style={{marginBottom:10}}>
+              <div style={{fontSize:10,color:T.t3,marginBottom:4,fontWeight:600}}>Phone</div>
+              <input value={editPhone} onChange={e=>setEditPhone(e.target.value)} placeholder="(xxx) xxx-xxxx" type="tel" style={{width:"100%",background:T.s2,border:`1px solid ${T.b1}`,borderRadius:8,padding:"8px 10px",fontSize:13,color:T.t1,fontFamily:"inherit"}}/>
+            </div>
+            <div style={{marginBottom:16}}>
+              <div style={{fontSize:10,color:T.t3,marginBottom:4,fontWeight:600}}>Notes</div>
+              <textarea value={editNotes} onChange={e=>setEditNotes(e.target.value)} placeholder="Relationship notes, schedule, anything useful..." rows={3} style={{width:"100%",background:T.s2,border:`1px solid ${T.b1}`,borderRadius:8,padding:"8px 10px",fontSize:12,color:T.t1,fontFamily:"inherit",resize:"none"}}/>
+            </div>
+            <div style={{display:"flex",gap:10}}>
+              <button onClick={()=>setEditDist(null)} style={{flex:1,padding:"10px 0",borderRadius:10,fontSize:13,fontWeight:600,cursor:"pointer",border:`1px solid ${T.b1}`,background:T.s2,color:T.t3,fontFamily:"inherit"}}>Cancel</button>
+              <button onClick={saveEdit} disabled={!editName.trim()} style={{flex:2,padding:"10px 0",borderRadius:10,fontSize:13,fontWeight:700,cursor:editName.trim()?"pointer":"not-allowed",border:"none",background:editName.trim()?T.blue:"rgba(79,142,247,.3)",color:"#fff",fontFamily:"inherit"}}>Save FSC</button>
+            </div>
+          </div>
+        </div>}
+      </div>}
+
+      {/* GROUP PRODUCT ROLLUP */}
+      {hasProducts&&<div className="anim" style={{animationDelay:"40ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
+        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue,marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <span>Group Product Health</span>
+          <span style={{fontSize:9,color:T.t4,fontWeight:400,textTransform:"none",letterSpacing:0}}>Tap product to see by location</span>
+        </div>
+
+        {/* Stopped across group */}
+        {groupStopped.length>0&&<div style={{marginBottom:groupBuying.length>0?14:0}}>
+          <div style={{fontSize:10,fontWeight:700,color:T.red,marginBottom:8}}>Stopped Buying ({groupStopped.length} products)</div>
+          {groupStopped.map((p,i)=>(
+            <div key={i} onClick={()=>setSelProduct(p.name)} style={{marginBottom:10,padding:"8px 10px",borderRadius:8,background:"rgba(248,113,113,.04)",border:"1px solid rgba(248,113,113,.08)",cursor:"pointer"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:p.locsDown.length>0?4:0}}>
+                <span style={{fontSize:12,fontWeight:600,color:T.t1}}>{p.name}</span>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <span className="m" style={{fontSize:10,color:T.red,flexShrink:0}}>Was {$$(p.py)} → $0</span>
+                  <Chev/>
+                </div>
+              </div>
+              {p.locsDown.length>0&&<div style={{fontSize:9,color:T.t4,lineHeight:1.5}}>
+                {p.locsDown.slice(0,3).map(l=>l.split(' ').slice(0,2).join(' ')).join(' · ')}
+                {p.locsDown.length>3&&<span> +{p.locsDown.length-3} more</span>}
+              </div>}
+            </div>
+          ))}
+        </div>}
+
+        {/* Buying across group */}
+        {groupBuying.length>0&&<div>
+          <div style={{fontSize:10,fontWeight:700,color:T.green,marginBottom:8}}>Currently Buying ({groupBuying.length} products)</div>
+          {groupBuying.slice(0,8).map((p,i)=>{
+            const mx=groupBuying[0]?.cy||1;
+            const trend=p.py>0?p.cy/p.py:1;
+            return <div key={i} onClick={()=>setSelProduct(p.name)} style={{marginBottom:8,cursor:"pointer"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
+                <span style={{fontSize:11,color:T.t2,flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</span>
+                <div style={{display:"flex",gap:8,flexShrink:0,marginLeft:8,alignItems:"center"}}>
+                  <span className="m" style={{fontSize:9,color:T.t3}}>{$$(p.py)}</span>
+                  <span style={{fontSize:9,color:T.t3}}>→</span>
+                  <span className="m" style={{fontSize:10,color:trend>=0.8?T.blue:T.amber,fontWeight:600}}>{$$(p.cy)}</span>
+                  <Chev/>
+                </div>
+              </div>
+              <div style={{height:4,borderRadius:2,background:T.s3,overflow:"hidden"}}>
+                <div className="bar-g" style={{animationDelay:`${i*40}ms`,height:"100%",borderRadius:2,width:`${Math.min(p.cy/mx*100,100)}%`,background:trend>=0.8?`linear-gradient(90deg,${T.blue},${T.cyan})`:T.amber}}/>
+              </div>
+              {p.locsDown.length>0&&<div style={{fontSize:9,color:T.amber,marginTop:2}}>
+                ⚠ {p.locsDown.slice(0,2).map(l=>l.split(' ').slice(0,2).join(' ')).join(', ')} stopped
+              </div>}
+            </div>;
+          })}
+        </div>}
+      </div>}
+
+      <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3,marginBottom:8}}>Locations ({group.children.length})</div>
+      {group.children.map((c,i)=>{
+        const cPy=c.pyQ?.[qk]||0;const cCy=c.cyQ?.[qk]||0;const cGap=cPy-cCy;const cRet=cPy>0?Math.round(cCy/cPy*100):0;
+        return <button key={c.id} className="anim" onClick={()=>goAcct(c)} style={{animationDelay:`${i*30}ms`,width:"100%",textAlign:"left",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:"12px 14px",marginBottom:8,cursor:"pointer"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+            <div style={{fontSize:12,fontWeight:600,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.name}</div><Chev/>
+          </div>
+          <div style={{fontSize:10,color:T.t3,marginBottom:6}}>{c.city}, {c.st}{c.dealer&&c.dealer!=="Unknown"?<span style={{color:T.cyan}}> · {c.dealer}</span>:""} · Last {c.last}d ago</div>
+          <div style={{display:"flex",gap:12}}>
+            <Pill l="PY" v={$$(cPy)} c={T.t2}/><Pill l="CY" v={$$(cCy)} c={T.blue}/><Pill l="Gap" v={cGap<=0?`+${$$(Math.abs(cGap))}`:$$(cGap)} c={cGap<=0?T.green:T.red}/><div style={{marginLeft:"auto"}}><Pill l="Ret" v={cRet+"%"} c={T.t3}/></div>
+          </div>
+          {(c.products||[]).length>0&&<div style={{marginTop:8,display:"flex",gap:4,flexWrap:"wrap"}}>
+            {c.products.slice(0,4).map((p,j)=>{
+              const pCy=p[`cy${qk}`]||0;const pPy=p[`py${qk}`]||0;
+              return <span key={j} style={{fontSize:8,color:pPy>200&&pCy===0?T.red:T.t3,background:pPy>200&&pCy===0?"rgba(248,113,113,.06)":T.s2,borderRadius:4,padding:"2px 5px",border:`1px solid ${pPy>200&&pCy===0?"rgba(248,113,113,.12)":T.b2}`}}>{p.n.split(" ")[0]} {pPy>200&&pCy===0?"!$0":$$(pCy)}</span>;
+            })}
+          </div>}
+        </button>;
+      })}
+    </div>
+  </div>;
+}
+
+
+export default GroupDetail;
