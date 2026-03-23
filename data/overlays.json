@@ -1,43 +1,36 @@
 {
   "nameOverrides": {},
   "contacts": {
-    "Master-CM189283": {
-      "contactName": "William R. Conroy, DDS",
-      "phone": "(401) 351-3090",
-      "email": "info@atwill-conroydentalprovidence.com",
-      "website": "https://www.atwill-conroydentalprovidence.com",
+    "Master-CM413476": {
+      "contactName": "Dr. Sheikh M. Ilyas",
+      "phone": "(203) 790-0111",
+      "email": "info@newenglanddentalllc.com",
+      "website": "https://newenglanddentalllc.com",
       "contacts": [
         {
-          "name": "William R. Conroy, DDS",
+          "name": "Dr. Sheikh M. Ilyas",
           "role": "Owner/DDS",
-          "email": "info@atwill-conroydentalprovidence.com",
-          "phone": "(401) 351-3090",
+          "email": "info@newenglanddentalllc.com",
+          "phone": "(203) 790-0111",
           "tier": 1
         },
         {
-          "name": "Kristofer Haggarty, DMD",
+          "name": "Dr. Matthew Hariprasad",
           "role": "Associate DDS",
           "email": null,
-          "phone": "(401) 351-3090",
+          "phone": "(203) 790-0111",
           "tier": 2
         },
         {
-          "name": "Bakhoum M. Girgis, DMD",
+          "name": "Dr. Atheena Antony",
           "role": "Associate DDS",
           "email": null,
-          "phone": "(401) 351-3090",
-          "tier": 2
-        },
-        {
-          "name": "Thomas Hernon, DMD",
-          "role": "Associate DDS",
-          "email": null,
-          "phone": "(401) 351-3090",
+          "phone": "(203) 790-0111",
           "tier": 2
         }
       ],
-      "savedAt": "2026-03-23T15:02:55.264Z",
-      "practiceName": "OFC OF ANTHONY PHILIP ALESSANDRO DDS"
+      "savedAt": "2026-03-23T15:06:04.716Z",
+      "practiceName": "NEW ENGLAND DENTAL"
     }
   },
   "fscReps": {},
@@ -47,5 +40,5 @@
   "groups": {},
   "groupDetaches": [],
   "groupMoves": {},
-  "lastUpdated": "2026-03-23T15:02:57.071Z"
+  "lastUpdated": "2026-03-23T15:06:06.681Z"
 }
