@@ -42,7 +42,7 @@ const AccountId = ({name, gName, size="md", color}:{name:string, gName?:string, 
   </div>;
 };
 
-function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup,overlays,saveOverlays}) {
+function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup,overlays,saveOverlays,goAcct=null}) {
   const [q,setQ]=useState("1");
   const [showForm,setShowForm]=useState(false);
   const [toast,setToast]=useState(null);
@@ -734,7 +734,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
             const sPy=s.pyQ?.["1"]||0;const sCy=s.cyQ?.["1"]||0;
             const sGap=sPy-sCy;const sRet=sPy>0?Math.round(sCy/sPy*100):0;
             const isDown=sGap>0&&sRet<50;
-            return <button key={s.id} className="anim" onClick={()=>goAcct(s)}
+            return <button key={s.id} className="anim" onClick={()=>goAcct?.(s)}
               style={{animationDelay:`${i*20}ms`,display:"flex",alignItems:"center",justifyContent:"space-between",
                 width:"100%",textAlign:"left",padding:"8px 10px",borderRadius:10,
                 background:isDown?"rgba(248,113,113,.04)":T.s2,
@@ -1005,7 +1005,7 @@ function SaleCalculator({acctTier,tierRate,isAccel,acctType,onAdd}) {
 
   const results=search.length>=2?SKU.filter(p=>{
     const q=search.toLowerCase();
-    return p[0].toLowerCase().includes(q)||p[1].toLowerCase().includes(q)||p[2].toLowerCase().includes(q);
+    return String(p[0]).toLowerCase().includes(q)||String(p[1]).toLowerCase().includes(q)||String(p[2]).toLowerCase().includes(q);
   }).slice(0,8):[];
 
   const calc=useMemo(()=>{

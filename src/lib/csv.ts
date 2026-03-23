@@ -138,7 +138,7 @@ export function processCSVData(rows: Record<string, string>[]) {
     const gPy: Record<string, number> = {};
     const gCy: Record<string, number> = {};
 
-    for (const cid of childIds) {
+    for (const cid of Array.from(childIds)) {
       const ci = childInfo[cid] || {};
       const pyQ: Record<string, number> = {};
       const cyQ: Record<string, number> = {};

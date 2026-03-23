@@ -1,6 +1,6 @@
 # ARCHITECTURE — accel-v7
 
-> Last updated: March 22, 2026
+> Last updated: March 23, 2026
 > Source of truth for how the app is built, what lives where, and the constraints we operate under.
 
 ---
@@ -20,14 +20,13 @@ accel-v7 is a **Next.js 14 sales intelligence app** for Ken Scott, Kerr Dental f
 
 The repo contains **two parallel UI systems**:
 
-### 2a. The "Accelerate" Monolith — `src/components/AccelerateApp.tsx`
-- **5,377 lines**, single file, `@ts-nocheck`
-- 18 function components defined inside this one file
-- 8 tab components: TodayTab, GroupsTab, DealersTab, DashTab, MapTab, EstTab, OutreachTab, AdminTab
-- 2 detail views: GroupDetail, AcctDetail
-- 101 useState hooks across all components
+### 2a. The "Accelerate" App — `src/components/AccelerateApp.tsx`
+- **~680 lines** — shell + routing + state only (Phase 5 decomposition complete)
+- Tab components extracted to `src/components/tabs/`: TodayTab, GroupsTab, DealersTab, DashTab, MapTab, EstTab, OutreachTab, AdminTab, GroupDetail, AcctDetail
+- Shared logic in `src/lib/`: tokens, tier, format (scoring), csv
+- `@ts-nocheck` still present in tab files — TypeScript errors cleared (Phase 6), full strict typing is future work
 - Navigation: 5 bottom tabs (Today, Groups, Dealers, Dash, More) + overflow menu (Route, Close, Outreach, Admin)
-- Owns its own data loading, tab navigation, state management, view stack
+- Owns data loading, tab navigation, state management, view stack
 - Has its own inline CSS via style objects (not Tailwind)
 - Mounted at `/accelerate` via `src/app/accelerate/page.tsx`
 - **This is the primary working app that Ken uses daily**
@@ -79,9 +78,9 @@ Runtime user corrections that survive CSV re-uploads:
 **Saved**: On user action via `POST /api/save-overlay` (commits JSON to GitHub)
 **Applied**: `applyOverlays()` runs on every data load, merging overlays on top of base static data
 
-### 3c. Dual Overlay Systems (technical debt)
+### 3c. Single Overlay System ✅
 
-Both `src/data/patches.json` (legacy) and `data/overlays.json` (current) exist. The `save-patch` API route still works. `applyOverlays()` reads from both. New writes go to overlays.json via `save-overlay`. Consolidation needed — retire patches.json and save-patch route.
+`data/overlays.json` is the sole persistence layer. `patches.json` has been retired (Phase 2). `save-patch` API route removed. `applyOverlays()` reads only from `overlays.json`.
 
 ### 3d. Data Flow
 
@@ -153,9 +152,9 @@ Live at accel-v7.vercel.app/accelerate
 
 ## 7. Architectural Constraints
 
-1. **AccelerateApp.tsx is 5,377 lines.** All 8 tabs, detail views, data processing, inline styles in one file. Primary technical debt.
-2. **`@ts-nocheck` disables TypeScript.** The monolith bypasses the type system entirely.
-3. **No test coverage.** Zero tests. Changes verified manually on live site.
+1. **`@ts-nocheck` in tab files.** TypeScript errors are cleared (Phase 6) but strict type checking is not yet enabled per-file. Full strictness is future work.
+2. **Test coverage is narrow.** `scoreAccount()` and `processCSVData()` are covered (34 tests added Phase 6). Tab components have no tests.
+3. **AccelerateApp.tsx decomposed but tab files still use inline styles.** No Tailwind in tab components — inline style objects throughout.
 4. **GitHub as database.** Overlays persist by committing JSON. Works for single-user, no concurrency/transactions/indexing.
 5. **1.7MB static data bundled at build time.** Acceptable for single-user app but makes builds slower.
 6. **Browser caching causes stale deploys.** Users sometimes need hard refresh or `?v=N` parameter.

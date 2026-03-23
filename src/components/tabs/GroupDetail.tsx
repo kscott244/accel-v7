@@ -75,7 +75,7 @@ function GroupDetail({group,goMain,goAcct,overlays,saveOverlays}) {
 
   // Detect which distributors are present in this group's children
   const groupDists = useMemo(()=>{
-    const distDedupeSet = new Set();
+    const distDedupeSet = new Set<string>();
     (group.children||[]).forEach((c:any) => { if(c.dealer && c.dealer!=="Unknown") distDedupeSet.add(c.dealer); });
     return [...distDedupeSet].sort();
   },[group]);

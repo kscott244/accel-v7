@@ -1,6 +1,24 @@
 # CURRENT PHASE — accel-v7
 
-## Active: Phase 5 — Extract Remaining Large Tabs ✅ Complete
+## Active: Phase 6 — Foundation Hardening ✅ Complete
+
+### What Was Done (Phase 6)
+1. **Fixed all 18 TypeScript errors** — tsconfig target es2020 + downlevelIteration, AdminTab `$$` import, AccelerateApp ArrayBuffer cast, SKU search String() casts, TodayTab SectionHeader count default, GroupDetail Set type param, csv.ts Array.from()
+2. **Fixed runtime bug in AcctDetail** — `goAcct` was missing from props, causing sibling location buttons to silently throw; added prop + wired from AccelerateApp
+3. **Installed Jest + 34 passing tests** — `scoring.test.ts` (26 tests covering `scoreAccount()` + `$$` formatter) and `csv.test.ts` (8 tests covering `processCSVData()`, `parseCSV()`, `normalizeTier()`)
+4. **Added `npm run test` and `npm run typecheck` scripts** to package.json
+5. **Fixed overlay data-loss vulnerability** — background GitHub fetch now only overwrites localStorage if GitHub data is newer (guards against failed saves being silently rolled back)
+6. **Updated ARCHITECTURE.md and ROADMAP.md** to reflect current state
+
+### Completion Criteria — All Met ✅
+- `npm run typecheck` passes with zero errors ✅
+- `npm run test` passes with 34 tests ✅
+- `npm run build` clean ✅
+- Docs accurate ✅
+
+---
+
+## Previously Completed: Phase 5 — Extract Remaining Large Tabs ✅ Complete
 
 ### What Was Done (Phase 5)
 1. **Created `src/components/tabs/TodayTab.tsx`** — Today scoring/priority tab (1,068 lines extracted)

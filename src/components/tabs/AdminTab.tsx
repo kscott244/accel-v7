@@ -2,6 +2,7 @@
 // @ts-nocheck
 import { useState } from "react";
 import { T } from "@/lib/tokens";
+import { $$ } from "@/lib/format";
 
 let BADGER: Record<string, any> = {};
 try { BADGER = require("@/data/badger-lookup.json"); } catch(e) {}

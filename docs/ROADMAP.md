@@ -11,10 +11,11 @@
 |-------|------|--------|-------------|
 | 1 | Foundation Audit + Docs | ✅ Complete | Audit repo, document architecture, establish project docs, define roadmap |
 | 2 | Stabilize + Consolidate | ✅ Complete | Retire patches.json, add deploy verification, fix remaining edge cases |
-| 3 | Decompose the Monolith | 🔲 Next | Extract tabs from AccelerateApp.tsx into separate files, enable TypeScript |
-| 4 | Data Pipeline Upgrade | 🔲 Planned | Improve CSV import, add data validation, weekly upload workflow |
-| 5 | Intelligence Layer | 🔲 Future | Enhanced scoring, AI briefings, gap-closing scenarios, route optimization |
-| 6 | Multi-Quarter / Q2+ | 🔲 Future | Support quarter transitions, historical tracking, goal updates |
+| 3 | Decompose the Monolith | ✅ Complete | Extracted all tabs + lib modules — AccelerateApp.tsx 5,377 → ~680 lines |
+| 4 | Data Pipeline Upgrade | 🔲 Next | CSV diff view, validation, weekly upload workflow |
+| 5 | Intelligence Layer | ⚠️ Partial | AI briefing, Deep Research, find-group-matches built — enhanced scoring + weekly change detection remain |
+| 6 | Foundation Hardening | ✅ Complete | Zero TS errors, 34 tests for scoring + CSV processor, updated docs |
+| 7 | Multi-Quarter / Q2+ | 🔲 Future | Quarter selector, historical tracking, goal management |
 
 ---
 

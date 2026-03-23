@@ -47,7 +47,7 @@ export default function DashTab({groups, q1CY, q1Att, q1Gap, scored, goAcct}) {
   const calcRate = getTierRate(calcTier);
   const calcResults = calcSearch.length>=2 ? SKU.filter(p=>{
     const q=calcSearch.toLowerCase();
-    return p[0].toLowerCase().includes(q)||p[1].toLowerCase().includes(q)||p[2].toLowerCase().includes(q);
+    return String(p[0]).toLowerCase().includes(q)||String(p[1]).toLowerCase().includes(q)||String(p[2]).toLowerCase().includes(q);
   }).slice(0,8) : [];
 
   const calc = useMemo(()=>{

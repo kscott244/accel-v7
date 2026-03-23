@@ -559,7 +559,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
 
 
 
-  const SectionHeader = ({label, color, count, pulse=false}) => (
+  const SectionHeader = ({label, color, count="", pulse=false}) => (
     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,marginTop:4}}>
       <div style={{width:7,height:7,borderRadius:"50%",background:color,flexShrink:0,animation:pulse?"pulse 2s infinite":"none"}}/>
       <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color}}>{label}</span>
