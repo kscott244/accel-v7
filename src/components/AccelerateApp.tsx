@@ -500,6 +500,8 @@ function AppInner() {
           // This is a wrapper node — recurse into its children
           return extractLeaves(g, c.children);
         }
+        // Skip stub children that have no pyQ — they crash scoreAccount downstream
+        if (!c.pyQ) return [];
         return [{ ...c, gName: fixGroupName(g), gId: g.id, gTier: g.tier }];
       });
     };
