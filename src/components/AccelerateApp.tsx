@@ -340,6 +340,23 @@ function AppInner() {
     }));
   };
 
+  // Roll up group-level pyQ/cyQ from children when missing.
+  // preloaded-data.ts was built without group totals; CSV uploads include them.
+  // This ensures all downstream code can safely read g.pyQ["1"] etc.
+  const rollupGroupTotals = (grps) => {
+    if (!grps) return grps;
+    return grps.map(g => {
+      if (g.pyQ && Object.keys(g.pyQ).length > 0) return g;
+      const pyQ: Record<string,number> = {};
+      const cyQ: Record<string,number> = {};
+      (g.children || []).forEach((c:any) => {
+        Object.entries(c.pyQ || {}).forEach(([k,v]:any) => { pyQ[k] = (pyQ[k]||0) + v; });
+        Object.entries(c.cyQ || {}).forEach(([k,v]:any) => { cyQ[k] = (cyQ[k]||0) + v; });
+      });
+      return { ...g, pyQ, cyQ };
+    });
+  };
+
   // Apply group moves from overlays (durable) + localStorage (session cache)
   const applyGroupOverrides = (grps) => {
     if (!grps) return grps;
@@ -440,7 +457,7 @@ function AppInner() {
         const saved = localStorage.getItem("accel_data_v2");
         if (saved) {
           const parsed = JSON.parse(saved);
-          setGroups(applyGroupOverrides(applyOverlays(hydrateDealer(parsed.groups))));
+          setGroups(applyGroupOverrides(applyOverlays(rollupGroupTotals(hydrateDealer(parsed.groups)))));
           setDataSource(`CSV uploaded ${parsed.generated}`);
           setLoading(false);
           return;
@@ -449,7 +466,7 @@ function AppInner() {
 
       try {
         const { PRELOADED } = require("@/data/preloaded-data");
-        setGroups(applyGroupOverrides(applyOverlays(hydrateDealer(PRELOADED.groups))));
+        setGroups(applyGroupOverrides(applyOverlays(rollupGroupTotals(hydrateDealer(PRELOADED.groups)))));
         setDataSource(`Pre-loaded ${PRELOADED.generated}`);
       } catch {
         setGroups([]);
@@ -487,7 +504,7 @@ function AppInner() {
         const integrity = checkOverlayIntegrity(OVERLAYS_REF, result.groups);
 
         // Apply overlays on top of new base data
-        setGroups(applyGroupOverrides(applyOverlays(hydrateDealer(result.groups))));
+        setGroups(applyGroupOverrides(applyOverlays(rollupGroupTotals(hydrateDealer(result.groups)))));
         setDataSource(`CSV uploaded ${result.generated}`);
         localStorage.setItem("accel_data_v2", JSON.stringify(result));
 
