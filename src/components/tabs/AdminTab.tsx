@@ -125,6 +125,7 @@ function AdminTab({groups, scored, overlays, saveOverlays}:{groups:any[], scored
       {sectionBtn("names","✏️ Names")}
       {sectionBtn("contacts","📇 Contacts")}
       {sectionBtn("dupes","🔗 Dupes")}
+      {sectionBtn("data","💾 Data")}
     </div>
 
     {/* ── GROUPS SECTION ── */}
@@ -486,6 +487,34 @@ function AdminTab({groups, scored, overlays, saveOverlays}:{groups:any[], scored
               </div>
             </div>
           ))}
+        </div>;
+      })()}
+    </div>}
+
+    {section==="data"&&<div>
+      <div style={{fontSize:14,fontWeight:700,color:T.t1,marginBottom:4}}>Data Cache</div>
+      <div style={{fontSize:11,color:T.t3,marginBottom:16}}>The app caches the last uploaded CSV in your browser. If Q1 numbers look wrong, reset to use the built-in preloaded data.</div>
+      {(()=>{
+        let cacheInfo = "No CSV cached — using preloaded data";
+        let hasCsvCache = false;
+        try {
+          const raw = localStorage.getItem("accel_data_v2");
+          if (raw) {
+            const d = JSON.parse(raw);
+            cacheInfo = `CSV cached from ${d.generated||"unknown date"} · ${(d.groups||[]).length} groups`;
+            hasCsvCache = true;
+          }
+        } catch {}
+        return <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:14}}>
+          <div style={{fontSize:11,color:T.t2,marginBottom:12}}>{cacheInfo}</div>
+          {hasCsvCache&&<button onClick={()=>{
+            try { localStorage.removeItem("accel_data_v2"); } catch {}
+            showToast("✅ Cache cleared — reloading…");
+            setTimeout(()=>window.location.reload(), 800);
+          }} style={{padding:"10px 16px",borderRadius:8,border:"none",background:"rgba(248,113,113,.15)",color:T.red,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",width:"100%"}}>
+            Reset to preloaded data
+          </button>}
+          {!hasCsvCache&&<div style={{fontSize:11,color:T.green}}>✓ Already using preloaded data</div>}
         </div>;
       })()}
     </div>}
