@@ -493,9 +493,17 @@ function AppInner() {
   // Flatten all children for "Today" scoring
   const allChildren = useMemo(() => {
     if (!groups) return [];
-    return groups.flatMap(g =>
-      g.children.map(c => ({ ...c, gName: fixGroupName(g), gId: g.id, gTier: g.tier }))
-    );
+    // Recursively extract leaf nodes — preloaded-data nests children 2 levels deep
+    const extractLeaves = (g: any, children: any[]): any[] => {
+      return children.flatMap(c => {
+        if (c.children && c.children.length > 0 && !c.products) {
+          // This is a wrapper node — recurse into its children
+          return extractLeaves(g, c.children);
+        }
+        return [{ ...c, gName: fixGroupName(g), gId: g.id, gTier: g.tier }];
+      });
+    };
+    return groups.flatMap(g => extractLeaves(g, g.children || []));
   }, [groups]);
 
   const totalAdjQ1 = adjs.reduce((s,a) => s + a.credited, 0);
