@@ -4,22 +4,8 @@ import { useState, useMemo } from "react";
 import { T, Q1_TARGET, FY_TARGET, DAYS_LEFT, HOME_LAT, HOME_LNG } from "@/lib/tokens";
 import { normalizeTier, isAccelTier } from "@/lib/tier";
 import { $$, $f, pc } from "@/lib/format";
-
-let BADGER: Record<string, any> = {};
-try { BADGER = require("@/data/badger-lookup.json"); } catch(e) {}
-
-const Bar = ({pct, color}) => <div style={{width:"100%",height:6,borderRadius:3,background:T.s3,overflow:"hidden"}}><div className="bar-g" style={{height:"100%",borderRadius:3,width:`${Math.min(Math.max(pct,0),100)}%`,background:color||`linear-gradient(90deg,${T.blue},${T.cyan})`}}/></div>;
-const Chev = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{opacity:.4,flexShrink:0}}><path d="M9 18l6-6-6-6"/></svg>;
-const AccountId = ({name, gName, size="md", color}:{name:string,gName?:string,size?:"sm"|"md"|"lg",color?:string}) => {
-  const showParent = gName && gName !== name && gName.toLowerCase() !== name.toLowerCase();
-  const fs = size==="sm"?11:size==="lg"?15:12;
-  const fw = size==="sm"?500:size==="lg"?700:600;
-  const pfs = size==="sm"?9:size==="lg"?11:10;
-  return <div style={{minWidth:0,overflow:"hidden"}}>
-    <div style={{fontSize:fs,fontWeight:fw,color:color||T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{name}</div>
-    {showParent&&<div style={{fontSize:pfs,color:T.cyan,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginTop:1}}>↳ {gName}</div>}
-  </div>;
-};
+import { Bar, Chev, AccountId } from "@/components/primitives";
+import { BADGER } from "@/lib/data";
 
 function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGroup}) {
   const [search, setSearch] = useState("");

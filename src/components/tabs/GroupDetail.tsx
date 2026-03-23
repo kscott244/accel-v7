@@ -4,43 +4,11 @@ import { useState, useMemo } from "react";
 import { T } from "@/lib/tokens";
 import { $$, $f, pc } from "@/lib/format";
 import { getTierLabel } from "@/lib/tier";
+import { BADGER } from "@/lib/data";
+import { Back, Chev, Pill, Stat, AccountId, fixGroupName } from "@/components/primitives";
 
 let SCHEIN_REPS: {fsc:any[], es:any[]} = {fsc:[], es:[]};
-let BADGER: Record<string, any> = {};
-let PARENT_NAMES: Record<string, string> = {};
-try { BADGER = require("@/data/badger-lookup.json"); } catch(e) {}
-try { PARENT_NAMES = require("@/data/parent-names.json"); } catch(e) {}
 try { SCHEIN_REPS = require("@/data/schein-ct-reps.json"); } catch(e) {}
-
-let OVERLAYS_REF: any = { nameOverrides:{}, contacts:{}, fscReps:{}, activityLogs:{}, research:{}, dealerOverrides:{}, groups:{}, groupDetaches:[], groupMoves:{}, groupContacts:{}, groupNotes:{} };
-
-const BAD_GROUP_NAMES = new Set(["STANDARD","Standard","HOUSE ACCOUNTS","House Accounts","SILVER","GOLD","PLATINUM","DIAMOND","TOP 100","Silver","Gold","Platinum","Diamond","Top 100",""]);
-const cleanParentName = (name) => { if (!name) return ""; return name.replace(/\s*:\s*Master-CM\d+$/i, "").trim(); };
-const fixGroupName = (g) => {
-  if (!g) return "Unknown";
-  const authName = PARENT_NAMES[g.id];
-  if (authName && !BAD_GROUP_NAMES.has(authName)) return authName;
-  const cleaned = cleanParentName(g.name);
-  if (cleaned && !BAD_GROUP_NAMES.has(cleaned)) return cleaned;
-  if (g.children?.length === 1) return g.children[0].name;
-  if (g.children?.length > 1) return `${g.children[0].name} (+${g.children.length-1})`;
-  return cleaned || g.id || "Unknown";
-};
-
-const Pill = ({l,v,c}) => <div><span style={{fontSize:9,textTransform:"uppercase",color:T.t3}}>{l} </span><span className="m" style={{fontSize:12,fontWeight:700,color:c}}>{v}</span></div>;
-const Stat = ({l,v,c}) => <div style={{background:T.s2,borderRadius:8,padding:"8px 10px",textAlign:"center"}}><div style={{fontSize:9,textTransform:"uppercase",color:T.t3,marginBottom:2}}>{l}</div><div className="m" style={{fontSize:14,fontWeight:700,color:c}}>{v}</div></div>;
-const Back = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>;
-const Chev = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{opacity:.4,flexShrink:0}}><path d="M9 18l6-6-6-6"/></svg>;
-const AccountId = ({name, gName, size="md", color}:{name:string, gName?:string, size?:"sm"|"md"|"lg", color?:string}) => {
-  const showParent = gName && gName !== name && gName.toLowerCase() !== name.toLowerCase();
-  const fs = size==="sm"?11:size==="lg"?15:12;
-  const fw = size==="sm"?500:size==="lg"?700:600;
-  const pfs = size==="sm"?9:size==="lg"?11:10;
-  return <div style={{minWidth:0,overflow:"hidden"}}>
-    <div style={{fontSize:fs,fontWeight:fw,color:color||T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{name}</div>
-    {showParent&&<div style={{fontSize:pfs,color:T.cyan,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginTop:1}}>↳ {gName}</div>}
-  </div>;
-};
 
 function GroupDetail({group,goMain,goAcct,overlays,saveOverlays}) {
   const [q,setQ]=useState("1");

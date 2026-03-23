@@ -6,21 +6,8 @@ import { $$ } from "@/lib/format";
 import CPID_MERGES from "@/data/cpid-pending-merges.json";
 import CPID_REVIEW from "@/data/cpid-review-queue.json";
 
-let BADGER: Record<string, any> = {};
-try { BADGER = require("@/data/badger-lookup.json"); } catch(e) {}
-
-let OVERLAYS_REF: any = { nameOverrides:{}, contacts:{}, fscReps:{}, activityLogs:{}, research:{}, dealerOverrides:{}, groups:{}, groupDetaches:[], groupMoves:{} };
-
-const AccountId = ({name, gName, size="md", color}:{name:string, gName?:string, size?:"sm"|"md"|"lg", color?:string}) => {
-  const showParent = gName && gName !== name && gName.toLowerCase() !== name.toLowerCase();
-  const fs = size==="sm"?11:size==="lg"?15:12;
-  const fw = size==="sm"?500:size==="lg"?700:600;
-  const pfs = size==="sm"?9:size==="lg"?11:10;
-  return <div style={{minWidth:0,overflow:"hidden"}}>
-    <div style={{fontSize:fs,fontWeight:fw,color:color||T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{name}</div>
-    {showParent&&<div style={{fontSize:pfs,color:T.cyan,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginTop:1}}>↳ {gName}</div>}
-  </div>;
-};
+import { BADGER } from "@/lib/data";
+import { AccountId } from "@/components/primitives";
 
 function AdminTab({groups, scored, overlays, saveOverlays}:{groups:any[], scored:any[], overlays:any, saveOverlays:any}) {
   const [section, setSection] = useState<string>("groups"); // groups | detach | names | contacts

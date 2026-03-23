@@ -4,10 +4,8 @@ import { useState, useMemo, useEffect } from "react";
 import { T } from "@/lib/tokens";
 import { $f } from "@/lib/format";
 
-let BADGER: Record<string, any> = {};
-try { BADGER = require("@/data/badger-lookup.json"); } catch(e) {}
-
-const Stat = ({l,v,c}) => <div style={{background:T.s2,borderRadius:8,padding:"8px 10px",textAlign:"center"}}><div style={{fontSize:9,textTransform:"uppercase",color:T.t3,marginBottom:2}}>{l}</div><div className="m" style={{fontSize:14,fontWeight:700,color:c}}>{v}</div></div>;
+import { BADGER } from "@/lib/data";
+import { Stat } from "@/components/primitives";
 
 function OutreachTab({scored}:{scored:any[]}) {
   const [gmailToken, setGmailToken] = useState<string|null>(null);

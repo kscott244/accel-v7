@@ -24,19 +24,8 @@ class ErrorBoundary extends Component<{children:any},{err:any,info:any}> {
   }
 }
 
-// Static data — loads if available, gracefully degrades if not
-let DEALERS: Record<string, string> = {};
-let PARENT_DEALERS: Record<string, string> = {};
-let WEEK_ROUTES: any = { routes: {}, unplaced: [] };
-let BADGER: Record<string, any> = {};
-let PARENT_NAMES: Record<string, string> = {};
-// DEALERS, PARENT_DEALERS, BADGER, WEEK_ROUTES remain static base data
-
-try { DEALERS = require("@/data/dealers").DEALERS; } catch(e) {}
-try { PARENT_DEALERS = require("@/data/parentDealers").PARENT_DEALERS; } catch(e) {}
-try { WEEK_ROUTES = require("@/data/week-routes.json"); } catch(e) {}
-try { BADGER = require("@/data/badger-lookup.json"); } catch(e) {}
-try { PARENT_NAMES = require("@/data/parent-names.json"); } catch(e) {}
+// Static data — single source of truth in src/lib/data.ts
+import { BADGER, PARENT_NAMES, DEALERS, PARENT_DEALERS, WEEK_ROUTES } from "@/lib/data";
 
 // OVERLAYS: runtime-loaded from data/overlays.json via API — NOT a static import
 // Default empty shape used until loadOverlays() resolves on app mount
@@ -204,6 +193,7 @@ import {
   getTierRate, isAccelTier, getTierLabel, extractGroupName,
 } from "@/lib/tier";
 import { $$, $f, pc, scoreAccount, getHealthStatus } from "@/lib/format";
+import { Back, Chev, Pill, Stat, Bar, AccountId, fixGroupName, cleanParentName, BAD_GROUP_NAMES } from "@/components/primitives";
 import { parseCSV, parseCSVLine, processCSVData, setDealers } from "@/lib/csv";
 import { diffDatasets, checkOverlayIntegrity } from "@/lib/dataDiff";
 
@@ -221,9 +211,7 @@ import OutreachTab from "@/components/tabs/OutreachTab";
 import AdminTab from "@/components/tabs/AdminTab";
 // ─── PHASE 5: Tab components extracted to src/components/tabs/ ────
 
-// ─── ICONS ───────────────────────────────────────────────────────
-const Back = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>;
-const Chev = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{opacity:.4,flexShrink:0}}><path d="M9 18l6-6-6-6"/></svg>;
+// ─── ICONS (local — nav bar only) ────────────────────────────────
 const UploadIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>;
 const IconBolt    = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>;
 const IconGroup   = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
@@ -235,39 +223,8 @@ const IconMail    = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0
 const IconAdmin   = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M12 14c-5 0-8 2-8 3v1h16v-1c0-1-3-3-8-3z"/><path d="M18 3l2 2-8 8-4-4 2-2 2 2z" strokeWidth="1.5"/></svg>;
 const IconMore    = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>;
 
-// ─── DISPLAY NAME FIXER ──────────────────────────────────────────
-const BAD_GROUP_NAMES = new Set(["STANDARD","Standard","HOUSE ACCOUNTS","House Accounts","SILVER","GOLD","PLATINUM","DIAMOND","TOP 100","Silver","Gold","Platinum","Diamond","Top 100",""]);
-const cleanParentName = (name) => {
-  if (!name) return "";
-  return name.replace(/\s*:\s*Master-CM\d+$/i, "").trim();
-};
-const fixGroupName = (g) => {
-  if (!g) return "Unknown";
-  const authName = PARENT_NAMES[g.id];
-  if (authName && !BAD_GROUP_NAMES.has(authName)) return authName;
-  const cleaned = cleanParentName(g.name);
-  if (cleaned && !BAD_GROUP_NAMES.has(cleaned)) return cleaned;
-  if (g.children?.length === 1) return g.children[0].name;
-  if (g.children?.length > 1) return `${g.children[0].name} (+${g.children.length-1})`;
-  return cleaned || g.id || "Unknown";
-};
-
-// ─── SMALL COMPONENTS ────────────────────────────────────────────
-const Pill = ({l,v,c}) => <div><span style={{fontSize:9,textTransform:"uppercase",color:T.t3}}>{l} </span><span className="m" style={{fontSize:12,fontWeight:700,color:c}}>{v}</span></div>;
-const Stat = ({l,v,c}) => <div style={{background:T.s2,borderRadius:8,padding:"8px 10px",textAlign:"center"}}><div style={{fontSize:9,textTransform:"uppercase",color:T.t3,marginBottom:2}}>{l}</div><div className="m" style={{fontSize:14,fontWeight:700,color:c}}>{v}</div></div>;
-const Bar = ({pct, color}) => <div style={{width:"100%",height:6,borderRadius:3,background:T.s3,overflow:"hidden"}}><div className="bar-g" style={{height:"100%",borderRadius:3,width:`${Math.min(Math.max(pct,0),100)}%`,background:color||`linear-gradient(90deg,${T.blue},${T.cyan})`}}/></div>;
-
-// ─── SHARED ACCOUNT IDENTITY ─────────────────────────────────────
-const AccountId = ({name, gName, size="md", color}:{name:string, gName?:string, size?:"sm"|"md"|"lg", color?:string}) => {
-  const showParent = gName && gName !== name && gName.toLowerCase() !== name.toLowerCase();
-  const fs = size==="sm"?11:size==="lg"?15:12;
-  const fw = size==="sm"?500:size==="lg"?700:600;
-  const pfs = size==="sm"?9:size==="lg"?11:10;
-  return <div style={{minWidth:0,overflow:"hidden"}}>
-    <div style={{fontSize:fs,fontWeight:fw,color:color||T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{name}</div>
-    {showParent&&<div style={{fontSize:pfs,color:T.cyan,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginTop:1}}>↳ {gName}</div>}
-  </div>;
-};
+// Back, Chev, Pill, Stat, Bar, AccountId, fixGroupName, cleanParentName, BAD_GROUP_NAMES
+// are all imported from @/components/primitives above.
 
 // ─── SKU PRICING (2025 Kerr Accelerate Formulary +3% for 2026) ──
 // [sku, desc, cat, stdWS, stdMSRP, diaWS, diaMSRP, platWS, platMSRP, goldWS, goldMSRP, silvWS, silvMSRP]

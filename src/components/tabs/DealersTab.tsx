@@ -3,29 +3,11 @@
 import { useState, useMemo } from "react";
 import { T } from "@/lib/tokens";
 import { $$, $f, pc } from "@/lib/format";
+import { BADGER, DEALERS } from "@/lib/data";
+import { Back, Chev, Stat, AccountId } from "@/components/primitives";
 
 let SCHEIN_REPS: {fsc:any[], es:any[]} = {fsc:[], es:[]};
-let BADGER: Record<string, any> = {};
-let DEALERS: Record<string, string> = {};
-try { BADGER = require("@/data/badger-lookup.json"); } catch(e) {}
-try { DEALERS = require("@/data/dealers").DEALERS; } catch(e) {}
 try { SCHEIN_REPS = require("@/data/schein-ct-reps.json"); } catch(e) {}
-
-let OVERLAYS_REF: any = { nameOverrides:{}, contacts:{}, fscReps:{}, activityLogs:{}, research:{}, dealerOverrides:{}, groups:{}, groupDetaches:[], groupMoves:{} };
-
-const Stat = ({l,v,c}) => <div style={{background:T.s2,borderRadius:8,padding:"8px 10px",textAlign:"center"}}><div style={{fontSize:9,textTransform:"uppercase",color:T.t3,marginBottom:2}}>{l}</div><div className="m" style={{fontSize:14,fontWeight:700,color:c}}>{v}</div></div>;
-const Back = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>;
-const Chev = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{opacity:.4,flexShrink:0}}><path d="M9 18l6-6-6-6"/></svg>;
-const AccountId = ({name, gName, size="md", color}:{name:string, gName?:string, size?:"sm"|"md"|"lg", color?:string}) => {
-  const showParent = gName && gName !== name && gName.toLowerCase() !== name.toLowerCase();
-  const fs = size==="sm"?11:size==="lg"?15:12;
-  const fw = size==="sm"?500:size==="lg"?700:600;
-  const pfs = size==="sm"?9:size==="lg"?11:10;
-  return <div style={{minWidth:0,overflow:"hidden"}}>
-    <div style={{fontSize:fs,fontWeight:fw,color:color||T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{name}</div>
-    {showParent&&<div style={{fontSize:pfs,color:T.cyan,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginTop:1}}>↳ {gName}</div>}
-  </div>;
-};
 
 // ─── STANDALONE CALCULATOR TAB ───────────────────────────────────
 // ─── DASHBOARD TAB ───────────────────────────────────────────────
