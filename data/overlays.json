@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-23T03:41:41.996Z",
+  "lastUpdated": "2026-03-23T04:16:23.167Z",
   "migratedFrom": "patches.json v1.0",
   "groups": {
     "Master-RDP-001": {
@@ -109,6 +109,37 @@
       ],
       "note": "Auto-saved from Deep Research 3/22/2026",
       "savedAt": "2026-03-22T00:00:00.000Z"
+    },
+    "Master-CM491938": {
+      "contactName": "Dr. Helene Strazza",
+      "phone": "(203) 323-5439",
+      "email": "h***@allaboutkidsteeth.com",
+      "website": "https://www.allaboutkidspd.com",
+      "contacts": [
+        {
+          "name": "Dr. Helene Strazza",
+          "role": "Founder & Chief Dentist (Senior Dentist post-acquisition)",
+          "email": "h***@allaboutkidsteeth.com",
+          "phone": "(203) 323-5439",
+          "tier": 1
+        },
+        {
+          "name": "Dr. Michael Skolnick",
+          "role": "CEO & Founder, Abra Health Group (DSO Parent)",
+          "email": null,
+          "phone": null,
+          "tier": 3
+        },
+        {
+          "name": "Emmy Ansinelli",
+          "role": "Spokesperson / Media Contact, Abra Health Group",
+          "email": "eansinelli@abrahealth.com",
+          "phone": null,
+          "tier": 3
+        }
+      ],
+      "savedAt": "2026-03-23T04:16:22.935Z",
+      "practiceName": "ALL ABOUT KIDS PEDIATRIC DENTISTRY"
     }
   },
   "fscReps": {},
