@@ -4224,8 +4224,158 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
     </div>;
   }
 
+  // ── FSC Co-call Planner state ──
+  const [cocallDist, setCocallDist] = useState<string|null>(null);
+  const [cocallOpen, setCocallOpen] = useState<boolean>(() => {
+    try { return localStorage.getItem("cocall_open") === "true"; } catch { return false; }
+  });
+
   // ── Top-level: 4 distributor cards + All Other ──
   return <div style={{padding:"16px 16px 0",paddingBottom:80}}>
+    {/* ── FSC CO-CALL PLANNER ── */}
+    <div style={{background:`linear-gradient(135deg,${T.s1},rgba(167,139,250,.06))`,border:`1px solid rgba(167,139,250,.2)`,borderRadius:16,padding:14,marginBottom:14}}>
+      <button onClick={()=>{const next=!cocallOpen;setCocallOpen(next);try{localStorage.setItem("cocall_open",String(next));}catch{}}} style={{width:"100%",display:"flex",justifyContent:"space-between",alignItems:"center",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit",padding:0}}>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <span style={{fontSize:16}}>🤝</span>
+          <div style={{textAlign:"left"}}>
+            <div style={{fontSize:13,fontWeight:700,color:T.purple}}>FSC Co-Call Planner</div>
+            <div style={{fontSize:10,color:T.t3}}>Build a hit list to share with your dealer rep</div>
+          </div>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T.t4} strokeWidth="2" style={{transform:cocallOpen?"rotate(180deg)":"none",transition:"transform .2s"}}><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+
+      {cocallOpen&&<div style={{marginTop:12}}>
+        {/* Distributor picker */}
+        <div style={{display:"flex",gap:6,marginBottom:12}}>
+          {DIST_ORDER.map(d=>(
+            <button key={d} onClick={()=>setCocallDist(cocallDist===d?null:d)} style={{
+              flex:1,padding:"8px 0",borderRadius:8,border:"none",fontFamily:"inherit",fontSize:11,fontWeight:700,cursor:"pointer",
+              background:cocallDist===d?(DIST_COLORS[d]||T.s2):T.s2,
+              color:cocallDist===d?(DIST_TEXT[d]||T.t1):T.t3,
+              borderWidth:1,borderStyle:"solid",
+              borderColor:cocallDist===d?(DIST_BORDER[d]||T.b1):T.b1,
+            }}>{d}</button>
+          ))}
+        </div>
+
+        {cocallDist&&(()=>{
+          // Build ranked co-call list for selected distributor
+          const B = typeof BADGER!=='undefined'?BADGER:{};
+          const distAccts = scored
+            .filter((a:any) => a.dealer === cocallDist)
+            .filter((a:any) => (a.pyQ?.["1"]||0) > 100 || (a.cyQ?.["1"]||0) > 100) // has meaningful history
+            .map((a:any) => {
+              const py = a.pyQ?.["1"]||0, cy = a.cyQ?.["1"]||0, gap = py - cy;
+              const deadProducts = (a.products||[]).filter((p:any) => (p.py1||0) > 100 && (p.cy1||0) === 0);
+              // Co-call score: gap matters most, but also prioritize accounts with prior purchases (FSC has a relationship)
+              let ccScore = 0;
+              if(gap > 5000) ccScore += 40;
+              else if(gap > 2000) ccScore += 25;
+              else if(gap > 500) ccScore += 15;
+              else if(gap > 0) ccScore += 5;
+              if(py > 5000) ccScore += 15; // big account = more leverage
+              else if(py > 2000) ccScore += 10;
+              else if(py > 500) ccScore += 5;
+              if(deadProducts.length > 0) ccScore += deadProducts.length * 5; // lost products = talking point
+              if(a.visitPriority === "NOW") ccScore += 10;
+              else if(a.visitPriority === "SOON") ccScore += 5;
+              if(cy > 0 && gap > 0) ccScore += 8; // still buying but down = winnable
+              return {...a, ccScore, gap, deadProducts};
+            })
+            .filter((a:any) => a.ccScore > 0 && a.gap > 0)
+            .sort((a:any,b:any) => b.ccScore - a.ccScore)
+            .slice(0, 10);
+
+          // Get FSC info for this distributor
+          const fscEntries: any[] = [];
+          Object.entries(OVERLAYS_REF.fscReps||{}).forEach(([gId, distMap]:any) => {
+            if(distMap[cocallDist]) {
+              const fsc = distMap[cocallDist];
+              const g = (groups||[]).find((g:any)=>g.id===gId);
+              if(fsc.name && !fscEntries.find((e:any)=>e.name===fsc.name)) {
+                fscEntries.push({...fsc, groupName: g?.name||gId});
+              }
+            }
+          });
+          // Also check localStorage
+          distAccts.forEach((a:any) => {
+            try {
+              const lsk = `groupFSC:${a.gId}:${cocallDist}`;
+              const local = JSON.parse(localStorage.getItem(lsk)||"null");
+              if(local?.name && !fscEntries.find((e:any)=>e.name===local.name)) fscEntries.push(local);
+            } catch {}
+          });
+
+          const totalGap = distAccts.reduce((s:number,a:any)=>s+a.gap,0);
+
+          if(distAccts.length === 0) return <div style={{fontSize:11,color:T.t4,textAlign:"center",padding:"12px 0"}}>No down accounts for {cocallDist} with enough history for a co-call.</div>;
+
+          return <div>
+            {/* FSC contact if known */}
+            {fscEntries.length>0&&<div style={{background:"rgba(167,139,250,.06)",border:"1px solid rgba(167,139,250,.12)",borderRadius:10,padding:"8px 12px",marginBottom:10,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div><div style={{fontSize:10,color:T.purple,fontWeight:600}}>{cocallDist} FSC: {fscEntries[0].name}</div>{fscEntries[0].phone&&<div style={{fontSize:9,color:T.t3}}>{fscEntries[0].phone}</div>}</div>
+              {fscEntries[0].phone&&<a href={`tel:${fscEntries[0].phone.replace(/\D/g,"")}`} style={{background:"rgba(167,139,250,.1)",border:"1px solid rgba(167,139,250,.2)",borderRadius:6,padding:"3px 10px",fontSize:10,fontWeight:600,color:T.purple,textDecoration:"none"}}>Call</a>}
+            </div>}
+
+            {/* Summary */}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+              <div style={{fontSize:10,color:T.t4}}>Top {distAccts.length} co-call targets · {$$(totalGap)} gap</div>
+              <button onClick={()=>{
+                // Copy shareable text to clipboard
+                const lines = distAccts.slice(0,8).map((a:any,i:number) => {
+                  const dp = a.deadProducts?.length>0 ? ` (lost: ${a.deadProducts.map((p:any)=>p.n).slice(0,2).join(", ")})` : "";
+                  return `${i+1}. ${a.name} — ${a.city} — gap $${Math.round(a.gap).toLocaleString()}${dp}`;
+                });
+                const txt = `${cocallDist} Co-Call Targets (${new Date().toLocaleDateString()}):\n${lines.join("\n")}\n\nTotal gap: $${Math.round(totalGap).toLocaleString()}`;
+                navigator.clipboard?.writeText(txt).then(()=>{}).catch(()=>{});
+              }} style={{background:"rgba(167,139,250,.08)",border:"1px solid rgba(167,139,250,.15)",borderRadius:6,padding:"3px 10px",fontSize:9,fontWeight:700,color:T.purple,cursor:"pointer",fontFamily:"inherit"}}>
+                📋 Copy List
+              </button>
+            </div>
+
+            {/* Ranked accounts */}
+            {distAccts.map((a:any,i:number)=>{
+              const py=a.pyQ?.["1"]||0, cy=a.cyQ?.["1"]||0;
+              const chipColor = a.visitPriority==="NOW"?"#f87171":a.visitPriority==="SOON"?"#fbbf24":"#34d399";
+              return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
+                style={{animationDelay:`${i*25}ms`,width:"100%",textAlign:"left",background:T.s2,border:`1px solid ${a.gap>2000?"rgba(248,113,113,.15)":T.b1}`,borderRadius:10,padding:"10px 12px",marginBottom:6,cursor:"pointer",fontFamily:"inherit"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6,flex:1,minWidth:0}}>
+                    <span style={{fontSize:11,fontWeight:800,color:T.purple,flexShrink:0,width:18}}>{i+1}</span>
+                    <div style={{fontSize:12,fontWeight:600,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
+                    <span style={{flexShrink:0,fontSize:7,fontWeight:700,borderRadius:3,padding:"1px 4px",background:`${chipColor}20`,color:chipColor}}>{a.visitPriority}</span>
+                  </div>
+                  <span style={{fontSize:12,fontWeight:700,color:T.red,fontFamily:"'JetBrains Mono',monospace",flexShrink:0,marginLeft:8}}>-{$$(a.gap)}</span>
+                </div>
+                <div style={{paddingLeft:24}}>
+                  <div style={{fontSize:10,color:T.t3}}>{a.city}{a.gName&&a.gName!==a.name?` · ${a.gName.slice(0,25)}`:""} · PY {$$(py)} → CY {$$(cy)}</div>
+                  {a.deadProducts?.length>0&&<div style={{fontSize:9,color:T.amber,marginTop:2}}>Lost: {a.deadProducts.slice(0,3).map((p:any)=>p.n).join(", ")}</div>}
+                </div>
+              </button>;
+            })}
+
+            {/* Google Maps route for top accounts */}
+            {(()=>{
+              const withGps = distAccts.filter((a:any)=>B[a.id]?.lat).slice(0,8);
+              if(withGps.length<2) return null;
+              const addrOf = (a:any) => {
+                const addr = B[a.id]?.address || "";
+                if(addr && /^\d/.test(addr)) return addr;
+                return `${a.city||""}, ${a.st||"CT"}`;
+              };
+              const origin = encodeURIComponent("Thomaston, CT");
+              const dest = encodeURIComponent(addrOf(withGps[withGps.length-1]));
+              const waypoints = withGps.slice(0,-1).map((a:any)=>encodeURIComponent(addrOf(a))).join("|");
+              const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&waypoints=${waypoints}&travelmode=driving`;
+              return <a href={url} target="_blank" rel="noopener" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,width:"100%",padding:"10px 0",borderRadius:10,border:"none",background:`linear-gradient(90deg,${T.purple},${T.blue})`,color:"#fff",fontSize:12,fontWeight:700,textDecoration:"none",marginTop:8,fontFamily:"inherit"}}>
+                🗺️ Route Top {withGps.length} in Maps
+              </a>;
+            })()}
+          </div>;
+        })()}
+      </div>}
+    </div>
     {/* Territory total summary */}
     {(()=>{
       const totalCY=scored.reduce((s,a)=>s+(a.cyQ?.["1"]||0),0);
