@@ -1,154 +1,44 @@
 {
-  "schemaVersion": 2,
-  "lastUpdated": "2026-03-23T08:00:00Z",
-  "migratedFrom": "patches.json v1.0",
-  "groups": {
-    "Master-MERGE-CM122852": {
-      "id": "Master-MERGE-CM122852",
-      "name": "DENTAL CARE OF STAMFORD",
-      "tier": "Standard",
-      "class2": "Private Practice",
-      "note": "Auto-merged: same address (1500 Summer St, Stamford). Dental Care of Stamford + Dental Care Orthodontics.",
-      "childIds": [
-        "Master-CM122852",
-        "Master-CM106751"
-      ],
-      "createdAt": "2026-03-23T02:00:00.000Z",
-      "updatedAt": "2026-03-23T02:00:00.000Z"
-    },
-    "Master-MERGE-CM920073": {
-      "id": "Master-MERGE-CM920073",
-      "name": "DENTAL ASSOCIATES",
-      "tier": "Standard",
-      "class2": "Private Practice",
-      "note": "Auto-merged: same address (291 Farmington Ave, Farmington). Dental Associates + Dental Associates - Steve Hall.",
-      "childIds": [
-        "Master-CM920073",
-        "Master-CM168402"
-      ],
-      "createdAt": "2026-03-23T02:00:00.000Z",
-      "updatedAt": "2026-03-23T02:00:00.000Z"
-    }
-  },
-  "groupDetaches": [
-    {
-      "childId": "Master-CM300371",
-      "fromGroupId": "Master-CM048310",
-      "newGroupId": "Master-CM300371-standalone",
-      "newGroupName": "ASPEN DENTAL",
-      "reason": "Bad MDM parent assignment \u2014 Aspen Torrington incorrectly parented under Columbia Dental"
-    }
-  ],
-  "groupMoves": {},
-  "nameOverrides": {
-    "Master-CM116929": "WELLS STREET DENTISTRY",
-    "Master-CM17699391": "FLANDERS DENTAL STUDIO",
-    "Master-CM1234238": "Dr. Dental: Dentistry & Braces"
-  },
+  "nameOverrides": {},
   "contacts": {
-    "Master-CM231113": {
-      "contactName": "Brittany Burroughs",
-      "email": "bburroughs@coastalctdental.com",
-      "phone": null,
-      "address": "112 Cross Rd, Waterford, CT 06385",
-      "website": null,
-      "contacts": [],
-      "note": "PM at Coastal Connecticut Dentistry \u2014 part of Resolute Dental Partners",
-      "savedAt": "2026-03-22T00:00:00.000Z"
-    },
-    "Master-CM116929": {
-      "contactName": "Christine Lague",
-      "email": "clague@westerlydentists.com",
-      "phone": null,
-      "address": "11 Wells Street, Westerly, RI",
-      "website": null,
-      "contacts": [],
-      "note": "PM at Wells Street Dentistry \u2014 part of Resolute Dental Partners",
-      "savedAt": "2026-03-22T00:00:00.000Z"
-    },
-    "Master-CM413476": {
-      "contactName": "Dr. Sheikh M. Ilyas",
-      "email": "info@newenglanddentalllc.com",
-      "phone": "(203) 790-0111",
-      "address": null,
-      "website": "https://newenglanddentalllc.com",
+    "Master-CM258928": {
+      "contactName": "Philip R. Mascia, DDS",
+      "phone": "203-775-3344",
+      "email": null,
+      "website": "https://www.danburyendo.com",
       "contacts": [
         {
-          "name": "Dr. Sheikh M. Ilyas",
-          "role": "Owner/DDS",
-          "email": "info@newenglanddentalllc.com",
-          "phone": "(203) 790-0111",
+          "name": "Philip R. Mascia, DDS",
+          "role": "Owner / Lead Endodontist",
+          "email": null,
+          "phone": "203-775-3344",
           "tier": 1
         },
         {
-          "name": "Dr. Hamed Vaziri",
-          "role": "Associate Dentist",
+          "name": "Ruchika Joon, DDS",
+          "role": "Associate Endodontist (Diplomate, American Board of Endodontics)",
           "email": null,
-          "phone": "(203) 790-0111",
+          "phone": "203-775-3344",
+          "tier": 2
+        },
+        {
+          "name": "Austin A. Ramsey, DDS",
+          "role": "Associate Endodontist (Board-Eligible)",
+          "email": null,
+          "phone": "203-775-3344",
           "tier": 2
         }
       ],
-      "note": "Auto-saved from Deep Research 3/22/2026",
-      "savedAt": "2026-03-22T00:00:00.000Z"
-    },
-    "Master-CM491938": {
-      "contactName": "Dr. Helene Strazza",
-      "phone": "(203) 323-5439",
-      "email": "h***@allaboutkidsteeth.com",
-      "website": "https://www.allaboutkidspd.com",
-      "contacts": [
-        {
-          "name": "Dr. Helene Strazza",
-          "role": "Founder & Chief Dentist (Senior Dentist post-acquisition)",
-          "email": "h***@allaboutkidsteeth.com",
-          "phone": "(203) 323-5439",
-          "tier": 1
-        },
-        {
-          "name": "Dr. Michael Skolnick",
-          "role": "CEO & Founder, Abra Health Group (DSO Parent)",
-          "email": null,
-          "phone": null,
-          "tier": 3
-        },
-        {
-          "name": "Emmy Ansinelli",
-          "role": "Spokesperson / Media Contact, Abra Health Group",
-          "email": "eansinelli@abrahealth.com",
-          "phone": null,
-          "tier": 3
-        }
-      ],
-      "savedAt": "2026-03-23T04:16:22.935Z",
-      "practiceName": "ALL ABOUT KIDS PEDIATRIC DENTISTRY"
-    },
-    "Master-CM9835082": {
-      "contactName": "Dr. Yulian Aminov",
-      "phone": "(203) 367-0400",
-      "email": null,
-      "website": "https://downtowndentalct.com",
-      "contacts": [
-        {
-          "name": "Dr. Yulian Aminov",
-          "role": "Owner/DDS",
-          "email": null,
-          "phone": "(203) 367-0400",
-          "tier": 1
-        },
-        {
-          "name": "Dr. Sanetta Aminov",
-          "role": "Owner/DDS",
-          "email": null,
-          "phone": "(203) 367-0400",
-          "tier": 1
-        }
-      ],
-      "savedAt": "2026-03-23T06:07:30.485Z",
-      "practiceName": "DOWNTOWN DDS"
+      "savedAt": "2026-03-23T13:38:53.558Z",
+      "practiceName": "GREATER DANBURY CENTER FOR ENDODONTICS"
     }
   },
   "fscReps": {},
   "activityLogs": {},
   "research": {},
-  "dealerOverrides": {}
+  "dealerOverrides": {},
+  "groups": {},
+  "groupDetaches": [],
+  "groupMoves": {},
+  "lastUpdated": "2026-03-23T13:38:53.815Z"
 }
