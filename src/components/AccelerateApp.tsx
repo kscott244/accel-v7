@@ -4346,7 +4346,7 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
               // Count how many of this group's locations are on this distributor
               const distLocs = isMultiLoc ? parentGroup.children.filter((c:any)=>c.dealer===cocallDist).length : 0;
               return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
-                style={{animationDelay:`${i*25}ms`,width:"100%",textAlign:"left",background:T.s2,border:`1px solid ${a.gap>2000?"rgba(248,113,113,.15)":T.b1}`,borderRadius:12,padding:"12px 14px",marginBottom:8,cursor:"pointer",fontFamily:"inherit"}}>
+                style={{animationDelay:`${i*25}ms`,width:"100%",textAlign:"left",background:T.s2,border:`1px solid ${a.gap>2000?"rgba(248,113,113,.15)":T.b1}`,borderLeft:isMultiLoc?`3px solid ${T.cyan}`:`1px solid ${a.gap>2000?"rgba(248,113,113,.15)":T.b1}`,borderRadius:12,padding:"12px 14px",marginBottom:8,cursor:"pointer",fontFamily:"inherit"}}>
                 {/* Row 1: Rank + Name + Priority + Gap */}
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:5}}>
                   <div style={{display:"flex",alignItems:"center",gap:7,flex:1,minWidth:0}}>
