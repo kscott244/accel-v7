@@ -1777,6 +1777,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
                   textDecoration:done?"line-through":"none",color:done?T.t3:T.t1}}>{a.name}</div>
+                {a.gName&&a.gName!==a.name&&<div style={{fontSize:9,color:T.cyan,marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontWeight:600,letterSpacing:".2px"}}>{a.gName}</div>}
                 <div style={{fontSize:10,color:T.t3,marginTop:1}}>{a.city}, {a.st} · Ask <span style={{color:T.amber,fontWeight:700}}>{$f(a.ask)}</span> · {Math.round(a.prob*100)}% likely</div>
               {a.clusterCount>=2&&<div style={{display:"flex",alignItems:"center",gap:8,marginTop:4}}>
                 <div style={{fontSize:9,color:T.cyan}}>📍 {a.clusterCount} other accounts nearby</div>
@@ -1823,6 +1824,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
                 textDecoration:done?"line-through":"none",color:done?T.t3:T.t1}}>{a.name}</div>
+              {a.gName&&a.gName!==a.name&&<div style={{fontSize:9,color:T.cyan,marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontWeight:600,letterSpacing:".2px"}}>{a.gName}</div>}
               <div style={{fontSize:10,color:T.t3,marginTop:1}}>
                 {isDark
                   ? <span style={{color:T.red}}>⚠ Gone dark — </span>
