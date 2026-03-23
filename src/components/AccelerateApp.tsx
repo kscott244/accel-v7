@@ -564,6 +564,44 @@ function AppInner() {
 
   const totalAdjQ1 = adjs.reduce((s,a) => s + a.credited, 0);
 
+  // Grouped Private: single-location groups sharing an address across different dealers
+  const groupedPrivates = useMemo(() => {
+    if (!groups) return [];
+    const norm = (s:string) => s?.toLowerCase()
+      .replace(/[.,#()]/g,'')
+      .replace(/\bstreet\b/g,'st').replace(/\bavenue\b/g,'ave').replace(/\broad\b/g,'rd')
+      .replace(/\bdrive\b/g,'dr').replace(/\bboulevard\b/g,'blvd')
+      .replace(/\s+/g,' ').trim() || '';
+    const map: Record<string,any[]> = {};
+    groups.forEach((g:any) => {
+      if (g.locs !== 1) return;
+      const c = (g.children||[])[0];
+      if (!c?.addr) return;
+      const key = norm(`${c.addr} ${c.city||''} ${c.st||''}`);
+      if (key.length < 8) return;
+      if (!map[key]) map[key] = [];
+      map[key].push(g);
+    });
+    return Object.values(map)
+      .filter(gs => gs.length >= 2)
+      .map(gs => {
+        const sorted = [...gs].sort((a:any,b:any) => (b.pyQ?.["1"]||0) - (a.pyQ?.["1"]||0));
+        const c0 = sorted[0].children?.[0];
+        const dealers = [...new Set(gs.map((g:any) => g.children?.[0]?.dealer || 'All Other'))];
+        const py1 = gs.reduce((s:number,g:any) => s+(g.pyQ?.["1"]||0), 0);
+        const cy1 = gs.reduce((s:number,g:any) => s+(g.cyQ?.["1"]||0), 0);
+        return {
+          id: `gp-${sorted[0].id}`, name: c0?.name || sorted[0].name,
+          addr: c0?.addr||'', city: c0?.city||'', st: c0?.st||'',
+          locs: 1, dealers, _groups: gs,
+          pyQ: {"1":py1}, cyQ: {"1":cy1},
+          _py1: py1, _cy1: cy1, _gap: py1-cy1, _ret: py1>0?cy1/py1:1, _locs: 1,
+          isGroupedPrivate: true, class2: "Private Practice",
+          tier: c0?.tier||"Standard",
+        };
+      });
+  }, [groups]);
+
   // Compute Q1 totals from data
   const q1CYFromData = useMemo(() => {
     if (!groups) return 0;
@@ -690,7 +728,7 @@ function AppInner() {
         const goAcctFn = (a:any, from?:any) => setView({type:"acct", data:a, from});
         return <>
           {!view && tab==="today" && <DashboardTab scored={scored} goAcct={goSmartFn} q1CY={q1CY} q1Gap={q1Gap} q1Att={q1Att} adjCount={adjs.length} totalAdj={totalAdjQ1} groups={groups||[]} goGroup={goGroupFn}/>}
-          {!view && tab==="groups" && <GroupsTab groups={groups||[]} goGroup={goGroupFn} filt={gFilt} setFilt={setGFilt} search={gSearch} setSearch={setGSearch}/>}
+          {!view && tab==="groups" && <GroupsTab groups={groups||[]} goGroup={goGroupFn} filt={gFilt} setFilt={setGFilt} search={gSearch} setSearch={setGSearch} groupedPrivates={groupedPrivates}/>}
           {!view && tab==="map" && <MapTab/>}
           {!view && tab==="calc" && <DashTab groups={groups||[]} q1CY={q1CY} q1Att={q1Att} q1Gap={q1Gap} scored={scored} goAcct={goSmartFn}/>}
           {!view && tab==="est" && <EstTab pct={estPct} setPct={setEstPct} q1CY={q1CY} groups={groups||[]} goAcct={goSmartFn}/>}

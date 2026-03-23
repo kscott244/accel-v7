@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { T } from "@/lib/tokens";
 import { $$ } from "@/lib/format";
+import CPID_MERGES from "@/data/cpid-pending-merges.json";
+import CPID_REVIEW from "@/data/cpid-review-queue.json";
 
 let BADGER: Record<string, any> = {};
 try { BADGER = require("@/data/badger-lookup.json"); } catch(e) {}
@@ -49,6 +51,13 @@ function AdminTab({groups, scored, overlays, saveOverlays}:{groups:any[], scored
   const [nameSearch, setNameSearch] = useState("");
   const [nameAccount, setNameAccount] = useState<any>(null);
   const [nameNewValue, setNameNewValue] = useState("");
+
+  // Dupes view
+  const [dupesView, setDupesView] = useState<"auto"|"review"|"live">("auto");
+  const [reviewPage, setReviewPage] = useState(0);
+  const [skippedMergeIds, setSkippedMergeIds] = useState<Record<string,boolean>>(() => {
+    try { return JSON.parse(localStorage.getItem("cpid_skipped")||"{}"); } catch { return {}; }
+  });
 
   // Contact form
   const [contactSearch, setContactSearch] = useState("");
@@ -451,10 +460,133 @@ function AdminTab({groups, scored, overlays, saveOverlays}:{groups:any[], scored
 
     {/* ── DUPLICATES REVIEW SECTION ── */}
     {section==="dupes"&&<div>
-      <div style={{fontSize:14,fontWeight:700,color:T.t1,marginBottom:4}}>Duplicate Review</div>
-      <div style={{fontSize:11,color:T.t3,marginBottom:14}}>Accounts at the same address in different groups. Merge the ones that are the same office — skip shared buildings with different practices.</div>
-      {(()=>{
-        // Build address-matched candidates from live scored data
+      <div style={{fontSize:14,fontWeight:700,color:T.t1,marginBottom:4}}>Merge Queue</div>
+      <div style={{fontSize:11,color:T.t3,marginBottom:12}}>AI-scored duplicate accounts at the same address. Approve to merge, skip to dismiss.</div>
+
+      {/* Sub-nav */}
+      <div style={{display:"flex",gap:3,marginBottom:14,background:T.s1,borderRadius:10,padding:3}}>
+        {([["auto",`Auto (${(CPID_MERGES as any[]).filter(p=>!Object.keys(OVERLAYS_REF.groups||{}).includes(p.id)&&!skippedMergeIds[p.id]).length})`],["review",`Review (${(CPID_REVIEW as any[]).length})`],["live","Live Scan"]] as [string,string][]).map(([k,label])=>(
+          <button key={k} onClick={()=>{setDupesView(k as any);setReviewPage(0);}} style={{flex:1,padding:"6px 4px",borderRadius:8,border:"none",background:dupesView===k?"rgba(79,142,247,.2)":"transparent",color:dupesView===k?T.blue:T.t3,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>{label}</button>
+        ))}
+      </div>
+
+      {/* ── AUTO-MERGE QUEUE ── */}
+      {dupesView==="auto"&&(()=>{
+        const applied = Object.keys(OVERLAYS_REF.groups||{});
+        const pending = (CPID_MERGES as any[]).filter(p=>!applied.includes(p.id)&&!skippedMergeIds[p.id]);
+        const skipPair = (id:string) => {
+          setSkippedMergeIds(prev=>{
+            const next={...prev,[id]:true};
+            try{localStorage.setItem("cpid_skipped",JSON.stringify(next));}catch{}
+            return next;
+          });
+        };
+        const approvePair = (p:any) => {
+          const grp={id:p.id,name:p.name,class2:p.class2||"Private Practice",childIds:p.childIds,tier:"Standard",source:"auto-merge",score:p.score,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
+          const next={...OVERLAYS_REF,groups:{...(OVERLAYS_REF.groups||{}),[p.id]:grp}};
+          saveOverlays(next).then((ok:boolean)=>{if(ok)showToast(`✅ Merged: ${p.name}`);else showToast("❌ Save failed",false);});
+        };
+        const applyAll = () => {
+          if(pending.length===0){showToast("All already applied");return;}
+          const newGroups={...(OVERLAYS_REF.groups||{})};
+          pending.forEach((p:any)=>{newGroups[p.id]={id:p.id,name:p.name,class2:p.class2||"Private Practice",childIds:p.childIds,tier:"Standard",source:"auto-merge",score:p.score,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};});
+          const next={...OVERLAYS_REF,groups:newGroups};
+          setSaving(true);
+          saveOverlays(next).then((ok:boolean)=>{setSaving(false);if(ok)showToast(`✅ Applied ${pending.length} auto-merges`);else showToast("❌ Apply failed",false);});
+        };
+        const doneCount=(CPID_MERGES as any[]).length-pending.length;
+        return <div>
+          {doneCount>0&&<div style={{fontSize:10,color:T.green,marginBottom:8}}>✓ {doneCount} already applied</div>}
+          {pending.length>0&&<button onClick={applyAll} disabled={saving} style={{width:"100%",padding:"10px 0",borderRadius:10,border:"none",background:"rgba(52,211,153,.15)",color:T.green,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",marginBottom:12,border:"1px solid rgba(52,211,153,.3)"}}>
+            {saving?"Applying...":(`Apply All ${pending.length} Recommended Merges`)}
+          </button>}
+          {pending.length===0&&<div style={{fontSize:12,color:T.t4,textAlign:"center",padding:"20px 0"}}>All auto-merges have been applied or skipped.</div>}
+          {pending.map((p:any,i:number)=>(
+            <div key={p.id} className="anim" style={{animationDelay:`${i*20}ms`,background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:12,marginBottom:8}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:12,fontWeight:700,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</div>
+                  <div style={{fontSize:10,color:T.cyan}}>{p.addr}</div>
+                </div>
+                <span style={{flexShrink:0,marginLeft:8,fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:6,background:p.score>=95?"rgba(52,211,153,.12)":"rgba(251,191,36,.1)",color:p.score>=95?T.green:T.amber,border:`1px solid ${p.score>=95?"rgba(52,211,153,.3)":"rgba(251,191,36,.25)"}`}}>
+                  {p.score}%
+                </span>
+              </div>
+              <div style={{display:"flex",gap:4,marginBottom:8}}>
+                <div style={{flex:1,padding:"6px 8px",background:T.s2,borderRadius:7}}>
+                  <div style={{fontSize:9,color:T.t4,marginBottom:2}}>Group A</div>
+                  <div style={{fontSize:10,fontWeight:600,color:T.t2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.groupAName}</div>
+                </div>
+                <div style={{flex:1,padding:"6px 8px",background:T.s2,borderRadius:7}}>
+                  <div style={{fontSize:9,color:T.t4,marginBottom:2}}>Group B</div>
+                  <div style={{fontSize:10,fontWeight:600,color:T.t2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.groupBName}</div>
+                </div>
+              </div>
+              <div style={{display:"flex",gap:6}}>
+                <button onClick={()=>approvePair(p)} disabled={saving} style={{flex:1,padding:"7px 0",borderRadius:8,border:"none",background:T.blue,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Approve</button>
+                <button onClick={()=>skipPair(p.id)} style={{padding:"7px 14px",borderRadius:8,border:`1px solid ${T.b1}`,background:"transparent",color:T.t3,fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>Skip</button>
+              </div>
+            </div>
+          ))}
+        </div>;
+      })()}
+
+      {/* ── REVIEW QUEUE ── */}
+      {dupesView==="review"&&(()=>{
+        const applied = Object.keys(OVERLAYS_REF.groups||{});
+        const pending = (CPID_REVIEW as any[]).filter((p:any)=>!applied.includes(p.groupA.id)&&!skippedMergeIds[p.groupA.id]);
+        const pageSize=20;
+        const page = pending.slice(reviewPage*pageSize,(reviewPage+1)*pageSize);
+        const approveReview = (p:any) => {
+          const betterName=(p.groupA.pyQ1>=p.groupB.pyQ1?p.groupA.name:p.groupB.name).replace(/:\s*Master-CM\d+$/i,'').trim();
+          const grp={id:p.groupA.id,name:betterName,class2:"Private Practice",childIds:[p.groupA.childId,p.groupB.childId],tier:"Standard",source:"review-merge",score:p.score,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
+          const next={...OVERLAYS_REF,groups:{...(OVERLAYS_REF.groups||{}),[p.groupA.id]:grp}};
+          saveOverlays(next).then((ok:boolean)=>{if(ok)showToast(`✅ Merged: ${betterName}`);else showToast("❌ Save failed",false);});
+        };
+        const skipReview = (id:string) => {
+          setSkippedMergeIds(prev=>{
+            const next={...prev,[id]:true};
+            try{localStorage.setItem("cpid_skipped",JSON.stringify(next));}catch{}
+            return next;
+          });
+        };
+        return <div>
+          <button disabled style={{width:"100%",padding:"9px 0",borderRadius:10,border:"1px solid rgba(120,120,160,.2)",background:"transparent",color:T.t4,fontSize:11,fontWeight:600,fontFamily:"inherit",marginBottom:12,cursor:"not-allowed"}}>
+            🤖 Research All Unknowns — Phase 2
+          </button>
+          <div style={{fontSize:10,color:T.t4,marginBottom:10}}>{pending.length} pairs pending · score 60–80 · review each individually</div>
+          {page.map((p:any,i:number)=>{
+            const cleanA=p.groupA.name.replace(/:\s*Master-CM\d+$/i,'').trim();
+            const cleanB=p.groupB.name.replace(/:\s*Master-CM\d+$/i,'').trim();
+            return <div key={p.groupA.id+p.groupB.id} className="anim" style={{animationDelay:`${i*15}ms`,background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:12,marginBottom:8}}>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+                <div style={{fontSize:10,color:T.cyan,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.groupA.addr}, {p.groupA.city} {p.groupA.st}</div>
+                <span style={{flexShrink:0,marginLeft:8,fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:5,background:"rgba(251,191,36,.1)",color:T.amber}}>{p.score}</span>
+              </div>
+              <div style={{display:"flex",gap:4,marginBottom:8}}>
+                <div style={{flex:1,padding:"5px 8px",background:T.s2,borderRadius:6}}>
+                  <div style={{fontSize:10,fontWeight:600,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{cleanA}</div>
+                  <div style={{fontSize:9,color:T.t4}}>PY {$$(p.groupA.pyQ1)}</div>
+                </div>
+                <div style={{flex:1,padding:"5px 8px",background:T.s2,borderRadius:6}}>
+                  <div style={{fontSize:10,fontWeight:600,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{cleanB}</div>
+                  <div style={{fontSize:9,color:T.t4}}>PY {$$(p.groupB.pyQ1)}</div>
+                </div>
+              </div>
+              <div style={{display:"flex",gap:6}}>
+                <button onClick={()=>approveReview(p)} disabled={saving} style={{flex:1,padding:"7px 0",borderRadius:8,border:"none",background:T.blue,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Approve</button>
+                <button onClick={()=>skipReview(p.groupA.id)} style={{padding:"7px 14px",borderRadius:8,border:`1px solid ${T.b1}`,background:"transparent",color:T.t3,fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>Skip</button>
+              </div>
+            </div>;
+          })}
+          {(reviewPage+1)*pageSize<pending.length&&<button onClick={()=>setReviewPage(p=>p+1)} style={{width:"100%",padding:"9px 0",borderRadius:10,border:`1px solid ${T.b1}`,background:"transparent",color:T.t3,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit",marginTop:4}}>
+            Load More ({pending.length-(reviewPage+1)*pageSize} remaining)
+          </button>}
+        </div>;
+      })()}
+
+      {/* ── LIVE SCAN ── */}
+      {dupesView==="live"&&(()=>{
         const normAddr = (a:string) => {
           if(!a) return '';
           let n = a.toLowerCase().trim();
@@ -474,75 +606,47 @@ function AdminTab({groups, scored, overlays, saveOverlays}:{groups:any[], scored
             addrMap[na].push({...a, addr});
           }
         });
-
-        // Filter to addresses with accounts in different groups
         const dismissed: Record<string,boolean> = (() => { try { return JSON.parse(localStorage.getItem("dupe_dismissed")||"{}"); } catch { return {}; } })();
         const merged: Record<string,boolean> = {};
-        // Check which are already merged in overlays
-        Object.values(overlays?.groups||{}).forEach((g:any) => {
-          (g.childIds||[]).forEach((cid:string) => { merged[cid] = true; });
-        });
-
+        Object.values(overlays?.groups||{}).forEach((g:any) => { (g.childIds||[]).forEach((cid:string) => { merged[cid] = true; }); });
         const candidates = Object.entries(addrMap)
           .filter(([addr, accts]) => {
             if(accts.length < 2) return false;
             const gids = new Set(accts.map((a:any) => a.gId));
             if(gids.size <= 1) return false;
-            // Skip if already merged
             if(accts.every((a:any) => merged[a.id])) return false;
-            // Skip dismissed
             if(dismissed[addr]) return false;
             return true;
           })
-          .map(([addr, accts]) => ({
-            addr,
-            accts: accts.sort((a:any,b:any) => (b.pyQ?.["1"]||0) - (a.pyQ?.["1"]||0)),
-            totalPY: accts.reduce((s:number,a:any) => s+(a.pyQ?.["1"]||0), 0),
-            totalCY: accts.reduce((s:number,a:any) => s+(a.cyQ?.["1"]||0), 0),
-          }))
-          .filter(c => Math.abs(c.totalPY) + Math.abs(c.totalCY) > 50)
-          .sort((a,b) => (b.totalPY+b.totalCY) - (a.totalPY+a.totalCY));
-
-        if(candidates.length === 0) return <div style={{fontSize:12,color:T.t4,textAlign:"center",padding:"30px 0"}}>No duplicate candidates found. All address matches have been reviewed or merged.</div>;
-
+          .map(([addr, accts]) => ({addr, accts: accts.sort((a:any,b:any)=>(b.pyQ?.["1"]||0)-(a.pyQ?.["1"]||0)), totalPY: accts.reduce((s:number,a:any)=>s+(a.pyQ?.["1"]||0),0), totalCY: accts.reduce((s:number,a:any)=>s+(a.cyQ?.["1"]||0),0)}))
+          .filter(c => Math.abs(c.totalPY)+Math.abs(c.totalCY)>50)
+          .sort((a,b)=>(b.totalPY+b.totalCY)-(a.totalPY+a.totalCY));
+        if(candidates.length===0) return <div style={{fontSize:12,color:T.t4,textAlign:"center",padding:"30px 0"}}>No live duplicates found.</div>;
         return <div>
-          <div style={{fontSize:10,color:T.t4,marginBottom:10}}>{candidates.length} address{candidates.length!==1?"es":""} with potential duplicates</div>
-          {candidates.map((c:any, ci:number) => (
+          <div style={{fontSize:10,color:T.t4,marginBottom:10}}>{candidates.length} address matches</div>
+          {candidates.map((c:any,ci:number)=>(
             <div key={c.addr} className="anim" style={{animationDelay:`${ci*30}ms`,background:T.s1,border:`1px solid ${T.b1}`,borderRadius:14,padding:14,marginBottom:10}}>
               <div style={{fontSize:10,color:T.cyan,marginBottom:8,fontWeight:600}}>📍 {c.addr}</div>
-              {c.accts.map((a:any) => {
-                const py=a.pyQ?.["1"]||0, cy=a.cyQ?.["1"]||0;
-                const isDSO = (groups||[]).find((g:any)=>g.id===a.gId)?.locs > 1;
+              {c.accts.map((a:any)=>{
+                const py=a.pyQ?.["1"]||0,cy=a.cyQ?.["1"]||0;
                 return <div key={a.id} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",background:T.s2,borderRadius:8,marginBottom:4}}>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:11,fontWeight:600,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}{isDSO?<span style={{fontSize:9,color:T.purple,marginLeft:4}}>DSO</span>:""}</div>
-                    <div style={{fontSize:9,color:T.t3}}>{a.dealer||"All Other"} · PY {$$(py)} / CY {$$(cy)} · {a.gName?.slice(0,25)}</div>
+                    <div style={{fontSize:11,fontWeight:600,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
+                    <div style={{fontSize:9,color:T.t3}}>{a.dealer||"All Other"} · PY {$$(py)} / CY {$$(cy)}</div>
                   </div>
                 </div>;
               })}
               <div style={{display:"flex",gap:6,marginTop:8}}>
                 <button onClick={()=>{
-                  // Merge all accounts at this address into one group
-                  const primary = c.accts.reduce((best:any,a:any) => ((a.pyQ?.["1"]||0)+(a.cyQ?.["1"]||0)) > ((best.pyQ?.["1"]||0)+(best.cyQ?.["1"]||0)) ? a : best, c.accts[0]);
-                  const childIds = c.accts.map((a:any) => a.id);
-                  const id = `Master-MERGE-${primary.id.split("-").pop()}`;
-                  if(saveOverlays) {
-                    const grp = {id, name: primary.name, class2: "Private Practice", tier: "Standard",
-                      childIds, note: `Merged: same address (${c.addr}). ${c.accts.length} accounts from different dealers.`,
-                      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()};
-                    const next = {...OVERLAYS_REF, groups:{...(OVERLAYS_REF.groups||{}), [id]: grp}};
-                    saveOverlays(next).then((ok:boolean) => { if(ok) showToast(`✅ Merged ${c.accts.length} accounts as "${primary.name}"`); else showToast("❌ Merge failed",false); });
+                  const primary=c.accts.reduce((best:any,a:any)=>((a.pyQ?.["1"]||0)+(a.cyQ?.["1"]||0))>((best.pyQ?.["1"]||0)+(best.cyQ?.["1"]||0))?a:best,c.accts[0]);
+                  const id=`Master-MERGE-${primary.id.split("-").pop()}`;
+                  if(saveOverlays){
+                    const grp={id,name:primary.name,class2:"Private Practice",tier:"Standard",childIds:c.accts.map((a:any)=>a.id),createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
+                    const next={...OVERLAYS_REF,groups:{...(OVERLAYS_REF.groups||{}),[id]:grp}};
+                    saveOverlays(next).then((ok:boolean)=>{if(ok)showToast(`✅ Merged ${c.accts.length} as "${primary.name}"`);else showToast("❌ Merge failed",false);});
                   }
-                }} style={{flex:1,padding:"8px 0",borderRadius:8,border:"none",background:T.blue,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-                  Merge ({c.accts.length} accounts)
-                </button>
-                <button onClick={()=>{
-                  const updated = {...dismissed, [c.addr]: true};
-                  try { localStorage.setItem("dupe_dismissed", JSON.stringify(updated)); } catch {}
-                  showToast("Skipped — won't show again");
-                }} style={{padding:"8px 14px",borderRadius:8,border:`1px solid ${T.b1}`,background:"transparent",color:T.t3,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
-                  Skip
-                </button>
+                }} style={{flex:1,padding:"8px 0",borderRadius:8,border:"none",background:T.blue,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Merge ({c.accts.length})</button>
+                <button onClick={()=>{const u={...dismissed,[c.addr]:true};try{localStorage.setItem("dupe_dismissed",JSON.stringify(u));}catch{} showToast("Skipped");}} style={{padding:"8px 14px",borderRadius:8,border:`1px solid ${T.b1}`,background:"transparent",color:T.t3,fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>Skip</button>
               </div>
             </div>
           ))}

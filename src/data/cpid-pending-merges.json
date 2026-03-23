@@ -1,0 +1,434 @@
+[
+  {
+    "id": "Master-CM047997",
+    "mergeId": "Master-CM1921839",
+    "name": "MIDDLETOWN DENTAL ASSOCIATES",
+    "childIds": [
+      "Master-CM1451924",
+      "Master-CM1921839"
+    ],
+    "class2": "Private Practice",
+    "source": "auto-merge",
+    "score": 98,
+    "reason": "exact_address_exact_name",
+    "groupAName": "EDGE DENTAL MANAGEMENT",
+    "groupBName": "MIDDLETOWN DENTAL ASSOCIATES",
+    "addr": "674 E Main St, Middletown NY"
+  },
+  {
+    "id": "Master-CM175757",
+    "mergeId": "Master-CM17672868",
+    "name": "ABRA DENTAL",
+    "childIds": [
+      "Master-CM491938",
+      "Master-CM17672868"
+    ],
+    "class2": "Private Practice",
+    "source": "auto-merge",
+    "score": 98,
+    "reason": "exact_address_exact_name",
+    "groupAName": "ABRA DENTAL",
+    "groupBName": "ALL ABOUT KIDS PEDIATRIC DENTISTRY",
+    "addr": "127 Greyrock Pl, Stamford CT"
+  },
+  {
+    "id": "Master-CM174643",
+    "mergeId": "Master-CM1750847",
+    "name": "BRIAN CHARLES FOOTE DMD",
+    "childIds": [
+      "Master-CM174643",
+      "Master-CM1750847"
+    ],
+    "class2": "Private Practice",
+    "source": "auto-merge",
+    "score": 92,
+    "reason": "exact_address_same_doctor_last_name",
+    "groupAName": "BRIAN CHARLES FOOTE DMD",
+    "groupBName": "DR BRIAN FOOTE DMD",
+    "addr": "21 Sandwich Rd, Wareham MA"
+  },
+  {
+    "id": "Master-CM1969858",
+    "mergeId": "Master-CM888684",
+    "name": "FARMINGTON FAMILY DENTAL GROUP",
+    "childIds": [
+      "Master-CM1969858",
+      "Master-CM888684"
+    ],
+    "class2": "Private Practice",
+    "source": "auto-merge",
+    "score": 90,
+    "reason": "exact_address_stripped_name_match",
+    "groupAName": "FARMINGTON FAMILY DENTAL GROUP",
+    "groupBName": "FARMINGTON FAMILY DENTISTRY",
+    "addr": "5 Melrose Dr, Farmington CT"
+  },
+  {
+    "id": "Master-CM17688756",
+    "mergeId": "Master-CM137511",
+    "name": "CANTON VALLEY DENTAL",
+    "childIds": [
+      "Master-CM17688756",
+      "Master-CM137511"
+    ],
+    "class2": "Private Practice",
+    "source": "auto-merge",
+    "score": 98,
+    "reason": "exact_address_exact_name",
+    "groupAName": "CANTON VALLEY DENTAL",
+    "groupBName": "CANTON VALLEY DENTAL",
+    "addr": "191 Albany Tpke Charles J Keefe, Canton CT"
+  },
+  {
+    "id": "Master-CM1390287",
+    "mergeId": "Master-CM836239",
+    "name": "DR EDLY DESTINE",
+    "childIds": [
+      "Master-CM1390287",
+      "Master-CM836239"
+    ],
+    "class2": "Private Practice",
+    "source": "auto-merge",
+    "score": 92,
+    "reason": "exact_address_same_doctor_last_name",
+    "groupAName": "DR EDLY DESTINE",
+    "groupBName": "DESTINE, EDLY",
+    "addr": "88 W Lincoln Ave, Mount Vernon NY"
+  },
+  {
+    "id": "Master-CM916101",
+    "mergeId": "Master-CM169843",
+    "name": "TOMAS TORRES",
+    "childIds": [
+      "Master-CM916101",
+      "Master-CM169843"
+    ],
+    "class2": "Private Practice",
+    "source": "auto-merge",
+    "score": 92,
+    "reason": "exact_address_same_doctor_last_name",
+    "groupAName": "TOMAS TORRES",
+    "groupBName": "TORRES, TOMAS DR",
+    "addr": "301 Main St Ste C, Goshen NY"
+  },
+  {
+    "id": "Master-CM958521",
+    "mergeId": "Master-CM17675878",
+    "name": "MELISSA MANN",
+    "childIds": [
+      "Master-CM958521",
+      "Master-CM17675878"
+    ],
+    "class2": "Private Practice",
+    "source": "auto-merge",
+    "score": 98,
+    "reason": "exact_address_exact_name",
+    "groupAName": "MELISSA MANN",
+    "groupBName": "MELISSA MANN",
+    "addr": "338 Route 100 Bailey Court, Somers NY"
+  },
+  {
+    "id": "Master-CM1434211",
+    "mergeId": "Master-CM100288",
+    "name": "JOSEPH J GARGANO",
+    "childIds": [
+      "Master-CM1434211",
+      "Master-CM100288"
+    ],
+    "class2": "Private Practice",
+    "source": "auto-merge",
+    "score": 92,
+    "reason": "exact_address_same_doctor_last_name",
+    "groupAName": "JOSEPH J GARGANO",
+    "groupBName": "JOSEPH JERRY GARGANO DMD",
+    "addr": "21 Washington Ave Unit A, North Haven CT"
+  },
+  {
+    "id": "Master-CM086385",
+    "mergeId": "Master-CM986961",
+    "name": "AAROHI DENTAL",
+    "childIds": [
+      "Master-CM086385",
+      "Master-CM986961"
+    ],
+    "class2": "Private Practice",
+    "source": "auto-merge",
+    "score": 92,
+    "reason": "exact_address_same_doctor_last_name",
+    "groupAName": "AAROHI DENTAL",
+    "groupBName": "AAROHI DENTAL PC",
+    "addr": "399 County St, New Bedford MA"
+  },
+  {
+    "id": "Master-CM1995967",
+    "mergeId": "Master-CM1897642",
+    "name": "CLINTON FAMILY DENTISTRY",
+    "childIds": [
+      "Master-CM1995967",
+      "Master-CM1897642"
+    ],
+    "class2": "Private Practice",
+    "source": "auto-merge",
+    "score": 98,
+    "reason": "exact_address_exact_name",
+    "groupAName": "CLINTON FAMILY DENTISTRY",
+    "groupBName": "CLINTON FAMILY DENTISTRY",
+    "addr": "252 E Main St, Clinton CT"
+  },
+  {
+    "id": "Master-CM287919",
+    "mergeId": "Master-CM1966508",
+    "name": "BARNUM DENTAL",
+    "childIds": [
+      "Master-CM287919",
+      "Master-CM1966508"
+    ],
+    "class2": "Private Practice",
+    "source": "auto-merge",
+    "score": 98,
+    "reason": "exact_address_exact_name",
+    "groupAName": "BARNUM DENTAL",
+    "groupBName": "BARNUM DENTAL",
+    "addr": "1100 Barnum Ave, Stratford CT"
+  },
+  {
+    "id": "Master-CM065241",
+    "mergeId": "Master-CM1921152",
+    "name": "CHILD AND ADULT ORTHODONTICS",
+    "childIds": [
+      "Master-CM065241",
+      "Master-CM1921152"
+    ],
+    "class2": "Private Practice",
+    "source": "auto-merge",
+    "score": 98,
+    "reason": "exact_address_exact_name",
+    "groupAName": "CHILD AND ADULT ORTHODONTICS",
+    "groupBName": "CHILD AND ADULT ORTHODONTICS",
+    "addr": "248 E Main St, Clinton CT"
+  },
+  {
+    "id": "Master-CM1481014",
+    "mergeId": "Master-CM1534850",
+    "name": "PORTER AND CHESTER",
+    "childIds": [
+      "Master-CM1481014",
+      "Master-CM1534850"
+    ],
+    "class2": "Private Practice",
+    "source": "auto-merge",
+    "score": 98,
+    "reason": "exact_address_exact_name",
+    "groupAName": "PORTER AND CHESTER",
+    "groupBName": "PORTER AND CHESTER",
+    "addr": "1245 Dixwell Ave, Hamden CT"
+  },
+  {
+    "id": "Master-CM1238996",
+    "mergeId": "Master-CM247393",
+    "name": "STONY POINT DENTAL PC",
+    "childIds": [
+      "Master-CM1238996",
+      "Master-CM247393"
+    ],
+    "class2": "Private Practice",
+    "source": "auto-merge",
+    "score": 92,
+    "reason": "exact_address_same_doctor_last_name",
+    "groupAName": "STONY POINT DENTAL PC",
+    "groupBName": "STONY POINT DENTAL",
+    "addr": "32 S Liberty Dr Robert Chorney, Stony Point NY"
+  },
+  {
+    "id": "Master-CM948766",
+    "mergeId": "Master-CM189754",
+    "name": "JONATHAN R TIGER",
+    "childIds": [
+      "Master-CM948766",
+      "Master-CM189754"
+    ],
+    "class2": "Private Practice",
+    "source": "auto-merge",
+    "score": 92,
+    "reason": "exact_address_same_doctor_last_name",
+    "groupAName": "JONATHAN R TIGER",
+    "groupBName": "JONATHAN TIGER",
+    "addr": "11 Medical Park Dr Ste 202, Pomona NY"
+  },
+  {
+    "id": "Master-CM084372",
+    "mergeId": "Master-CM120343",
+    "name": "AMERICAN MOBILE DENTAL PC",
+    "childIds": [
+      "Master-CM084372",
+      "Master-CM120343"
+    ],
+    "class2": "Private Practice",
+    "source": "auto-merge",
+    "score": 98,
+    "reason": "exact_address_exact_name",
+    "groupAName": "AMERICAN MOBILE DENTAL PC",
+    "groupBName": "AMERICAN MOBILE DENTAL PC",
+    "addr": "875 Mamaroneck Ave, Mamaroneck NY"
+  },
+  {
+    "id": "Master-CM265093",
+    "mergeId": "Master-CM867844",
+    "name": "CARING DENTAL GROUP",
+    "childIds": [
+      "Master-CM265093",
+      "Master-CM867844"
+    ],
+    "class2": "Private Practice",
+    "source": "auto-merge",
+    "score": 98,
+    "reason": "exact_address_exact_name",
+    "groupAName": "CARING DENTAL GROUP",
+    "groupBName": "CARING DENTAL GROUP",
+    "addr": "103 S Main St, Newtown CT"
+  },
+  {
+    "id": "Master-CM1811525",
+    "mergeId": "Master-CM629977",
+    "name": "PUTNAM DENTAL ARTS",
+    "childIds": [
+      "Master-CM1811525",
+      "Master-CM629977"
+    ],
+    "class2": "Private Practice",
+    "source": "auto-merge",
+    "score": 98,
+    "reason": "exact_address_exact_name",
+    "groupAName": "PUTNAM DENTAL ARTS",
+    "groupBName": "PUTNAM DENTAL ARTS",
+    "addr": "824 Route 6, Mahopac NY"
+  },
+  {
+    "id": "Master-CM1542348",
+    "mergeId": "Master-CM314640",
+    "name": "NORTHEAST IMPLANT AND ORAL SURGERY",
+    "childIds": [
+      "Master-CM1542348",
+      "Master-CM314640"
+    ],
+    "class2": "Private Practice",
+    "source": "auto-merge",
+    "score": 92,
+    "reason": "exact_address_same_doctor_last_name",
+    "groupAName": "NORTHEAST IMPLANT AND ORAL SURGERY",
+    "groupBName": "NORTHEAST IMPLANT & ORAL SURGERY",
+    "addr": "Northeast Implant & 27 Hospital Ave, Danbury CT"
+  },
+  {
+    "id": "Master-CM17711543",
+    "mergeId": "Master-CM365301",
+    "name": "DR ERIC J. LEVINE",
+    "childIds": [
+      "Master-CM17711543",
+      "Master-CM365301"
+    ],
+    "class2": "Private Practice",
+    "source": "auto-merge",
+    "score": 92,
+    "reason": "exact_address_same_doctor_last_name",
+    "groupAName": "DR ERIC J. LEVINE",
+    "groupBName": "ERIC J LEVINE DMD",
+    "addr": "231 Farmington Ave, Farmington CT"
+  },
+  {
+    "id": "Master-CM953708",
+    "mergeId": "Master-CM1998037",
+    "name": "12 MONTH SMILES",
+    "childIds": [
+      "Master-CM953708",
+      "Master-CM1998037"
+    ],
+    "class2": "Private Practice",
+    "source": "auto-merge",
+    "score": 98,
+    "reason": "exact_address_exact_name",
+    "groupAName": "12 MONTH SMILES",
+    "groupBName": "12 MONTH SMILES",
+    "addr": "300 Hemingway Ave, East Haven CT"
+  },
+  {
+    "id": "Master-CM160194",
+    "mergeId": "Master-CM241141",
+    "name": "DONALD J DUFOUR DDS",
+    "childIds": [
+      "Master-CM160194",
+      "Master-CM241141"
+    ],
+    "class2": "Private Practice",
+    "source": "auto-merge",
+    "score": 92,
+    "reason": "exact_address_same_doctor_last_name",
+    "groupAName": "DONALD J DUFOUR DDS",
+    "groupBName": "DONALD J DUFOUR",
+    "addr": "101 Sullivan Dr Lizzies Prof Bldg, Fall River MA"
+  },
+  {
+    "id": "Master-CM1908187",
+    "mergeId": "Master-CM17671886",
+    "name": "GOLD STAR FAMILY DENTISTRY",
+    "childIds": [
+      "Master-CM1908187",
+      "Master-CM17671886"
+    ],
+    "class2": "Private Practice",
+    "source": "auto-merge",
+    "score": 92,
+    "reason": "exact_address_same_doctor_last_name",
+    "groupAName": "GOLD STAR FAMILY DENTISTRY",
+    "groupBName": "GOLSTAR FAMILY DENTISTRY",
+    "addr": "489 Gold Star Hwy, Groton CT"
+  },
+  {
+    "id": "Master-CM225946",
+    "mergeId": "Master-CM915216",
+    "name": "KATE KIGURADZE",
+    "childIds": [
+      "Master-CM225946",
+      "Master-CM915216"
+    ],
+    "class2": "Private Practice",
+    "source": "auto-merge",
+    "score": 92,
+    "reason": "exact_address_same_doctor_last_name",
+    "groupAName": "KATE KIGURADZE",
+    "groupBName": "KETEVAN KIGURADZE DDS",
+    "addr": "106 Noroton Ave Ste #103, Darien CT"
+  },
+  {
+    "id": "Master-CM213843",
+    "mergeId": "Master-CM1371514",
+    "name": "PERIDONTAL ASSOCIATES",
+    "childIds": [
+      "Master-CM213843",
+      "Master-CM1371514"
+    ],
+    "class2": "Private Practice",
+    "source": "auto-merge",
+    "score": 92,
+    "reason": "exact_address_same_doctor_last_name",
+    "groupAName": "PERIDONTAL ASSOCIATES",
+    "groupBName": "PERIODONTAL ASSOCIATES",
+    "addr": "27 Meriden Ave Ste B1 David H Burkard, Southington CT"
+  },
+  {
+    "id": "Master-CM17785145",
+    "mergeId": "Master-CM17776628",
+    "name": "GRD-NEW ROCHELLE DENTAL ARTS",
+    "childIds": [
+      "Master-CM17785145",
+      "Master-CM17776628"
+    ],
+    "class2": "Private Practice",
+    "source": "auto-merge",
+    "score": 98,
+    "reason": "exact_address_exact_name",
+    "groupAName": "GRD-NEW ROCHELLE DENTAL ARTS",
+    "groupBName": "GRD-NEW ROCHELLE DENTAL ARTS",
+    "addr": "451 Main St Fl 3, New Rochelle NY"
+  }
+]
