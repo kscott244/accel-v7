@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-23T02:00:00.000Z",
+  "lastUpdated": "2026-03-23T03:41:41.996Z",
   "migratedFrom": "patches.json v1.0",
   "groups": {
     "Master-RDP-001": {
@@ -55,13 +55,14 @@
       "fromGroupId": "Master-CM048310",
       "newGroupId": "Master-CM300371-standalone",
       "newGroupName": "ASPEN DENTAL",
-      "reason": "Bad MDM parent assignment \u2014 Aspen Torrington incorrectly parented under Columbia Dental"
+      "reason": "Bad MDM parent assignment — Aspen Torrington incorrectly parented under Columbia Dental"
     }
   ],
   "groupMoves": {},
   "nameOverrides": {
     "Master-CM116929": "WELLS STREET DENTISTRY",
-    "Master-CM17699391": "FLANDERS DENTAL STUDIO"
+    "Master-CM17699391": "FLANDERS DENTAL STUDIO",
+    "Master-CM1234238": "Dr. Dental: Dentistry & Braces"
   },
   "contacts": {
     "Master-CM231113": {
@@ -71,7 +72,7 @@
       "address": "112 Cross Rd, Waterford, CT 06385",
       "website": null,
       "contacts": [],
-      "note": "PM at Coastal Connecticut Dentistry \u2014 part of Resolute Dental Partners",
+      "note": "PM at Coastal Connecticut Dentistry — part of Resolute Dental Partners",
       "savedAt": "2026-03-22T00:00:00.000Z"
     },
     "Master-CM116929": {
@@ -81,7 +82,7 @@
       "address": "11 Wells Street, Westerly, RI",
       "website": null,
       "contacts": [],
-      "note": "PM at Wells Street Dentistry \u2014 part of Resolute Dental Partners",
+      "note": "PM at Wells Street Dentistry — part of Resolute Dental Partners",
       "savedAt": "2026-03-22T00:00:00.000Z"
     },
     "Master-CM413476": {
