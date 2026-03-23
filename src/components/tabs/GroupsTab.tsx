@@ -103,7 +103,11 @@ export default function GroupsTab({groups,goGroup,filt,setFilt,search,setSearch}
       {/* ── STANDARD LIST VIEW ── */}
       <div style={{marginBottom:8,fontSize:10,color:T.t4}}>
         {filt==="All"
-          ? `${list.length} total · ${list.filter(g=>g.locs>=2).length} multi-location · ${list.filter(g=>g.locs===1).length} single`
+          ? `${list.length} total · ${enriched.filter(g=>g.locs>=2).length} multi-location · ${enriched.filter(g=>g.locs===1).length} single`
+          : filt==="Multi-Location"
+          ? `${list.length} groups · 2+ locations`
+          : filt==="Private"
+          ? `${list.length} single-location accounts`
           : `${list.length} groups`}
       </div>
       {list.slice(0,50).map((g,i)=><GroupCard key={g.id} g={g} i={i}/>)}

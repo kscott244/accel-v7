@@ -279,7 +279,7 @@ function AppInner() {
   const [showMore, setShowMore] = useState(false);
   const [adjs, setAdjs] = useState([]);
   const [estPct, setEstPct] = useState(90);
-  const [gFilt, setGFilt] = useState("All");
+  const [gFilt, setGFilt] = useState("Multi-Location");
   const [gSearch, setGSearch] = useState("");
   const [dataSource, setDataSource] = useState("preloaded");
   const [groups, setGroups] = useState(null);
