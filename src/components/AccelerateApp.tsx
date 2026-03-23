@@ -412,14 +412,22 @@ function AppInner() {
           loadedOverlays = JSON.parse(cached);
         }
         // Always fetch fresh from GitHub in background to stay current
+        // Only adopt GitHub data if it is NEWER than the local cache — prevents a failed
+        // save from being silently rolled back on next page load (the root cause of overlay
+        // data disappearing after a CSV upload when the prior save had an error).
         fetch("/api/load-overlay").then(async (res) => {
           if (res.ok) {
             const { overlays: fresh } = await res.json();
             if (fresh) {
-              setOverlays(fresh);
-              try { localStorage.setItem("overlay_cache_v2", JSON.stringify(fresh)); } catch {}
-              // Reapply overlays onto current groups with fresh data
-              setGroups(prev => prev ? applyGroupOverrides(applyOverlays(prev.map((g:any) => ({...g})))) : prev);
+              const cachedTime = loadedOverlays?.lastUpdated ? new Date(loadedOverlays.lastUpdated).getTime() : 0;
+              const freshTime  = fresh.lastUpdated         ? new Date(fresh.lastUpdated).getTime()          : 0;
+              if (freshTime >= cachedTime) {
+                setOverlays(fresh);
+                try { localStorage.setItem("overlay_cache_v2", JSON.stringify(fresh)); } catch {}
+                // Reapply overlays onto current groups with fresh data
+                setGroups(prev => prev ? applyGroupOverrides(applyOverlays(prev.map((g:any) => ({...g})))) : prev);
+              }
+              // else: local cache is newer (unsaved changes present) — keep local data
             }
           }
         }).catch(() => { /* Overlay fetch failed — using cached data */ });
