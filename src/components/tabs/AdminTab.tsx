@@ -195,7 +195,7 @@ function AdminTab({groups, scored, overlays, saveOverlays}:{groups:any[], scored
                   <div style={{flex:1,minWidth:0}}>
                     <AccountId name={a.name} gName={a.gName} size="md"/>
                     <div style={{fontSize:10,color:T.t3}}>{a.city}{a.st?`, ${a.st}`:""}</div>
-                    <div style={{fontSize:9,color:T.t4,marginTop:1}}>{a.dealer||"Unknown"} · PY {$$(py)} / CY {$$(cy)}</div>
+                    <div style={{fontSize:9,color:T.t4,marginTop:1}}>{a.dealer||"All Other"} · PY {$$(py)} / CY {$$(cy)}</div>
                   </div>
                   <div style={{flexShrink:0,background:"rgba(79,142,247,.1)",border:"1px solid rgba(79,142,247,.2)",borderRadius:8,padding:"4px 10px",fontSize:10,fontWeight:700,color:T.blue}}>+ Add</div>
                 </button>;
@@ -211,7 +211,7 @@ function AdminTab({groups, scored, overlays, saveOverlays}:{groups:any[], scored
               return <div key={id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",background:T.s2,borderRadius:8,marginBottom:4,border:`1px solid ${T.b1}`}}>
                 <div style={{flex:1,minWidth:0}}>
                   <AccountId name={acct?acct.name:id} gName={acct?.gName} size="sm"/>
-                  <div style={{fontSize:9,color:T.t3}}>{acct?`${acct.city||""} · ${acct.dealer||"Unknown"} · PY ${$$(py)}`:id}</div>
+                  <div style={{fontSize:9,color:T.t3}}>{acct?`${acct.city||""} · ${acct.dealer||"All Other"} · PY ${$$(py)}`:id}</div>
                 </div>
                 <button onClick={()=>setChildIds(childIds.filter(x=>x!==id))} style={{background:"rgba(248,113,113,.1)",border:"1px solid rgba(248,113,113,.2)",borderRadius:6,color:T.red,cursor:"pointer",fontSize:10,fontWeight:600,padding:"3px 8px",fontFamily:"inherit",flexShrink:0}}>Remove</button>
               </div>;
@@ -457,7 +457,7 @@ function AdminTab({groups, scored, overlays, saveOverlays}:{groups:any[], scored
                 return <div key={a.id} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",background:T.s2,borderRadius:8,marginBottom:4}}>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontSize:11,fontWeight:600,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}{isDSO?<span style={{fontSize:9,color:T.purple,marginLeft:4}}>DSO</span>:""}</div>
-                    <div style={{fontSize:9,color:T.t3}}>{a.dealer||"Unknown"} · PY {$$(py)} / CY {$$(cy)} · {a.gName?.slice(0,25)}</div>
+                    <div style={{fontSize:9,color:T.t3}}>{a.dealer||"All Other"} · PY {$$(py)} / CY {$$(cy)} · {a.gName?.slice(0,25)}</div>
                   </div>
                 </div>;
               })}

@@ -31,7 +31,7 @@ const AccountId = ({name, gName, size="md", color}:{name:string, gName?:string, 
 // ─── DASHBOARD TAB ───────────────────────────────────────────────
 // ─── MAP / ROUTE TAB ─────────────────────────────────────────────
 // ─── DEALERS TAB ─────────────────────────────────────────────────
-const DIST_ORDER = ["Schein","Patterson","Benco","Darby"];
+const DIST_ORDER = ["Schein","Patterson","Benco","Darby","DDS Dental","Dental City"];
 const DIST_COLORS: Record<string,string> = {
   Schein:"rgba(79,142,247,.18)", Patterson:"rgba(167,139,250,.18)",
   Benco:"rgba(34,211,238,.18)", Darby:"rgba(251,191,36,.18)"
@@ -77,11 +77,11 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
 
   // Build per-distributor stats from scored accounts — includes all accounts
   const distStats = useMemo(()=>{
-    const ALL_BUCKETS = [...DIST_ORDER, "All Other", "Unknown"];
+    const ALL_BUCKETS = [...DIST_ORDER, "All Other"];
     const map:Record<string,{accts:any[],cy:number,py:number,nowCount:number}> = {};
     ALL_BUCKETS.forEach(d=>{ map[d]={accts:[],cy:0,py:0,nowCount:0}; });
     scored.forEach(a=>{
-      const d = a.dealer || "Unknown";
+      const d = a.dealer || "All Other";
       if(!map[d]) map[d]={accts:[],cy:0,py:0,nowCount:0};
       const cy=a.cyQ?.["1"]||0, py=a.pyQ?.["1"]||0;
       map[d].accts.push(a);

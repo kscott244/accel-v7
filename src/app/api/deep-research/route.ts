@@ -55,7 +55,7 @@ Always search the web before answering. If you cannot find specific information,
 Practice: ${practiceLabel}
 Location: ${location}
 Account type: ${accountType}
-Distributor: ${dealer || "Unknown"}
+Distributor: ${dealer || "All Other"}
 ${doctor ? `Known doctor: ${doctor}` : ""}
 ${products?.length ? `Currently buying: ${products.slice(0,5).join(", ")}` : ""}
 

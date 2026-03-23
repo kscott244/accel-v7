@@ -76,7 +76,7 @@ function GroupDetail({group,goMain,goAcct,overlays,saveOverlays}) {
   // Detect which distributors are present in this group's children
   const groupDists = useMemo(()=>{
     const distDedupeSet = new Set<string>();
-    (group.children||[]).forEach((c:any) => { if(c.dealer && c.dealer!=="Unknown") distDedupeSet.add(c.dealer); });
+    (group.children||[]).forEach((c:any) => { if(c.dealer && c.dealer!=="All Other") distDedupeSet.add(c.dealer); });
     return [...distDedupeSet].sort();
   },[group]);
 
@@ -203,7 +203,7 @@ function GroupDetail({group,goMain,goAcct,overlays,saveOverlays}) {
   const distBreakdown = useMemo(()=>{
     const map: Record<string,{cy:number,py:number,locs:number}> = {};
     (group.children||[]).forEach((c:any)=>{
-      const d = c.dealer && c.dealer!=="Unknown" ? c.dealer : "Unknown";
+      const d = c.dealer || "All Other";
       if(!map[d]) map[d]={cy:0,py:0,locs:0};
       map[d].cy += c.cyQ?.[qk]||0;
       map[d].py += c.pyQ?.[qk]||0;
@@ -322,7 +322,7 @@ function GroupDetail({group,goMain,goAcct,overlays,saveOverlays}) {
         <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.orange,marginBottom:12}}>Distributor Split</div>
         {distBreakdown.rows.map((row,i)=>{
           const DIST_COLOR: Record<string,string> = {
-            Schein:"#4f8ef7",Patterson:"#a78bfa",Benco:"#22d3ee",Darby:"#fbbf24",Unknown:"#7878a0"
+            Schein:"#4f8ef7",Patterson:"#a78bfa",Benco:"#22d3ee",Darby:"#fbbf24","DDS Dental":"#f97316","Dental City":"#10b981","All Other":"#7878a0"
           };
           const c = DIST_COLOR[row.dist] || "#7878a0";
           const shareDelta = row.cyPct - row.pyPct; // gaining or losing share vs PY
@@ -563,7 +563,7 @@ function GroupDetail({group,goMain,goAcct,overlays,saveOverlays}) {
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
             <div style={{fontSize:12,fontWeight:600,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.name}</div><Chev/>
           </div>
-          <div style={{fontSize:10,color:T.t3,marginBottom:6}}>{c.city}, {c.st}{c.dealer&&c.dealer!=="Unknown"?<span style={{color:T.cyan}}> · {c.dealer}</span>:""} · Last {c.last}d ago</div>
+          <div style={{fontSize:10,color:T.t3,marginBottom:6}}>{c.city}, {c.st}{c.dealer&&c.dealer!=="All Other"?<span style={{color:T.cyan}}> · {c.dealer}</span>:""} · Last {c.last}d ago</div>
           <div style={{display:"flex",gap:12}}>
             <Pill l="PY" v={$$(cPy)} c={T.t2}/><Pill l="CY" v={$$(cCy)} c={T.blue}/><Pill l="Gap" v={cGap<=0?`+${$$(Math.abs(cGap))}`:$$(cGap)} c={cGap<=0?T.green:T.red}/><div style={{marginLeft:"auto"}}><Pill l="Ret" v={cRet+"%"} c={T.t3}/></div>
           </div>

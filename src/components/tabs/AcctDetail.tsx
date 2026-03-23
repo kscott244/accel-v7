@@ -186,7 +186,7 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup,overlays,saveOverla
     setAiState("loading"); setAiText("");
     const payload = {
       name: acct.name, city: acct.city, state: acct.st,
-      tier: acctType, dealer: acct.dealer||"Unknown",
+      tier: acctType, dealer: acct.dealer||"All Other",
       group: acct.gName||"None", lastOrderDays: acct.last,
       Q1_PY: pyVal, Q1_CY: cyVal, gap, retentionPct: Math.round(ret*100),
       buying: buying.slice(0,6).map(p=>({name:p.n, py:p[`py1`]||0, cy:p[`cy1`]||0})),
@@ -247,7 +247,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
           city: acct.city,
           state: acct.st,
           address: acct.addr || badger?.address || "",
-          dealer: acct.dealer||"Unknown",
+          dealer: acct.dealer||"All Other",
           products: buying.slice(0,5).map(p=>p.n),
           doctor: badger?.doctor || "",
           gName: acct.gName || "",
@@ -482,7 +482,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
         {(()=>{const h=getHealthStatus(ret,gap,cyVal,pyVal);return <div style={{display:"inline-flex",alignItems:"center",marginTop:6,fontSize:10,fontWeight:700,color:h.color,background:h.bg,border:`1px solid ${h.border}`,borderRadius:999,padding:"3px 10px",letterSpacing:".2px"}}>{h.label}</div>;})()}
         <div style={{fontSize:10,color:T.t4,marginTop:2,display:"flex",gap:8,flexWrap:"wrap"}}>
           {acct.gName&&<span>Group: {groupOverride?groupOverride.targetGroupName:acct.gName}</span>}
-          {acct.dealer&&acct.dealer!=="Unknown"&&<span style={{color:T.cyan}}>Dealer: {acct.dealer}{acct.dealerFlag&&<span title="Dealer assignment flagged for review — rep data conflicts with Tableau export" style={{marginLeft:4,fontSize:9,color:T.amber,fontWeight:700,cursor:"help"}}>⚠?</span>}</span>}
+          {acct.dealer&&acct.dealer!=="All Other"&&<span style={{color:T.cyan}}>Dealer: {acct.dealer}{acct.dealerFlag&&<span title="Dealer assignment flagged for review — rep data conflicts with Tableau export" style={{marginLeft:4,fontSize:9,color:T.amber,fontWeight:700,cursor:"help"}}>⚠?</span>}</span>}
         </div>
 
         {/* QUARTER SELECTOR */}
@@ -744,7 +744,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
                 marginBottom:6,cursor:"pointer"}}>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:11,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.name}</div>
-                <div style={{fontSize:9,color:T.t4,marginTop:1}}>{s.city}, {s.st}{s.dealer&&s.dealer!=="Unknown"?<span style={{color:T.cyan}}> · {s.dealer}</span>:""}</div>
+                <div style={{fontSize:9,color:T.t4,marginTop:1}}>{s.city}, {s.st}{s.dealer&&s.dealer!=="All Other"?<span style={{color:T.cyan}}> · {s.dealer}</span>:""}</div>
               </div>
               <div style={{display:"flex",gap:6,alignItems:"center",flexShrink:0,marginLeft:8}}>
                 <Pill l="CY" v={$$(sCy)} c={T.blue}/>
@@ -956,7 +956,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
               </div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:12,fontWeight:600,color:T.t1}}>{s.name}</div>
-                <div style={{fontSize:10,color:T.t4}}>{s.city}, {s.st}{s.dealer&&s.dealer!=="Unknown"?" · "+s.dealer:""}</div>
+                <div style={{fontSize:10,color:T.t4}}>{s.city}, {s.st}{s.dealer&&s.dealer!=="All Other"?" · "+s.dealer:""}</div>
               </div>
               <div style={{fontSize:11,fontFamily:"monospace",color:T.t3,flexShrink:0}}>{$$(s.pyQ?.["1"]||0)}</div>
             </div>;

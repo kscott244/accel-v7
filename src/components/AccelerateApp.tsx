@@ -340,7 +340,7 @@ function AppInner() {
       ...g,
       children: g.children?.map(c => ({
         ...c,
-        dealer: c.dealer || DEALERS[c.id] || "Unknown"
+        dealer: c.dealer || DEALERS[c.id] || "All Other"
       }))
     }));
   };

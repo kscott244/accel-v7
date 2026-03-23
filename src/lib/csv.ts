@@ -173,7 +173,7 @@ export function processCSVData(rows: Record<string, string>[]) {
         pyQ,
         cyQ,
         products: products.slice(0, 10),
-        dealer: _dealers[cid] || "Unknown",
+        dealer: _dealers[cid] || "All Other",
       });
 
       for (const [k, v] of Object.entries(pyQ)) gPy[k] = (gPy[k] || 0) + v;

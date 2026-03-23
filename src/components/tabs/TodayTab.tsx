@@ -168,7 +168,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
       }
 
       // 3. Has dealer contact → can coordinate outreach in parallel
-      const hasDealer = a.dealer && a.dealer !== "Unknown";
+      const hasDealer = a.dealer && a.dealer !== "All Other";
       if (hasDealer) prob += 0.04;
 
       // 4. Has Badger field intel → we know who to call
@@ -330,7 +330,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
     // ── DEALER PUSH ──
     const dealerGroups: Record<string, any[]> = {};
     clustered.forEach((a: any) => {
-      if (a.dealer && a.dealer !== "Unknown") {
+      if (a.dealer && a.dealer !== "All Other") {
         dealerGroups[a.dealer] = dealerGroups[a.dealer] || [];
         dealerGroups[a.dealer].push(a);
       }
@@ -483,7 +483,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
               <div style={{display:"flex",alignItems:"center",gap:4}}>
                 <span style={{fontSize:8,color:T.red,fontWeight:700}}>▼</span>
                 <span style={{fontSize:11,fontWeight:600,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{topChild.name}</span>
-                {topChild.dealer&&topChild.dealer!=="Unknown"&&<span style={{fontSize:9,color:T.cyan,flexShrink:0}}>· {topChild.dealer}</span>}
+                {topChild.dealer&&topChild.dealer!=="All Other"&&<span style={{fontSize:9,color:T.cyan,flexShrink:0}}>· {topChild.dealer}</span>}
               </div>
               {/* Down products on worst child */}
               {(topChild.products||[]).filter((p:any)=>(p.py1||p.pyQ?.["1"]||0)>100&&(p.cy1||p.cyQ?.["1"]||0)===0).slice(0,3).map((p:any,j:number)=>(
@@ -510,7 +510,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
               onClick={()=>goAcct({...c,gName:g.gName,gId:g.gId,gTier:g.gTier})}>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:11,fontWeight:500,color:T.t2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.name}</div>
-                {c.dealer&&c.dealer!=="Unknown"&&<span style={{fontSize:9,color:T.cyan}}>{c.dealer}</span>}
+                {c.dealer&&c.dealer!=="All Other"&&<span style={{fontSize:9,color:T.cyan}}>{c.dealer}</span>}
               </div>
               <div style={{flexShrink:0,marginLeft:8,display:"flex",alignItems:"center",gap:4}}>
                 <span className="m" style={{fontSize:11,fontWeight:600,color:T.red}}>-{$$(c.gap||0)}</span>
