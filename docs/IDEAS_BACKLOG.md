@@ -1,58 +1,91 @@
-# Accelerate v7 — Ideas Backlog
+# IDEAS BACKLOG — accel-v7
 
-Captured from chat sessions. Organized by category. Not prioritized — see ROADMAP.md for phased plan.
+> Captured ideas organized by category. Not prioritized — this is a parking lot.
+> Move items to ROADMAP.md phases when they become actionable.
 
 ---
 
-## Selling Tools (directly helps close deals)
+## Data & Import
 
-- [ ] **FSC Co-call Planner** — ✅ BUILT. Ranked co-call targets per distributor with gap, lost products, parent group context, copy-to-clipboard, Google Maps route.
-- [ ] **Editable Week Route Planner** — replace static week-routes.json with Mon-Fri day buckets, drag accounts, one Maps link per day. High priority for Q2.
-- [ ] **Tier Upgrade Tracker** — "These 8 accounts are $X from Silver." Show accounts near tier thresholds with the products that would push them over.
-- [ ] **Pipeline / New Account Tracking** — zero-spend prospects are invisible. Need a way to add, track, and score prospective accounts.
-- [ ] **Pre-call distributor brief** — AI-generated talking points for FSC meetings, aggregated by distributor.
-- [ ] **Weekly Overdrive win archive / Monday reset** — archive completed Overdrive outcomes weekly so you can see progress over time.
+- [ ] Auto-detect Tableau CSV format on upload (column name matching)
+- [ ] Diff view on re-import: "15 new accounts, 3 removed, 47 changed"
+- [ ] Overlay integrity check: flag overlays referencing deleted accounts
+- [ ] CSV export of current filtered view
+- [ ] Bulk import contacts from external source (Badger, LinkedIn)
+- [ ] Data freshness indicator: "Base data last updated: March 15, 2026"
+- [ ] Validate dealer assignments on CSV import (cross-reference dealers.ts)
 
-## Data & Intelligence
+## Account Intelligence
 
-- [ ] **Auto-regenerate Overdrive on CSV upload** — force refresh of scoring when new data is loaded.
-- [ ] **60-day dark account auto-detection** — flag accounts that haven't ordered in 60+ days and surface them.
-- [ ] **Overnight account health alerts** — background polling for changes, push notification or email digest.
-- [ ] **Product cross-sell recommendations** — AI-driven: "this account buys Harmonize but not OptiBond — suggest pairing."
+- [ ] Win-back targets: accounts that bought in Q1 2025 but $0 in Q1 2026
+- [ ] Distributor-level trends: "Schein offices declining 12% faster than Patterson"
+- [ ] Product category gaps: "This office buys composites but zero bonding agents"
+- [ ] Upgrade path modeling: "If these 8 offices move from Platinum to Diamond = $Y more credit"
+- [ ] "Fastest path to $759K" scenario generator
+- [ ] Account health timeline: show CY trajectory over weeks, not just PY vs CY snapshot
+- [ ] Flag accounts whose score moved significantly week-over-week
+
+## Visit Planning
+
+- [ ] Cluster-based route suggestions: "5 NOW-priority offices within 20 min of each other"
+- [ ] Calendar integration: block time for top routes
+- [ ] Visit frequency recommendations based on account value + status
+- [ ] "I'm in [city]" mode: show nearest priority accounts from current location
+- [ ] Multi-day trip planner for MA/RI territories (further from Thomaston)
 
 ## Outreach & Communication
 
-- [ ] **Gmail outreach** — ✅ BUILT. AI-generated emails with Kerr product intelligence, dealer-aware, batch send.
-- [ ] **Deep Research contact hierarchy** — ✅ BUILT. Web search for contacts, auto-save to overlays.
-- [ ] **Account-specific AI talking points** — ✅ BUILT (in Deep Research). Uses purchase data + web search.
-- [ ] **Automated down-account email campaigns** — scheduled sends, not just manual queue.
+- [ ] Email templates by scenario: win-back, cross-sell, new product launch, co-call request
+- [ ] Follow-up reminder system: "You emailed Dr. Smith 7 days ago, no response"
+- [ ] Dealer co-call email templates with pre-filled FSC rep info
+- [ ] Track email open/response rates (requires more Gmail integration)
+- [ ] SMS outreach option for quick touchpoints
 
-## Admin & Data Quality
+## Scoring & Prioritization
 
-- [ ] **Duplicate review tool** — ✅ BUILT. Address-matched accounts across groups with merge/skip.
-- [ ] **Group merge/duplicate analysis** — find groups that look like duplicates (similar names, overlapping addresses).
-- [ ] **Search-based group creation** — ✅ BUILT. Search by name/city/address, tap to add, combined PY total.
-- [ ] **Bulk dealer override** — assign/change dealer for multiple accounts at once.
+- [ ] Configurable scoring weights: let Ken adjust what matters most
+- [ ] Time-aware scoring: accounts score higher as quarter-end approaches
+- [ ] "What changed this week" alert dashboard
+- [ ] Separate scoring profiles: "Q1 close mode" vs "Q2 build mode"
 
-## Architecture & Platform
+## UI & Navigation
 
-- [ ] **Split AccelerateApp.tsx into component files** — Phase 3 in roadmap.
-- [ ] **Replace static preloaded-data.ts with database** — Phase 4 in roadmap.
-- [ ] **Persist manual adjustments to overlays** — Phase 2 in roadmap.
-- [ ] **Remove legacy dead code** — Phase 2 in roadmap.
-- [ ] **Multi-user support** — auth, per-user overlays, role-based access.
-- [ ] **QBR / report export** — PDF or slide deck generation from territory data.
-- [ ] **CRM integration** — Salesforce or HubSpot sync.
+- [ ] Pull-to-refresh on mobile
+- [ ] Keyboard shortcuts for desktop use
+- [ ] Offline mode: service worker for cached data when no internet
+- [ ] Global search improvements: search by product, city, dealer, not just name
+- [ ] Dark mode polish (already dark, but refinement)
 
-## UX & Polish
+## Admin & Maintenance
 
-- [ ] **Consolidated nav** — ✅ DONE. 5 main tabs + More menu.
-- [ ] **Shared AccountId component** — ✅ DONE. Child name + parent group in cyan, 14 locations.
-- [ ] **Left border accent on group children** — ✅ DONE. Cyan stripe on co-call cards.
-- [ ] **Event/CE tracking** — log lunch-and-learns, CE events, tie to accounts.
-- [ ] **Offline mode** — service worker for full offline access.
-- [ ] **Dark/light theme toggle** — currently dark-only.
+- [ ] Group merge tool: combine duplicate groups across distributors (analysis started, UI partial)
+- [ ] Bulk name cleanup: fix Tableau name formatting issues en masse
+- [ ] Audit log: "Who changed what, when" for overlay changes
+- [ ] Backup/restore: download full overlay state, restore from file
+- [ ] "Undo last change" for overlay edits
+
+## Multi-Quarter / Long-Term
+
+- [ ] Quarter selector with historical data
+- [ ] Year-over-year territory analysis
+- [ ] Goal setting UI: input new quarter targets
+- [ ] Territory change tracker: accounts gained/lost over time
+- [ ] Annual review dashboard: full year performance summary
+- [ ] Multi-rep support (if app is ever shared with other Kerr reps)
+
+## Technical Debt
+
+- [ ] Decompose AccelerateApp.tsx (5,377 lines → separate tab files)
+- [ ] Enable TypeScript (remove @ts-nocheck)
+- [ ] Add basic test coverage for scoring engine and CSV processor
+- [ ] Consolidate patches.json and overlays.json into single system
+- [ ] Remove save-patch API route after patches.json retirement
+- [ ] Add error tracking (Sentry or similar)
+- [ ] Consider Supabase or similar if GitHub-as-DB hits scaling issues
+- [ ] Clean up dead component-based pages (or bring them up to parity)
 
 ---
 
-*Last updated: March 22, 2026*
+## How to Use This File
+
+When starting a new session, scan this list for anything relevant to the current phase. When an idea comes up in conversation, add it here instead of trying to build it immediately. When something moves into active development, reference it in ROADMAP.md under the appropriate phase.
