@@ -265,68 +265,47 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
       if (data?.intel) {
         setDrIntel(data.intel);
         setDrState("done");
-        // Auto-suggest group members based on cities/doctor found in research
+        // Auto-suggest group members using claude-opus-4-6 semantic matching
         try {
           const intel = data.intel;
-          const intelText = [
-            ...(intel.hooks||[]),
-            intel.ownershipNote||"",
-            intel.statusNote||"",
-            ...(intel.talkingPoints||[]),
-          ].join(" ").toLowerCase();
-          // Only suggest if research indicates multi-location
-          const isMulti = intelText.includes("location") || intelText.includes("site") || intelText.includes("office") || intelText.includes("dso") || intelText.includes("group practice");
+          const intelText = [...(intel.hooks||[]), intel.ownershipNote||"", ...(intel.talkingPoints||[])].join(" ").toLowerCase();
+          const isMulti = intelText.includes("location") || intelText.includes("site") || intelText.includes("office") || intelText.includes("dso") || intelText.includes("group practice") || intelText.includes("multiple");
           if (isMulti) {
-            const rawText = [intel.ownershipNote||"", ...(intel.hooks||[]), ...(intel.talkingPoints||[]), intel.statusNote||""].join(" ");
-
-            // 1. Extract city names — "City, ST" or "City ST" patterns
-            const cityMatches = new Set<string>();
-            const cityRe = /([A-Z][a-z]+(?:\s[A-Z][a-z]+)*),?\s+(CT|MA|RI|NY|NH|VT|ME)/g;
-            let m;
-            while ((m = cityRe.exec(rawText)) !== null) cityMatches.add(m[1].toLowerCase());
-
-            // 2. Extract street addresses — look for number + street patterns
-            // e.g. "481 Old Post Rd", "1 Thurber Blvd", "1196 Smith St"
-            const addrMatches = new Set<string>();
-            const addrRe = /(\d+\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\s+(?:Rd|Blvd|St|Ave|Dr|Ln|Way|Pl|Ct|Hwy|Pike|Rte|Route|Ste))/g;
-            while ((m = addrRe.exec(rawText)) !== null) {
-              // Get just the street name (drop number) for fuzzy matching
-              const streetName = m[1].replace(/^\d+\s+/, "").toLowerCase().split(/\s+(?:ste|suite|#).*/i)[0].trim();
-              if (streetName.length >= 6) addrMatches.add(streetName);
-            }
-
-            // 3. Strip credentials to get real doctor last name
-            const doctorContact = (intel.contacts||[]).find((c:any) => c.tier === 1);
-            const cleanDoctorName = (doctorContact?.name||"")
-              .replace(/(DDS|DMD|MD|Jr\.?|Sr\.?|II|III|IV|PhD)\.?,?/gi, "").trim();
-            const nameParts = cleanDoctorName.split(/\s+/).filter((p:string) => p.length > 1);
-            const doctorLast = nameParts.length > 0 ? nameParts[nameParts.length-1].toLowerCase() : "";
-
-            // 4. Practice name keywords — all meaningful words from current account name
-            const stopWords = new Set(["the","and","of","dental","dentistry","associates","dds","dmd","llc","pc","pllc","group","care","family","general","dr"]);
-            const acctWords = acct.name.toLowerCase().split(/\s+/).filter((w:string) => w.length >= 4 && !stopWords.has(w));
-
-            // Search all accounts
+            // Build condensed account list for Opus
             const allAccts = (groups||[]).flatMap((g:any) =>
-              (g.children||[]).map((c:any) => ({...c, gId:g.id, gName:g.name, tier:g.tier}))
-            );
-            const suggestions = allAccts.filter((c:any) => {
-              if (c.id === acct.id) return false;
-              if (c.gId === acct.gId && acct.gId) return false;
-              const cName = c.name?.toLowerCase() || "";
-              const cCity = c.city?.toLowerCase() || "";
-              const cAddr = c.address?.toLowerCase() || "";
-              // City match
-              const cityMatch = [...cityMatches].some(city => city.length >= 4 && cCity.includes(city));
-              // Address match — street name appears in account's address
-              const addrMatch = addrMatches.size > 0 && cAddr && [...addrMatches].some(street => cAddr.includes(street));
-              // Doctor last name in account name
-              const doctorMatch = doctorLast.length >= 4 && cName.includes(doctorLast);
-              // Any meaningful word from practice name matches
-              const nameMatch = acctWords.length > 0 && acctWords.some((w:string) => cName.includes(w));
-              return cityMatch || addrMatch || doctorMatch || nameMatch;
-            }).slice(0,8);
-            if (suggestions.length > 0) setGroupSuggestions(suggestions);
+              (g.children||[]).map((c:any) => ({
+                id: c.id,
+                name: c.name,
+                city: c.city,
+                st: c.st,
+                address: c.address||""
+              }))
+            ).filter((c:any) => c.id !== acct.id);
+
+            fetch("/api/find-group-matches", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                intel,
+                acct: { name: acct.name, city: acct.city, st: acct.st, address: acct.address||"" },
+                accounts: allAccts
+              })
+            })
+            .then(r => r.json())
+            .then(result => {
+              if (result.matches?.length > 0) {
+                // Map matched IDs back to full account objects
+                const matchedIds = new Set(result.matches.map((m:any) => m.id));
+                const reasonMap: Record<string,string> = {};
+                result.matches.forEach((m:any) => { reasonMap[m.id] = m.reason; });
+                const matched = (groups||[]).flatMap((g:any) =>
+                  (g.children||[]).map((c:any) => ({...c, gId:g.id}))
+                ).filter((c:any) => matchedIds.has(c.id))
+                  .map((c:any) => ({...c, matchReason: reasonMap[c.id]||""}));
+                if (matched.length > 0) setGroupSuggestions(matched);
+              }
+            })
+            .catch(() => {}); // silent fail — don't block research
           }
         } catch(e) {}
         // Save contact info to persistent overlay storage (committed to overlays.json via API)
@@ -443,8 +422,9 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
               </button>
             </div>
             {groupSuggestions.slice(0,3).map((s:any)=>(
-              <div key={s.id} style={{fontSize:10,color:T.t2,marginTop:3,paddingLeft:4}}>
-                · {s.name} — {s.city}, {s.st}
+              <div key={s.id} style={{marginTop:4,paddingLeft:4}}>
+                <div style={{fontSize:11,color:T.t1,fontWeight:600}}>· {s.name} — {s.city}, {s.st}</div>
+                {s.matchReason&&<div style={{fontSize:9,color:T.t4,paddingLeft:8,marginTop:1,fontStyle:"italic"}}>{s.matchReason}</div>}
               </div>
             ))}
             {groupSuggestions.length > 3 && <div style={{fontSize:9,color:T.t4,marginTop:2,paddingLeft:4}}>+{groupSuggestions.length-3} more</div>}
