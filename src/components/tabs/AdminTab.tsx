@@ -33,6 +33,9 @@ function AdminTab({groups, scored, overlays, saveOverlays}:{groups:any[], scored
   // Create Group form
   const [newGroupName, setNewGroupName] = useState("");
   const [newGroupClass, setNewGroupClass] = useState("Emerging DSO");
+  const [groupType, setGroupType] = useState<"multi"|"private"|"merge">("multi");
+  const [mergeBase, setMergeBase] = useState<any>(null);
+  const [mergeSearch, setMergeSearch] = useState("");
   const [childIdInput, setChildIdInput] = useState("");
   const [childIds, setChildIds] = useState<string[]>([]);
   const [editingGroup, setEditingGroup] = useState<any>(null);
@@ -159,33 +162,83 @@ function AdminTab({groups, scored, overlays, saveOverlays}:{groups:any[], scored
       {/* Create / Edit group form */}
       <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:14}}>
         <div style={{fontSize:12,fontWeight:700,color:T.t2,marginBottom:12}}>{editingGroup?"✏️ Edit Group":"➕ Create New Group"}</div>
-        
-        <div style={{marginBottom:10}}>
+
+        {/* Group Type selector — only shown when not editing */}
+        {!editingGroup&&<div style={{marginBottom:12}}>
+          <div style={{fontSize:10,color:T.t3,marginBottom:6}}>Group Type</div>
+          <div style={{display:"flex",gap:6}}>
+            {([["multi","Multi Practice","Multiple physical locations under one owner"],["private","Private Group","Same address, multiple dealers"],["merge","Merge with Existing","Add accounts to an existing group"]] as [string,string,string][]).map(([k,label,tip])=>(
+              <button key={k} onClick={()=>{
+                setGroupType(k as any);
+                setMergeBase(null); setMergeSearch(""); setChildIds([]); setNewGroupName("");
+                setNewGroupClass(k==="private"?"Private Practice":"Emerging DSO");
+              }} title={tip} style={{flex:1,padding:"7px 4px",borderRadius:8,border:`1px solid ${groupType===k?"rgba(79,142,247,.4)":T.b1}`,background:groupType===k?"rgba(79,142,247,.12)":"transparent",color:groupType===k?T.blue:T.t3,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit",textAlign:"center"}}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>}
+
+        {/* Merge with Existing — base group search */}
+        {!editingGroup&&groupType==="merge"&&<div style={{marginBottom:10}}>
+          <div style={{fontSize:10,color:T.t3,marginBottom:4}}>Search Existing Group to Merge Into</div>
+          {mergeBase
+            ? <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 12px",background:T.s2,borderRadius:8,border:`1px solid ${T.b1}`,marginBottom:6}}>
+                <div>
+                  <div style={{fontSize:12,fontWeight:700,color:T.t1}}>{mergeBase.name}</div>
+                  <div style={{fontSize:10,color:T.t4}}>{(mergeBase.children||[]).length} existing locations · {mergeBase.class2}</div>
+                </div>
+                <button onClick={()=>{setMergeBase(null);setMergeSearch("");setChildIds([]);setNewGroupName("");}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:12}}>✕</button>
+              </div>
+            : <>
+                <input value={mergeSearch} onChange={e=>setMergeSearch(e.target.value)} placeholder="Type group name..."
+                  style={{width:"100%",padding:"9px 12px",borderRadius:8,border:`1px solid ${T.b1}`,background:T.bg,color:T.t1,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
+                {mergeSearch.length>=2&&<div style={{border:`1px solid ${T.b2}`,borderRadius:8,background:T.s1,overflow:"hidden",marginTop:4,maxHeight:200,overflowY:"auto"}}>
+                  {searchGroups(mergeSearch).map((g:any,i:number)=>(
+                    <button key={g.id} onClick={()=>{
+                      setMergeBase(g);
+                      setMergeSearch(g.name);
+                      setNewGroupName(g.name);
+                      setNewGroupClass(g.class2||"Emerging DSO");
+                      // Pre-populate with existing children
+                      const existingIds=(g.children||[]).map((c:any)=>c.id);
+                      setChildIds(existingIds);
+                    }} style={{display:"block",width:"100%",textAlign:"left",padding:"8px 12px",background:"transparent",border:"none",borderBottom:i>0?`1px solid ${T.b1}`:"none",cursor:"pointer",fontFamily:"inherit",color:T.t1}}>
+                      <div style={{fontSize:12,fontWeight:600}}>{g.name}</div>
+                      <div style={{fontSize:10,color:T.t4}}>{(g.children||[]).length} locs · {g.class2}</div>
+                    </button>
+                  ))}
+                </div>}
+              </>}
+        </div>}
+
+        {/* Group Name */}
+        {(groupType!=="merge"||mergeBase)&&<div style={{marginBottom:10}}>
           <div style={{fontSize:10,color:T.t3,marginBottom:4}}>Group Name</div>
           <input value={newGroupName} onChange={e=>setNewGroupName(e.target.value)} placeholder="e.g. Resolute Dental Partners"
             style={{width:"100%",padding:"9px 12px",borderRadius:8,border:`1px solid ${T.b1}`,background:T.bg,color:T.t1,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
-        </div>
+        </div>}
 
-        <div style={{marginBottom:10}}>
-          <div style={{fontSize:10,color:T.t3,marginBottom:4}}>Type</div>
+        {/* Class dropdown — hidden for Private Group (auto-set) */}
+        {groupType!=="private"&&(groupType!=="merge"||mergeBase)&&<div style={{marginBottom:10}}>
+          <div style={{fontSize:10,color:T.t3,marginBottom:4}}>Classification</div>
           <select value={newGroupClass} onChange={e=>setNewGroupClass(e.target.value)}
             style={{width:"100%",padding:"9px 12px",borderRadius:8,border:`1px solid ${T.b1}`,background:T.bg,color:T.t1,fontSize:12,fontFamily:"inherit"}}>
             <option>Emerging DSO</option>
             <option>DSO</option>
-            <option>Private Practice</option>
             <option>Academic</option>
           </select>
-        </div>
+        </div>}
 
-        <div style={{marginBottom:10}}>
-          <div style={{fontSize:10,color:T.t3,marginBottom:4}}>Add Locations — search by name, city, or address</div>
+        {/* Add Locations search */}
+        {(groupType!=="merge"||mergeBase)&&<div style={{marginBottom:10}}>
+          <div style={{fontSize:10,color:T.t3,marginBottom:4}}>{groupType==="merge"?"Add More Locations":"Add Locations"} — search by name, city, or address</div>
           <div style={{position:"relative",marginBottom:6}}>
             <input value={childIdInput} onChange={e=>setChildIdInput(e.target.value)}
               placeholder="Search: office name, city, doctor..."
               style={{width:"100%",padding:"10px 32px 10px 12px",borderRadius:10,border:`1px solid ${childIdInput.length>=2?T.blue:T.b1}`,background:T.bg,color:T.t1,fontSize:13,fontFamily:"inherit",boxSizing:"border-box",outline:"none"}}/>
             {childIdInput.length>=1&&<button onClick={()=>setChildIdInput("")} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:14,padding:0}}>✕</button>}
           </div>
-          {/* Search results */}
           {childIdInput.length>=2&&(()=>{
             const results = searchAccounts(childIdInput).filter(a=>!childIds.includes(a.id));
             if(results.length===0) return <div style={{fontSize:11,color:T.t4,padding:"8px 0",textAlign:"center"}}>No matches for "{childIdInput}"</div>;
@@ -204,7 +257,6 @@ function AdminTab({groups, scored, overlays, saveOverlays}:{groups:any[], scored
               })}
             </div>;
           })()}
-          {/* Selected accounts */}
           {childIds.length>0&&<div style={{marginTop:4}}>
             <div style={{fontSize:9,textTransform:"uppercase",color:T.t4,letterSpacing:"1px",marginBottom:6,fontWeight:700}}>Selected ({childIds.length}){(()=>{const t=childIds.reduce((s,id)=>{const a=scored.find(x=>x.id===id);return s+(a?.pyQ?.["1"]||0);},0);return t>0?<span style={{color:T.amber,textTransform:"none",letterSpacing:0}}> · Combined PY {$$(t)}</span>:"";})()}</div>
             {childIds.map(id=>{
@@ -219,22 +271,27 @@ function AdminTab({groups, scored, overlays, saveOverlays}:{groups:any[], scored
               </div>;
             })}
           </div>}
-        </div>
+        </div>}
 
         <button onClick={()=>{
           if(!newGroupName.trim()||childIds.length===0){showToast("❌ Need a name and at least one account",false);return;}
-          const id = editingGroup?.id || `Master-CUSTOM-${Date.now()}`;
-          // Save group to overlays (durable)
-        if (saveOverlays) {
-          const grp = {id,name:newGroupName.trim(),class2:newGroupClass,childIds,tier:"Standard",createdAt:editingGroup?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
-          const next = { ...OVERLAYS_REF, groups: { ...(OVERLAYS_REF.groups||{}), [id]: grp } };
-          saveOverlays(next).then(ok => { if(ok) showToast("✅ Group saved"); else showToast("❌ Save failed",false); });
-        }
-        }} disabled={saving||!newGroupName.trim()||childIds.length===0}
+          if(groupType==="merge"&&!mergeBase&&!editingGroup){showToast("❌ Select a group to merge into",false);return;}
+          // For merge: use base group's ID so the overlay supersedes the original
+          const id = editingGroup?.id || (groupType==="merge"&&mergeBase?mergeBase.id:`Master-CUSTOM-${Date.now()}`);
+          const cls = groupType==="private"?"Private Practice":newGroupClass;
+          if (saveOverlays) {
+            const grp = {id,name:newGroupName.trim(),class2:cls,childIds,tier:"Standard",groupType,createdAt:editingGroup?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
+            const next = { ...OVERLAYS_REF, groups: { ...(OVERLAYS_REF.groups||{}), [id]: grp } };
+            saveOverlays(next).then(ok => {
+              if(ok){ showToast("✅ Group saved"); setGroupType("multi"); setMergeBase(null); setMergeSearch(""); }
+              else showToast("❌ Save failed",false);
+            });
+          }
+        }} disabled={saving||!newGroupName.trim()||childIds.length===0||(groupType==="merge"&&!mergeBase&&!editingGroup)}
           style={{width:"100%",padding:"11px 0",borderRadius:10,border:"none",background:(!newGroupName.trim()||childIds.length===0)?T.s2:T.blue,color:"#fff",fontSize:13,fontWeight:700,cursor:(!newGroupName.trim()||childIds.length===0)?"not-allowed":"pointer",fontFamily:"inherit"}}>
-          {saving?"Saving...":editingGroup?"Update Group":"Create Group"}
+          {saving?"Saving...":editingGroup?"Update Group":groupType==="merge"?"Merge Groups":"Create Group"}
         </button>
-        {editingGroup&&<button onClick={()=>{setEditingGroup(null);setNewGroupName("");setChildIds([]);}} style={{width:"100%",marginTop:6,padding:"9px 0",borderRadius:10,border:`1px solid ${T.b1}`,background:"transparent",color:T.t3,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>Cancel Edit</button>}
+        {editingGroup&&<button onClick={()=>{setEditingGroup(null);setNewGroupName("");setChildIds([]);setGroupType("multi");setMergeBase(null);setMergeSearch("");}} style={{width:"100%",marginTop:6,padding:"9px 0",borderRadius:10,border:`1px solid ${T.b1}`,background:"transparent",color:T.t3,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>Cancel Edit</button>}
       </div>
     </div>}
 

@@ -183,6 +183,9 @@ function applyOverlays(grps: any[]): any[] {
     }
   });
 
+  // Remove groups emptied by custom group child moves — they become ghost shells
+  result = result.filter(g => (g.children||[]).length > 0);
+
   return result;
 }
 
