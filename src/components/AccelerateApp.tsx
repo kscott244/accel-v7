@@ -210,7 +210,7 @@ import DashTab from "@/components/tabs/DashTab";
 import MapTab from "@/components/tabs/MapTab";
 import EstTab from "@/components/tabs/EstTab";
 // ─── PHASE 4: Tab components extracted to src/components/tabs/ ────
-import TodayTab from "@/components/tabs/TodayTab";
+import DashboardTab from "@/components/tabs/TodayTab";
 import GroupDetail from "@/components/tabs/GroupDetail";
 import AcctDetail from "@/components/tabs/AcctDetail";
 import DealersTab from "@/components/tabs/DealersTab";
@@ -686,7 +686,7 @@ function AppInner() {
         const goGroupFn = (g:any) => setView({type:"group", data:g});
         const goAcctFn = (a:any, from?:any) => setView({type:"acct", data:a, from});
         return <>
-          {!view && tab==="today" && <TodayTab scored={scored} goAcct={goSmartFn} q1CY={q1CY} q1Gap={q1Gap} q1Att={q1Att} adjCount={adjs.length} totalAdj={totalAdjQ1} groups={groups||[]} goGroup={goGroupFn}/>}
+          {!view && tab==="today" && <DashboardTab scored={scored} goAcct={goSmartFn} q1CY={q1CY} q1Gap={q1Gap} q1Att={q1Att} adjCount={adjs.length} totalAdj={totalAdjQ1} groups={groups||[]} goGroup={goGroupFn}/>}
           {!view && tab==="groups" && <GroupsTab groups={groups||[]} goGroup={goGroupFn} filt={gFilt} setFilt={setGFilt} search={gSearch} setSearch={setGSearch}/>}
           {!view && tab==="map" && <MapTab/>}
           {!view && tab==="calc" && <DashTab groups={groups||[]} q1CY={q1CY} q1Att={q1Att} q1Gap={q1Gap} scored={scored} goAcct={goSmartFn}/>}
@@ -717,7 +717,7 @@ function AppInner() {
       {/* NAV BAR */}
       <nav style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:960,zIndex:100,borderTop:`1px solid ${T.b1}`,background:"rgba(10,10,15,.92)",backdropFilter:"blur(32px)"}}>
         <div style={{display:"flex",height:56,alignItems:"center",justifyContent:"space-around",padding:"0 4px"}}>
-          {[{k:"today",l:"Today",I:IconBolt},{k:"groups",l:"Groups",I:IconGroup},{k:"dealers",l:"Dealers",I:IconDealer},{k:"calc",l:"Dash",I:IconChart}].map(t=>(
+          {[{k:"today",l:"Dashboard",I:IconBolt},{k:"groups",l:"Groups",I:IconGroup},{k:"dealers",l:"Dealers",I:IconDealer},{k:"calc",l:"Dash",I:IconChart}].map(t=>(
             <button key={t.k} onClick={()=>{setTab(t.k);setView(null);setShowMore(false)}} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 12px",cursor:"pointer",color:tab===t.k&&!view&&!showMore?T.blue:T.t4}}>
               <t.I c={tab===t.k&&!view&&!showMore?T.blue:T.t4}/>
               <span style={{fontSize:9,fontWeight:600,letterSpacing:".5px"}}>{t.l}</span>

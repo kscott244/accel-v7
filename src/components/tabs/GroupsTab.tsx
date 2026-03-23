@@ -8,7 +8,7 @@ import { $$ } from "@/lib/format";
 import { fixGroupName, Pill, Chev } from "@/components/primitives";
 
 export default function GroupsTab({groups,goGroup,filt,setFilt,search,setSearch}) {
-  const fs=["All","Schein","Patterson","Benco","Darby","Top 100","Diamond","Platinum","Gold","DSO","Urgent"];
+  const fs=["All","Multi-Location","Private","Schein","Patterson","Benco","Darby","Top 100","Diamond","Platinum","Gold","DSO","Urgent"];
   const isDealerFilt=["Schein","Patterson","Benco","Darby"].includes(filt);
 
   // Enrich each group with dealer-specific spend for sorting/display
@@ -26,6 +26,8 @@ export default function GroupsTab({groups,goGroup,filt,setFilt,search,setSearch}
     let l=[...enriched];
     if(search){const q=search.toLowerCase();l=l.filter(g=>fixGroupName(g).toLowerCase().includes(q)||g.name.toLowerCase().includes(q)||g.children?.some(c=>c.name.toLowerCase().includes(q)));}
     if(filt==="Urgent")l=l.filter(g=>g._gap>2000&&g._ret<0.3);
+    else if(filt==="Multi-Location")l=l.filter(g=>g.locs>=2);
+    else if(filt==="Private")l=l.filter(g=>g.locs===1);
     else if(filt==="Top 100")l=l.filter(g=>g.tier==="Top 100"||g.tier?.startsWith("Top 100"));
     else if(filt==="DSO")l=l.filter(g=>g.locs>=3||g.class2==="DSO"||g.class2==="EMERGING DSO");
     else if(isDealerFilt)l=l.filter(g=>g._locs>0);
@@ -99,7 +101,11 @@ export default function GroupsTab({groups,goGroup,filt,setFilt,search,setSearch}
       }
     </> : <>
       {/* ── STANDARD LIST VIEW ── */}
-      <div style={{marginBottom:8,fontSize:10,color:T.t4}}>{list.length} groups</div>
+      <div style={{marginBottom:8,fontSize:10,color:T.t4}}>
+        {filt==="All"
+          ? `${list.length} total · ${list.filter(g=>g.locs>=2).length} multi-location · ${list.filter(g=>g.locs===1).length} single`
+          : `${list.length} groups`}
+      </div>
       {list.slice(0,50).map((g,i)=><GroupCard key={g.id} g={g} i={i}/>)}
       {list.length>50&&<div style={{textAlign:"center",padding:16,fontSize:11,color:T.t4}}>Showing top 50 of {list.length} groups. Use search to find more.</div>}
     </>}

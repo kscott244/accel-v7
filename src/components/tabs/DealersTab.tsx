@@ -55,6 +55,7 @@ const PRI_ORDER:Record<string,number> = {NOW:0,SOON:1,"ON TRACK":2,PROTECT:3,PIP
 
 function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],goAcct:(a:any)=>void,goGroup:(g:any)=>void}) {
   const [mainTab, setMainTab] = useState<"dealers"|"team">("dealers");
+  const [acctType, setAcctType] = useState<"all"|"private"|"groups">("all");
   const [selDist,setSelDist] = useState<string|null>(null);
   const [selRep,setSelRep]  = useState<string|null>(null); // null = all reps view
   const [selGroup,setSelGroup] = useState<string|null>(null); // gId of selected group in rep drill-down
@@ -75,12 +76,30 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
     try { localStorage.setItem("dealer_manual_reps", JSON.stringify(updated)); } catch {}
   };
 
+  // Build gId → locs lookup from groups prop
+  const groupLocsMap = useMemo(()=>{
+    const m: Record<string,number> = {};
+    groups.forEach(g=>{ m[g.id] = g.locs||1; });
+    return m;
+  },[groups]);
+
+  // Filter scored by acctType before building distStats
+  const filteredScored = useMemo(()=>{
+    if(acctType==="all") return scored;
+    return scored.filter(a=>{
+      const locs = a.gId ? (groupLocsMap[a.gId]||1) : 1;
+      if(acctType==="private") return locs===1;
+      if(acctType==="groups") return locs>=2;
+      return true;
+    });
+  },[scored,acctType,groupLocsMap]);
+
   // Build per-distributor stats from scored accounts — includes all accounts
   const distStats = useMemo(()=>{
     const ALL_BUCKETS = [...DIST_ORDER, "All Other"];
     const map:Record<string,{accts:any[],cy:number,py:number,nowCount:number}> = {};
     ALL_BUCKETS.forEach(d=>{ map[d]={accts:[],cy:0,py:0,nowCount:0}; });
-    scored.forEach(a=>{
+    filteredScored.forEach(a=>{
       const d = a.dealer || "All Other";
       if(!map[d]) map[d]={accts:[],cy:0,py:0,nowCount:0};
       const cy=a.cyQ?.["1"]||0, py=a.pyQ?.["1"]||0;
@@ -96,7 +115,7 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
       map["All Other"].nowCount += map["Unknown"].nowCount;
     }
     return map;
-  },[scored]);
+  },[filteredScored]);
 
   // Extract distributor hint from a freeform rep string
   // e.g. "Dave R - Benco" → "Benco", "Jeff T - Schein" → "Schein", "Lyndon" → null
@@ -705,13 +724,26 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
         })()}
       </div>}
     </div>
+    {/* ── ACCOUNT TYPE TOGGLE — All / Private / Groups ── */}
+    <div style={{display:"flex",gap:6,marginBottom:12}}>
+      {([["all","All"],["private","Private"],["groups","Groups"]] as const).map(([val,label])=>(
+        <button key={val} onClick={()=>setAcctType(val)}
+          style={{flex:1,padding:"6px 0",borderRadius:8,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",
+            border:`1px solid ${acctType===val?"rgba(79,142,247,.4)":T.b2}`,
+            background:acctType===val?"rgba(79,142,247,.18)":T.s2,
+            color:acctType===val?T.blue:T.t3}}>
+          {label}
+        </button>
+      ))}
+    </div>
+
     {/* Territory total summary */}
     {(()=>{
-      const totalCY=scored.reduce((s,a)=>s+(a.cyQ?.["1"]||0),0);
-      const totalPY=scored.reduce((s,a)=>s+(a.pyQ?.["1"]||0),0);
+      const totalCY=filteredScored.reduce((s,a)=>s+(a.cyQ?.["1"]||0),0);
+      const totalPY=filteredScored.reduce((s,a)=>s+(a.pyQ?.["1"]||0),0);
       const totalGap=totalPY-totalCY;
       return <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:"10px 14px",marginBottom:14,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <div style={{fontSize:10,color:T.t3,fontWeight:600,textTransform:"uppercase",letterSpacing:"1px"}}>All Distributors · {scored.length} accounts</div>
+        <div style={{fontSize:10,color:T.t3,fontWeight:600,textTransform:"uppercase",letterSpacing:"1px"}}>All Distributors · {filteredScored.length} accounts</div>
         <div style={{display:"flex",gap:12}}>
           <div style={{textAlign:"right"}}><div style={{fontSize:8,color:T.t4}}>CY</div><div style={{fontSize:11,fontWeight:700,color:T.blue,fontFamily:"'DM Mono',monospace"}}>{$$(totalCY)}</div></div>
           <div style={{textAlign:"right"}}><div style={{fontSize:8,color:T.t4}}>Gap</div><div style={{fontSize:11,fontWeight:700,color:totalGap<=0?T.green:T.red,fontFamily:"'DM Mono',monospace"}}>{totalGap<=0?`+${$$(Math.abs(totalGap))}`:$$(totalGap)}</div></div>

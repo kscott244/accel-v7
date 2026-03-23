@@ -22,7 +22,7 @@ const AccountId = ({name, gName, size="md", color}:{name:string, gName?:string, 
   </div>;
 };
 
-function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGroup}) {
+function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGroup}) {
   const [scope, setScope] = useState<string>(() => {
     try { return localStorage.getItem("today_scope") || "1"; } catch { return "1"; }
   });
@@ -445,7 +445,92 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
   const hot = scopedScored.filter((a:any) => suppressedByRule(a) === "none" && a.score >= 50).slice(0,10);
   const followUp = scopedScored.filter((a:any) => suppressedByRule(a) === "none" && a.score >= 20 && a.score < 50).slice(0,10);
 
-  // ── Group-first action card for Today tab
+  // ── NEW DASHBOARD COMPUTED SECTIONS ──
+
+  // Best Bet Before Q1 End — active accounts with gap, ordered recently
+  const bestBet = useMemo(() => {
+    return scored
+      .filter((a:any) => {
+        const cy = a.cyQ?.["1"]||0;
+        const py = a.pyQ?.["1"]||0;
+        return cy > 0 && py > 300 && cy < py * 0.85 && a.last < 21;
+      })
+      .sort((a:any,b:any) => ((b.pyQ?.["1"]||0)-(b.cyQ?.["1"]||0)) - ((a.pyQ?.["1"]||0)-(a.cyQ?.["1"]||0)))
+      .slice(0, 5);
+  }, [scored]);
+
+  // Gone Dark — had PY, zero CY, silent > 45 days
+  const goneDark = useMemo(() => {
+    return scored
+      .filter((a:any) => (a.cyQ?.["1"]||0) === 0 && (a.pyQ?.["1"]||0) > 400 && a.last > 45)
+      .sort((a:any,b:any) => (b.pyQ?.["1"]||0) - (a.pyQ?.["1"]||0))
+      .slice(0, 5);
+  }, [scored]);
+
+  // Losing Share — buying but well below PY, not silent
+  const losingShare = useMemo(() => {
+    return scored
+      .filter((a:any) => {
+        const cy = a.cyQ?.["1"]||0;
+        const py = a.pyQ?.["1"]||0;
+        return cy > 0 && py > 400 && cy < py * 0.5 && a.last < 45;
+      })
+      .sort((a:any,b:any) => ((b.pyQ?.["1"]||0)-(b.cyQ?.["1"]||0)) - ((a.pyQ?.["1"]||0)-(a.cyQ?.["1"]||0)))
+      .slice(0, 5);
+  }, [scored]);
+
+  // Momentum — growing or strong retention
+  const momentum = useMemo(() => {
+    return scored
+      .filter((a:any) => {
+        const cy = a.cyQ?.["1"]||0;
+        const py = a.pyQ?.["1"]||0;
+        return cy > 0 && (cy >= py * 0.85 || cy > py) && py > 200;
+      })
+      .sort((a:any,b:any) => (b.cyQ?.["1"]||0) - (a.cyQ?.["1"]||0))
+      .slice(0, 5);
+  }, [scored]);
+
+  // Dealer Health — sum CY and PY by dealer
+  const dealerHealth = useMemo(() => {
+    const DEALER_COLORS: Record<string,string> = {
+      Schein:"#4f8ef7", Patterson:"#a78bfa", Benco:"#22d3ee",
+      Darby:"#fbbf24", Safco:"#f97316", "DDS Dental":"#f97316",
+      "Dental City":"#10b981", "All Other":"#7878a0"
+    };
+    const map: Record<string,{cy:number,py:number}> = {};
+    scored.forEach((a:any) => {
+      const d = a.dealer || "All Other";
+      if(!map[d]) map[d]={cy:0,py:0};
+      map[d].cy += a.cyQ?.["1"]||0;
+      map[d].py += a.pyQ?.["1"]||0;
+    });
+    return Object.entries(map)
+      .filter(([,v]) => v.py > 0)
+      .map(([d,v]) => ({dealer:d, cy:v.cy, py:v.py, color: DEALER_COLORS[d]||"#7878a0"}))
+      .sort((a,b) => b.py - a.py)
+      .slice(0, 6);
+  }, [scored]);
+
+  // Geo clusters — cities with 3+ declining accounts
+  const geoClusters = useMemo(() => {
+    const cityMap: Record<string,{city:string,st:string,gap:number,count:number}> = {};
+    scored.forEach((a:any) => {
+      const py = a.pyQ?.["1"]||0;
+      const cy = a.cyQ?.["1"]||0;
+      if(py - cy < 500) return;
+      const key = `${a.city||""},${a.st||""}`;
+      if(!cityMap[key]) cityMap[key]={city:a.city||"",st:a.st||"",gap:0,count:0};
+      cityMap[key].gap += py-cy;
+      cityMap[key].count++;
+    });
+    return Object.values(cityMap)
+      .filter(c => c.count >= 3)
+      .sort((a,b) => b.gap - a.gap)
+      .slice(0, 3);
+  }, [scored]);
+
+  // ── Group-first action card for Dashboard tab
   const GroupActionCard = ({g, i, isHot, goAcct, goGroup, groups}: any) => {
     const [expanded, setExpanded] = useState(false);
     const gap = g.totalGap;
@@ -557,8 +642,6 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
     </button>
   );};
 
-
-
   const SectionHeader = ({label, color, count="", pulse=false}) => (
     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,marginTop:4}}>
       <div style={{width:7,height:7,borderRadius:"50%",background:color,flexShrink:0,animation:pulse?"pulse 2s infinite":"none"}}/>
@@ -567,19 +650,25 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
     </div>
   );
 
-  return <div style={{padding:"16px 16px 80px"}}>
+  // Velocity dot color based on days since last order
+  const velDot = (last:number) => {
+    const c = last < 7 ? T.green : last < 21 ? T.amber : T.orange;
+    return <span style={{display:"inline-block",width:7,height:7,borderRadius:"50%",background:c,flexShrink:0,marginRight:4}}/>;
+  };
+
+  return <div style={{padding:"0 0 80px"}}>
 
     {/* ── SEARCH BAR ── */}
-    <div style={{position:"relative",marginBottom:16}}>
+    <div style={{position:"relative",margin:"16px 16px 12px"}}>
       <svg style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",width:15,height:15,color:T.t4}} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
       <input type="search" value={search} onChange={e=>setSearch(e.target.value)}
         placeholder="Search by office name or city…"
-        style={{width:"100%",height:42,borderRadius:12,border:`1px solid ${search?T.blue+"44":T.b1}`,background:T.s1,color:T.t1,fontSize:13,paddingLeft:38,paddingRight:search?36:12,outline:"none",fontFamily:"inherit"}}/>
+        style={{width:"100%",height:42,borderRadius:12,border:`1px solid ${search?T.blue+"44":T.b1}`,background:T.s1,color:T.t1,fontSize:13,paddingLeft:38,paddingRight:search?36:12,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}/>
       {search&&<button onClick={()=>setSearch("")} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:16,lineHeight:1}}>✕</button>}
     </div>
 
     {/* ── SEARCH RESULTS ── */}
-    {q ? <>
+    {q ? <div style={{padding:"0 16px"}}>
       <div style={{fontSize:10,color:T.t4,marginBottom:10}}>{searchResults.length} result{searchResults.length!==1?"s":""} for "{search}"</div>
       {searchResults.length===0&&<div style={{padding:"24px 0",textAlign:"center",color:T.t4,fontSize:12}}>No accounts found.</div>}
       {searchResults.map((a,i)=>{
@@ -610,11 +699,13 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
           </div>
         </button>;
       })}
-    </> :
+    </div> :
 
-    /* ── NORMAL TODAY CONTENT ── */
+    /* ── DASHBOARD CONTENT ── */
     <>
-    {/* ── SCOPE SELECTOR + PROGRESS CARD ── */}
+
+    {/* ── SCOPE SELECTOR + Q1 PULSE ── */}
+    <div style={{padding:"0 16px"}}>
     <div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(79,142,247,.06))`,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16,boxShadow:"0 4px 24px rgba(0,0,0,.4)"}}>
 
       {/* Scope pills */}
@@ -632,9 +723,9 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
       </div>
 
       {scope === "1" ? <>
-        {/* ── Q1 view: target attainment (existing logic) ── */}
+        {/* ── Q1 PULSE ── */}
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-          <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color:T.t3}}>Q1 Progress</span>
+          <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color:T.t3}}>Q1 Pulse</span>
           <div style={{display:"flex",alignItems:"center",gap:6}}>
             <span style={{fontSize:10,fontWeight:700,color:statusColor,background:statusBg,border:`1px solid ${statusBorder}`,borderRadius:999,padding:"2px 10px"}}>{statusLabel}</span>
             <span className="m" style={{fontSize:10,fontWeight:700,color:T.amber}}>{DAYS_LEFT}d left</span>
@@ -698,7 +789,157 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
         </>;
       })()}
     </div>
+    </div>
 
+    {/* ── BEST BET BEFORE MARCH 31 — only show when DAYS_LEFT <= 14 ── */}
+    {scope === "1" && DAYS_LEFT <= 14 && bestBet.length > 0 && <div style={{padding:"0 16px",marginBottom:16}}>
+      <div style={{background:`linear-gradient(135deg,rgba(251,191,36,.08),rgba(251,191,36,.03))`,border:"1px solid rgba(251,191,36,.25)",borderRadius:14,padding:"12px 14px"}}>
+        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.amber,marginBottom:10}}>
+          ⚡ Best Bet Before Q1 Closes · {DAYS_LEFT}d left
+        </div>
+        {bestBet.map((a:any,i:number)=>{
+          const py=a.pyQ?.["1"]||0; const cy=a.cyQ?.["1"]||0; const gap=py-cy;
+          return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
+            style={{animationDelay:`${i*15}ms`,width:"100%",textAlign:"left",
+              background:T.s1,border:"1px solid rgba(79,142,247,.2)",
+              borderLeft:`3px solid ${T.blue}`,
+              borderRadius:10,padding:"9px 12px",marginBottom:6,cursor:"pointer",
+              display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{flex:1,minWidth:0}}>
+              <AccountId name={a.name} gName={a.gName} size="md"/>
+              <div style={{fontSize:10,color:T.t3,marginTop:1,display:"flex",alignItems:"center",gap:4}}>
+                {velDot(a.last||99)}
+                last {a.last||"?"} days
+              </div>
+            </div>
+            <div style={{flexShrink:0,marginLeft:10,textAlign:"right"}}>
+              <div className="m" style={{fontSize:11,fontWeight:700,color:T.blue}}>{$$(cy)}</div>
+              <div style={{fontSize:9,color:T.t4}}>vs {$$(py)} PY</div>
+              <div className="m" style={{fontSize:10,fontWeight:700,color:T.amber}}>-{$$(gap)}</div>
+            </div>
+            <Chev/>
+          </button>;
+        })}
+      </div>
+    </div>}
+
+    {/* ── HURTING + MOMENTUM ── */}
+    {scope === "1" && (goneDark.length > 0 || losingShare.length > 0 || momentum.length > 0) && <div style={{padding:"0 16px",marginBottom:16}}>
+      <div style={{display:"grid",gridTemplateColumns:momentum.length>0?"1fr 1fr":"1fr",gap:10}}>
+
+        {/* HURTING card */}
+        {(goneDark.length > 0 || losingShare.length > 0) && <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:14,padding:"12px 14px"}}>
+          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.red,marginBottom:10}}>Hurting</div>
+
+          {/* Gone Dark sub-section */}
+          {goneDark.length > 0 && <>
+            <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t4,marginBottom:6}}>🔴 Gone Dark</div>
+            {goneDark.map((a:any,i:number)=>{
+              const py=a.pyQ?.["1"]||0;
+              const textColor = a.last > 90 ? T.red : T.amber;
+              return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
+                style={{animationDelay:`${i*15}ms`,width:"100%",textAlign:"left",
+                  background:"rgba(248,113,113,.04)",
+                  border:`1px solid rgba(248,113,113,.15)`,
+                  borderLeft:`3px solid ${T.red}`,
+                  borderRadius:8,padding:"8px 10px",marginBottom:5,cursor:"pointer",
+                  display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:11,fontWeight:600,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
+                  {a.gName&&a.gName!==a.name&&<div style={{fontSize:9,color:T.cyan,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} onClick={e=>{e.stopPropagation();const g=(groups||[]).find(gr=>gr.id===a.gId);if(g&&goGroup)goGroup(g);}}>{a.gName}</div>}
+                  <div style={{fontSize:9,color:textColor,marginTop:1}}>{a.last||"?"} days silent</div>
+                </div>
+                <div style={{flexShrink:0,marginLeft:8,textAlign:"right"}}>
+                  <div className="m" style={{fontSize:10,fontWeight:700,color:T.t3}}>{$$(py)} PY</div>
+                </div>
+              </button>;
+            })}
+          </>}
+
+          {/* Losing Share sub-section */}
+          {losingShare.length > 0 && <>
+            <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t4,marginBottom:6,marginTop:goneDark.length>0?10:0}}>🟠 Losing Share</div>
+            {losingShare.map((a:any,i:number)=>{
+              const py=a.pyQ?.["1"]||0; const cy=a.cyQ?.["1"]||0; const gap=py-cy;
+              return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
+                style={{animationDelay:`${i*15}ms`,width:"100%",textAlign:"left",
+                  background:"rgba(251,146,60,.04)",
+                  border:`1px solid rgba(251,146,60,.15)`,
+                  borderLeft:`3px solid ${T.orange}`,
+                  borderRadius:8,padding:"8px 10px",marginBottom:5,cursor:"pointer",
+                  display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:11,fontWeight:600,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
+                  {a.gName&&a.gName!==a.name&&<div style={{fontSize:9,color:T.cyan,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} onClick={e=>{e.stopPropagation();const g=(groups||[]).find(gr=>gr.id===a.gId);if(g&&goGroup)goGroup(g);}}>{a.gName}</div>}
+                  <div style={{fontSize:9,color:T.t3,marginTop:1}}>{$$(cy)} of {$$(py)} PY · -${Math.round(gap).toLocaleString()}</div>
+                </div>
+              </button>;
+            })}
+          </>}
+        </div>}
+
+        {/* MOMENTUM card */}
+        {momentum.length > 0 && <div style={{background:T.s1,border:`1px solid rgba(52,211,153,.15)`,borderRadius:14,padding:"12px 14px"}}>
+          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.green,marginBottom:10}}>🟢 Momentum</div>
+          {momentum.map((a:any,i:number)=>{
+            const py=a.pyQ?.["1"]||0; const cy=a.cyQ?.["1"]||0;
+            return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
+              style={{animationDelay:`${i*15}ms`,width:"100%",textAlign:"left",
+                background:"rgba(52,211,153,.04)",
+                border:`1px solid rgba(52,211,153,.15)`,
+                borderLeft:`3px solid ${T.green}`,
+                borderRadius:8,padding:"8px 10px",marginBottom:5,cursor:"pointer",
+                display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:11,fontWeight:600,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
+                {a.gName&&a.gName!==a.name&&<div style={{fontSize:9,color:T.cyan,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.gName}</div>}
+                <div style={{fontSize:9,color:T.green,marginTop:1}}>{$$(cy)} CY</div>
+              </div>
+              <div style={{flexShrink:0,marginLeft:8,textAlign:"right"}}>
+                <div style={{fontSize:9,color:T.t4}}>{$$(py)} PY</div>
+              </div>
+            </button>;
+          })}
+        </div>}
+      </div>
+    </div>}
+
+    {/* ── DEALER HEALTH ── */}
+    {dealerHealth.length > 0 && <div style={{padding:"0 16px",marginBottom:16}}>
+      <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:14,padding:"12px 14px"}}>
+        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3,marginBottom:12}}>Dealer Health</div>
+        {dealerHealth.map((d:any,i:number)=>{
+          const pct = d.py > 0 ? Math.min(d.cy / d.py * 100, 100) : 0;
+          const ret = d.py > 0 ? Math.round(d.cy / d.py * 100) : 0;
+          const retColor = ret >= 85 ? T.green : ret >= 60 ? T.amber : T.red;
+          return <div key={d.dealer} style={{marginBottom:i<dealerHealth.length-1?12:0}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+              <span style={{fontSize:11,fontWeight:700,color:d.color||T.t2,background:"rgba(255,255,255,.05)",borderRadius:6,padding:"2px 8px"}}>{d.dealer}</span>
+              <div style={{textAlign:"right"}}>
+                <span className="m" style={{fontSize:10,fontWeight:700,color:retColor}}>{ret}%</span>
+                <span style={{fontSize:9,color:T.t4,marginLeft:4}}>{$$(d.cy)} / {$$(d.py)}</span>
+              </div>
+            </div>
+            <div style={{width:"100%",height:5,borderRadius:3,background:T.s3,overflow:"hidden",position:"relative"}}>
+              <div style={{height:"100%",borderRadius:3,width:`${pct}%`,background:d.color||T.blue}}/>
+            </div>
+          </div>;
+        })}
+      </div>
+    </div>}
+
+    {/* ── GEO CLUSTERS ── */}
+    {geoClusters.length > 0 && <div style={{padding:"0 16px",marginBottom:16}}>
+      {geoClusters.map((c:any,i:number)=>(
+        <div key={i} style={{background:"rgba(79,142,247,.06)",border:"1px solid rgba(79,142,247,.15)",borderRadius:10,padding:"10px 14px",marginBottom:6,fontSize:11,color:T.t2}}>
+          📍 Area Focus: {c.count} declining accounts in {c.city}{c.st?`, ${c.st}`:""} — consider a visit
+          <span style={{fontSize:9,color:T.t4,marginLeft:6}}>-{$$(c.gap)} combined gap</span>
+        </div>
+      ))}
+    </div>}
+
+    {/* ── FOCUS TODAY + OVERDRIVE ── */}
+    <div style={{padding:"0 16px"}}>
     {/* ── OVERDRIVE — Q1 only ── */}
     {scope === "1" && overdrive&&DAYS_LEFT>0&&q1Gap>0&&<div className="anim" style={{marginBottom:16}}>
       {/* Overdrive toggle header */}
@@ -978,7 +1219,7 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
       </div>
     </div>}
 
-    {/* ── SECTION 2: WINS & MOMENTUM ── */}
+    {/* ── SECTION 2: WINS & MOMENTUM (existing) ── */}
     <div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(52,211,153,.04))`,border:"1px solid rgba(52,211,153,.1)",borderRadius:16,padding:14,marginBottom:16}}>
       <SectionHeader label="Wins & Momentum" color={T.green}/>
       {growing.length===0&&healthyAccel.length===0&&(
@@ -1087,8 +1328,9 @@ function TodayTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGro
         })}
       </div>}
     </div>
+    </div>
     </>}
   </div>;
 }
 
-export default TodayTab;
+export default DashboardTab;
