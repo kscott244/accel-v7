@@ -1,69 +1,64 @@
 # CURRENT PHASE — accel-v7
 
-## Active: Phase 3 — Decompose the Monolith ✅ Complete
+## Active: Phase 4 — Extract Tab Components ✅ Complete
 
-### What Was Done (Phase 3)
-1. **Extracted `src/lib/tokens.ts`** — design tokens (`T`), `Q1_TARGET`, `FY_TARGET`, `DAYS_LEFT`, `HOME_LAT/LNG`
-2. **Extracted `src/lib/tier.ts`** — `normalizeTier`, `isTop100`, `normalizePracticeType`, `getTierRate`, `isAccelTier`, `getTierLabel`, `extractGroupName`, `ACCEL_RATES`
-3. **Extracted `src/lib/format.ts`** — `$$`, `$f`, `pc`, `scoreAccount()`, `getHealthStatus()`
-4. **Extracted `src/lib/csv.ts`** — `parseCSV`, `parseCSVLine`, `processCSVData` (full Tableau CSV processor)
-5. **AccelerateApp.tsx reduced from 5,388 → 5,053 lines** — replaced 393 lines of inline logic with 9-line import block
-6. **All 4 modules are pure TypeScript** — no React deps, fully reusable, single responsibility
-7. **App deployed and verified** — chunk hash changed, build READY, no regressions
+### What Was Done (Phase 4)
+1. **Created `src/data/sku-data.ts`** — SKU pricing array (44 products) extracted from AccelerateApp.tsx
+2. **Created `src/components/primitives.tsx`** — Shared UI primitives: `fixGroupName`, `Pill`, `Stat`, `Bar`, `AccountId`, `Chev`, `IconMap`
+3. **Created `src/components/tabs/GroupsTab.tsx`** — Groups list tab (~99 lines of logic)
+4. **Created `src/components/tabs/EstTab.tsx`** — Q1 Completion Estimator tab (~108 lines)
+5. **Created `src/components/tabs/MapTab.tsx`** — Map/Route tab with Leaflet (~178 lines)
+6. **Created `src/components/tabs/DashTab.tsx`** — Dashboard + Quick Sale Calculator (~220 lines)
+7. **Patched `src/components/AccelerateApp.tsx`** — Replaced 4 inline tab bodies + SKU array with imports
+8. **AccelerateApp.tsx reduced from 5,052 → 4,400 lines** (−652 lines, −13%)
 
 ### What Remains in AccelerateApp.tsx (intentional)
-- `ErrorBoundary`, static data imports, `OVERLAYS_REF`, `applyOverlays()` — lines 1-192 (too entangled to move safely)
-- Icons + small UI primitives (`Back`, `Chev`, `Pill`, `Stat`, `Bar`, `AccountId`, `fixGroupName`) — kept inline, nav-coupled
-- SKU pricing array — only used by `EstTab`, not worth moving yet
-- All 8 tab components (`TodayTab`, `GroupsTab`, `GroupDetail`, `AccountDetail`, `DashTab`, `MapTab`, `DealersTab`, `EstTab`, `OutreachTab`, `AdminTab`) — Phase 4 work
+- `ErrorBoundary`, static data imports, `OVERLAYS_REF`, `applyOverlays()` — too entangled to move
+- Icons (Back, IconBolt, etc.) + primitives kept inline — nav-coupled, other tabs still use them
+- `TodayTab` (~1069 lines), `DealersTab` (~692 lines), `AccountDetail` (~798 lines) — Phase 5 targets
+- `GroupDetail` (~309 lines), `OutreachTab` (~317 lines), `AdminTab` (~471 lines) — Phase 5 targets
 
 ### Commits
-- `31c5798` — phase 3: extract tokens, tier, format, csv to src/lib/
-- `264f024` — phase 3: fix — restore icons/primitives accidentally removed from AccelerateApp
+- `e65991019c31` — phase 4: extract GroupsTab, EstTab, MapTab, DashTab, primitives, sku-data
 
 ---
 
 ## Previously Completed
 
+### Phase 3 — Decompose the Monolith ✅ Complete
+1. Extracted `src/lib/tokens.ts` — design tokens, Q1_TARGET, FY_TARGET, DAYS_LEFT
+2. Extracted `src/lib/tier.ts` — normalizeTier, getTierRate, isAccelTier, getTierLabel, ACCEL_RATES
+3. Extracted `src/lib/format.ts` — $$, $f, pc, scoreAccount, getHealthStatus
+4. Extracted `src/lib/csv.ts` — parseCSV, parseCSVLine, processCSVData
+5. AccelerateApp.tsx reduced from 5,388 → 5,053 lines
+
 ### Phase 2 — Stabilize + Consolidate ✅ Complete
-1. Retired patches.json — deleted save-patch route, marked patches.json deprecated
-2. Added build version badge — commit SHA in More menu
-3. Audited applyOverlays() edge cases — all 5 verified safe
-4. Cache-busting headers — next.config.js sets no-cache on /api/* and /accelerate
+1. Retired patches.json — deleted save-patch route
+2. Added build version badge
+3. Audited applyOverlays() edge cases
+4. Cache-busting headers
 
 ### Phase 1 — Foundation Audit + Docs ✅ Complete
-1. Full repo audit — file tree, data flow, API routes, component structure, deployment pipeline
-2. Created/updated docs/ARCHITECTURE.md, docs/ROADMAP.md, docs/CURRENT_PHASE.md, docs/IDEAS_BACKLOG.md
+1. Full repo audit
+2. Created docs/ARCHITECTURE.md, docs/ROADMAP.md, docs/CURRENT_PHASE.md, docs/IDEAS_BACKLOG.md
 
 ---
 
-## Next Up: Phase 4 — Extract Tab Components
+## Next Up: Phase 5 — Extract Remaining Large Tabs
 
 ### Scope
-Extract tabs one at a time into `src/components/tabs/`. Start smallest/safest first.
+Continue tab extraction for the larger, more complex components.
 
-### Extraction Order (safest → riskiest)
-1. `GroupsTab` (~100 lines) — minimal deps, list render only
-2. `EstTab` (~113 lines) — self-contained calculator
-3. `MapTab` (~179 lines) — route builder, no scoring deps
-4. `DashTab` (~220 lines) — charts + aggregates, moderate deps
-5. `OutreachTab` (~317 lines) — AI calls, moderate coupling
-6. `AdminTab` (~471 lines) — CSV upload + overlay editing, high coupling
-7. `GroupDetail` (~309 lines) — complex props, defer
-8. `DealersTab` (~692 lines) — complex state, defer
-9. `TodayTab` (~1069 lines) + `AccountDetail` (~798 lines) — last, most coupled
-
-### DO NOT extract in Phase 4
-- `TodayTab`, `DealersTab`, `AccountDetail` — too large/coupled, Phase 5+
-- `applyOverlays()` — module-level state coupling, needs context refactor first
+### Extraction Order
+1. `GroupDetail` (~309 lines) — moderate coupling, manageable
+2. `OutreachTab` (~317 lines) — AI calls, moderate coupling
+3. `AdminTab` (~471 lines) — CSV upload + overlay editing
+4. `DealersTab` (~692 lines) — complex state
+5. `AccountDetail` (~798 lines) — high coupling
+6. `TodayTab` (~1069 lines) — most complex, last
 
 ### Entry Criteria
-- Phase 3 complete ✅
-
-### What Phase 4 Does NOT Include
-- New features
-- UI redesign
-- TypeScript strict mode (remove @ts-nocheck) — save for after tabs are extracted
+- Phase 4 complete ✅
 
 ---
 
