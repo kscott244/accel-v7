@@ -2,6 +2,7 @@
 // @ts-nocheck
 import { useState, useMemo } from "react";
 import { T } from "@/lib/tokens";
+import { $$, $f, pc } from "@/lib/format";
 import { getTierLabel } from "@/lib/tier";
 
 let BADGER: Record<string, any> = {};
