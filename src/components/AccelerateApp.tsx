@@ -4873,31 +4873,44 @@ function AdminTab({groups, scored, overlays, saveOverlays}:{groups:any[], scored
         </div>
 
         <div style={{marginBottom:10}}>
-          <div style={{fontSize:10,color:T.t3,marginBottom:4}}>Child Account IDs (paste Master-CM IDs or search below)</div>
-          <div style={{display:"flex",gap:6,marginBottom:6}}>
+          <div style={{fontSize:10,color:T.t3,marginBottom:4}}>Add Locations — search by name, city, or address</div>
+          <div style={{position:"relative",marginBottom:6}}>
             <input value={childIdInput} onChange={e=>setChildIdInput(e.target.value)}
-              placeholder="Master-CM123456 or search name..."
-              style={{flex:1,padding:"8px 10px",borderRadius:8,border:`1px solid ${T.b1}`,background:T.bg,color:T.t1,fontSize:11,fontFamily:"inherit"}}/>
-            <button onClick={()=>{
-              const trimmed = childIdInput.trim();
-              if(trimmed && !childIds.includes(trimmed)) setChildIds([...childIds, trimmed]);
-              setChildIdInput("");
-            }} style={{padding:"8px 12px",borderRadius:8,border:"none",background:T.blue,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>Add</button>
+              placeholder="Search: office name, city, doctor..."
+              style={{width:"100%",padding:"10px 32px 10px 12px",borderRadius:10,border:`1px solid ${childIdInput.length>=2?T.blue:T.b1}`,background:T.bg,color:T.t1,fontSize:13,fontFamily:"inherit",boxSizing:"border-box",outline:"none"}}/>
+            {childIdInput.length>=1&&<button onClick={()=>setChildIdInput("")} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:14,padding:0}}>✕</button>}
           </div>
-          {/* Search accounts to add */}
-          {childIdInput.length>=2&&searchAccounts(childIdInput).map(a=>(
-            <button key={a.id} onClick={()=>{if(!childIds.includes(a.id))setChildIds([...childIds,a.id]);setChildIdInput("");}}
-              style={{display:"block",width:"100%",textAlign:"left",padding:"6px 10px",borderRadius:6,border:`1px solid ${T.b1}`,background:T.s2,color:T.t2,fontSize:10,cursor:"pointer",fontFamily:"inherit",marginBottom:3}}>
-              {a.name} · {a.city} · {a.id}
-            </button>
-          ))}
-          {/* Current child list */}
-          {childIds.length>0&&<div style={{marginTop:6}}>
+          {/* Search results */}
+          {childIdInput.length>=2&&(()=>{
+            const results = searchAccounts(childIdInput).filter(a=>!childIds.includes(a.id));
+            if(results.length===0) return <div style={{fontSize:11,color:T.t4,padding:"8px 0",textAlign:"center"}}>No matches for "{childIdInput}"</div>;
+            return <div style={{border:`1px solid ${T.b2}`,borderRadius:10,background:T.s1,overflow:"hidden",marginBottom:8,maxHeight:280,overflowY:"auto"}}>
+              {results.map((a,i)=>{
+                const py=a.pyQ?.["1"]||0, cy=a.cyQ?.["1"]||0;
+                return <button key={a.id} onClick={()=>{setChildIds([...childIds,a.id]);setChildIdInput("");}}
+                  style={{display:"flex",width:"100%",textAlign:"left",padding:"10px 12px",background:i%2===0?"transparent":"rgba(255,255,255,.02)",border:"none",borderBottom:i<results.length-1?`1px solid ${T.b1}`:"none",cursor:"pointer",fontFamily:"inherit",alignItems:"center",gap:10}}>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:12,fontWeight:600,color:T.t1,marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
+                    <div style={{fontSize:10,color:T.t3}}>{a.city}{a.st?`, ${a.st}`:""}{a.gName?` · ${a.gName}`:""}</div>
+                    <div style={{fontSize:9,color:T.t4,marginTop:1}}>{a.dealer||"Unknown"} · PY {$$(py)} / CY {$$(cy)}</div>
+                  </div>
+                  <div style={{flexShrink:0,background:"rgba(79,142,247,.1)",border:"1px solid rgba(79,142,247,.2)",borderRadius:8,padding:"4px 10px",fontSize:10,fontWeight:700,color:T.blue}}>+ Add</div>
+                </button>;
+              })}
+            </div>;
+          })()}
+          {/* Selected accounts */}
+          {childIds.length>0&&<div style={{marginTop:4}}>
+            <div style={{fontSize:9,textTransform:"uppercase",color:T.t4,letterSpacing:"1px",marginBottom:6,fontWeight:700}}>Selected ({childIds.length}){(()=>{const t=childIds.reduce((s,id)=>{const a=scored.find(x=>x.id===id);return s+(a?.pyQ?.["1"]||0);},0);return t>0?<span style={{color:T.amber,textTransform:"none",letterSpacing:0}}> · Combined PY {$$(t)}</span>:"";})()}</div>
             {childIds.map(id=>{
               const acct = scored.find(a=>a.id===id);
-              return <div key={id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 8px",background:T.s2,borderRadius:6,marginBottom:3}}>
-                <span style={{fontSize:10,color:T.t2}}>{acct?`${acct.name} · ${acct.city}`:id}</span>
-                <button onClick={()=>setChildIds(childIds.filter(x=>x!==id))} style={{background:"none",border:"none",color:T.red,cursor:"pointer",fontSize:12,padding:0}}>✕</button>
+              const py=acct?.pyQ?.["1"]||0, cy=acct?.cyQ?.["1"]||0;
+              return <div key={id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",background:T.s2,borderRadius:8,marginBottom:4,border:`1px solid ${T.b1}`}}>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:11,fontWeight:600,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{acct?acct.name:id}</div>
+                  <div style={{fontSize:9,color:T.t3}}>{acct?`${acct.city||""} · ${acct.dealer||"Unknown"} · PY ${$$(py)}`:id}</div>
+                </div>
+                <button onClick={()=>setChildIds(childIds.filter(x=>x!==id))} style={{background:"rgba(248,113,113,.1)",border:"1px solid rgba(248,113,113,.2)",borderRadius:6,color:T.red,cursor:"pointer",fontSize:10,fontWeight:600,padding:"3px 8px",fontFamily:"inherit",flexShrink:0}}>Remove</button>
               </div>;
             })}
           </div>}
