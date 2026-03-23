@@ -298,6 +298,7 @@ const IconSliders = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0
 const IconDealer  = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>;
 const IconMail    = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>;
 const IconAdmin   = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M12 14c-5 0-8 2-8 3v1h16v-1c0-1-3-3-8-3z"/><path d="M18 3l2 2-8 8-4-4 2-2 2 2z" strokeWidth="1.5"/></svg>;
+const IconMore    = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>;
 
 // ─── DISPLAY NAME FIXER ──────────────────────────────────────────
 const BAD_GROUP_NAMES = new Set(["STANDARD","Standard","HOUSE ACCOUNTS","House Accounts","SILVER","GOLD","PLATINUM","DIAMOND","TOP 100","Silver","Gold","Platinum","Diamond","Top 100",""]);
@@ -619,6 +620,7 @@ export default function App() {
 function AppInner() {
   const [tab, setTab] = useState("today");
   const [view, setView] = useState(null);
+  const [showMore, setShowMore] = useState(false);
   const [adjs, setAdjs] = useState([]);
   const [estPct, setEstPct] = useState(90);
   const [gFilt, setGFilt] = useState("All");
@@ -984,15 +986,31 @@ function AppInner() {
         </>;
       })()}
 
+      {/* MORE MENU OVERLAY */}
+      {showMore && <div style={{position:"fixed",inset:0,zIndex:90,background:"rgba(0,0,0,.6)",backdropFilter:"blur(4px)"}} onClick={()=>setShowMore(false)}>
+        <div style={{position:"absolute",bottom:58,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:928,background:T.s1,border:`1px solid ${T.b2}`,borderRadius:16,padding:"8px 0",boxShadow:"0 -8px 32px rgba(0,0,0,.5)"}} onClick={e=>e.stopPropagation()}>
+          {[{k:"map",l:"Route",I:IconMap,desc:"Week routes & Google Maps"},{k:"est",l:"Close",I:IconSliders,desc:"Q1 completion estimator"},{k:"outreach",l:"Outreach",I:IconMail,desc:"AI email campaigns"},{k:"admin",l:"Admin",I:IconAdmin,desc:"Groups, contacts, data fixes"}].map(t=>(
+            <button key={t.k} onClick={()=>{setTab(t.k);setView(null);setShowMore(false)}} style={{width:"100%",display:"flex",alignItems:"center",gap:12,padding:"12px 16px",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit",color:tab===t.k?T.blue:T.t2}}>
+              <t.I c={tab===t.k?T.blue:T.t3}/>
+              <div style={{textAlign:"left"}}><div style={{fontSize:13,fontWeight:600}}>{t.l}</div><div style={{fontSize:10,color:T.t4}}>{t.desc}</div></div>
+            </button>
+          ))}
+        </div>
+      </div>}
+
       {/* NAV BAR */}
-      <nav style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:960,zIndex:50,borderTop:`1px solid ${T.b1}`,background:"rgba(10,10,15,.92)",backdropFilter:"blur(32px)"}}>
+      <nav style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:960,zIndex:100,borderTop:`1px solid ${T.b1}`,background:"rgba(10,10,15,.92)",backdropFilter:"blur(32px)"}}>
         <div style={{display:"flex",height:56,alignItems:"center",justifyContent:"space-around",padding:"0 4px"}}>
-          {[{k:"today",l:"Today",I:IconBolt},{k:"groups",l:"Groups",I:IconGroup},{k:"map",l:"Route",I:IconMap},{k:"calc",l:"Dash",I:IconChart},{k:"est",l:"Close",I:IconSliders},{k:"dealers",l:"Dealers",I:IconDealer},{k:"outreach",l:"Outreach",I:IconMail},{k:"admin",l:"Admin",I:IconAdmin}].map(t=>(
-            <button key={t.k} onClick={()=>{setTab(t.k);setView(null)}} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 8px",cursor:"pointer",color:tab===t.k&&!view?T.blue:T.t4}}>
-              <t.I c={tab===t.k&&!view?T.blue:T.t4}/>
+          {[{k:"today",l:"Today",I:IconBolt},{k:"groups",l:"Groups",I:IconGroup},{k:"dealers",l:"Dealers",I:IconDealer},{k:"calc",l:"Dash",I:IconChart}].map(t=>(
+            <button key={t.k} onClick={()=>{setTab(t.k);setView(null);setShowMore(false)}} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 12px",cursor:"pointer",color:tab===t.k&&!view&&!showMore?T.blue:T.t4}}>
+              <t.I c={tab===t.k&&!view&&!showMore?T.blue:T.t4}/>
               <span style={{fontSize:9,fontWeight:600,letterSpacing:".5px"}}>{t.l}</span>
             </button>
           ))}
+          <button onClick={()=>setShowMore(!showMore)} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 12px",cursor:"pointer",color:showMore||["map","est","outreach","admin"].includes(tab)?T.blue:T.t4}}>
+            <IconMore c={showMore||["map","est","outreach","admin"].includes(tab)?T.blue:T.t4}/>
+            <span style={{fontSize:9,fontWeight:600,letterSpacing:".5px"}}>More</span>
+          </button>
         </div>
       </nav>
     </div>
