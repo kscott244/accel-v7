@@ -1,26 +1,22 @@
 {
   "nameOverrides": {},
   "contacts": {},
-  "fscReps": {},
+  "fscReps": {
+    "Master-CM94845": {
+      "Schein": {
+        "name": "Jeff Trachtenberg",
+        "phone": "860-234-7482",
+        "notes": ""
+      }
+    }
+  },
   "activityLogs": {},
   "research": {},
   "dealerOverrides": {},
   "groups": {},
   "groupDetaches": [],
   "groupMoves": {},
-  "groupContacts": {
-    "Master-CM94845": [
-      {
-        "id": 1774274765876,
-        "name": "Gabrielle Giroux",
-        "role": "Henry Schein : Special Markets",
-        "phone": "857-265-8603",
-        "email": "gabrielle.giroux@henryschein.com",
-        "notes": "",
-        "savedAt": "2026-03-23T14:06:05.876Z"
-      }
-    ]
-  },
+  "groupContacts": {},
   "groupNotes": {},
-  "lastUpdated": "2026-03-23T14:06:07.123Z"
+  "lastUpdated": "2026-03-23T14:07:06.846Z"
 }
