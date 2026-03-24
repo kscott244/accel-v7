@@ -10,7 +10,7 @@ import { Back, Chev, Pill, Stat, AccountId, fixGroupName } from "@/components/pr
 let SCHEIN_REPS: {fsc:any[], es:any[]} = {fsc:[], es:[]};
 try { SCHEIN_REPS = require("@/data/schein-ct-reps.json"); } catch(e) {}
 
-function GroupDetail({group,goMain,goAcct,overlays,saveOverlays}) {
+function GroupDetail({group,goMain,goAcct,overlays,saveOverlays,salesStore=null}) {
   const [q,setQ]=useState("1");
   const qk=q;
   const py=group.pyQ?.[qk]||0;const cy=group.cyQ?.[qk]||0;
@@ -66,6 +66,7 @@ function GroupDetail({group,goMain,goAcct,overlays,saveOverlays}) {
   });
 
   const [selProduct, setSelProduct] = useState<string|null>(null);
+  const [prodView, setProdView] = useState<string>("location");
   const [editDist, setEditDist] = useState<string|null>(null);
   const [editName, setEditName] = useState("");
   const [editPhone, setEditPhone] = useState("");
@@ -225,12 +226,28 @@ function GroupDetail({group,goMain,goAcct,overlays,saveOverlays}) {
     }).filter((c:any) => c.prodPY > 0 || c.prodCY > 0)
       .sort((a:any,b:any) => (b.prodPY-b.prodCY)-(a.prodPY-a.prodCY));
 
+    // Monthly aggregation across all group children
+    const MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const childIds = new Set((group.children||[]).map((c:any) => c.id));
+    const allGroupProdRecs = salesStore?.records
+      ? (Object.values(salesStore.records) as any[]).filter((r:any) => childIds.has(r.childId) && r.l3 === selProduct)
+      : [];
+    const hasMonthData = allGroupProdRecs.length > 0;
+    const monthBuckets: Record<number,{py:number,cy:number}> = {};
+    for (let m=1; m<=12; m++) monthBuckets[m]={py:0,cy:0};
+    allGroupProdRecs.forEach((r:any) => {
+      const m = r.month||1;
+      if (m>=1&&m<=12) { monthBuckets[m].py += r.py||0; monthBuckets[m].cy += r.cy||0; }
+    });
+    const maxMonthVal = Math.max(...Object.values(monthBuckets).flatMap(v=>[v.py,v.cy]),1);
+    const MAX_BAR_H = 64;
+
     return <div style={{paddingBottom:80}}>
       <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"10px 16px"}}>
         <button onClick={()=>setSelProduct(null)} style={{background:"none",border:"none",color:T.blue,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:13,fontWeight:600,fontFamily:"inherit"}}><Back/> {fixGroupName(group)}</button>
       </div>
       <div style={{padding:"16px 16px 0"}}>
-        <div className="anim" style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
+        <div className="anim" style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12}}>
           <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>{selProduct}</div>
           <div style={{fontSize:11,color:T.t3,marginBottom:12}}>{fixGroupName(group)} · all locations</div>
           {prod&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}>
@@ -240,28 +257,73 @@ function GroupDetail({group,goMain,goAcct,overlays,saveOverlays}) {
             <Stat l="Locs" v={`${prod.locsCY.length}/${prod.locsPY.length}`} c={T.t3}/>
           </div>}
         </div>
-        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3,marginBottom:8}}>By Location</div>
-        {childBreakdown.length===0&&<div style={{fontSize:12,color:T.t4,textAlign:"center",padding:"20px 0"}}>No location data for this product.</div>}
-        {childBreakdown.map((c:any,i:number)=>{
-          const gap=c.prodPY-c.prodCY;
-          const isStopped=c.prodPY>0&&c.prodCY===0;
-          const isNew=c.prodPY===0&&c.prodCY>0;
-          return <button key={c.id} className="anim" onClick={()=>goAcct(c)}
-            style={{animationDelay:`${i*25}ms`,width:"100%",textAlign:"left",background:T.s1,
-              border:`1px solid ${isStopped?"rgba(248,113,113,.2)":gap>0?"rgba(251,191,36,.15)":T.b1}`,
-              borderRadius:12,padding:"11px 13px",marginBottom:7,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <div style={{flex:1,minWidth:0}}>
-              <AccountId name={c.name} size="md"/>
-              <div style={{fontSize:10,color:T.t3}}>{c.city}, {c.st}{c.dealer?<span style={{color:T.cyan}}> · {c.dealer}</span>:""}</div>
-              {isStopped&&<div style={{fontSize:9,color:T.red,marginTop:2,fontWeight:600}}>STOPPED · was {$$(c.prodPY)}</div>}
-              {isNew&&<div style={{fontSize:9,color:T.green,marginTop:2,fontWeight:600}}>NEW BUYER</div>}
-            </div>
-            <div style={{textAlign:"right",flexShrink:0,marginLeft:10}}>
-              <div style={{fontSize:11,fontWeight:700,color:isStopped?T.red:T.blue,fontFamily:"monospace"}}>{$$(c.prodCY)}</div>
-              {c.prodPY>0&&<div style={{fontSize:9,color:gap>0?T.red:T.green,fontFamily:"monospace"}}>{gap>0?"-":"+"}${Math.round(Math.abs(gap))}</div>}
-            </div>
-          </button>;
-        })}
+        {/* View toggle */}
+        <div style={{display:"flex",gap:6,marginBottom:12}}>
+          {(["location","month"] as const).map(v=>(
+            <button key={v} onClick={()=>setProdView(v)}
+              style={{flex:1,padding:"7px 0",borderRadius:8,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
+                border:`1px solid ${prodView===v?"rgba(79,142,247,.25)":T.b2}`,
+                background:prodView===v?"rgba(79,142,247,.12)":T.s2,
+                color:prodView===v?T.blue:T.t3}}>
+              {v==="location"?"By Location":"By Month"}
+            </button>
+          ))}
+        </div>
+        {/* By Location view */}
+        {prodView==="location"&&<>
+          {childBreakdown.length===0&&<div style={{fontSize:12,color:T.t4,textAlign:"center",padding:"20px 0"}}>No location data for this product.</div>}
+          {childBreakdown.map((c:any,i:number)=>{
+            const gap=c.prodPY-c.prodCY;
+            const isStopped=c.prodPY>0&&c.prodCY===0;
+            const isNew=c.prodPY===0&&c.prodCY>0;
+            return <button key={c.id} className="anim" onClick={()=>goAcct(c)}
+              style={{animationDelay:`${i*25}ms`,width:"100%",textAlign:"left",background:T.s1,
+                border:`1px solid ${isStopped?"rgba(248,113,113,.2)":gap>0?"rgba(251,191,36,.15)":T.b1}`,
+                borderRadius:12,padding:"11px 13px",marginBottom:7,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{flex:1,minWidth:0}}>
+                <AccountId name={c.name} size="md"/>
+                <div style={{fontSize:10,color:T.t3}}>{c.city}, {c.st}{c.dealer?<span style={{color:T.cyan}}> · {c.dealer}</span>:""}</div>
+                {isStopped&&<div style={{fontSize:9,color:T.red,marginTop:2,fontWeight:600}}>STOPPED · was {$$(c.prodPY)}</div>}
+                {isNew&&<div style={{fontSize:9,color:T.green,marginTop:2,fontWeight:600}}>NEW BUYER</div>}
+              </div>
+              <div style={{textAlign:"right",flexShrink:0,marginLeft:10}}>
+                <div style={{fontSize:11,fontWeight:700,color:isStopped?T.red:T.blue,fontFamily:"monospace"}}>{$$(c.prodCY)}</div>
+                {c.prodPY>0&&<div style={{fontSize:9,color:gap>0?T.red:T.green,fontFamily:"monospace"}}>{gap>0?"-":"+"}${Math.round(Math.abs(gap))}</div>}
+              </div>
+            </button>;
+          })}
+        </>}
+        {/* By Month view */}
+        {prodView==="month"&&<div className="anim" style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:14,padding:14,marginBottom:8}}>
+          {!hasMonthData
+            ? <div style={{fontSize:11,color:T.t4,textAlign:"center",padding:"16px 0"}}>No monthly history — upload a CSV to populate</div>
+            : <>
+                <div style={{display:"flex",gap:2,alignItems:"flex-end",height:MAX_BAR_H+24}}>
+                  {[1,2,3,4,5,6,7,8,9,10,11,12].map(m=>{
+                    const d = monthBuckets[m];
+                    const pyH = Math.round(d.py/maxMonthVal*MAX_BAR_H);
+                    const cyH = Math.round(d.cy/maxMonthVal*MAX_BAR_H);
+                    const stopped = d.py>50&&d.cy===0;
+                    return <div key={m} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:0}}>
+                      <div style={{width:"100%",height:MAX_BAR_H,display:"flex",alignItems:"flex-end",justifyContent:"center",gap:1}}>
+                        <div style={{width:"46%",height:pyH||2,background:"rgba(120,120,160,.28)",borderRadius:"2px 2px 0 0",flexShrink:0}}/>
+                        <div style={{width:"46%",height:cyH||(stopped?3:0),background:stopped?"rgba(248,113,113,.55)":"linear-gradient(0deg,#4f8ef7,#22d3ee)",borderRadius:"2px 2px 0 0",flexShrink:0}}/>
+                      </div>
+                      <span style={{fontSize:7,color:T.t4,marginTop:3,lineHeight:1}}>{MONTHS_SHORT[m-1]}</span>
+                    </div>;
+                  })}
+                </div>
+                <div style={{display:"flex",gap:10,marginTop:8,justifyContent:"flex-end"}}>
+                  <span style={{fontSize:9,color:T.t4,display:"flex",alignItems:"center",gap:3}}>
+                    <span style={{display:"inline-block",width:8,height:8,background:"rgba(120,120,160,.35)",borderRadius:1}}/>PY
+                  </span>
+                  <span style={{fontSize:9,color:T.blue,display:"flex",alignItems:"center",gap:3}}>
+                    <span style={{display:"inline-block",width:8,height:8,background:T.blue,borderRadius:1}}/>CY
+                  </span>
+                </div>
+              </>
+          }
+        </div>}
       </div>
     </div>;
   }

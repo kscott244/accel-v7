@@ -853,23 +853,32 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
             {/* Inline month-by-month expansion */}
             {isExpanded&&<div style={{marginTop:8,background:T.s2,borderRadius:10,padding:"10px 12px",border:`1px solid ${T.b1}`}}>
               {prodRecords.length===0
-                ? <div style={{fontSize:10,color:T.t4,textAlign:"center",padding:"2px 0"}}>No history on record for this product.</div>
-                : <>
-                    <div style={{display:"grid",gridTemplateColumns:"76px 40px 1fr 1fr",gap:4,marginBottom:6,paddingBottom:5,borderBottom:`1px solid ${T.b1}`}}>
-                      <span style={{fontSize:9,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:.5}}>Month</span>
-                      <span style={{fontSize:9,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:.5}}>Q</span>
-                      <span style={{fontSize:9,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:.5,textAlign:"right"}}>PY</span>
-                      <span style={{fontSize:9,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:.5,textAlign:"right"}}>CY</span>
-                    </div>
-                    {prodRecords.map((r:any,ri:number)=>(
-                      <div key={r.txKey} style={{display:"grid",gridTemplateColumns:"76px 40px 1fr 1fr",gap:4,padding:"4px 0",borderBottom:ri<prodRecords.length-1?`1px solid ${T.b1}`:"none",alignItems:"center"}}>
-                        <span style={{fontSize:10,color:T.t2}}>{MONTHS_P[(r.month||1)-1]} {r.year}</span>
-                        <span style={{fontSize:10,color:T.t3}}>Q{r.quarter}</span>
-                        <span style={{fontSize:10,fontFamily:"'JetBrains Mono',monospace",color:r.py>0?T.t2:T.t4,textAlign:"right"}}>{r.py>0?`$${r.py.toLocaleString()}`:"—"}</span>
-                        <span style={{fontSize:10,fontFamily:"'JetBrains Mono',monospace",color:r.cy>0?T.cyan:T.t4,textAlign:"right"}}>{r.cy>0?`$${r.cy.toLocaleString()}`:"—"}</span>
+                ? <div style={{fontSize:10,color:T.t4,textAlign:"center",padding:"2px 0"}}>No monthly history — upload a CSV to populate</div>
+                : (()=>{
+                    const maxProdVal = Math.max(...(prodRecords as any[]).map((r:any)=>Math.max(r.py||0,r.cy||0)),1);
+                    return <>
+                      <div style={{display:"grid",gridTemplateColumns:"76px 40px 1fr 1fr",gap:4,marginBottom:6,paddingBottom:5,borderBottom:`1px solid ${T.b1}`}}>
+                        <span style={{fontSize:9,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:.5}}>Month</span>
+                        <span style={{fontSize:9,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:.5}}>Q</span>
+                        <span style={{fontSize:9,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:.5,textAlign:"right"}}>PY</span>
+                        <span style={{fontSize:9,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:.5,textAlign:"right"}}>CY</span>
                       </div>
-                    ))}
-                  </>
+                      {(prodRecords as any[]).map((r:any,ri:number)=>(
+                        <div key={r.txKey} style={{marginBottom:ri<prodRecords.length-1?5:0}}>
+                          <div style={{display:"grid",gridTemplateColumns:"76px 40px 1fr 1fr",gap:4,padding:"3px 0",alignItems:"center"}}>
+                            <span style={{fontSize:10,color:T.t2}}>{MONTHS_P[(r.month||1)-1]} {r.year}</span>
+                            <span style={{fontSize:10,color:T.t3}}>Q{r.quarter}</span>
+                            <span style={{fontSize:10,fontFamily:"'JetBrains Mono',monospace",color:r.py>0?T.t2:T.t4,textAlign:"right"}}>{r.py>0?`$${r.py.toLocaleString()}`:"—"}</span>
+                            <span style={{fontSize:10,fontFamily:"'JetBrains Mono',monospace",color:r.cy>0?T.cyan:T.t4,textAlign:"right"}}>{r.cy>0?`$${r.cy.toLocaleString()}`:"—"}</span>
+                          </div>
+                          <div style={{position:"relative",height:3,borderRadius:2,background:T.s3,overflow:"hidden",marginTop:2}}>
+                            <div style={{position:"absolute",top:0,left:0,height:"100%",borderRadius:2,width:`${(r.py||0)/maxProdVal*100}%`,background:"rgba(120,120,160,.3)"}}/>
+                            <div style={{position:"absolute",top:0,left:0,height:"100%",borderRadius:2,width:`${(r.cy||0)/maxProdVal*100}%`,background:r.cy>0?`linear-gradient(90deg,${T.blue},${T.cyan})`:"rgba(248,113,113,.5)"}}/>
+                          </div>
+                        </div>
+                      ))}
+                    </>;
+                  })()
               }
             </div>}
           </div>;

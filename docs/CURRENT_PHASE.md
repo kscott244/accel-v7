@@ -1,6 +1,46 @@
 # CURRENT PHASE — accel-v7
 
-## Active: Phase 17 — Weekly Delta Dashboard ✅ Complete
+## Active: Phase 18 — Product Monthly Timeline ✅ Complete
+
+### Goal
+Add a 12-month "By Month" chart view when tapping a product in GroupDetail,
+and enhance AcctDetail's product expansion table with mini visual bars so
+Ken can instantly see which month a product dropped off.
+
+### What Was Built
+
+**src/components/AccelerateApp.tsx**
+- Added `salesStore={salesStore}` prop to `<GroupDetail>` (was missing)
+
+**src/components/tabs/GroupDetail.tsx**
+- Added `salesStore=null` parameter to function signature
+- Added `prodView` state ("location" | "month") for the toggle
+- In the `selProduct` drill-down view: replaced static "By Location" label
+  with a two-button toggle ("By Location" / "By Month")
+- "By Location" — existing child breakdown, unchanged
+- "By Month" — aggregates salesStore records across ALL group children
+  for the selected product, bucketed by month 1–12; renders a 12-bar
+  vertical chart (gray PY bars + blue/cyan CY bars) with month labels;
+  shows "No monthly history — upload a CSV to populate" if no records
+
+**src/components/tabs/AcctDetail.tsx**
+- Product expansion month table: replaced `borderBottom` row separators
+  with a 3px mini bar overlay (PY gray + CY gradient) beneath each row,
+  showing relative magnitude at a glance
+- Updated empty-state text to match GroupDetail phrasing
+- Computed `maxProdVal` from records for proportional bar widths
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| src/components/AccelerateApp.tsx | Pass salesStore to GroupDetail |
+| src/components/tabs/GroupDetail.tsx | By Month toggle + 12-bar chart |
+| src/components/tabs/AcctDetail.tsx | Mini bars in month table |
+
+---
+
+## Previously Completed: Phase 17 — Weekly Delta Dashboard ✅ Complete
 
 ### Goal
 Show Ken what changed between his last two CSV uploads — accounts that
