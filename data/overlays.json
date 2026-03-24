@@ -442,11 +442,25 @@
       "score": 92,
       "createdAt": "2026-03-24T20:29:27.868Z",
       "updatedAt": "2026-03-24T20:29:27.868Z"
+    },
+    "Master-CM213843": {
+      "id": "Master-CM213843",
+      "name": "PERIDONTAL ASSOCIATES",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM213843",
+        "Master-CM1371514"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 92,
+      "createdAt": "2026-03-24T20:29:29.903Z",
+      "updatedAt": "2026-03-24T20:29:29.903Z"
     }
   },
   "groupDetaches": [],
   "groupMoves": {},
-  "lastUpdated": "2026-03-24T20:29:27.732Z",
+  "lastUpdated": "2026-03-24T20:29:29.776Z",
   "groupNotes": {
     "Master-CM175757": "The account is lost - unless we can get another distributor to try and take business from Schein then we are not going to win.  The large order they placed in Dec-2025 was to get the chargeback Kerr offered.  I mention to AJ we could probably work out another chargeback and he said no\n",
     "Master-CM591885": "Spoke with both Rich and Lori from Schein - They are actually losing the business as well so this is not just dealer switched to another product "
