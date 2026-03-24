@@ -194,7 +194,7 @@ import { Back, Chev, Pill, Stat, Bar, AccountId, fixGroupName, cleanParentName, 
 import { parseCSV, parseCSVLine, processCSVData, setDealers } from "@/lib/csv";
 import { diffDatasets, checkOverlayIntegrity } from "@/lib/dataDiff";
 import { mergeCrmCandidates, applyCrmToGroups, EMPTY_CRM_STORE } from "@/lib/crm";
-import { buildSalesRecords, mergeSalesRecords, EMPTY_SALES_STORE } from "@/lib/sales";
+import { buildSalesRecords, mergeSalesRecords, deriveSalesRollups, EMPTY_SALES_STORE } from "@/lib/sales";
 
 import { SKU } from "@/data/sku-data";
 import GroupsTab from "@/components/tabs/GroupsTab";
@@ -441,12 +441,37 @@ function AppInner() {
         }
       }).catch(() => { /* CRM fetch failed — using cache */ });
 
+      // ── Load Sales History ──
+      // Load from localStorage cache; re-derive rollups on boot.
+      let bootSalesStore: any = null;
+      try {
+        const cachedSales = localStorage.getItem("sales_history_v1");
+        if (cachedSales) {
+          bootSalesStore = JSON.parse(cachedSales);
+          setSalesStore(bootSalesStore);
+        }
+      } catch {}
+      // Fetch fresh from GitHub in background (same pattern as CRM)
+      fetch("/api/load-sales").then(async (res) => {
+        if (res.ok) {
+          const { sales: freshSales } = await res.json();
+          if (freshSales?.records) {
+            setSalesStore(freshSales);
+            try { localStorage.setItem("sales_history_v1", JSON.stringify(freshSales)); } catch {}
+          }
+        }
+      }).catch(() => { /* sales fetch failed — using cache */ });
+
       // ── Load Base Data ──
       try {
         const saved = localStorage.getItem("accel_data_v2");
         if (saved) {
           const parsed = JSON.parse(saved);
-          setGroups(applyGroupOverrides(applyOverlays(rollupGroupTotals(hydrateDealer(parsed.groups)))));
+          // Re-derive rollups from full sales history if available
+          const baseGroups = bootSalesStore
+            ? deriveSalesRollups(bootSalesStore, parsed.groups)
+            : parsed.groups;
+          setGroups(applyGroupOverrides(applyOverlays(rollupGroupTotals(hydrateDealer(baseGroups)))));
           setDataSource(`CSV uploaded ${parsed.generated}`);
           setLoading(false);
           return;
@@ -510,7 +535,11 @@ function AppInner() {
         }
 
         // Merge sales records — raw rows from this upload de-duped into
-        // the persistent sales-history store. Fire-and-forget, non-blocking.
+        // the persistent sales-history store. After merging, re-derive
+        // pyQ/cyQ/products/last from the full accumulated history so
+        // overlapping weekly exports accumulate rather than replace.
+        // Fire-and-forget persist — never blocks the upload flow.
+        let baseGroupsForDisplay = result.groups;
         if (result.rawSalesRows && result.rawSalesRows.length > 0) {
           const batchId = `batch_${Date.now()}_${result.rawSalesRows.length}`;
           const newRecords = buildSalesRecords(result.rawSalesRows, batchId);
@@ -529,10 +558,19 @@ function AppInner() {
             }).catch(() => { /* sales save failed — cached locally */ });
             return nextSales;
           });
+          // Re-derive rollups from the merged store synchronously.
+          // Read from localStorage since setSalesStore is async.
+          try {
+            const stored = localStorage.getItem("sales_history_v1");
+            if (stored) {
+              const storedSales = JSON.parse(stored);
+              baseGroupsForDisplay = deriveSalesRollups(storedSales, result.groups);
+            }
+          } catch { /* fallback: use result.groups as-is */ }
         }
 
-        // Apply CRM identity, then overlays on top of new base data
-        setGroups(applyGroupOverrides(applyOverlays(applyCrmToGroups(rollupGroupTotals(hydrateDealer(result.groups)), crmStore))));
+        // Apply CRM identity, then overlays on top of derived base data
+        setGroups(applyGroupOverrides(applyOverlays(applyCrmToGroups(rollupGroupTotals(hydrateDealer(baseGroupsForDisplay)), crmStore))));
         setDataSource(`CSV uploaded ${result.generated}`);
         localStorage.setItem("accel_data_v2", JSON.stringify(result));
         try { localStorage.setItem("import_report_v1", JSON.stringify(result.report)); } catch {}
@@ -792,5 +830,6 @@ function AppInner() {
     </div>
   );
 }
+
 
 
