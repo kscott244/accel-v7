@@ -715,7 +715,7 @@ function AppInner() {
       {/* NAV BAR */}
       <nav style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:960,zIndex:100,borderTop:`1px solid ${T.b1}`,background:"rgba(10,10,15,.92)",backdropFilter:"blur(32px)"}}>
         <div style={{display:"flex",height:56,alignItems:"center",justifyContent:"space-around",padding:"0 4px"}}>
-          {[{k:"today",l:"Today",I:IconBolt},{k:"groups",l:"Accounts",I:IconGroup},{k:"dealers",l:"Territory",I:IconDealer}].map(t=>(
+          {[{k:"today",l:"Today",I:IconBolt},{k:"groups",l:"Accounts",I:IconGroup},{k:"dealers",l:"Dealers",I:IconDealer}].map(t=>(
             <button key={t.k} onClick={()=>{setTab(t.k);setView(null);setShowMore(false)}} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 16px",cursor:"pointer",color:tab===t.k&&!view&&!showMore?T.blue:T.t4}}>
               <t.I c={tab===t.k&&!view&&!showMore?T.blue:T.t4}/>
               <span style={{fontSize:9,fontWeight:600,letterSpacing:".5px"}}>{t.l}</span>
