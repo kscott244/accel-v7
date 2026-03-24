@@ -1,58 +1,90 @@
 # CURRENT PHASE — accel-v7
 
-## Active: Phase 10 — CRM / Sales Data Split ✅ Complete
+## Active: Phase 11 — Sales History Layer ✅ Complete
 
-### What Was Done (Phase 10)
+### Goal
+Introduce a persistent, de-duplicated sales-history layer as the foundation for incremental upload ingestion. No UI changes. No behavior changes. Pure additive infrastructure.
 
-**Goal**: Stop treating CSV uploads as the source of truth for account identity.
-Separate persistent CRM identity data from upload-driven sales activity data.
+### Sales History Model
 
-#### Data model split
-| Field | Owner | Survives upload |
-|-------|-------|----------------|
-| name, city, st, addr, zip, email | CRM | ✅ Yes |
-| tier, top100, class2, dealer | CRM | ✅ Yes |
-| firstSeenDate, lastSeenDate | CRM | ✅ Yes |
-| pyQ, cyQ, products, last | Sales (upload) | Replaced each upload |
-| contacts, notes, research, groups | Overlays | ✅ Yes (unchanged) |
+**Storage**: `data/sales-history.json` (GitHub, same pattern as overlays + crm-accounts)
+**LocalStorage cache**: `sales_history_v1`
 
-#### Files added
-1. **`src/lib/crm.ts`** — `CrmAccount` + `CrmStore` types, `mergeCrmCandidates()` (fill-blanks-only merge policy — uploaded CSV never overwrites a populated CRM field), `applyCrmToGroups()` (hydrates identity fields from CRM onto groups array before rendering)
-2. **`src/app/api/load-crm/route.ts`** — GET `data/crm-accounts.json` from GitHub; returns `{ crm: null }` on 404 (first run) instead of error
-3. **`src/app/api/save-crm/route.ts`** — POST `data/crm-accounts.json` to GitHub; handles first-write (no SHA) and subsequent updates
+**Transaction Key** (dedup key):
+```
+{childId}|{year}|{month}|{l3}|{pyCents}|{cyCents}
+```
+- Content-addressed: the same invoice row in two overlapping weekly exports maps to the same key
+- Integer cents (×100, rounded) avoids floating-point comparison issues
+- Empty string for l3 on rows with no product
 
-#### Files modified
-4. **`src/lib/csv.ts`** — `processCSVData()` now extracts `crmCandidates` (identity fields only, no pyQ/cyQ/products) and returns them alongside `groups`/`generated`/`report`
-5. **`src/components/AccelerateApp.tsx`** — 5 targeted patches:
-   - Import `mergeCrmCandidates`, `applyCrmToGroups`, `EMPTY_CRM_STORE` from `@/lib/crm`
-   - `crmStore` state initialized to `EMPTY_CRM_STORE`
-   - Boot sequence loads CRM from localStorage cache then fetches fresh from GitHub in background
-   - Upload handler merges `crmCandidates` into CRM store (fill-blanks policy), persists async to GitHub, non-fatal on failure
-   - `setGroups` in upload handler now pipes through `applyCrmToGroups` before overlays
+**SalesStore shape**:
+```json
+{
+  "schemaVersion": 1,
+  "lastUpdated": "ISO",
+  "batches": [
+    { "id": "batch_ts_rowcount", "filename": "...", "uploadedAt": "ISO", "rowCount": N, "newRecords": N }
+  ],
+  "records": {
+    "txKey": { "childId", "parentId", "year", "month", "quarter", "l3", "py", "cy", "batchId" }
+  }
+}
+```
 
-#### Behavior
-- On first run: CRM store is empty, app works exactly as before
-- After first CSV upload: CRM records created for all ~984 offices, persisted to `data/crm-accounts.json`
-- On subsequent uploads: only blank fields are filled — existing identity data is never overwritten
-- CRM load is async/non-blocking — never delays app startup
-- CRM save is fire-and-forget — upload flow is never blocked by save failure
+### Files Added
 
-### Completion Criteria — All Met ✅
-- `npm run test` 69/69 passing ✅
-- `npm run build` clean — `/api/load-crm` and `/api/save-crm` appear in route table ✅
-- No UI changes ✅
-- Existing overlays.json untouched ✅
-- All existing behavior preserved ✅
+| File | Purpose |
+|------|---------|
+| `src/lib/sales.ts` | `SalesRecord`, `SalesBatch`, `SalesStore` types; `buildTxKey()`; `buildSalesRecords()`; `mergeSalesRecords()`; `EMPTY_SALES_STORE`; `salesStoreSummary()` |
+| `src/app/api/load-sales/route.ts` | GET `data/sales-history.json` from GitHub; returns `{ sales: null }` on 404 |
+| `src/app/api/save-sales/route.ts` | POST `data/sales-history.json` to GitHub; handles first-write (no SHA) |
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| `src/lib/csv.ts` | Added `import type { RawSalesRow }` from sales; added `rawSalesRows[]` accumulator in row loop (captures non-zero py/cy rows); added `rawSalesRows` to return value of `processCSVData()` |
+| `src/components/AccelerateApp.tsx` | Added `buildSalesRecords`/`mergeSalesRecords`/`EMPTY_SALES_STORE` import; added `salesStore` state; wired sales persist block in `handleUpload` (fire-and-forget, same pattern as CRM) |
+
+### Behavior
+
+- On first CSV upload: `data/sales-history.json` is created in GitHub with all non-zero rows from that upload as records
+- On subsequent uploads: new records are de-duped by txKey — rows already in the store are skipped; only net-new rows are inserted
+- Each upload appends a batch entry recording filename, timestamp, row count, and net-new record count
+- Sales persist is fire-and-forget (never blocks upload flow; failure is non-fatal and cached in localStorage)
+- All existing rollups, UI, and behavior are completely unchanged — `pyQ`/`cyQ` still come from the existing aggregation pipeline
+
+### What Does NOT Change
+- Upload still replaces the working groups array (CY/PY rollups are still recomputed from scratch each upload)
+- No UI changes of any kind
+- overlays.json untouched
+- crm-accounts.json untouched
+- All existing tests still pass
+
+### Completion Criteria ✅
+- `src/lib/sales.ts` pushed — commit `905db45002`
+- `/api/load-sales` pushed — commit `01265f9d96`
+- `/api/save-sales` pushed — commit `c1c9141f3d`
+- `csv.ts` patched — commit `65d1fad307`
+- `AccelerateApp.tsx` patched — commit `c0401b24e8`
+- Vercel build in progress
 
 ---
 
-## Previously Completed: Phase 9 — Import Cleanup Pipeline ✅ Complete
-- csv.ts hardened: tab/BOM/CRLF/header-alias/coerceNumber/coerceDate/junk-row
-- 37 csv tests, 69 total
+## Previously Completed: Phase 10 — CRM / Sales Data Split ✅ Complete
 
-## Previously Completed: Phase 8 — Import Manager ✅ Complete
-## Previously Completed: Phase 7 — Data Pipeline Upgrade ✅ Complete
-## Previously Completed: Phase 6 — Foundation Hardening ✅ Complete
+**Goal**: Stop treating CSV uploads as source of truth for account identity. Separate persistent CRM identity from upload-driven sales data.
+
+Files added: `src/lib/crm.ts`, `/api/load-crm`, `/api/save-crm`
+Files modified: `csv.ts` (crmCandidates), `AccelerateApp.tsx` (CRM wiring)
+
+---
+
+## Previously Completed: Phase 9 — Import Cleanup Pipeline ✅
+## Previously Completed: Phase 8 — Import Manager ✅
+## Previously Completed: Phase 7 — Data Pipeline Upgrade ✅
+## Previously Completed: Phase 6 — Foundation Hardening ✅
 ## Previously Completed: Phases 1–5 ✅
 
 ---
