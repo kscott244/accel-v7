@@ -1,7 +1,15 @@
 {
   "nameOverrides": {},
   "contacts": {},
-  "fscReps": {},
+  "fscReps": {
+    "Master-CM1191419": {
+      "Schein": {
+        "name": "Rich Foti",
+        "phone": "(203) 530-3467",
+        "notes": "Rich.Foti@henryschein.com"
+      }
+    }
+  },
   "activityLogs": {},
   "research": {},
   "dealerOverrides": {},
@@ -24,5 +32,5 @@
   },
   "groupDetaches": [],
   "groupMoves": {},
-  "lastUpdated": "2026-03-23T22:47:53.287Z"
+  "lastUpdated": "2026-03-24T06:57:41.390Z"
 }
