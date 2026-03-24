@@ -4,6 +4,7 @@
 import { useState, useMemo } from "react";
 import { T } from "@/lib/tokens";
 import { getTierLabel } from "@/lib/tier";
+import { trunkStrength } from "@/lib/stemm";
 import { $$, pc } from "@/lib/format";
 import { fixGroupName, Pill, Bar, Chev } from "@/components/primitives";
 import { scorePriority, BUCKET_STYLE } from "@/lib/priority";
@@ -25,6 +26,7 @@ function AccountCard({g, i, goGroup, isDealerFilt, filt}) {
   const retColor  = g._ret >= 0.7 ? T.green : g._ret >= 0.4 ? T.amber : T.red;
   const barColor  = `linear-gradient(90deg,${retColor},${retColor}99)`;
   const rootDots  = (g._rootStrength ?? 0) >= 60 ? 3 : (g._rootStrength ?? 0) >= 30 ? 2 : (g._rootStrength ?? 0) > 0 ? 1 : 0;
+  const trunk      = trunkStrength(g);
 
   return (
     <button className="anim" onClick={() => goGroup(g)}
@@ -58,14 +60,19 @@ function AccountCard({g, i, goGroup, isDealerFilt, filt}) {
       {/* Row 2: retention bar */}
       <Bar pct={retPct} color={barColor}/>
 
-      {/* Row 3: PY / CY / priority bucket badge + root strength */}
+      {/* Row 3: PY / CY / trunk strength + bucket badge */}
       <div style={{display:"flex",alignItems:"center",gap:14,marginTop:7}}>
         <Pill l="PY" v={$$(g._py1)} c={T.t2}/>
         <Pill l="CY" v={$$(g._cy1)} c={T.blue}/>
-        <div style={{display:"flex",alignItems:"center",gap:6,marginLeft:"auto"}}>
-          {rootDots > 0 && <span style={{fontSize:8,letterSpacing:1,color:T.t4,fontFamily:"monospace"}}>
-            {"●".repeat(rootDots)}{"○".repeat(3-rootDots)}
-          </span>}
+        <div style={{display:"flex",alignItems:"center",gap:5,marginLeft:"auto"}}>
+          {g._locs >= 2 && <span style={{
+            fontSize:9,fontWeight:700,
+            color:trunk.color,
+            background:trunk.bg,
+            border:`1px solid ${trunk.border}`,
+            borderRadius:4,padding:"2px 7px",
+            letterSpacing:".2px"
+          }}>{trunk.label}</span>}
           <span style={{fontSize:9,fontWeight:700,color:bStyle.color,
             background:bStyle.bg,borderRadius:4,padding:"2px 7px",
             border:`1px solid ${bStyle.border}`}}>{bucket}</span>
@@ -288,3 +295,4 @@ export default function GroupsTab({groups,goGroup,filt,setFilt,search,setSearch,
     </div>
   );
 }
+
