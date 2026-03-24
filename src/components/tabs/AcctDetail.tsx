@@ -27,6 +27,7 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup,overlays,saveOverla
   const [groupOverride,setGroupOverride]=useState<any>(null);
   const [actLog,setActLog]=useState<any[]>([]);
   const [actType,setActType]=useState("visit");
+  const [expandedProduct,setExpandedProduct]=useState<string|null>(null);
   const [actContact,setActContact]=useState("");
   const [actNotes,setActNotes]=useState("");
   const [actFollowUp,setActFollowUp]=useState("");
@@ -830,12 +831,49 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
         {products.sort((a,b)=>Math.abs(b[`py${qk}`]||0)-Math.abs(a[`py${qk}`]||0)).slice(0,10).map((p,i)=>{
           const pPy=Math.abs(p[`py${qk}`]||0);const pCy=Math.abs(p[`cy${qk}`]||0);
           const mx=Math.max(...products.map(x=>Math.abs(x[`py${qk}`]||0)),1);
+          const isExpanded = expandedProduct === p.n;
+          // Filter salesStore records for this product on this account
+          const prodRecords = salesStore?.records
+            ? Object.values(salesStore.records).filter((r:any) => r.childId === acct.id && r.l3 === p.n)
+            : [];
+          prodRecords.sort((a:any,b:any) => b.year!==a.year ? b.year-a.year : b.month-a.month);
+          const MONTHS_P = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
           return <div key={i} style={{marginBottom:10}}>
-            <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:11,color:T.t2}}>{p.n}</span><span className="m" style={{fontSize:10,color:pCy===0&&pPy>100?T.red:T.t3}}>{$$(pPy)} / {$$(pCy)}</span></div>
+            {/* Tappable header row */}
+            <div onClick={()=>setExpandedProduct(isExpanded ? null : p.n)}
+              style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3,cursor:"pointer",borderRadius:6,padding:"2px 0",userSelect:"none"}}>
+              <div style={{display:"flex",alignItems:"center",gap:5,flex:1,minWidth:0}}>
+                <span style={{fontSize:9,color:T.t4,transition:"transform .15s",display:"inline-block",transform:isExpanded?"rotate(90deg)":"rotate(0deg)"}}>▶</span>
+                <span style={{fontSize:11,color:T.t2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.n}</span>
+              </div>
+              <span className="m" style={{fontSize:10,color:pCy===0&&pPy>100?T.red:T.t3,flexShrink:0,marginLeft:8}}>{$$(pPy)} / {$$(pCy)}</span>
+            </div>
             <div style={{position:"relative",height:12,borderRadius:3,background:T.s3,overflow:"hidden"}}>
               <div style={{position:"absolute",top:0,left:0,height:"50%",width:`${pPy/mx*100}%`,background:"rgba(255,255,255,.08)"}}/>
               <div className="bar-g" style={{animationDelay:`${i*60}ms`,position:"absolute",bottom:0,left:0,height:"50%",width:`${pCy/mx*100}%`,background:pCy===0?T.red:`linear-gradient(90deg,${T.blue},${T.cyan})`}}/>
             </div>
+            {/* Inline month-by-month expansion */}
+            {isExpanded&&<div style={{marginTop:8,background:T.s2,borderRadius:10,padding:"10px 12px",border:`1px solid ${T.b1}`}}>
+              {prodRecords.length===0
+                ? <div style={{fontSize:10,color:T.t4,textAlign:"center",padding:"2px 0"}}>No history on record for this product.</div>
+                : <>
+                    <div style={{display:"grid",gridTemplateColumns:"76px 40px 1fr 1fr",gap:4,marginBottom:6,paddingBottom:5,borderBottom:`1px solid ${T.b1}`}}>
+                      <span style={{fontSize:9,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:.5}}>Month</span>
+                      <span style={{fontSize:9,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:.5}}>Q</span>
+                      <span style={{fontSize:9,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:.5,textAlign:"right"}}>PY</span>
+                      <span style={{fontSize:9,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:.5,textAlign:"right"}}>CY</span>
+                    </div>
+                    {prodRecords.map((r:any,ri:number)=>(
+                      <div key={r.txKey} style={{display:"grid",gridTemplateColumns:"76px 40px 1fr 1fr",gap:4,padding:"4px 0",borderBottom:ri<prodRecords.length-1?`1px solid ${T.b1}`:"none",alignItems:"center"}}>
+                        <span style={{fontSize:10,color:T.t2}}>{MONTHS_P[(r.month||1)-1]} {r.year}</span>
+                        <span style={{fontSize:10,color:T.t3}}>Q{r.quarter}</span>
+                        <span style={{fontSize:10,fontFamily:"'JetBrains Mono',monospace",color:r.py>0?T.t2:T.t4,textAlign:"right"}}>{r.py>0?`$${r.py.toLocaleString()}`:"—"}</span>
+                        <span style={{fontSize:10,fontFamily:"'JetBrains Mono',monospace",color:r.cy>0?T.cyan:T.t4,textAlign:"right"}}>{r.cy>0?`$${r.cy.toLocaleString()}`:"—"}</span>
+                      </div>
+                    ))}
+                  </>
+              }
+            </div>}
           </div>;
         })}
         <div style={{display:"flex",gap:12,marginTop:8,fontSize:9,color:T.t4}}><span>▬ PY</span><span style={{color:T.blue}}>▬ CY</span></div>
@@ -1113,4 +1151,5 @@ function SaleCalculator({acctTier,tierRate,isAccel,acctType,onAdd}) {
 }
 
 export default AcctDetail;
+
 
