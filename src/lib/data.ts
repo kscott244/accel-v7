@@ -12,9 +12,11 @@ export let PARENT_NAMES: Record<string, string> = {};
 export let DEALERS: Record<string, string> = {};
 export let PARENT_DEALERS: Record<string, string> = {};
 export let WEEK_ROUTES: any = { routes: {}, unplaced: [] };
+export let DEALER_REPS: Record<string, any> = {};
 
 try { BADGER        = require("@/data/badger-lookup.json");        } catch(e) {}
 try { PARENT_NAMES  = require("@/data/parent-names.json");         } catch(e) {}
 try { DEALERS       = require("@/data/dealers").DEALERS;           } catch(e) {}
 try { PARENT_DEALERS = require("@/data/parentDealers").PARENT_DEALERS; } catch(e) {}
 try { WEEK_ROUTES   = require("@/data/week-routes.json");          } catch(e) {}
+try { DEALER_REPS   = require("@/data/dealer-reps.json");          } catch(e) {}

@@ -1,0 +1,679 @@
+{
+  "Schein": {
+    "fsc": [
+      {
+        "name": "Greg Calandra",
+        "phone": "508-615-5501",
+        "email": "greg.calandra@henryschein.com",
+        "role": "FSC"
+      },
+      {
+        "name": "Sandi Cangiano",
+        "phone": "603-496-8697",
+        "email": "sandi.cangiano@henryschein.com",
+        "role": "FSC"
+      },
+      {
+        "name": "Joe Cleveland",
+        "phone": "978-380-2184",
+        "email": "joe.cleveland@henryschein.com",
+        "role": "FSC"
+      },
+      {
+        "name": "Mark Dremann",
+        "phone": "207-749-2665",
+        "email": "mark.dremann@henryschein.com",
+        "role": "FSC"
+      },
+      {
+        "name": "Chris Hayden",
+        "phone": "603-498-4480",
+        "email": "chris.hayden@henryschein.com",
+        "role": "FSC"
+      },
+      {
+        "name": "Tom Peterson",
+        "phone": "603-867-7103",
+        "email": "tom.peterson@henryschein.com",
+        "role": "FSC"
+      },
+      {
+        "name": "Victoria Uminsky",
+        "phone": "508-254-7466",
+        "email": "victoria.uminsky@henryschein.com",
+        "role": "FSC"
+      },
+      {
+        "name": "Jeff Blair",
+        "phone": "508-397-6252",
+        "email": "jeff.blair@henryschein.com",
+        "role": "FSC"
+      },
+      {
+        "name": "Ashley Brown",
+        "phone": "631-839-1498",
+        "email": "ashley.brown@henryschein.com",
+        "role": "FSC"
+      },
+      {
+        "name": "Steve Davenport",
+        "phone": "508-789-2203",
+        "email": "steve.davenport@henryschein.com",
+        "role": "FSC"
+      },
+      {
+        "name": "Christine Gerard",
+        "phone": "617-733-0300",
+        "email": "christine.gerard@henryschein.com",
+        "role": "FSC"
+      },
+      {
+        "name": "Ilenis Guadarrama",
+        "phone": "857-391-4055",
+        "email": "ilenis.guadarrama@henryschein.com",
+        "role": "FSC"
+      },
+      {
+        "name": "Evan Harris",
+        "phone": "781-254-0875",
+        "email": "evan.harris@henryschein.com",
+        "role": "FSC"
+      },
+      {
+        "name": "Jason Harris",
+        "phone": "978-998-0023",
+        "email": "jason.harris@henryschein.com",
+        "role": "FSC"
+      },
+      {
+        "name": "Donna Laptew",
+        "phone": "401-487-3376",
+        "email": "donna.laptew@henryschein.com",
+        "role": "FSC"
+      },
+      {
+        "name": "Thomas Maguire",
+        "phone": "781-254-8095",
+        "email": "thomas.maguire@henryschein.com",
+        "role": "FSC"
+      },
+      {
+        "name": "Lori Martin",
+        "phone": "401-487-9018",
+        "email": "lori.martin@henryschein.com",
+        "role": "FSC"
+      },
+      {
+        "name": "Ron O'Shea",
+        "phone": "781-910-4103",
+        "email": "ron.oshea@henryschein.com",
+        "role": "FSC"
+      },
+      {
+        "name": "Aimee Stone",
+        "phone": "781-444-1884",
+        "email": "aimee.stone@henryschein.com",
+        "role": "FSC"
+      },
+      {
+        "name": "Steve Sullivan",
+        "phone": "617-840-5935",
+        "email": "steve.sullivan@henryschein.com",
+        "role": "FSC"
+      },
+      {
+        "name": "Pedrom Tand",
+        "phone": "508-479-2167",
+        "email": "pedrom.tand@henryschein.com",
+        "role": "FSC"
+      },
+      {
+        "name": "Patti Westcott",
+        "phone": "508-962-6078",
+        "email": "patricia.westcott@henryschein.com",
+        "role": "FSC"
+      },
+      {
+        "name": "Tracy Nigro",
+        "phone": "508-262-8105",
+        "email": "tracy.nigro@henryschein.com",
+        "role": "FSC"
+      },
+      {
+        "name": "Rich Anderson",
+        "phone": "860-888-5427",
+        "email": "rich.anderson@henryschein.com",
+        "role": "FSC",
+        "branch": "CTHAR"
+      },
+      {
+        "name": "Isabelle Binstadt",
+        "phone": "860-459-0796",
+        "email": "isabelle.binstadt@henryschein.com",
+        "role": "FSC",
+        "branch": "CTHAR"
+      },
+      {
+        "name": "Micheal Jordan",
+        "phone": "203-980-2598",
+        "email": "micheal.jordan@henryschein.com",
+        "role": "FSC",
+        "branch": "CTHAR"
+      },
+      {
+        "name": "Rich Foti",
+        "phone": "203-530-3467",
+        "email": "rich.foti@henryschein.com",
+        "role": "FSC",
+        "branch": "CTHAR"
+      },
+      {
+        "name": "Mike Gantos",
+        "phone": "203-671-1995",
+        "email": "michael.gantos@henryschein.com",
+        "role": "FSC",
+        "branch": "CTHAR"
+      },
+      {
+        "name": "Kevin Korengel",
+        "phone": "860-214-9663",
+        "email": "kevin.korengel@henryschein.com",
+        "role": "FSC",
+        "branch": "CTHAR"
+      },
+      {
+        "name": "Kyle Kureczka",
+        "phone": "860-796-9986",
+        "email": "kyle.kureczka@henryschein.com",
+        "role": "FSC",
+        "branch": "CTHAR"
+      },
+      {
+        "name": "Bailey Pace",
+        "phone": "860-733-2055",
+        "email": "bailey.pace@henryschein.com",
+        "role": "FSC",
+        "branch": "CTHAR"
+      },
+      {
+        "name": "Mark Rocha",
+        "phone": "860-877-0284",
+        "email": "mark.rocha@henryschein.com",
+        "role": "FSC",
+        "branch": "CTHAR"
+      },
+      {
+        "name": "Jeff Trachtenberg",
+        "phone": "860-234-7482",
+        "email": "jeff.trachtenberg@henryschein.com",
+        "role": "FSC",
+        "branch": "CTHAR"
+      },
+      {
+        "name": "Bob Tremblay",
+        "phone": "413-250-3862",
+        "email": "bob.tremblay@henryschein.com",
+        "role": "FSC",
+        "branch": "CTHAR"
+      },
+      {
+        "name": "Diane Warner",
+        "phone": "860-478-8170",
+        "email": "diane.warner@henryschein.com",
+        "role": "FSC",
+        "branch": "CTHAR"
+      },
+      {
+        "name": "Bob Zager",
+        "phone": "203-733-5942",
+        "email": "bob.zager@henryschein.com",
+        "role": "FSC",
+        "branch": "CTHAR"
+      }
+    ],
+    "es": [
+      {
+        "name": "Jim Hammon",
+        "phone": "781-996-9777",
+        "email": "jim.hammon@henryschein.com",
+        "role": "ES"
+      },
+      {
+        "name": "Scott Lasser",
+        "phone": "617-797-6593",
+        "email": "scott.lasser@henryschein.com",
+        "role": "ES"
+      },
+      {
+        "name": "Michael Coletti",
+        "phone": "781-760-1224",
+        "email": "michael.coletti@henryschein.com",
+        "role": "ES"
+      },
+      {
+        "name": "Dan Ginley",
+        "phone": "978-857-5814",
+        "email": "dan.ginley@henryschein.com",
+        "role": "ES"
+      },
+      {
+        "name": "Drew Cooper",
+        "phone": "860-301-7604",
+        "email": "drew.cooper@henryschein.com",
+        "role": "ES"
+      },
+      {
+        "name": "Jason Gosselin",
+        "phone": "617-719-3343",
+        "email": "jason.gosselin@henryschein.com",
+        "role": "ES"
+      },
+      {
+        "name": "Mark Heiman",
+        "phone": "781-453-1194",
+        "email": "mark.heiman@henryschein.com",
+        "role": "ES"
+      },
+      {
+        "name": "Taylor Peterson",
+        "phone": "603-320-6333",
+        "email": "taylor.peterson@henryschein.com",
+        "role": "ES"
+      }
+    ],
+    "branch": "New England"
+  },
+  "Patterson": {
+    "reps": [
+      {
+        "name": "Mary Ellen Banks",
+        "phone": "603-234-1011",
+        "email": "mary.ellen.banks@pattersondental.com",
+        "role": "Territory Rep",
+        "states": "MA NH"
+      },
+      {
+        "name": "Stephen Brodeur",
+        "phone": "401-639-5350",
+        "email": "stephen.brodeur@pattersondental.com",
+        "role": "Territory Rep",
+        "states": "RI"
+      },
+      {
+        "name": "Matthew Catania",
+        "phone": "978-985-5538",
+        "email": "matthew.catania@pattersondental.com",
+        "role": "Territory Rep",
+        "states": "MA"
+      },
+      {
+        "name": "Liana Christy",
+        "phone": "774-276-5541",
+        "email": "liana.christy@pattersondental.com",
+        "role": "Territory Rep",
+        "states": "MA NH"
+      },
+      {
+        "name": "Don Ciarcia",
+        "phone": "860-214-5404",
+        "email": "donald.ciarcia@pattersondental.com",
+        "role": "Territory Rep",
+        "states": "CT"
+      },
+      {
+        "name": "Steve Del Vecchio",
+        "phone": "860-490-8174",
+        "email": "stephen.delvecchio@pattersondental.com",
+        "role": "Territory Rep",
+        "states": "CT"
+      },
+      {
+        "name": "Jay Gannon",
+        "phone": "860-983-0599",
+        "email": "jay.gannon@pattersondental.com",
+        "role": "Territory Rep",
+        "states": "CT"
+      },
+      {
+        "name": "Andrea Kingston",
+        "phone": "603-630-9027",
+        "email": "andrea.kingston@pattersondental.com",
+        "role": "Territory Rep",
+        "states": "MA NH"
+      },
+      {
+        "name": "Julie Larrivee",
+        "phone": "207-831-1368",
+        "email": "julie.larrivee@pattersondental.com",
+        "role": "Territory Rep",
+        "states": "ME"
+      },
+      {
+        "name": "Jeff LaVoie",
+        "phone": "781-789-5928",
+        "email": "jeffrey.lavoie@pattersondental.com",
+        "role": "Territory Rep",
+        "states": "RI MA"
+      },
+      {
+        "name": "Steven Malley",
+        "phone": "401-500-4543",
+        "email": "steven.malley@pattersondental.com",
+        "role": "Territory Rep",
+        "states": "RI MA"
+      },
+      {
+        "name": "Ryan Mastej",
+        "phone": "203-641-0442",
+        "email": "ryan.mastej@pattersondental.com",
+        "role": "Territory Rep",
+        "states": "CT"
+      },
+      {
+        "name": "Chris O'Donnell",
+        "phone": "413-219-3341",
+        "email": "christopher.o'donnell@pattersondental.com",
+        "role": "Territory Rep",
+        "states": "CT/MA/VT"
+      },
+      {
+        "name": "John Pace",
+        "phone": "508-982-0222",
+        "email": "john.pace@pattersondental.com",
+        "role": "Territory Rep",
+        "states": "MA NH"
+      },
+      {
+        "name": "Jake Perez",
+        "phone": "603-706-2859",
+        "email": "jacob.perez@pattersondental.com",
+        "role": "Territory Rep",
+        "states": "MA, NH"
+      },
+      {
+        "name": "Lisa Rakowski",
+        "phone": "518-226-2797",
+        "email": "lisa.rakowski@pattersondental.com",
+        "role": "Territory Rep",
+        "states": "NY VT"
+      },
+      {
+        "name": "Scott Rigby",
+        "phone": "508-320-5566",
+        "email": "scott.rigby@pattersondental.com",
+        "role": "Territory Rep",
+        "states": "MA"
+      },
+      {
+        "name": "Stacey Sullivan",
+        "phone": "207-217-4149",
+        "email": "stacey.sullivan@pattersondental.com",
+        "role": "Territory Rep",
+        "states": "ME"
+      },
+      {
+        "name": "Bill Walsh",
+        "phone": "617-699-0418",
+        "email": "bill.walsh@pattersondental.com",
+        "role": "Territory Rep",
+        "states": "MA"
+      },
+      {
+        "name": "Paul Waters",
+        "phone": "757-291-9006",
+        "email": "paul.waters@pattersondental.com",
+        "role": "Territory Rep",
+        "states": "CT"
+      },
+      {
+        "name": "Troy Wylie",
+        "phone": "617-821-5907",
+        "email": "troy.wylie@pattersondental.com",
+        "role": "Territory Rep",
+        "states": "MA"
+      },
+      {
+        "name": "Delaney Kinch",
+        "phone": "207-229-5457",
+        "email": "delaney.kinch@pattersondental.com",
+        "role": "Territory Rep",
+        "states": "MA"
+      }
+    ],
+    "eq": [
+      {
+        "name": "Blake Kelsey",
+        "phone": "508-725-3225",
+        "email": "blake.kelsey@pattersondental.com",
+        "role": "Equipment Specialist"
+      },
+      {
+        "name": "Dennis Martin",
+        "phone": "207-232-7326",
+        "email": "dennis.martin@pattersondental.com",
+        "role": "Equipment Specialist"
+      },
+      {
+        "name": "Mark Plancon",
+        "phone": "860-510-8506",
+        "email": "mark.plancon@pattersondental.com",
+        "role": "Equipment Specialist"
+      },
+      {
+        "name": "Paul Tabaszewski",
+        "phone": "860-280-4324",
+        "email": "paul.tabaszewski@pattersondental.com",
+        "role": "Equipment Specialist"
+      }
+    ],
+    "cadcam": [
+      {
+        "name": "Rachel Waterhouse",
+        "phone": "603-966-0809",
+        "email": "rachel.waterhouse@pattersondental.com",
+        "role": "CAD/CAM Specialist"
+      },
+      {
+        "name": "Merle Leeds",
+        "phone": "603-785-5207",
+        "email": "merle.leeds@pattersondental.com",
+        "role": "CAD/CAM Specialist"
+      },
+      {
+        "name": "Rosemary Perez",
+        "phone": "508-735-5507",
+        "email": "rosemary.perez@pattersondental.com",
+        "role": "CAD/CAM TA"
+      },
+      {
+        "name": "KATIE LOPEZ",
+        "phone": "860-637-9015",
+        "email": "katie.lopez@pattersondental.com",
+        "role": "CAD/CAM TA"
+      }
+    ],
+    "branch": "New England"
+  },
+  "Benco": {
+    "reps": [
+      {
+        "name": "John Healy",
+        "phone": "978-618-5895",
+        "email": "jhealy@benco.com",
+        "role": "Territory Rep"
+      },
+      {
+        "name": "Rob Lippman",
+        "phone": "508-320-2389",
+        "email": "rlippman@benco.com",
+        "role": "Territory Rep"
+      },
+      {
+        "name": "Karen Meyer",
+        "phone": "603-867-3736",
+        "email": "kmeyer@benco.com",
+        "role": "Territory Rep"
+      },
+      {
+        "name": "Tom O'Kelly",
+        "phone": "774-281-0626",
+        "email": "tokelly@benco.com",
+        "role": "Territory Rep"
+      },
+      {
+        "name": "Jeff Richard",
+        "phone": "207-459-8566",
+        "email": "jrichard@benco.com",
+        "role": "Territory Rep"
+      },
+      {
+        "name": "Shannon Riley",
+        "phone": "860-919-2509",
+        "email": "sriley@benco.com",
+        "role": "Territory Rep"
+      },
+      {
+        "name": "Lisa Tiraboschi",
+        "phone": "978-793-1819",
+        "email": "ltiraboschi@benco.com",
+        "role": "Territory Rep"
+      },
+      {
+        "name": "Kimberly Wright",
+        "phone": "978-360-3552",
+        "email": "kwright@benco.com",
+        "role": "Territory Rep"
+      },
+      {
+        "name": "Heidi Murray",
+        "phone": "603-714-9131",
+        "email": "hmurray@benco.com",
+        "role": "Territory Rep"
+      },
+      {
+        "name": "Traci Dempsey",
+        "phone": "207-522-9749",
+        "email": "tdempsey@benco.com",
+        "role": "Territory Rep"
+      },
+      {
+        "name": "Kerri Joy",
+        "phone": "585-820-3145",
+        "email": "kjoy@benco.com",
+        "role": "Territory Rep"
+      }
+    ],
+    "eq": [
+      {
+        "name": "Derek Lombardi",
+        "phone": "978-877-2019",
+        "email": "dlombardi@benco.com",
+        "role": "Equipment Specialist"
+      },
+      {
+        "name": "Jesse Leveille",
+        "phone": "207-233-4978",
+        "email": "jleveille@benco.com",
+        "role": "Equipment Specialist"
+      },
+      {
+        "name": "Tori Kivak",
+        "phone": "570-602-7781",
+        "email": "tkivak@benco.com",
+        "role": "Equipment Specialist"
+      },
+      {
+        "name": "Jose Amaral",
+        "phone": "401-524-6965",
+        "email": "jamaral@benco.com",
+        "role": "Equipment Specialist"
+      },
+      {
+        "name": "Tim Auger",
+        "phone": "401-209-8662",
+        "email": "tauger@benco.com",
+        "role": "Equipment Specialist"
+      },
+      {
+        "name": "Patrick Cote",
+        "phone": "339-224-1926",
+        "email": "pcote@benco.com",
+        "role": "Equipment Specialist"
+      },
+      {
+        "name": "Greg Fawcett",
+        "phone": "603-340-7721",
+        "email": "gfawcett@benco.com",
+        "role": "Equipment Specialist"
+      },
+      {
+        "name": "Kenneth Parker",
+        "phone": "339-440-1000",
+        "email": "kparker@benco.com",
+        "role": "Equipment Specialist"
+      },
+      {
+        "name": "Spencer Smith",
+        "phone": "401-258-9641",
+        "email": "ssmith@benco.com",
+        "role": "Equipment Specialist"
+      },
+      {
+        "name": "Michael Robitaille",
+        "phone": "207-500-1664",
+        "email": "mrobitaille@benco.com",
+        "role": "Equipment Specialist"
+      },
+      {
+        "name": "Roberto Arredondo",
+        "phone": "617-874-6663",
+        "email": "rarredondo@benco.com",
+        "role": "Equipment Specialist"
+      },
+      {
+        "name": "Tony Tudino",
+        "phone": "401-871-5483",
+        "email": "atudino@benco.com",
+        "role": "Equipment Specialist"
+      },
+      {
+        "name": "Bryant Joslyn",
+        "phone": "603-986-7087",
+        "email": "bjoslyn@benco.com",
+        "role": "Equipment Specialist"
+      },
+      {
+        "name": "Huriel Ortiz",
+        "phone": "401-290-8666",
+        "email": "hortiz@benco.com",
+        "role": "Equipment Specialist"
+      },
+      {
+        "name": "Jamie Boyer",
+        "phone": "413-887-1712",
+        "email": "jboyer@benco.com",
+        "role": "Equipment Specialist"
+      },
+      {
+        "name": "Mike Berry",
+        "phone": "207-357-1136",
+        "email": "mberry@benco.com",
+        "role": "Equipment Specialist"
+      },
+      {
+        "name": "Omar Ikariden",
+        "phone": "857-939-1854",
+        "email": "oikariden@benco.com",
+        "role": "Equipment Specialist"
+      },
+      {
+        "name": "Jahfar Faye",
+        "phone": "508-262-8274",
+        "email": "jfaye@benco.com",
+        "role": "Equipment Specialist"
+      }
+    ],
+    "service": [],
+    "branch": "New England"
+  }
+}
