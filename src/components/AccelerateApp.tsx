@@ -184,7 +184,7 @@ function applyOverlays(grps: any[]): any[] {
 
 // ─── EXTRACTED MODULES (Phase 3) ─────────────────────────────────
 // These were inline in this file. Extracted to src/lib/ for reuse and clarity.
-import { T, Q1_TARGET, FY_TARGET, DAYS_LEFT, HOME_LAT, HOME_LNG } from "@/lib/tokens";
+import { T, Q1_TARGET, FY_TARGET, DAYS_LEFT, QUARTER_TARGETS, daysLeftInQuarter } from "@/lib/tokens";
 import {
   ACCEL_RATES, normalizeTier, isTop100, normalizePracticeType,
   getTierRate, isAccelTier, getTierLabel, extractGroupName,
@@ -245,6 +245,17 @@ function AppInner() {
   const [loading, setLoading] = useState(true);
   const [uploadMsg, setUploadMsg] = useState(null);
   const fileRef = useRef(null);
+
+  // ── ACTIVE QUARTER ────────────────────────────────────────────
+  // Auto-detected from loaded data, user-overridable, persisted to localStorage.
+  // Empty string means "not yet set" — auto-detect fires after data loads.
+  const [activeQ, setActiveQState] = useState<string>(() => {
+    try { return localStorage.getItem("active_quarter") || ""; } catch { return ""; }
+  });
+  const setActiveQ = (q: string) => {
+    setActiveQState(q);
+    try { localStorage.setItem("active_quarter", q); } catch {}
+  };
 
   // ── OVERLAY STATE ─────────────────────────────────────────────
   // overlays: runtime-loaded from data/overlays.json, never wiped by CSV upload
@@ -480,8 +491,21 @@ function AppInner() {
 
       try {
         const { PRELOADED } = require("@/data/preloaded-data");
-        setGroups(applyGroupOverrides(applyOverlays(rollupGroupTotals(hydrateDealer(PRELOADED.groups)))));
+        const preloadedGroups = applyGroupOverrides(applyOverlays(rollupGroupTotals(hydrateDealer(PRELOADED.groups))));
+        setGroups(preloadedGroups);
         setDataSource(`Pre-loaded ${PRELOADED.generated}`);
+        // Auto-detect activeQ from data if not already set
+        setActiveQState(prev => {
+          if (prev) return prev;
+          const qTotals: Record<string,number> = {};
+          preloadedGroups.forEach((g: any) => {
+            ["1","2","3","4"].forEach(q => { qTotals[q] = (qTotals[q]||0) + (g.cyQ?.[q]||0); });
+          });
+          const best = Object.entries(qTotals).filter(([,v])=>v>0).sort(([a],[b])=>parseInt(b)-parseInt(a))[0];
+          const detected = best ? best[0] : "1";
+          try { localStorage.setItem("active_quarter", detected); } catch {}
+          return detected;
+        });
       } catch {
         setGroups([]);
         setDataSource("No data — upload CSV");
@@ -570,7 +594,19 @@ function AppInner() {
         }
 
         // Apply CRM identity, then overlays on top of derived base data
-        setGroups(applyGroupOverrides(applyOverlays(applyCrmToGroups(rollupGroupTotals(hydrateDealer(baseGroupsForDisplay)), crmStore))));
+        const uploadedGroups = applyGroupOverrides(applyOverlays(applyCrmToGroups(rollupGroupTotals(hydrateDealer(baseGroupsForDisplay)), crmStore)));
+        setGroups(uploadedGroups);
+        // Auto-detect activeQ from uploaded data
+        setActiveQState(prev => {
+          const qTotals: Record<string,number> = {};
+          uploadedGroups.forEach((g: any) => {
+            ["1","2","3","4"].forEach(q => { qTotals[q] = (qTotals[q]||0) + (g.cyQ?.[q]||0); });
+          });
+          const best = Object.entries(qTotals).filter(([,v])=>v>0).sort(([a],[b])=>parseInt(b)-parseInt(a))[0];
+          const detected = best ? best[0] : (prev || "1");
+          try { localStorage.setItem("active_quarter", detected); } catch {}
+          return detected;
+        });
         setDataSource(`CSV uploaded ${result.generated}`);
         localStorage.setItem("accel_data_v2", JSON.stringify(result));
         try { localStorage.setItem("import_report_v1", JSON.stringify(result.report)); } catch {}
@@ -662,12 +698,13 @@ function AppInner() {
   // Compute Q1 totals from data
   const q1CYFromData = useMemo(() => {
     if (!groups) return 0;
-    return groups.reduce((s,g) => s + (g.cyQ?.["1"]||0), 0);
-  }, [groups]);
+    return groups.reduce((s,g) => s + (g.cyQ?.[activeQ||"1"]||0), 0);
+  }, [groups, activeQ]);
 
   const q1CY = q1CYFromData + totalAdjQ1;
-  const q1Gap = Q1_TARGET - q1CY;
-  const q1Att = q1CY / Q1_TARGET;
+  const activeTarget = QUARTER_TARGETS[activeQ||"1"] || Q1_TARGET;
+  const q1Gap = activeTarget - q1CY;
+  const q1Att = q1CY / activeTarget;
 
   // Score all accounts — use combined sibling totals for gap/priority when addr siblings exist
   const scored = useMemo(() => {
@@ -706,7 +743,7 @@ function AppInner() {
 
       return {
         ...adjusted, addr,
-        ...scoreAccount(scoreBase, "1"),
+        ...scoreAccount(scoreBase, activeQ || "1"),
         // Store combined for display
         combinedPY, combinedCY,
         combinedGap: combinedPY - combinedCY,
@@ -717,7 +754,7 @@ function AppInner() {
         indivCY: adjCY,
       };
     }).sort((a,b) => b.score - a.score);
-  }, [allChildren, adjs]);
+  }, [allChildren, adjs, activeQ]);
 
   if (loading) return <div style={{background:T.bg,color:T.t1,minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'DM Sans',sans-serif"}}><div style={{textAlign:"center"}}><div style={{fontSize:20,marginBottom:8,color:T.blue}}><IconBolt c={T.blue}/></div><div style={{color:T.t3}}>Loading Accelerate...</div></div></div>;
 
@@ -751,9 +788,24 @@ function AppInner() {
             color:q1Att>=1?T.green:q1Att>=.85?T.amber:T.red,
             background:q1Att>=1?"rgba(52,211,153,.1)":q1Att>=.85?"rgba(251,191,36,.1)":"rgba(248,113,113,.1)",
             border:`1px solid ${q1Att>=1?"rgba(52,211,153,.2)":q1Att>=.85?"rgba(251,191,36,.2)":"rgba(248,113,113,.2)"}`,
-            borderRadius:999,padding:"2px 8px"}}>{pc(q1Att)} · {DAYS_LEFT}d left</div>}
+            borderRadius:999,padding:"2px 8px"}}>{pc(q1Att)} · {daysLeftInQuarter(activeQ||"1")}d left</div>}
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
+          {/* Quarter switcher — only show quarters with any CY data */}
+          {(()=>{
+            const qs = ["1","2","3","4"].filter(q=>(groups||[]).some(g=>(g.cyQ?.[q]||0)>0));
+            if(qs.length<=1) return null;
+            return <div style={{display:"flex",gap:3}}>
+              {qs.map(q=>(
+                <button key={q} onClick={()=>setActiveQ(q)} style={{
+                  padding:"2px 8px",borderRadius:6,fontSize:10,fontWeight:700,cursor:"pointer",
+                  border:`1px solid ${(activeQ||"1")===q?"rgba(79,142,247,.4)":T.b1}`,
+                  background:(activeQ||"1")===q?"rgba(79,142,247,.15)":T.s2,
+                  color:(activeQ||"1")===q?T.blue:T.t4,fontFamily:"inherit",transition:"all .15s"
+                }}>Q{q}</button>
+              ))}
+            </div>;
+          })()}
           <button onClick={()=>fileRef.current?.click()} style={{background:"rgba(79,142,247,.08)",border:`1px solid rgba(79,142,247,.15)`,borderRadius:8,padding:"4px 10px",display:"flex",alignItems:"center",gap:5,cursor:"pointer",color:T.blue,fontSize:10,fontWeight:600,fontFamily:"inherit"}}><UploadIcon/> CSV</button>
           <input ref={fileRef} type="file" accept=".csv" onChange={handleUpload} style={{display:"none"}}/>
           <div className="m" style={{border:`1px solid ${T.b1}`,background:T.s2,borderRadius:999,padding:"3px 10px",fontSize:10,fontWeight:500,color:T.t4}}>{dataSource}</div>
@@ -784,12 +836,12 @@ function AppInner() {
         const goGroupFn = (g:any) => setView({type:"group", data:g});
         const goAcctFn = (a:any, from?:any) => setView({type:"acct", data:a, from});
         return <>
-          {!view && tab==="today" && <DashboardTab scored={scored} goAcct={goSmartFn} q1CY={q1CY} q1Gap={q1Gap} q1Att={q1Att} adjCount={adjs.length} totalAdj={totalAdjQ1} groups={groups||[]} goGroup={goGroupFn}/>}
+          {!view && tab==="today" && <DashboardTab scored={scored} goAcct={goSmartFn} q1CY={q1CY} q1Gap={q1Gap} q1Att={q1Att} adjCount={adjs.length} totalAdj={totalAdjQ1} groups={groups||[]} goGroup={goGroupFn} activeQ={activeQ||"1"}/>}
           {!view && tab==="groups" && <GroupsTab groups={groups||[]} goGroup={goGroupFn} filt={gFilt} setFilt={setGFilt} search={gSearch} setSearch={setGSearch} groupedPrivates={groupedPrivates}/>}
           {!view && tab==="map" && <MapTab/>}
-          {!view && tab==="calc" && <DashTab groups={groups||[]} q1CY={q1CY} q1Att={q1Att} q1Gap={q1Gap} scored={scored} goAcct={goSmartFn}/>}
+          {!view && tab==="calc" && <DashTab groups={groups||[]} q1CY={q1CY} q1Att={q1Att} q1Gap={q1Gap} scored={scored} goAcct={goSmartFn} activeQ={activeQ||"1"}/>}
           {!view && tab==="est" && <EstTab pct={estPct} setPct={setEstPct} q1CY={q1CY} groups={groups||[]} goAcct={goSmartFn}/>}
-          {!view && tab==="dealers" && <DealersTab scored={scored} groups={groups||[]} goAcct={goAcctFn} goGroup={goGroupFn}/>}
+          {!view && tab==="dealers" && <DealersTab scored={scored} groups={groups||[]} goAcct={goAcctFn} goGroup={goGroupFn} activeQ={activeQ||"1"}/>}
           {!view && tab==="outreach" && <OutreachTab scored={scored}/>}
           {!view && tab==="admin" && <AdminTab groups={groups||[]} scored={scored} overlays={overlays} saveOverlays={saveOverlays} salesStore={salesStore}/>}
           {view?.type==="group" && <GroupDetail group={view.data} goMain={()=>setView(null)} overlays={overlays} saveOverlays={saveOverlays} goAcct={(a:any)=>setView({type:"acct",data:{...a,gName:fixGroupName(view.data),gId:view.data.id,gTier:view.data.tier},from:view.data})}/>}
@@ -830,6 +882,7 @@ function AppInner() {
     </div>
   );
 }
+
 
 
 
