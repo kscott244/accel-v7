@@ -22,6 +22,7 @@ export function scoreAccount(a: any, q: any) {
   const gap = py - cy;
   const ret = py > 0 ? cy / py : 0;
   const d = a.last || 999;
+  const qLabel = `Q${q}`;
 
   if (gap > 8000) { s += 30; r.push({ label: `Large gap: ${$$(gap)}`, pts: 30 }); }
   else if (gap > 4000) { s += 20; r.push({ label: `Gap: ${$$(gap)}`, pts: 20 }); }
@@ -35,8 +36,8 @@ export function scoreAccount(a: any, q: any) {
   else if (d > 60) { s += 15; r.push({ label: `${d}d since order`, pts: 15 }); }
   else if (d > 30) { s += 8; r.push({ label: `${d}d since order`, pts: 8 }); }
 
-  if (gap > 5000 && d < 60) { s += 15; r.push({ label: "Q1 close — act now", pts: 15 }); }
-  else if (gap > 3000) { s += 10; r.push({ label: "Q1 closing window", pts: 10 }); }
+  if (gap > 5000 && d < 60) { s += 15; r.push({ label: `${qLabel} close — act now`, pts: 15 }); }
+  else if (gap > 3000) { s += 10; r.push({ label: `${qLabel} closing window`, pts: 10 }); }
 
   const tier = a.gTier || a.tier;
   if (tier === "Diamond" || tier?.includes("Diamond")) { s += 10; r.push({ label: "Diamond tier", pts: 10 }); }
