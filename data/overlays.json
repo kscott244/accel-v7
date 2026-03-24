@@ -47,6 +47,13 @@
         "phone": "(203) 530-3467",
         "notes": "Rich.Foti@henryschein.com"
       }
+    },
+    "Master-CM175757": {
+      "Schein": {
+        "name": "AJ Weiss",
+        "phone": "862-812-8327",
+        "notes": "Called to get lost business back - stated that NJ owner likes Solventum more and only way he will push Kerr products is if we get him a high margin"
+      }
     }
   },
   "activityLogs": {
@@ -82,5 +89,5 @@
   },
   "groupDetaches": [],
   "groupMoves": {},
-  "lastUpdated": "2026-03-24T16:17:06.508Z"
+  "lastUpdated": "2026-03-24T20:16:59.061Z"
 }
