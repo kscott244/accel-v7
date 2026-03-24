@@ -1,50 +1,56 @@
 # CURRENT PHASE — accel-v7
 
-## Active: Phase 21 — Search Model Step 3 ✅ Complete
+## Active: Phase 22 — Search Model Step 4 ✅ Complete
 
 ### Goal
-Collapse TodayTab search results by parent when the search matches a group name,
-so searching "Abra Dental" shows one parent group card instead of N child cards.
+Add loc count to the AccountId primitive so multi-location group membership
+is visible everywhere an account's identity is displayed.
 
 ### Baseline
-Commit `78e533d` — Phase 20 Steps 1-2
+Commit `9c2124e` — Phase 21
 
 ### What Was Changed
 
-**src/components/tabs/TodayTab.tsx**
-- Replaced flat `searchResults` memo with parent-collapsing logic:
-  - Each matched child is classified: did it match on `gName` (parent name) or on its own fields?
-  - If `gName` matched AND the group is multi-location → collapse all children into one parent card
-  - Children that only matched on their own name/city/addr/st stay as individual child cards
-  - Children whose parent is already shown as a collapsed card are excluded (no double-up)
-- Added parent card rendering: cyan left border, group name, loc count, group-level PY/CY/gap/ret, "Group · N locs" badge
-- Parent card taps → `goGroup()` → GroupDetail
-- Child card rendering unchanged
-- Added `fixGroupName` import from primitives
+**src/components/primitives.tsx**
+- AccountId now accepts optional `locs` prop
+- When `locs > 1` and parent line is shown, renders: `↳ {gName} · {locs} locs`
+- Single-location accounts (locs=1 or undefined) show no suffix — no visual change
 
-### Matching Rules
-- Search "abra dental" → matches `gName` on ABRA DENTAL children → shows 1 parent card
-- Search "all about kids" → matches child name only → shows that specific child card
-- Search "stamford" → matches city on individual children → shows individual child cards
-- Single-location groups where gName === name → treated as child match (no collapse needed)
+**src/components/tabs/TodayTab.tsx**
+- Added `groupLocsMap` memo: `gId → locs` lookup built from `groups` prop
+- Updated 3 AccountId calls with `locs={groupLocsMap[a.gId]}`:
+  - Child search results
+  - Overdrive/today focus cards
+  - Trip planner modal stops
+
+**src/components/tabs/DealersTab.tsx**
+- Updated 2 AccountId calls with locs:
+  - Dealer detail location list: `locs={groupLocsMap[a.gId]}`
+  - Co-call planner cards: `locs={isMultiLoc?gLocs:undefined}`
+
+**src/components/tabs/AcctDetail.tsx**
+- Updated header AccountId: `locs={parentGroup?.locs}`
 
 ### Files Modified
 
 | File | Change |
 |------|--------|
-| src/components/tabs/TodayTab.tsx | Parent-collapsing search + parent card rendering |
-| docs/CURRENT_PHASE.md | Updated to Phase 21 |
+| src/components/primitives.tsx | AccountId accepts + renders `locs` prop |
+| src/components/tabs/TodayTab.tsx | groupLocsMap memo + 3 AccountId updates |
+| src/components/tabs/DealersTab.tsx | 2 AccountId updates |
+| src/components/tabs/AcctDetail.tsx | 1 AccountId update |
+| docs/CURRENT_PHASE.md | Updated to Phase 22 |
 
 ### Deploy
-- Commit: `1505cbf`
+- Commit: `c64ffa5`
 - Verified live: version API returns matching SHA
 
 ---
 
+## Previously Completed: Phase 21 — Search Model Step 3 ✅ Complete
 ## Previously Completed: Phase 20 — Search Model Steps 1-2 ✅ Complete
 ## Previously Completed: Phase 19 — Search Behavior Audit ✅ Complete
-## Previously Completed: Phase 18 — Product Monthly Timeline ✅ Complete
-## Previously Completed: Phases 1–17 ✅
+## Previously Completed: Phases 1–18 ✅
 
 ---
 
