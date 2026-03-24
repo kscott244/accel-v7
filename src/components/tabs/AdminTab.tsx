@@ -9,7 +9,7 @@ import CPID_REVIEW from "@/data/cpid-review-queue.json";
 import { BADGER, OVERLAYS_REF } from "@/lib/data";
 import { AccountId } from "@/components/primitives";
 
-function AdminTab({groups, scored, overlays, saveOverlays}:{groups:any[], scored:any[], overlays:any, saveOverlays:any}) {
+function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:any[], scored:any[], overlays:any, saveOverlays:any, salesStore?:any}) {
   const [section, setSection] = useState<string>("groups"); // groups | detach | names | contacts
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{msg:string,ok:boolean}|null>(null);
@@ -127,6 +127,7 @@ function AdminTab({groups, scored, overlays, saveOverlays}:{groups:any[], scored
       {sectionBtn("contacts","📇 Contacts")}
       {sectionBtn("dupes","🔗 Dupes")}
       {sectionBtn("data","💾 Data")}
+      {sectionBtn("history","📜 History")}
     </div>
 
     {/* ── GROUPS SECTION ── */}
@@ -749,7 +750,69 @@ function AdminTab({groups, scored, overlays, saveOverlays}:{groups:any[], scored
         </div>;
       })()}
     </div>}
+    {section==="history"&&<div>
+      <div style={{fontSize:14,fontWeight:700,color:T.t1,marginBottom:4}}>Sales History</div>
+      <div style={{fontSize:11,color:T.t3,marginBottom:16}}>Accumulated upload batches. Each weekly CSV is de-duped — uploading the same file twice adds no extra records.</div>
+      {(()=>{
+        const batches: any[] = salesStore?.batches || [];
+        const recordCount: number = salesStore?.records ? Object.keys(salesStore.records).length : 0;
+        const lastUpdated: string | null = salesStore?.lastUpdated || null;
+
+        const StatRow = ({label, value, dim=false}: {label:string,value:string|number,dim?:boolean}) => (
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 0",borderBottom:`1px solid ${T.b1}`}}>
+            <span style={{fontSize:11,color:dim?T.t4:T.t3}}>{label}</span>
+            <span style={{fontSize:11,fontWeight:600,color:dim?T.t4:T.t2,fontFamily:"'JetBrains Mono',monospace"}}>{value}</span>
+          </div>
+        );
+
+        const Section = ({title, icon, children}: {title:string,icon:string,children:any}) => (
+          <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:14,marginBottom:10}}>
+            <div style={{fontSize:11,fontWeight:700,color:T.t3,textTransform:"uppercase",letterSpacing:.6,marginBottom:8}}>{icon} {title}</div>
+            {children}
+          </div>
+        );
+
+        if (batches.length === 0) return (
+          <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:20,textAlign:"center"}}>
+            <div style={{fontSize:24,marginBottom:8}}>📂</div>
+            <div style={{fontSize:13,fontWeight:600,color:T.t2,marginBottom:4}}>No upload history yet</div>
+            <div style={{fontSize:11,color:T.t4}}>Upload a CSV — each batch will be recorded here.</div>
+          </div>
+        );
+
+        return <div>
+          {/* ── TOTALS ── */}
+          <Section title="Store Totals" icon="🗄️">
+            <StatRow label="Total upload batches" value={batches.length.toLocaleString()} />
+            <StatRow label="Total de-duped records" value={recordCount.toLocaleString()} />
+            {lastUpdated && <StatRow label="Last updated" value={new Date(lastUpdated).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})} dim />}
+          </Section>
+
+          {/* ── BATCH LIST ── */}
+          <Section title="Upload Batches" icon="📦">
+            {[...batches].reverse().map((b: any, i: number) => {
+              const ts = new Date(b.uploadedAt);
+              const dateStr = ts.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+              const timeStr = ts.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
+              return (
+                <div key={b.id} style={{paddingBottom:10,marginBottom:10,borderBottom:i<batches.length-1?`1px solid ${T.b1}`:"none"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,marginBottom:3}}>
+                    <div style={{fontSize:11,fontWeight:600,color:T.t2,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{b.filename||"—"}</div>
+                    <div style={{flexShrink:0,fontSize:10,color:T.t4}}>{dateStr} {timeStr}</div>
+                  </div>
+                  <div style={{display:"flex",gap:10}}>
+                    <span style={{fontSize:10,color:T.t3}}>Rows: <span style={{color:T.t2,fontWeight:600,fontFamily:"'JetBrains Mono',monospace"}}>{(b.rowCount||0).toLocaleString()}</span></span>
+                    <span style={{fontSize:10,color:T.t3}}>New records: <span style={{color:b.newRecords>0?T.green:T.t4,fontWeight:600,fontFamily:"'JetBrains Mono',monospace"}}>{(b.newRecords||0).toLocaleString()}</span></span>
+                  </div>
+                </div>
+              );
+            })}
+          </Section>
+        </div>;
+      })()}
+    </div>}
   </div>;
 }
 
 export default AdminTab;
+
