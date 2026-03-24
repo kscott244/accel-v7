@@ -1,72 +1,50 @@
 # CURRENT PHASE — accel-v7
 
-## Active: Phase 16 — Quarter Switcher ✅ Complete
+## Active: Phase 17 — Weekly Delta Dashboard ✅ Complete
 
 ### Goal
-Make the app quarter-aware so it works correctly for Q2, Q3, and Q4 without
-hardcoded Q1 logic. Auto-detect the active quarter from loaded data, allow
-the user to override it, and wire it through scoring, KPIs, and all tabs.
+Show Ken what changed between his last two CSV uploads — accounts that
+reactivated, accounts that went dark, and big revenue movers — so the
+first thing he sees each week is what needs attention.
 
 ### What Was Built
 
-**src/lib/tokens.ts**
-- Added QUARTER_TARGETS record: Q1=8,915 Q2=\89,602 Q3=\94,888 Q4=\94,689
-- Added daysLeftInQuarter(q) function — returns days remaining in any quarter
-- Added quarterLabel(q) helper — returns "Q2 2026" style string
-- Kept Q1_TARGET and DAYS_LEFT as legacy exports (backward compat)
-
-**src/lib/format.ts**
-- scoreAccount() reasons now say "Q{q} close — act now" and "Q{q} closing window"
-  instead of hardcoded "Q1 close" strings
+**src/lib/weeklyDelta.ts** (new file)
+- WeeklySnapshot type: stores q, cy map, py map, uploadedAt timestamp
+- buildSnapshot(accounts, q): snapshot the current leaf-level cyQ values
+- computeDelta(prev, accounts, q): diffs prev snapshot vs current data
+  - reactivated: was $0 CY, now has revenue (sorted by currCY desc, max 8)
+  - wentDark: had CY revenue, now $0 (sorted by prevCY desc, max 8)
+  - bigMovers: |diff| >= $300 (sorted by abs diff desc, max 8)
+- saveSnapshot / loadSnapshot: localStorage("weekly_snapshot_v1") persistence
 
 **src/components/AccelerateApp.tsx**
-- Added activeQ state — persisted to localStorage("active_quarter")
-- Auto-detects activeQ after data loads: highest quarter with CY > 0
-- Also auto-detects on CSV upload
-- Compact Q1/Q2/Q3/Q4 pill switcher in header — only shows quarters with data,
-  hidden when only one quarter has data (no clutter for current Q1-only datasets)
-- Header attainment badge uses daysLeftInQuarter(activeQ)
-- Scoring (scored useMemo) uses activeQ for scoreAccount()
-- q1CYFromData, q1Gap, q1Att all use activeQ and QUARTER_TARGETS[activeQ]
-- activeQ passed as prop to TodayTab, DashTab, DealersTab
+- Imports weeklyDelta lib
+- weeklyDelta state added
+- On CSV upload: loads previous snapshot, runs computeDelta if same quarter,
+  then saves new snapshot; sets weeklyDelta state
+- Passes weeklyDelta prop to TodayTab
 
 **src/components/tabs/TodayTab.tsx**
-- Accepts activeQ prop from parent (removed local activeQ useMemo)
-- All pyQ/cyQ["1"] references replaced with [activeQ]
-- daysLeftInQuarter(activeQ) used for endgame/sprint/cruise thresholds
-- kpiData uses QUARTER_TARGETS[activeQ] for target and daysLeftInQuarter(activeQ) for perDay
-- Dependency arrays updated to include activeQ
-
-**src/components/tabs/DashTab.tsx**
-- Accepts activeQ prop
-- Header shows "Q{activeQ} 2026" instead of hardcoded "Q1 2026"
-- Target shows QUARTER_TARGETS[activeQ] instead of hardcoded 8,915
-- All pyQ/cyQ["1"] references replaced with [activeQ]
-
-**src/components/tabs/DealersTab.tsx**
-- Accepts activeQ prop
-- All 18 pyQ/cyQ["1"] references replaced with [activeQ]
+- Accepts weeklyDelta prop
+- deltaOpenState: defaults open (true), collapses on tap
+- Renders "What changed" card between search bar and KPI strip when delta exists
+- Collapsed header shows pill badges: reactivated count (green), dark count (red), movers count (amber)
+- Expanded: three sections, each row tappable — routes to AcctDetail via goAcct
 
 ### Files Modified
 
 | File | Commit |
 |------|--------|
-| src/lib/tokens.ts | 4d81cf00 |
-| src/lib/format.ts | 35a55e65 |
-| src/components/AccelerateApp.tsx | b677511d |
-| src/components/tabs/TodayTab.tsx | f06dc2d0 |
-| src/components/tabs/DashTab.tsx | dfca07de |
-| src/components/tabs/DealersTab.tsx | 3112ae23 |
+| src/lib/weeklyDelta.ts | b19cf7d6 (new) |
+| src/components/AccelerateApp.tsx | 25d309dc |
+| src/components/tabs/TodayTab.tsx | 5e2fd06b |
 
 ---
 
+## Previously Completed: Phase 16 — Quarter Switcher ✅
 ## Previously Completed: Phase 15 — Product Drill-Down in AcctDetail ✅
-## Previously Completed: Phase 14 — Account-Level Sales History in AcctDetail ✅
-## Previously Completed: Phase 13 — Sales History UI in Admin Tab ✅
-## Previously Completed: Phase 12 — Incremental Rollup Derivation ✅
-## Previously Completed: Phase 11 — Sales History Layer ✅
-## Previously Completed: Phase 10 — CRM / Sales Data Split ✅
-## Previously Completed: Phases 1–9 ✅
+## Previously Completed: Phases 1–14 ✅
 
 ---
 
