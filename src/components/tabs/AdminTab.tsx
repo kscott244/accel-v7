@@ -642,29 +642,110 @@ function AdminTab({groups, scored, overlays, saveOverlays}:{groups:any[], scored
     </div>}
 
     {section==="data"&&<div>
-      <div style={{fontSize:14,fontWeight:700,color:T.t1,marginBottom:4}}>Data Cache</div>
-      <div style={{fontSize:11,color:T.t3,marginBottom:16}}>The app caches the last uploaded CSV in your browser. If Q1 numbers look wrong, reset to use the built-in preloaded data.</div>
+      <div style={{fontSize:14,fontWeight:700,color:T.t1,marginBottom:4}}>Import Manager</div>
+      <div style={{fontSize:11,color:T.t3,marginBottom:16}}>Stats from your most recent CSV upload. Persists across refreshes.</div>
       {(()=>{
-        let cacheInfo = "No CSV cached — using preloaded data";
-        let hasCsvCache = false;
+        // Load report from localStorage
+        let report: any = null;
         try {
-          const raw = localStorage.getItem("accel_data_v2");
-          if (raw) {
-            const d = JSON.parse(raw);
-            cacheInfo = `CSV cached from ${d.generated||"unknown date"} · ${(d.groups||[]).length} groups`;
-            hasCsvCache = true;
-          }
+          const raw = localStorage.getItem("import_report_v1");
+          if (raw) report = JSON.parse(raw);
         } catch {}
-        return <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:14}}>
-          <div style={{fontSize:11,color:T.t2,marginBottom:12}}>{cacheInfo}</div>
-          {hasCsvCache&&<button onClick={()=>{
-            try { localStorage.removeItem("accel_data_v2"); } catch {}
-            showToast("✅ Cache cleared — reloading…");
-            setTimeout(()=>window.location.reload(), 800);
-          }} style={{padding:"10px 16px",borderRadius:8,border:"none",background:"rgba(248,113,113,.15)",color:T.red,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",width:"100%"}}>
-            Reset to preloaded data
-          </button>}
-          {!hasCsvCache&&<div style={{fontSize:11,color:T.green}}>✓ Already using preloaded data</div>}
+
+        if (!report) return (
+          <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:20,textAlign:"center"}}>
+            <div style={{fontSize:24,marginBottom:8}}>📂</div>
+            <div style={{fontSize:13,fontWeight:600,color:T.t2,marginBottom:4}}>No import on record</div>
+            <div style={{fontSize:11,color:T.t4}}>Upload a CSV from the Data Import tab to see stats here.</div>
+          </div>
+        );
+
+        const StatRow = ({label, value, dim=false, warn=false}: {label:string,value:string|number,dim?:boolean,warn?:boolean}) => (
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 0",borderBottom:`1px solid ${T.b1}`}}>
+            <span style={{fontSize:11,color:dim?T.t4:T.t3}}>{label}</span>
+            <span style={{fontSize:11,fontWeight:600,color:warn?T.amber:dim?T.t4:T.t2,fontFamily:"'JetBrains Mono',monospace"}}>{value}</span>
+          </div>
+        );
+
+        const Section = ({title, icon, children}: {title:string,icon:string,children:any}) => (
+          <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:14,marginBottom:10}}>
+            <div style={{fontSize:11,fontWeight:700,color:T.t3,textTransform:"uppercase",letterSpacing:.6,marginBottom:8}}>{icon} {title}</div>
+            {children}
+          </div>
+        );
+
+        const ts = new Date(report.timestamp);
+        const dateStr = ts.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+        const timeStr = ts.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
+
+        return <div>
+          {/* ── FILE STATS ── */}
+          <Section title="File Stats" icon="📄">
+            {report.filename && <StatRow label="Filename"   value={report.filename} />}
+            <StatRow label="Uploaded"       value={`${dateStr} at ${timeStr}`} />
+            <StatRow label="Delimiter"      value={report.delimiterDetected} />
+            <StatRow label="Encoding"       value={report.encodingDetected}
+              warn={report.encodingDetected==="Windows-1252 (likely)"} />
+          </Section>
+
+          {/* ── CLEANUP STATS ── */}
+          <Section title="Cleanup Stats" icon="🧹">
+            <StatRow label="Total rows in file (excl. header)" value={report.totalRawRows.toLocaleString()} />
+            <StatRow label="  → Blank rows skipped"            value={report.blankRowsSkipped.toLocaleString()} dim />
+            <StatRow label="  → Grand Total rows skipped"      value={report.grandTotalRowsSkipped.toLocaleString()} dim />
+            <StatRow label="  → Summary rows skipped"          value={report.summaryRowsSkipped.toLocaleString()} dim />
+            <StatRow label="  → No Invoice Date — skipped"     value={report.noDateRowsSkipped.toLocaleString()}
+              warn={report.noDateRowsSkipped > 0} />
+            <StatRow label="Clean rows aggregated"             value={report.cleanRowsProcessed.toLocaleString()} />
+          </Section>
+
+          {/* ── ENTITY OUTPUT ── */}
+          <Section title="Entity Output" icon="🏢">
+            <StatRow label="Unique parent groups seen"         value={report.uniqueParents.toLocaleString()} />
+            <StatRow label="Unique office locations seen"      value={report.uniqueOffices.toLocaleString()} />
+            <StatRow label="  → Zero-revenue offices dropped"  value={report.zeroRevenueOfficesDropped.toLocaleString()} dim />
+            <StatRow label="Offices in output"                 value={report.finalOffices.toLocaleString()} />
+            <StatRow label="Groups in output"                  value={report.finalGroups.toLocaleString()} />
+          </Section>
+
+          {/* ── WARNINGS ── */}
+          {report.warnings?.length > 0 && (
+            <Section title="Warnings" icon="⚠️">
+              {report.warnings.map((w: any) => (
+                <div key={w.code} style={{marginBottom:8,paddingBottom:8,borderBottom:`1px solid ${T.b1}`}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
+                    <div style={{fontSize:11,color:T.amber,fontWeight:600,flex:1}}>{w.label}</div>
+                    {w.count > 0 && <span style={{flexShrink:0,fontSize:10,fontWeight:700,color:T.amber,background:"rgba(251,191,36,.1)",border:"1px solid rgba(251,191,36,.25)",borderRadius:5,padding:"2px 6px"}}>{w.count}</span>}
+                  </div>
+                  {w.examples?.length > 0 && (
+                    <div style={{marginTop:4,fontSize:10,color:T.t4,fontFamily:"'JetBrains Mono',monospace"}}>
+                      e.g. {w.examples.join(", ")}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </Section>
+          )}
+          {(!report.warnings || report.warnings.length === 0) && (
+            <div style={{textAlign:"center",padding:"8px 0",fontSize:11,color:T.green}}>✓ No warnings</div>
+          )}
+
+          {/* ── CACHE RESET ── */}
+          <div style={{marginTop:12}}>
+            {(()=>{
+              let hasCsvCache = false;
+              try { hasCsvCache = !!localStorage.getItem("accel_data_v2"); } catch {}
+              return hasCsvCache
+                ? <button onClick={()=>{
+                    try { localStorage.removeItem("accel_data_v2"); localStorage.removeItem("import_report_v1"); } catch {}
+                    showToast("✅ Cache cleared — reloading…");
+                    setTimeout(()=>window.location.reload(), 800);
+                  }} style={{padding:"10px 16px",borderRadius:8,border:"none",background:"rgba(248,113,113,.15)",color:T.red,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",width:"100%"}}>
+                    Reset to preloaded data
+                  </button>
+                : <div style={{fontSize:11,color:T.green,textAlign:"center"}}>✓ Using preloaded data — upload a CSV to override</div>;
+            })()}
+          </div>
         </div>;
       })()}
     </div>}
