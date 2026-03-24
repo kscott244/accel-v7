@@ -11,10 +11,39 @@ export const T = {
 };
 
 // ─── APP CONSTANTS ────────────────────────────────────────────────
-export const Q1_TARGET = 778915;
-export const FY_TARGET = 3158094;
-// Recomputed at import time — always reflects days remaining in Q1 2026
-export const DAYS_LEFT = Math.max(0, Math.ceil((new Date(2026, 2, 31).getTime() - new Date().getTime()) / 86400000));
+
+// Per-quarter credited wholesale targets for FY2026
+export const QUARTER_TARGETS: Record<string, number> = {
+  "1": 778915,
+  "2": 789602,
+  "3": 794888,
+  "4": 794689,
+};
+
+// Quarter end dates — used for daysLeftInQuarter()
+const QUARTER_END: Record<string, Date> = {
+  "1": new Date(2026, 2, 31),
+  "2": new Date(2026, 5, 30),
+  "3": new Date(2026, 8, 30),
+  "4": new Date(2026, 11, 31),
+};
+
+export const Q1_TARGET = QUARTER_TARGETS["1"];
+export const FY_TARGET = Object.values(QUARTER_TARGETS).reduce((s, v) => s + v, 0);
+
+// Returns days remaining until end of the given quarter
+export function daysLeftInQuarter(q: string = "1"): number {
+  const end = QUARTER_END[q] || QUARTER_END["1"];
+  return Math.max(0, Math.ceil((end.getTime() - new Date().getTime()) / 86400000));
+}
+
+// Legacy constant — kept for backward compat with callers that haven't adopted daysLeftInQuarter()
+export const DAYS_LEFT = daysLeftInQuarter("1");
+
+// Human-readable quarter label, e.g. "Q2 2026"
+export function quarterLabel(q: string): string {
+  return `Q${q} 2026`;
+}
 
 // Thomaston CT home base coordinates — used for distance scoring in Overdrive
 export const HOME_LAT = 41.6723;
