@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { T, Q1_TARGET, FY_TARGET, DAYS_LEFT, QUARTER_TARGETS, daysLeftInQuarter, HOME_LAT, HOME_LNG } from "@/lib/tokens";
 import { normalizeTier, isAccelTier } from "@/lib/tier";
 import { $$, $f, pc } from "@/lib/format";
-import { Bar, Chev, AccountId } from "@/components/primitives";
+import { Bar, Chev, AccountId, fixGroupName } from "@/components/primitives";
 import { BADGER } from "@/lib/data";
 import { scorePriority, BUCKET_STYLE } from "@/lib/priority";
 
@@ -306,15 +306,68 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
   const q = search.trim().toLowerCase();
   const searchResults = useMemo(() => {
     if (!q) return [];
-    return scored.filter((a:any) =>
+
+    // Step 1: find all matching children
+    const matches = scored.filter((a:any) =>
       a.name?.toLowerCase().includes(q) ||
       a.city?.toLowerCase().includes(q) ||
       a.st?.toLowerCase().includes(q) ||
       a.addr?.toLowerCase().includes(q) ||
       a.gName?.toLowerCase().includes(q) ||
       (a.city && a.st && `${a.city} ${a.st}`.toLowerCase().includes(q))
-    ).slice(0, 30);
-  }, [q, scored]);
+    );
+
+    // Step 2: for each match, determine if it matched on gName (parent) vs child fields
+    // If gName matches the query AND the group has multiple locations, collapse into a parent card
+    const parentIds = new Set<string>();     // gIds that will be shown as parent cards
+    const childOnly: any[] = [];             // children that matched on their OWN fields, not gName
+
+    matches.forEach((a:any) => {
+      const gNameMatch = a.gName?.toLowerCase().includes(q);
+      const childMatch = a.name?.toLowerCase().includes(q) ||
+        a.city?.toLowerCase().includes(q) ||
+        a.st?.toLowerCase().includes(q) ||
+        a.addr?.toLowerCase().includes(q) ||
+        (a.city && a.st && `${a.city} ${a.st}`.toLowerCase().includes(q));
+
+      // Find parent group
+      const parentGroup = (groups||[]).find((g:any) => g.id === a.gId);
+      const isMultiLoc = parentGroup && parentGroup.locs > 1;
+
+      if (gNameMatch && isMultiLoc) {
+        // This matched on parent name and is a multi-loc group → collapse
+        parentIds.add(a.gId);
+      } else if (childMatch) {
+        // Matched on child's own fields only
+        childOnly.push(a);
+      }
+      // If gNameMatch but single-loc, it falls through to childOnly via childMatch
+      // (gName === name for single-loc, so childMatch will also be true)
+    });
+
+    // Step 3: build result list — parent cards first, then remaining child cards
+    const results: any[] = [];
+
+    // Parent cards
+    parentIds.forEach(gId => {
+      const parentGroup = (groups||[]).find((g:any) => g.id === gId);
+      if (parentGroup) {
+        results.push({ _isParent: true, _group: parentGroup });
+      }
+    });
+
+    // Child cards — exclude children whose parent is already shown as a parent card
+    childOnly.forEach(a => {
+      if (!parentIds.has(a.gId)) {
+        results.push(a);
+      }
+    });
+
+    return results.slice(0, 30);
+  }, [q, scored, groups]);
+
+  // Count for status line
+  const searchCount = searchResults.length;
 
   // KPI styling
   const { att, cy, gap, perDay, target, isFY } = kpiData;
@@ -338,9 +391,42 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
 
     {/* ── SEARCH RESULTS ── */}
     {q ? <div style={{padding:"0 16px"}}>
-      <div style={{fontSize:10,color:T.t4,marginBottom:10}}>{searchResults.length} result{searchResults.length!==1?"s":""} for "{search}"</div>
-      {searchResults.length===0&&<div style={{padding:"24px 0",textAlign:"center",color:T.t4,fontSize:12}}>No accounts found.</div>}
-      {searchResults.map((a,i)=>{
+      <div style={{fontSize:10,color:T.t4,marginBottom:10}}>{searchCount} result{searchCount!==1?"s":""} for "{search}"</div>
+      {searchCount===0&&<div style={{padding:"24px 0",textAlign:"center",color:T.t4,fontSize:12}}>No accounts found.</div>}
+      {searchResults.map((r,i)=>{
+        // ── PARENT GROUP CARD ──
+        if (r._isParent) {
+          const g = r._group;
+          const gpy=g.pyQ?.[activeQ]||0; const gcy=g.cyQ?.[activeQ]||0; const ggap=gpy-gcy;
+          const gret=gpy>0?gcy/gpy:0;
+          const gName = fixGroupName(g);
+          return <button key={g.id} className="anim" onClick={()=>goGroup(g)}
+            style={{animationDelay:`${i*15}ms`,width:"100%",textAlign:"left",background:T.s1,
+              border:`1px solid rgba(34,211,238,.15)`,borderLeft:`3px solid ${T.cyan}`,borderRadius:14,padding:"12px 14px",marginBottom:8,cursor:"pointer"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:13,fontWeight:700,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{gName}</div>
+                <div style={{fontSize:10,color:T.t3,marginTop:2}}>
+                  {g.locs} location{g.locs!==1?"s":""}
+                  {isAccelTier(g.tier)&&<span style={{color:T.amber}}> · {normalizeTier(g.tier)}</span>}
+                </div>
+              </div>
+              <div style={{textAlign:"right",flexShrink:0,marginLeft:12}}>
+                <div className="m" style={{fontSize:12,fontWeight:700,color:ggap>0?T.red:ggap<0?T.green:T.t4}}>{ggap>0?`-${$$(ggap)}`:ggap<0?`+${$$(-ggap)}`:"Even"}</div>
+                <div className="m" style={{fontSize:10,color:T.t4}}>{Math.round(gret*100)}% ret</div>
+              </div>
+              <Chev/>
+            </div>
+            <div style={{display:"flex",gap:12,alignItems:"center"}}>
+              <div><span style={{fontSize:9,textTransform:"uppercase",color:T.t3}}>PY </span><span className="m" style={{fontSize:12,fontWeight:700,color:T.t2}}>{$$(gpy)}</span></div>
+              <div><span style={{fontSize:9,textTransform:"uppercase",color:T.t3}}>CY </span><span className="m" style={{fontSize:12,fontWeight:700,color:T.blue}}>{$$(gcy)}</span></div>
+              <span style={{marginLeft:"auto",fontSize:9,fontWeight:600,color:T.cyan,background:"rgba(34,211,238,.08)",borderRadius:4,padding:"2px 7px"}}>Group · {g.locs} locs</span>
+            </div>
+          </button>;
+        }
+
+        // ── CHILD ACCOUNT CARD (unchanged) ──
+        const a = r;
         const py=a.pyQ?.[activeQ]||0; const cy=a.cyQ?.[activeQ]||0; const gap=py-cy;
         const ret=py>0?cy/py:0;
         return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
