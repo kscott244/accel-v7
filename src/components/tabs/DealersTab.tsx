@@ -577,6 +577,11 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
 
   // ── Top-level: 4 distributor cards + All Other ──
   return <div style={{padding:"16px 16px 0",paddingBottom:80}}>
+    {/* ── TAB TOGGLE ── */}
+    <div style={{display:"flex",gap:5,marginBottom:14}}>
+      <button onClick={()=>setMainTab("dealers")} style={{flex:1,padding:"7px 0",borderRadius:8,fontSize:11,fontWeight:700,cursor:"pointer",border:"1px solid rgba(79,142,247,.3)",background:"rgba(79,142,247,.15)",color:T.blue,fontFamily:"inherit"}}>Dealers</button>
+      <button onClick={()=>setMainTab("team")} style={{flex:1,padding:"7px 0",borderRadius:8,fontSize:11,fontWeight:700,cursor:"pointer",border:`1px solid ${T.b2}`,background:T.s2,color:T.t3,fontFamily:"inherit"}}>Roster</button>
+    </div>
     {/* ── FSC CO-CALL PLANNER ── */}
     <div style={{background:`linear-gradient(135deg,${T.s1},rgba(167,139,250,.06))`,border:`1px solid rgba(167,139,250,.2)`,borderRadius:16,padding:14,marginBottom:14}}>
       <button onClick={()=>{const next=!cocallOpen;setCocallOpen(next);try{localStorage.setItem("cocall_open",String(next));}catch{}}} style={{width:"100%",display:"flex",justifyContent:"space-between",alignItems:"center",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit",padding:0}}>
