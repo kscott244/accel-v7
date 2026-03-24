@@ -245,6 +245,7 @@ function AppInner() {
   const [groups, setGroups] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploadMsg, setUploadMsg] = useState(null);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
   const fileRef = useRef(null);
 
   // ── ACTIVE QUARTER ────────────────────────────────────────────
@@ -515,6 +516,24 @@ function AppInner() {
       setLoading(false);
     };
     boot();
+  }, []);
+
+  // ── VERSION CHECK — poll every 3 min, show banner if new deploy detected ──
+  useEffect(() => {
+    const builtSha = (process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA || "dev").slice(0, 10);
+    const check = async () => {
+      try {
+        const res = await fetch("/api/version?t=" + Date.now());
+        if (!res.ok) return;
+        const { sha } = await res.json();
+        if (sha && sha !== "dev" && builtSha !== "dev" && !sha.startsWith(builtSha) && !builtSha.startsWith(sha.slice(0,10))) {
+          setUpdateAvailable(true);
+        }
+      } catch {}
+    };
+    check();
+    const id = setInterval(check, 3 * 60 * 1000);
+    return () => clearInterval(id);
   }, []);
 
   // Handle CSV upload
@@ -819,6 +838,7 @@ function AppInner() {
       {overlaySaveStatus==="saving"&&<div className="anim" style={{margin:"0 16px 8px",padding:"6px 12px",borderRadius:8,background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.15)",fontSize:11,color:T.blue}}>💾 Saving...</div>}
       {overlaySaveStatus==="saved"&&<div className="anim" style={{margin:"0 16px 8px",padding:"6px 12px",borderRadius:8,background:"rgba(52,211,153,.08)",border:"1px solid rgba(52,211,153,.15)",fontSize:11,color:T.green}}>✓ Saved</div>}
       {overlaySaveStatus==="error"&&<div className="anim" style={{margin:"0 16px 8px",padding:"6px 12px",borderRadius:8,background:"rgba(248,113,113,.08)",border:"1px solid rgba(248,113,113,.15)",fontSize:11,color:T.red}}>⚠ Save failed: {overlaySaveError} — your change is cached locally but not backed up yet.</div>}
+      {updateAvailable&&<button className="anim" onClick={()=>window.location.reload()} style={{display:"block",width:"calc(100% - 32px)",margin:"0 16px 8px",padding:"10px 14px",borderRadius:10,background:"rgba(79,142,247,.12)",border:"1px solid rgba(79,142,247,.3)",fontSize:12,fontWeight:700,color:T.blue,cursor:"pointer",fontFamily:"inherit",textAlign:"left"}}>⬆ Update available — tap to reload</button>}
 
       {/* TAB CONTENT */}
       {/* goSmart: always route child taps through the parent group when group has >1 loc.
