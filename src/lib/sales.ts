@@ -292,6 +292,72 @@ export function deriveSalesRollups(
   });
 }
 
+// ─── COMPACT STORAGE ─────────────────────────────────────────────
+// Compact wire format for GitHub/localStorage persistence.
+// Records are stored as { q } only — all other fields are encoded
+// in the txKey itself ({childId}|{year}|{month}|{l3}|{pyCents}|{cyCents}).
+// This reduces a 40K-record store from ~8.6MB to ~2.5MB, fitting
+// within Vercel's 4.5MB serverless body limit.
+//
+// schemaVersion: 2 signals compact format vs. v1 (full records).
+
+export interface CompactSalesStore {
+  schemaVersion: 2;
+  lastUpdated:   string;
+  batches:       SalesBatch[];
+  records:       Record<string, { q: number }>;
+}
+
+export function toCompactSalesStore(store: SalesStore): CompactSalesStore {
+  const compact: Record<string, { q: number }> = {};
+  for (const [key, rec] of Object.entries(store.records)) {
+    compact[key] = { q: rec.quarter };
+  }
+  return { schemaVersion: 2, lastUpdated: store.lastUpdated, batches: store.batches, records: compact };
+}
+
+// Reconstruct a full SalesStore from compact or legacy full format.
+export function hydrateSalesStore(data: CompactSalesStore | SalesStore): SalesStore {
+  if (!data) return EMPTY_SALES_STORE;
+
+  // v1 full format — already a SalesStore, pass through
+  if ((data as any).schemaVersion !== 2) return data as SalesStore;
+
+  const compact = data as CompactSalesStore;
+  const records: Record<string, SalesRecord> = {};
+
+  for (const [txKey, val] of Object.entries(compact.records)) {
+    const parts = txKey.split("|");
+    if (parts.length < 6) continue;
+    // childId|year|month|l3(may contain |)|pyCents|cyCents
+    const childId = parts[0];
+    const year    = parseInt(parts[1], 10);
+    const month   = parseInt(parts[2], 10);
+    const cyCents = parseInt(parts[parts.length - 1], 10);
+    const pyCents = parseInt(parts[parts.length - 2], 10);
+    const l3      = parts.slice(3, parts.length - 2).join("|");
+    records[txKey] = {
+      txKey,
+      childId,
+      parentId: "",
+      year,
+      month,
+      quarter:  val.q,
+      l3,
+      py:       pyCents / 100,
+      cy:       cyCents / 100,
+      batchId:  "",
+    };
+  }
+
+  return {
+    schemaVersion: 1,
+    lastUpdated:   compact.lastUpdated,
+    batches:       compact.batches,
+    records,
+  };
+}
+
 // ─── STORE SIZE SUMMARY ──────────────────────────────────────────
 // Quick diagnostic: how many records and batches are in the store.
 export function salesStoreSummary(store: SalesStore) {

@@ -194,7 +194,7 @@ import { Back, Chev, Pill, Stat, Bar, AccountId, fixGroupName, cleanParentName, 
 import { parseCSV, parseCSVLine, processCSVData, setDealers } from "@/lib/csv";
 import { diffDatasets, checkOverlayIntegrity } from "@/lib/dataDiff";
 import { mergeCrmCandidates, applyCrmToGroups, EMPTY_CRM_STORE } from "@/lib/crm";
-import { buildSalesRecords, mergeSalesRecords, deriveSalesRollups, EMPTY_SALES_STORE } from "@/lib/sales";
+import { buildSalesRecords, mergeSalesRecords, deriveSalesRollups, EMPTY_SALES_STORE, toCompactSalesStore, hydrateSalesStore } from "@/lib/sales";
 import { buildSnapshot, computeDelta, saveSnapshot, loadSnapshot } from "@/lib/weeklyDelta";
 
 import { SKU } from "@/data/sku-data";
@@ -464,7 +464,7 @@ function AppInner() {
       try {
         const cachedSales = localStorage.getItem("sales_history_v1");
         if (cachedSales) {
-          bootSalesStore = JSON.parse(cachedSales);
+          bootSalesStore = hydrateSalesStore(JSON.parse(cachedSales));
           setSalesStore(bootSalesStore);
         }
       } catch {}
@@ -473,8 +473,9 @@ function AppInner() {
         if (res.ok) {
           const { sales: freshSales } = await res.json();
           if (freshSales?.records) {
-            setSalesStore(freshSales);
-            try { localStorage.setItem("sales_history_v1", JSON.stringify(freshSales)); } catch {}
+            const hydrated = hydrateSalesStore(freshSales);
+            setSalesStore(hydrated);
+            try { localStorage.setItem("sales_history_v1", JSON.stringify(toCompactSalesStore(hydrated))); } catch {}
           }
         }
       }).catch(() => { /* sales fetch failed — using cache */ });
@@ -598,13 +599,14 @@ function AppInner() {
             { id: batchId, filename: result.report?.filename || "", uploadedAt: new Date().toISOString(), rowCount: result.rawSalesRows.length }
           );
           setSalesStore(nextSales);
-          // Try localStorage cache — may fail on large stores, that's OK
-          try { localStorage.setItem("sales_history_v1", JSON.stringify(nextSales)); } catch {}
+          // Compact format: ~2.5MB vs ~8.6MB full — fits Vercel 4.5MB body limit
+          const compactSales = toCompactSalesStore(nextSales);
+          try { localStorage.setItem("sales_history_v1", JSON.stringify(compactSales)); } catch {}
           // GitHub is the primary persistent store — fire and forget
           fetch("/api/save-sales", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ sales: nextSales }),
+            body: JSON.stringify({ sales: compactSales }),
           }).catch(() => {});
           // Re-derive rollups directly from merged store — no localStorage needed
           baseGroupsForDisplay = deriveSalesRollups(nextSales, result.groups);
