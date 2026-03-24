@@ -194,6 +194,7 @@ import { Back, Chev, Pill, Stat, Bar, AccountId, fixGroupName, cleanParentName, 
 import { parseCSV, parseCSVLine, processCSVData, setDealers } from "@/lib/csv";
 import { diffDatasets, checkOverlayIntegrity } from "@/lib/dataDiff";
 import { mergeCrmCandidates, applyCrmToGroups, EMPTY_CRM_STORE } from "@/lib/crm";
+import { buildSalesRecords, mergeSalesRecords, EMPTY_SALES_STORE } from "@/lib/sales";
 
 import { SKU } from "@/data/sku-data";
 import GroupsTab from "@/components/tabs/GroupsTab";
@@ -249,6 +250,7 @@ function AppInner() {
   // overlays: runtime-loaded from data/overlays.json, never wiped by CSV upload
   const [overlays, setOverlaysState] = useState<any>(EMPTY_OVERLAYS);
   const [crmStore, setCrmStore] = useState<any>(EMPTY_CRM_STORE);
+  const [salesStore, setSalesStore] = useState<any>(EMPTY_SALES_STORE);
   const [overlaySaveStatus, setOverlaySaveStatus] = useState<"idle"|"saving"|"saved"|"error">("idle");
   const [overlaySaveError, setOverlaySaveError] = useState<string|null>(null);
 
@@ -504,6 +506,28 @@ function AppInner() {
               body: JSON.stringify({ crm: nextCrm }),
             }).catch(() => { /* CRM save failed — cached locally */ });
             return nextCrm;
+          });
+        }
+
+        // Merge sales records — raw rows from this upload de-duped into
+        // the persistent sales-history store. Fire-and-forget, non-blocking.
+        if (result.rawSalesRows && result.rawSalesRows.length > 0) {
+          const batchId = `batch_${Date.now()}_${result.rawSalesRows.length}`;
+          const newRecords = buildSalesRecords(result.rawSalesRows, batchId);
+          setSalesStore((prevSales: any) => {
+            const nextSales = mergeSalesRecords(
+              prevSales || EMPTY_SALES_STORE,
+              newRecords,
+              { id: batchId, filename: result.report?.filename || "", uploadedAt: new Date().toISOString(), rowCount: result.rawSalesRows.length }
+            );
+            try { localStorage.setItem("sales_history_v1", JSON.stringify(nextSales)); } catch {}
+            // Async GitHub persist — fire and forget, failure is non-fatal
+            fetch("/api/save-sales", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ sales: nextSales }),
+            }).catch(() => { /* sales save failed — cached locally */ });
+            return nextSales;
           });
         }
 
@@ -768,4 +792,5 @@ function AppInner() {
     </div>
   );
 }
+
 
