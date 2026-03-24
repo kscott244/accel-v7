@@ -3,11 +3,8 @@
 import { useState, useMemo } from "react";
 import { T } from "@/lib/tokens";
 import { $$, $f, pc } from "@/lib/format";
-import { BADGER, DEALERS } from "@/lib/data";
+import { BADGER, DEALERS, DEALER_REPS } from "@/lib/data";
 import { Back, Chev, Stat, AccountId } from "@/components/primitives";
-
-let SCHEIN_REPS: {fsc:any[], es:any[]} = {fsc:[], es:[]};
-try { SCHEIN_REPS = require("@/data/schein-ct-reps.json"); } catch(e) {}
 
 // ─── STANDALONE CALCULATOR TAB ───────────────────────────────────
 // ─── DASHBOARD TAB ───────────────────────────────────────────────
@@ -37,6 +34,7 @@ const PRI_ORDER:Record<string,number> = {NOW:0,SOON:1,"ON TRACK":2,PROTECT:3,PIP
 
 function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],goAcct:(a:any)=>void,goGroup:(g:any)=>void}) {
   const [mainTab, setMainTab] = useState<"dealers"|"team">("dealers");
+  const [rosterDist, setRosterDist] = useState<string>("Schein");
   const [acctType, setAcctType] = useState<"all"|"private"|"groups">("all");
   const [selDist,setSelDist] = useState<string|null>(null);
   const [selRep,setSelRep]  = useState<string|null>(null); // null = all reps view
@@ -248,43 +246,68 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
     const totalCY = selGroupData.totalCY;
     const gap = totalPY - totalCY;
     const ret = totalPY > 0 ? Math.round(totalCY/totalPY*100) : 0;
-    // ── SCHEIN TEAM DIRECTORY ──
+    // ── DEALER TEAM DIRECTORY ──
   if (mainTab === "team") {
+    const ROSTER_DISTS = ["Schein","Patterson","Benco"];
+    const roster = DEALER_REPS[rosterDist] || {};
+    // Flatten all rep groups for selected dealer
+    const sections: {label:string, color:string, reps:any[]}[] = [];
+    if (rosterDist === "Schein") {
+      if (roster.fsc?.length)  sections.push({label:`FSC — Field Sales (${roster.fsc.length})`, color:T.cyan,  reps:roster.fsc});
+      if (roster.es?.length)   sections.push({label:`ES — Equipment Specialists (${roster.es.length})`, color:T.amber, reps:roster.es});
+    } else if (rosterDist === "Patterson") {
+      if (roster.reps?.length)   sections.push({label:`Territory Reps (${roster.reps.length})`, color:T.purple, reps:roster.reps});
+      if (roster.eq?.length)     sections.push({label:`Equipment Specialists (${roster.eq.length})`, color:T.amber, reps:roster.eq});
+      if (roster.cadcam?.length) sections.push({label:`CAD/CAM (${roster.cadcam.length})`, color:T.cyan, reps:roster.cadcam});
+    } else if (rosterDist === "Benco") {
+      if (roster.reps?.length)    sections.push({label:`Territory Reps (${roster.reps.length})`, color:T.amber, reps:roster.reps});
+      if (roster.eq?.length)      sections.push({label:`Equipment Specialists (${roster.eq.length})`, color:T.cyan, reps:roster.eq});
+    }
+    const distColor = DIST_TEXT[rosterDist] || T.blue;
     return <div style={{paddingBottom:80}}>
-      <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:"1px solid "+T.b3,padding:"12px 16px"}}>
-        <div style={{display:"flex",gap:6}}>
-          <button onClick={()=>setMainTab("dealers")} style={{flex:1,padding:"7px 0",borderRadius:8,fontSize:11,fontWeight:700,cursor:"pointer",border:"1px solid "+T.b2,background:T.s2,color:T.t3,fontFamily:"inherit"}}>Dealers</button>
-          <button onClick={()=>setMainTab("team")} style={{flex:1,padding:"7px 0",borderRadius:8,fontSize:11,fontWeight:700,cursor:"pointer",border:"1px solid rgba(79,142,247,.3)",background:"rgba(79,142,247,.15)",color:T.blue,fontFamily:"inherit"}}>Schein Team</button>
+      <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:"1px solid "+T.b3,padding:"10px 16px"}}>
+        <div style={{display:"flex",gap:5,marginBottom:8}}>
+          <button onClick={()=>setMainTab("dealers")} style={{flex:1,padding:"6px 0",borderRadius:8,fontSize:10,fontWeight:700,cursor:"pointer",border:"1px solid "+T.b2,background:T.s2,color:T.t3,fontFamily:"inherit"}}>Dealers</button>
+          <button onClick={()=>setMainTab("team")} style={{flex:1,padding:"6px 0",borderRadius:8,fontSize:10,fontWeight:700,cursor:"pointer",border:"1px solid rgba(79,142,247,.3)",background:"rgba(79,142,247,.15)",color:T.blue,fontFamily:"inherit"}}>Roster</button>
+        </div>
+        <div style={{display:"flex",gap:5}}>
+          {ROSTER_DISTS.map(d=>(
+            <button key={d} onClick={()=>setRosterDist(d)}
+              style={{flex:1,padding:"5px 0",borderRadius:7,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit",
+                border:`1px solid ${rosterDist===d?(DIST_BORDER[d]||T.b2):T.b2}`,
+                background:rosterDist===d?(DIST_COLORS[d]||T.s2):T.s2,
+                color:rosterDist===d?(DIST_TEXT[d]||T.t2):T.t3}}>
+              {d}
+            </button>
+          ))}
         </div>
       </div>
       <div style={{padding:"16px"}}>
-        <div style={{fontSize:10,color:T.t4,marginBottom:14}}>Henry Schein · CT Territory Roster</div>
-        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan,marginBottom:10}}>{"FSC — Field Sales Consultants ("+SCHEIN_REPS.fsc.length+")"}</div>
-        {SCHEIN_REPS.fsc.map((r:any,i:number)=>(
-          <div key={i} style={{background:T.s1,border:"1px solid "+T.b1,borderRadius:12,padding:"12px 14px",marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:13,fontWeight:700,color:T.t1}}>{r.name}</div>
-              <div style={{fontSize:10,color:T.t4,marginTop:1}}>{r.email}</div>
+        {sections.length === 0
+          ? <div style={{fontSize:12,color:T.t4,textAlign:"center",padding:"30px 0"}}>No roster loaded for {rosterDist}</div>
+          : sections.map(sec=>(
+            <div key={sec.label} style={{marginBottom:20}}>
+              <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color:sec.color,marginBottom:10}}>{sec.label}</div>
+              {sec.reps.map((r:any,i:number)=>(
+                <div key={i} style={{background:T.s1,border:"1px solid "+T.b1,borderRadius:12,padding:"10px 12px",marginBottom:7}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:12,fontWeight:700,color:T.t1}}>{r.name}</div>
+                      <div style={{fontSize:10,color:T.t4,marginTop:1}}>{r.email}</div>
+                      {r.states&&<div style={{fontSize:9,color:T.t4,marginTop:1}}>{r.states}</div>}
+                    </div>
+                    <div style={{display:"flex",gap:6,alignItems:"center",flexShrink:0,marginLeft:10}}>
+                      {r.phone&&<a href={"tel:"+r.phone.replace(/[^0-9]/g,"")}
+                        style={{background:"rgba(52,211,153,.1)",border:"1px solid rgba(52,211,153,.25)",borderRadius:7,padding:"4px 10px",fontSize:10,fontWeight:700,color:T.green,textDecoration:"none"}}>Call</a>}
+                      {r.email&&<a href={"mailto:"+r.email}
+                        style={{background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.2)",borderRadius:7,padding:"4px 10px",fontSize:10,fontWeight:700,color:T.blue,textDecoration:"none"}}>Email</a>}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div style={{display:"flex",gap:8,alignItems:"center",flexShrink:0,marginLeft:12}}>
-              <span style={{fontSize:11,fontFamily:"monospace",color:T.t3}}>{r.phone}</span>
-              <a href={"tel:"+r.phone.replace(/[^0-9]/g,"")} style={{background:"rgba(34,211,153,.1)",border:"1px solid rgba(34,211,153,.25)",borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:700,color:T.green,textDecoration:"none"}}>Call</a>
-            </div>
-          </div>
-        ))}
-        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.amber,marginBottom:10,marginTop:20}}>{"ES — Equipment Specialists ("+SCHEIN_REPS.es.length+")"}</div>
-        {SCHEIN_REPS.es.map((r:any,i:number)=>(
-          <div key={i} style={{background:T.s1,border:"1px solid "+T.b1,borderRadius:12,padding:"12px 14px",marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:13,fontWeight:700,color:T.t1}}>{r.name}</div>
-              <div style={{fontSize:10,color:T.t4,marginTop:1}}>{r.email}</div>
-            </div>
-            <div style={{display:"flex",gap:8,alignItems:"center",flexShrink:0,marginLeft:12}}>
-              <span style={{fontSize:11,fontFamily:"monospace",color:T.t3}}>{r.phone}</span>
-              <a href={"tel:"+r.phone.replace(/[^0-9]/g,"")} style={{background:"rgba(34,211,153,.1)",border:"1px solid rgba(34,211,153,.25)",borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:700,color:T.green,textDecoration:"none"}}>Call</a>
-            </div>
-          </div>
-        ))}
+          ))
+        }
       </div>
     </div>;
   }
@@ -293,7 +316,7 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
       <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"10px 16px",display:"flex",alignItems:"center",gap:10}}>
         <div style={{display:"flex",gap:6,marginBottom:0}}>
           <button onClick={()=>setMainTab("dealers")} style={{flex:1,padding:"5px 0",borderRadius:7,fontSize:10,fontWeight:700,cursor:"pointer",border:"1px solid rgba(79,142,247,.25)",background:"rgba(79,142,247,.12)",color:T.blue,fontFamily:"inherit"}}>Dealers</button>
-          <button onClick={()=>setMainTab("team")} style={{flex:1,padding:"5px 0",borderRadius:7,fontSize:10,fontWeight:700,cursor:"pointer",border:`1px solid ${T.b2}`,background:T.s2,color:T.t3,fontFamily:"inherit"}}>Schein Team</button>
+          <button onClick={()=>setMainTab("team")} style={{flex:1,padding:"5px 0",borderRadius:7,fontSize:10,fontWeight:700,cursor:"pointer",border:`1px solid ${T.b2}`,background:T.s2,color:T.t3,fontFamily:"inherit"}}>Roster</button>
         </div>
         <button onClick={()=>setSelGroup(null)} style={{background:"none",border:"none",color:T.blue,cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"inherit",display:"flex",alignItems:"center",gap:4}}><Back/> {selRep==="__none__"?"No Rep":selRep}</button>
       </div>
@@ -363,6 +386,14 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
     const repLabel = selRep==="__none__" ? "No Rep Assigned" : selRep;
     const manuals = manualReps[selDist]||[];
     const manualEntry = manuals.find(r=>r.name===selRep);
+    // Look up official contact from roster (match by first+last name, case-insensitive)
+    const allRosterReps: any[] = Object.values(DEALER_REPS[selDist]||{}).flat();
+    const rosterEntry = selRep !== "__none__"
+      ? allRosterReps.find(r => r.name?.toLowerCase() === selRep.toLowerCase())
+      : null;
+    const repPhone = rosterEntry?.phone || manualEntry?.phone;
+    const repEmail = rosterEntry?.email;
+    const repNotes = manualEntry?.notes;
     const totalPY = repGroupsList.reduce((s:number,g:any)=>s+g.totalPY,0);
     const totalCY = repGroupsList.reduce((s:number,g:any)=>s+g.totalCY,0);
     const totalGap = totalPY - totalCY;
@@ -380,10 +411,15 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
             <div><div style={{fontSize:9,color:T.t4}}>CY</div><div style={{fontSize:12,fontWeight:700,color:T.blue,fontFamily:"monospace"}}>{$$(totalCY)}</div></div>
             <div><div style={{fontSize:9,color:T.t4}}>Gap</div><div style={{fontSize:12,fontWeight:700,color:totalGap>0?T.red:T.green,fontFamily:"monospace"}}>{totalGap>0?"-":"+"}${Math.abs(totalGap)>=1000?`${(Math.abs(totalGap)/1000).toFixed(1)}k`:`${Math.round(Math.abs(totalGap))}`}</div></div>
           </div>
-          {manualEntry?.phone&&<a href={`tel:${manualEntry.phone}`} style={{display:"inline-flex",alignItems:"center",gap:5,marginTop:8,fontSize:10,color:T.cyan,textDecoration:"none",background:"rgba(34,211,238,.08)",border:"1px solid rgba(34,211,238,.15)",borderRadius:8,padding:"3px 10px"}}>
-            📞 {manualEntry.phone}
-          </a>}
-          {manualEntry?.notes&&<div style={{fontSize:10,color:T.t3,marginTop:6,fontStyle:"italic"}}>{manualEntry.notes}</div>}
+          {(repPhone||repEmail)&&<div style={{display:"flex",gap:6,marginTop:8,flexWrap:"wrap"}}>
+            {repPhone&&<a href={`tel:${repPhone.replace(/[^0-9]/g,"")}`} style={{display:"inline-flex",alignItems:"center",gap:4,fontSize:10,color:T.green,textDecoration:"none",background:"rgba(52,211,153,.08)",border:"1px solid rgba(52,211,153,.2)",borderRadius:8,padding:"4px 10px",fontWeight:700}}>
+              📞 {repPhone}
+            </a>}
+            {repEmail&&<a href={`mailto:${repEmail}`} style={{display:"inline-flex",alignItems:"center",gap:4,fontSize:10,color:T.blue,textDecoration:"none",background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.2)",borderRadius:8,padding:"4px 10px",fontWeight:700}}>
+              ✉ {repEmail}
+            </a>}
+          </div>}
+          {repNotes&&<div style={{fontSize:10,color:T.t3,marginTop:6,fontStyle:"italic"}}>{repNotes}</div>}
         </div>
         {repGroupsList.length===0&&<div style={{fontSize:12,color:T.t4,textAlign:"center",padding:"30px 0"}}>No accounts linked to this rep yet.</div>}
         {/* Parent group cards */}
