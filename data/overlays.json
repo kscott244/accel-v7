@@ -274,11 +274,25 @@
       "score": 98,
       "createdAt": "2026-03-24T20:29:13.025Z",
       "updatedAt": "2026-03-24T20:29:13.025Z"
+    },
+    "Master-CM1481014": {
+      "id": "Master-CM1481014",
+      "name": "PORTER AND CHESTER",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM1481014",
+        "Master-CM1534850"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 98,
+      "createdAt": "2026-03-24T20:29:14.191Z",
+      "updatedAt": "2026-03-24T20:29:14.191Z"
     }
   },
   "groupDetaches": [],
   "groupMoves": {},
-  "lastUpdated": "2026-03-24T20:29:12.900Z",
+  "lastUpdated": "2026-03-24T20:29:14.090Z",
   "groupNotes": {
     "Master-CM175757": "The account is lost - unless we can get another distributor to try and take business from Schein then we are not going to win.  The large order they placed in Dec-2025 was to get the chargeback Kerr offered.  I mention to AJ we could probably work out another chargeback and he said no\n",
     "Master-CM591885": "Spoke with both Rich and Lori from Schein - They are actually losing the business as well so this is not just dealer switched to another product "
