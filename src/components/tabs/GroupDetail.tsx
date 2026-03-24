@@ -8,7 +8,22 @@ import { BADGER, OVERLAYS_REF } from "@/lib/data";
 import { Back, Chev, Pill, Stat, AccountId, fixGroupName } from "@/components/primitives";
 
 let SCHEIN_REPS: {fsc:any[], es:any[]} = {fsc:[], es:[]};
-try { SCHEIN_REPS = require("@/data/schein-ct-reps.json"); } catch(e) {}
+try {
+  const ctReps   = require("@/data/schein-ct-reps.json");
+  const allReps  = require("@/data/dealer-reps.json")?.Schein || {fsc:[], es:[]};
+  // Merge both files; deduplicate by lowercase email
+  const seen = new Set<string>();
+  const dedup = (list: any[]) => list.filter(r => {
+    const key = (r.email||r.name||"").toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  SCHEIN_REPS = {
+    fsc: dedup([...ctReps.fsc, ...allReps.fsc]),
+    es:  dedup([...ctReps.es,  ...allReps.es]),
+  };
+} catch(e) {}
 
 function GroupDetail({group,goMain,goAcct,overlays,saveOverlays,salesStore=null}) {
   const [q,setQ]=useState("1");
@@ -432,7 +447,7 @@ function GroupDetail({group,goMain,goAcct,overlays,saveOverlays,salesStore=null}
             </div>
             {/* Quick-pick from Schein CT roster */}
             <div style={{marginBottom:12}}>
-              <div style={{fontSize:10,color:T.t3,marginBottom:6,fontWeight:600}}>Pick from Schein CT Roster</div>
+              <div style={{fontSize:10,color:T.t3,marginBottom:6,fontWeight:600}}>Pick from Schein Roster (CT + NE)</div>
               <input value={rosterSearch} onChange={e=>setRosterSearch(e.target.value)}
                 placeholder="Search FSC or ES by name"
                 style={{width:"100%",background:T.s2,border:"1px solid "+T.b1,borderRadius:8,padding:"7px 10px",fontSize:12,color:T.t1,fontFamily:"inherit",marginBottom:6}}/>
