@@ -1,39 +1,47 @@
 # CURRENT PHASE — accel-v7
 
-## Active: Phase 20 — Search Model Steps 1-2 ✅ Complete
+## Active: Phase 21 — Search Model Step 3 ✅ Complete
 
 ### Goal
-Implement the first two low-risk search consistency fixes from the Phase 19 audit.
+Collapse TodayTab search results by parent when the search matches a group name,
+so searching "Abra Dental" shows one parent group card instead of N child cards.
 
 ### Baseline
-Commit `04f98c9` — Phase 19 search behavior audit
+Commit `78e533d` — Phase 20 Steps 1-2
 
 ### What Was Changed
 
-**Step 1: Unified DealersTab navigation**
-- `src/components/AccelerateApp.tsx` line 889: changed `goAcct={goAcctFn}` → `goAcct={goSmartFn}`
-- DealersTab co-call taps now route multi-location accounts to GroupDetail (consistent with TodayTab)
-- Single-location accounts still go to AcctDetail
+**src/components/tabs/TodayTab.tsx**
+- Replaced flat `searchResults` memo with parent-collapsing logic:
+  - Each matched child is classified: did it match on `gName` (parent name) or on its own fields?
+  - If `gName` matched AND the group is multi-location → collapse all children into one parent card
+  - Children that only matched on their own name/city/addr/st stay as individual child cards
+  - Children whose parent is already shown as a collapsed card are excluded (no double-up)
+- Added parent card rendering: cyan left border, group name, loc count, group-level PY/CY/gap/ret, "Group · N locs" badge
+- Parent card taps → `goGroup()` → GroupDetail
+- Child card rendering unchanged
+- Added `fixGroupName` import from primitives
 
-**Step 2: Unified AccountId in DealersTab co-call list**
-- `src/components/tabs/DealersTab.tsx` line 705: added `gName={isMultiLoc?a.gName:undefined}` to AccountId
-- Removed duplicate `↳ {a.gName}` from the group context line (Row 3) — AccountId now handles identity display
-- Kept the group-level financial context (locs count, Group PY/CY) as a separate line — that's useful info not identity duplication
+### Matching Rules
+- Search "abra dental" → matches `gName` on ABRA DENTAL children → shows 1 parent card
+- Search "all about kids" → matches child name only → shows that specific child card
+- Search "stamford" → matches city on individual children → shows individual child cards
+- Single-location groups where gName === name → treated as child match (no collapse needed)
 
 ### Files Modified
 
 | File | Change |
 |------|--------|
-| src/components/AccelerateApp.tsx | DealersTab goAcctFn → goSmartFn |
-| src/components/tabs/DealersTab.tsx | AccountId gName added, group context line cleaned |
-| docs/CURRENT_PHASE.md | Updated to Phase 20 |
+| src/components/tabs/TodayTab.tsx | Parent-collapsing search + parent card rendering |
+| docs/CURRENT_PHASE.md | Updated to Phase 21 |
 
 ### Deploy
-- Commit: `e925295`
+- Commit: `1505cbf`
 - Verified live: version API returns matching SHA
 
 ---
 
+## Previously Completed: Phase 20 — Search Model Steps 1-2 ✅ Complete
 ## Previously Completed: Phase 19 — Search Behavior Audit ✅ Complete
 ## Previously Completed: Phase 18 — Product Monthly Timeline ✅ Complete
 ## Previously Completed: Phases 1–17 ✅
