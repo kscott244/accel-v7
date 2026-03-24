@@ -8,6 +8,7 @@ import { SKU } from "@/data/sku-data";
 import { BADGER } from "@/lib/data";
 import { Back, Chev, Pill, Stat, Bar, AccountId, fixGroupName } from "@/components/primitives";
 import { scorePriority } from "@/lib/priority";
+import { branchSpread } from "@/lib/stemm";
 
 function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup,overlays,saveOverlays,reapplyGroupOverrides=null,goAcct=null}) {
   const [q,setQ]=useState("1");
@@ -122,6 +123,7 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup,overlays,saveOverla
   const badger = useMemo(()=> BADGER[acct.id] || BADGER[acct.gId] || null, [acct.id, acct.gId]);
 
   const { rootStrength } = useMemo(() => scorePriority(acct, "1"), [acct.id]);
+  const spread = useMemo(() => branchSpread(acct.products ?? [], qk), [acct.id, qk]);
 
   const pyVal=acct.pyQ?.[qk]||0;
   const cyBase=acct.cyQ?.[qk]||0;
@@ -743,7 +745,27 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
       {/* VISIT PREP */}
       <div className="anim" style={{animationDelay:"80ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12}}>
         <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue,marginBottom:10}}>Account Intel</div>
-        {buying.length>0&&<div style={{marginBottom:12}}>
+        {/* BRANCH SPREAD — STEMM product category penetration */}
+        <div style={{marginBottom:14}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+            <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3}}>Branch Spread</span>
+            <span style={{fontSize:9,fontWeight:700,color:spread.labelColor,
+              background:"rgba(255,255,255,.04)",borderRadius:4,padding:"2px 7px",
+              border:"1px solid rgba(255,255,255,.08)"}}>{spread.activeCount}/6 · {spread.label}</span>
+          </div>
+          <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+            {spread.branches.map(b => (
+              <span key={b.key} style={{
+                fontSize:9,fontWeight:600,
+                borderRadius:4,padding:"3px 8px",
+                color:b.active?"#f0f0fa":b.hadPY?"rgba(248,113,113,.7)":"rgba(92,92,122,.6)",
+                background:b.active?"rgba(79,142,247,.10)":b.hadPY?"rgba(248,113,113,.06)":"rgba(255,255,255,.03)",
+                border:`1px solid ${b.active?"rgba(79,142,247,.22)":b.hadPY?"rgba(248,113,113,.15)":"rgba(255,255,255,.06)"}`,
+              }}>{b.label}{b.hadPY&&!b.active?" ↓":""}</span>
+            ))}
+          </div>
+        </div>
+                {buying.length>0&&<div style={{marginBottom:12}}>
           <div style={{fontSize:10,fontWeight:600,color:T.green,marginBottom:6}}>Currently Buying ({buying.length})</div>
           {buying.slice(0,8).map((p,i)=>{
             const pPy=p[`py${qk}`]||0;const pCy=p[`cy${qk}`]||0;
