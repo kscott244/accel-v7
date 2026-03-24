@@ -240,17 +240,10 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
   };
 
   // ── Level 3: Group children view (rep → group → children) ──
-  if(selDist && selRep !== null && selGroup && selGroupData) {
-    const children = sortByPriority(selGroupData.children || []);
-    const totalPY = selGroupData.totalPY;
-    const totalCY = selGroupData.totalCY;
-    const gap = totalPY - totalCY;
-    const ret = totalPY > 0 ? Math.round(totalCY/totalPY*100) : 0;
-    // ── DEALER TEAM DIRECTORY ──
+  // ── ROSTER VIEW — always top-level, independent of drill-down state ──
   if (mainTab === "team") {
     const ROSTER_DISTS = ["Schein","Patterson","Benco"];
     const roster = DEALER_REPS[rosterDist] || {};
-    // Flatten all rep groups for selected dealer
     const sections: {label:string, color:string, reps:any[]}[] = [];
     if (rosterDist === "Schein") {
       if (roster.fsc?.length)  sections.push({label:`FSC — Field Sales (${roster.fsc.length})`, color:T.cyan,  reps:roster.fsc});
@@ -260,15 +253,14 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
       if (roster.eq?.length)     sections.push({label:`Equipment Specialists (${roster.eq.length})`, color:T.amber, reps:roster.eq});
       if (roster.cadcam?.length) sections.push({label:`CAD/CAM (${roster.cadcam.length})`, color:T.cyan, reps:roster.cadcam});
     } else if (rosterDist === "Benco") {
-      if (roster.reps?.length)    sections.push({label:`Territory Reps (${roster.reps.length})`, color:T.amber, reps:roster.reps});
-      if (roster.eq?.length)      sections.push({label:`Equipment Specialists (${roster.eq.length})`, color:T.cyan, reps:roster.eq});
+      if (roster.reps?.length) sections.push({label:`Territory Reps (${roster.reps.length})`, color:T.amber, reps:roster.reps});
+      if (roster.eq?.length)   sections.push({label:`Equipment Specialists (${roster.eq.length})`, color:T.cyan, reps:roster.eq});
     }
-    const distColor = DIST_TEXT[rosterDist] || T.blue;
     return <div style={{paddingBottom:80}}>
       <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:"1px solid "+T.b3,padding:"10px 16px"}}>
         <div style={{display:"flex",gap:5,marginBottom:8}}>
           <button onClick={()=>setMainTab("dealers")} style={{flex:1,padding:"6px 0",borderRadius:8,fontSize:10,fontWeight:700,cursor:"pointer",border:"1px solid "+T.b2,background:T.s2,color:T.t3,fontFamily:"inherit"}}>Dealers</button>
-          <button onClick={()=>setMainTab("team")} style={{flex:1,padding:"6px 0",borderRadius:8,fontSize:10,fontWeight:700,cursor:"pointer",border:"1px solid rgba(79,142,247,.3)",background:"rgba(79,142,247,.15)",color:T.blue,fontFamily:"inherit"}}>Roster</button>
+          <button style={{flex:1,padding:"6px 0",borderRadius:8,fontSize:10,fontWeight:700,cursor:"pointer",border:"1px solid rgba(79,142,247,.3)",background:"rgba(79,142,247,.15)",color:T.blue,fontFamily:"inherit"}}>Roster</button>
         </div>
         <div style={{display:"flex",gap:5}}>
           {ROSTER_DISTS.map(d=>(
@@ -312,6 +304,12 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
     </div>;
   }
 
+  if(selDist && selRep !== null && selGroup && selGroupData) {
+    const children = sortByPriority(selGroupData.children || []);
+    const totalPY = selGroupData.totalPY;
+    const totalCY = selGroupData.totalCY;
+    const gap = totalPY - totalCY;
+    const ret = totalPY > 0 ? Math.round(totalCY/totalPY*100) : 0;
   return <div style={{paddingBottom:80}}>
       <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"10px 16px",display:"flex",alignItems:"center",gap:10}}>
         <div style={{display:"flex",gap:6,marginBottom:0}}>
