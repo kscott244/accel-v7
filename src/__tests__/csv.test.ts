@@ -53,7 +53,8 @@ describe("parseCSV", () => {
     const csv = `Name,Address\n"Smith, John","123 Main St, Hartford"`;
     const rows = parseCSV(csv);
     expect(rows[0]["Name"]).toBe("Smith, John");
-    expect(rows[0]["Address"]).toBe("123 Main St, Hartford");
+    // "Address" is aliased to canonical "Addr" by the header normalizer
+    expect(rows[0]["Addr"]).toBe("123 Main St, Hartford");
   });
 
   it("handles escaped double-quotes inside quoted fields", () => {
@@ -254,12 +255,10 @@ describe("processCSVData numeric coercion", () => {
 // ── date coercion ────────────────────────────────────────────────
 describe("processCSVData date coercion", () => {
   it("handles M/D/YYYY dates", () => {
+    // March = month 3, ceil(3/3) = Q1
     const result = processCSVData([makeRow({ "Invoice Date": "3/15/2025", "PY": "100", "CY": "0" })]);
     const child = result.groups.flatMap((g: any) => g.children).find((c: any) => c.id === "Master-CM100002");
-    expect(child.pyQ["1"]).toBeUndefined();
-    expect(child.pyQ["2"]).toBeUndefined();  // March is Q1
-    // March = month 3, ceil(3/3) = Q1
-    expect(child.pyQ["1"]).toBeUndefined();
+    expect(child.pyQ["1"]).toBe(100);
   });
 
   it("handles ISO YYYY-MM-DD dates", () => {
