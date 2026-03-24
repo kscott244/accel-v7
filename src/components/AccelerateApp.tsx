@@ -120,8 +120,10 @@ function applyOverlays(grps: any[]): any[] {
     let totalPY: Record<string,number> = {};
     let totalCY: Record<string,number> = {};
 
-    // Step 4b: Remove the pre-existing baked group from result
-    result = result.filter(g => g.id !== create.id);
+    // Step 4b: Capture any source groups being merged (childIds that are group IDs),
+    // then remove both the pre-existing baked group AND those source groups from result.
+    const mergedSourceGroups = result.filter(g => childIdSet.has(g.id));
+    result = result.filter(g => g.id !== create.id && !childIdSet.has(g.id));
 
     // Step 4c: Remove these childIds from wherever they currently live in result
     // (they may be children of the removed group or standalone groups)
@@ -136,13 +138,22 @@ function applyOverlays(grps: any[]): any[] {
       return { ...g, children: kept, locs: kept.length };
     });
 
-    // Step 4d: Build the children array from the leaf map
+    // Step 4d: Build the children array from the leaf map.
+    // If a childId is a group ID (not a leaf), expand all of that group's children.
     (create.childIds||[]).forEach((cid:string) => {
       const leaf = leafByChildId[cid];
       if (leaf) {
         children.push({ ...leaf, id: cid, gId: create.id, gName: create.name });
+      } else {
+        // childId may be a group — expand its children (group-to-group merge)
+        const srcGroup = mergedSourceGroups.find(g => g.id === cid);
+        if (srcGroup?.children?.length) {
+          srcGroup.children.forEach((c:any) => {
+            children.push({ ...c, gId: create.id, gName: create.name });
+          });
+        }
+        // Truly unfound childIds added below as stubs
       }
-      // Unfound childIds added below as stubs
     });
 
     // Roll up financials
@@ -151,9 +162,9 @@ function applyOverlays(grps: any[]): any[] {
       Object.entries(c.cyQ||{}).forEach(([q,v]:any) => { totalCY[q] = (totalCY[q]||0) + v; });
     });
 
-    // Add any childIds not found anywhere in base data
+    // Add any childIds not found anywhere in base data (true stubs — neither leaf nor group)
     (create.childIds||[]).forEach((cid:string) => {
-      if (!children.find(c => c.id === cid)) {
+      if (!children.find(c => c.id === cid) && !mergedSourceGroups.find(g => g.id === cid)) {
         children.push({ id: cid, name: nameMap[cid]||cid, gId: create.id, gName: create.name,
           pyQ: {}, cyQ: {}, products: [], tier: "Standard", class2: "Private Practice" });
       }
