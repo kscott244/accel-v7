@@ -32,13 +32,13 @@ export const Stat = ({l,v,c}:{l:string,v:any,c:string}) => <div style={{backgrou
 export const Bar  = ({pct,color}:{pct:number,color?:string}) => <div style={{width:"100%",height:6,borderRadius:3,background:T.s3,overflow:"hidden"}}><div className="bar-g" style={{height:"100%",borderRadius:3,width:`${Math.min(Math.max(pct,0),100)}%`,background:color||`linear-gradient(90deg,${T.blue},${T.cyan})`}}/></div>;
 
 // ─── SHARED ACCOUNT IDENTITY ─────────────────────────────────────
-export const AccountId = ({name,gName,locs,size="md",color}:{name:string,gName?:string,locs?:number,size?:"sm"|"md"|"lg",color?:string}) => {
+export const AccountId = ({name,gName,size="md",color}:{name:string,gName?:string,size?:"sm"|"md"|"lg",color?:string}) => {
   const showParent = gName && gName !== name && gName.toLowerCase() !== name.toLowerCase();
   const fs = size==="sm"?11:size==="lg"?15:12;
   const fw = size==="sm"?500:size==="lg"?700:600;
   const pfs = size==="sm"?9:size==="lg"?11:10;
   return <div style={{minWidth:0,overflow:"hidden"}}>
     <div style={{fontSize:fs,fontWeight:fw,color:color||T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{name}</div>
-    {showParent&&<div style={{fontSize:pfs,color:T.blue,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginTop:1}}>↳ {gName}{locs&&locs>1?` · ${locs} locs`:""}</div>}
+    {showParent&&<div style={{fontSize:pfs,color:T.cyan,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginTop:1}}>↳ {gName}</div>}
   </div>;
 };

@@ -302,13 +302,6 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
       .slice(0, 5);
   }, [scored, activeQ]);
 
-  // ── Group locs map: gId → child count ──
-  const locsMap = useMemo(() => {
-    const m: Record<string,number> = {};
-    (groups||[]).forEach((g:any) => { if (g.id && g.children?.length) m[g.id] = g.children.length; });
-    return m;
-  }, [groups]);
-
   // ── Search ──
   const q = search.trim().toLowerCase();
   const searchResults = useMemo(() => {
@@ -355,7 +348,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
             border:`1px solid ${T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:8,cursor:"pointer"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
             <div style={{flex:1,minWidth:0}}>
-              <AccountId name={a.name} gName={a.gName} locs={a.gId?locsMap[a.gId]:undefined} size="md"/>
+              <AccountId name={a.name} gName={a.gName} size="md"/>
               <div style={{fontSize:10,color:T.t3,marginTop:2}}>
                 {a.addr ? a.addr + ', ' : ''}{a.city}, {a.st}
                 {isAccelTier(a.gTier||a.tier)&&<span style={{color:T.amber}}> · {normalizeTier(a.gTier||a.tier)}</span>}
