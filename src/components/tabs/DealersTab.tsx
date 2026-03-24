@@ -32,7 +32,8 @@ function isNoRep(s:string|undefined):boolean {
 
 const PRI_ORDER:Record<string,number> = {NOW:0,SOON:1,"ON TRACK":2,PROTECT:3,PIPELINE:4};
 
-function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],goAcct:(a:any)=>void,goGroup:(g:any)=>void}) {
+function DealersTab({scored,groups,goAcct,goGroup,activeQ:activeQProp}:{scored:any[],groups:any[],goAcct:(a:any)=>void,goGroup:(g:any)=>void,activeQ?:string}) {
+  const activeQ = activeQProp || "1";
   const [mainTab, setMainTab] = useState<"dealers"|"team">("dealers");
   const [rosterDist, setRosterDist] = useState<string>("Schein");
   const [acctType, setAcctType] = useState<"all"|"private"|"groups">("all");
@@ -82,7 +83,7 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
     filteredScored.forEach(a=>{
       const d = a.dealer || "All Other";
       if(!map[d]) map[d]={accts:[],cy:0,py:0,nowCount:0};
-      const cy=a.cyQ?.["1"]||0, py=a.pyQ?.["1"]||0;
+      const cy=a.cyQ?.[activeQ]||0, py=a.pyQ?.[activeQ]||0;
       map[d].accts.push(a);
       map[d].cy+=cy; map[d].py+=py;
       if(a.visitPriority==="NOW") map[d].nowCount++;
@@ -198,8 +199,8 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
       }
       const bucket = repToGroups[repKey][gId];
       bucket.children.push(a);
-      bucket.totalPY += a.pyQ?.["1"] || 0;
-      bucket.totalCY += a.cyQ?.["1"] || 0;
+      bucket.totalPY += a.pyQ?.[activeQ] || 0;
+      bucket.totalCY += a.cyQ?.[activeQ] || 0;
       // Track highest priority child
       const PO = {NOW:0,SOON:1,"ON TRACK":2,PROTECT:3,PIPELINE:4};
       if((PO[a.visitPriority]??9) < (PO[bucket.maxVisitPriority]??9)) bucket.maxVisitPriority = a.visitPriority;
@@ -338,7 +339,7 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
         {/* Child locations */}
         <div style={{fontSize:9,textTransform:"uppercase",color:T.t4,letterSpacing:"1px",marginBottom:8,fontWeight:700}}>Locations ({children.length})</div>
         {children.map((a:any,i:number)=>{
-          const cy=a.cyQ?.["1"]||0, py=a.pyQ?.["1"]||0, gap=py-cy;
+          const cy=a.cyQ?.[activeQ]||0, py=a.pyQ?.[activeQ]||0, gap=py-cy;
           const chip=PRI_CHIP[a.visitPriority]||PRI_CHIP["ON TRACK"];
           const isDown=gap>0;
           const locRet=py>0?Math.round(cy/py*100):0;
@@ -612,9 +613,9 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
           const B = typeof BADGER!=='undefined'?BADGER:{};
           const distAccts = scored
             .filter((a:any) => a.dealer === cocallDist)
-            .filter((a:any) => (a.pyQ?.["1"]||0) > 100 || (a.cyQ?.["1"]||0) > 100) // has meaningful history
+            .filter((a:any) => (a.pyQ?.[activeQ]||0) > 100 || (a.cyQ?.[activeQ]||0) > 100) // has meaningful history
             .map((a:any) => {
-              const py = a.pyQ?.["1"]||0, cy = a.cyQ?.["1"]||0, gap = py - cy;
+              const py = a.pyQ?.[activeQ]||0, cy = a.cyQ?.[activeQ]||0, gap = py - cy;
               const deadProducts = (a.products||[]).filter((p:any) => (p.py1||0) > 100 && (p.cy1||0) === 0);
               // Co-call score: gap matters most, but also prioritize accounts with prior purchases (FSC has a relationship)
               let ccScore = 0;
@@ -684,13 +685,13 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
 
             {/* Ranked accounts */}
             {distAccts.map((a:any,i:number)=>{
-              const py=a.pyQ?.["1"]||0, cy=a.cyQ?.["1"]||0;
+              const py=a.pyQ?.[activeQ]||0, cy=a.cyQ?.[activeQ]||0;
               const chipColor = a.visitPriority==="NOW"?"#f87171":a.visitPriority==="SOON"?"#fbbf24":"#34d399";
               // Find parent group totals for this distributor
               const parentGroup = (groups||[]).find((g:any)=>g.id===a.gId);
               const isMultiLoc = parentGroup && parentGroup.children && parentGroup.children.length > 1;
-              const gPY = isMultiLoc ? (parentGroup.pyQ?.["1"]||0) : 0;
-              const gCY = isMultiLoc ? (parentGroup.cyQ?.["1"]||0) : 0;
+              const gPY = isMultiLoc ? (parentGroup.pyQ?.[activeQ]||0) : 0;
+              const gCY = isMultiLoc ? (parentGroup.cyQ?.[activeQ]||0) : 0;
               const gGap = gPY - gCY;
               const gLocs = isMultiLoc ? parentGroup.children.length : 0;
               // Count how many of this group's locations are on this distributor
@@ -760,8 +761,8 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
 
     {/* Territory total summary */}
     {(()=>{
-      const totalCY=filteredScored.reduce((s,a)=>s+(a.cyQ?.["1"]||0),0);
-      const totalPY=filteredScored.reduce((s,a)=>s+(a.pyQ?.["1"]||0),0);
+      const totalCY=filteredScored.reduce((s,a)=>s+(a.cyQ?.[activeQ]||0),0);
+      const totalPY=filteredScored.reduce((s,a)=>s+(a.pyQ?.[activeQ]||0),0);
       const totalGap=totalPY-totalCY;
       return <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:"10px 14px",marginBottom:14,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <div style={{fontSize:10,color:T.t3,fontWeight:600,textTransform:"uppercase",letterSpacing:"1px"}}>All Distributors · {filteredScored.length} accounts</div>
@@ -776,7 +777,7 @@ function DealersTab({scored,groups,goAcct,goGroup}:{scored:any[],groups:any[],go
       if(!s||s.accts.length===0) return null;
       const gap=s.py-s.cy;
       const ret=s.py>0?s.cy/s.py:0;
-      const upCount=s.accts.filter(a=>(a.cyQ?.["1"]||0)>=(a.pyQ?.["1"]||0)).length;
+      const upCount=s.accts.filter(a=>(a.cyQ?.[activeQ]||0)>=(a.pyQ?.[activeQ]||0)).length;
       const downCount=s.accts.length-upCount;
       const isAllOther=dist==="All Other";
       // repCount: only count reps whose distributor hint matches this dist
