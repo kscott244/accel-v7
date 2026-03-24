@@ -41,9 +41,12 @@ function GroupDetail({group,goMain,goAcct,overlays,saveOverlays,salesStore=null}
     }
   };
 
+  // All known distributors — always show full list so FSC reps can be added
+  // regardless of whether dealer mapping matched (accounts may show "All Other")
+  const KNOWN_DISTS = ["Benco","Darby","DDS Dental","Dental City","Patterson","Schein"];
   // Detect which distributors are present in this group's children
   const groupDists = useMemo(()=>{
-    const distDedupeSet = new Set<string>();
+    const distDedupeSet = new Set<string>(KNOWN_DISTS);
     (group.children||[]).forEach((c:any) => { if(c.dealer && c.dealer!=="All Other") distDedupeSet.add(c.dealer); });
     return [...distDedupeSet].sort();
   },[group]);
