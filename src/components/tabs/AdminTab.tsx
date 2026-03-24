@@ -154,6 +154,11 @@ function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:a
         ))}
       </div>}
 
+      {/* Merge hint */}
+      {!editingGroup&&<div style={{background:"rgba(79,142,247,.06)",border:"1px solid rgba(79,142,247,.15)",borderRadius:10,padding:"10px 14px",marginBottom:12,fontSize:11,color:T.t3}}>
+        <span style={{fontWeight:700,color:T.blue}}>Moving an account into a group?</span> Open the account card and tap <strong>Move →</strong> — you'll see FROM and TO before confirming.
+      </div>}
+
       {/* Create / Edit group form */}
       <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:14}}>
         <div style={{fontSize:12,fontWeight:700,color:T.t2,marginBottom:12}}>{editingGroup?"✏️ Edit Group":"➕ Create New Group"}</div>
