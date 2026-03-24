@@ -4,29 +4,26 @@
 import { useState, useMemo } from "react";
 import { T } from "@/lib/tokens";
 import { getTierLabel } from "@/lib/tier";
-import { trunkStrength } from "@/lib/stemm";
 import { $$, pc } from "@/lib/format";
 import { fixGroupName, Pill, Bar, Chev } from "@/components/primitives";
 import { scorePriority, BUCKET_STYLE } from "@/lib/priority";
 
-// Filters: grouped by intent but rendered in one scrollable row
-const FILTERS = [
-  "All","Urgent","Multi-Location","Private","DSO",
-  "Top 100","Diamond","Platinum","Gold",
-  "Schein","Patterson","Benco","Darby",
-];
-const DEALER_FILTERS = new Set(["Schein","Patterson","Benco","Darby"]);
+// Filters split into two semantic rows
+const STATUS_FILTERS = ["All","Urgent","Multi-Location","Private","DSO","Top 100","Diamond","Platinum","Gold"];
+const DEALER_FILTER_LIST = ["Schein","Patterson","Benco","Darby"];
+const DEALER_FILTERS = new Set(DEALER_FILTER_LIST);
 
 // ── ACCOUNT CARD ─────────────────────────────────────────────────
-// Single design for all views. Status communicated by left-accent + bar color.
 function AccountCard({g, i, goGroup, isDealerFilt, filt}) {
-  const bucket    = g._priorityBucket ?? "Watch";
-  const bStyle    = BUCKET_STYLE[bucket];
-  const retPct    = Math.min(100, Math.round(g._ret * 100));
-  const retColor  = g._ret >= 0.7 ? T.green : g._ret >= 0.4 ? T.amber : T.red;
-  const barColor  = `linear-gradient(90deg,${retColor},${retColor}99)`;
-  const rootDots  = (g._rootStrength ?? 0) >= 60 ? 3 : (g._rootStrength ?? 0) >= 30 ? 2 : (g._rootStrength ?? 0) > 0 ? 1 : 0;
-  const trunk      = trunkStrength(g);
+  const bucket   = g._priorityBucket ?? "Watch";
+  const bStyle   = BUCKET_STYLE[bucket];
+  const retPct   = Math.min(100, Math.round(g._ret * 100));
+  const retColor = g._ret >= 0.7 ? T.green : g._ret >= 0.4 ? T.amber : T.red;
+  const barColor = `linear-gradient(90deg,${retColor},${retColor}99)`;
+  // Subtitle: priorityReason is the most useful signal; fall back to locs · tier
+  const subtitle = g._priorityReason
+    ? g._priorityReason + (isDealerFilt ? ` · ${filt}` : "")
+    : `${g._locs} loc${g._locs!==1?"s":""} · ${getTierLabel(g.tier,g.class2)}${isDealerFilt ? ` · ${filt}` : ""}`;
 
   return (
     <button className="anim" onClick={() => goGroup(g)}
@@ -41,42 +38,28 @@ function AccountCard({g, i, goGroup, isDealerFilt, filt}) {
           <div style={{fontSize:13,fontWeight:700,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
             {fixGroupName(g)}
           </div>
-          <div style={{fontSize:10,color:T.t3,marginTop:1}}>
-            {g._locs} loc{g._locs!==1?"s":""} · {getTierLabel(g.tier,g.class2)}
-            {isDealerFilt&&<span style={{color:T.cyan}}> · {filt}</span>}
+          <div style={{fontSize:10,color:T.t3,marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+            {subtitle}
           </div>
         </div>
         <div style={{flexShrink:0,marginLeft:12,textAlign:"right"}}>
-          <div className="m" style={{fontSize:13,fontWeight:700,
-            color:g._gap<=0?T.green:T.red}}>
+          <div className="m" style={{fontSize:13,fontWeight:700,color:g._gap<=0?T.green:T.red}}>
             {g._gap<=0?`+${$$(Math.abs(g._gap))}`:$$(g._gap)}
           </div>
-          <div style={{fontSize:10,color:retColor,fontWeight:600,marginTop:1}}>
-            {retPct}% ret
-          </div>
+          <div style={{fontSize:10,color:retColor,fontWeight:600,marginTop:1}}>{retPct}% ret</div>
         </div>
       </div>
 
       {/* Row 2: retention bar */}
       <Bar pct={retPct} color={barColor}/>
 
-      {/* Row 3: PY / CY / trunk strength + bucket badge */}
+      {/* Row 3: PY / CY / single priority badge */}
       <div style={{display:"flex",alignItems:"center",gap:14,marginTop:7}}>
         <Pill l="PY" v={$$(g._py1)} c={T.t2}/>
         <Pill l="CY" v={$$(g._cy1)} c={T.blue}/>
-        <div style={{display:"flex",alignItems:"center",gap:5,marginLeft:"auto"}}>
-          {g._locs >= 2 && <span style={{
-            fontSize:9,fontWeight:700,
-            color:trunk.color,
-            background:trunk.bg,
-            border:`1px solid ${trunk.border}`,
-            borderRadius:4,padding:"2px 7px",
-            letterSpacing:".2px"
-          }}>{trunk.label}</span>}
-          <span style={{fontSize:9,fontWeight:700,color:bStyle.color,
-            background:bStyle.bg,borderRadius:4,padding:"2px 7px",
-            border:`1px solid ${bStyle.border}`}}>{bucket}</span>
-        </div>
+        <span style={{marginLeft:"auto",fontSize:9,fontWeight:700,color:bStyle.color,
+          background:bStyle.bg,borderRadius:4,padding:"2px 7px",
+          border:`1px solid ${bStyle.border}`}}>{bucket}</span>
         <Chev/>
       </div>
     </button>
@@ -145,7 +128,7 @@ function GPCard({gp, i, goGroup}) {
 // ── SECTION LABEL ────────────────────────────────────────────────
 const SectionLabel = ({label, color, count=null}) => (
   <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:10,marginTop:4}}>
-    <div style={{width:6,height:6,borderRadius:"50%",background:color,flexShrink:0}}/>
+    <div style={{width:7,height:7,borderRadius:"50%",background:color,flexShrink:0}}/>
     <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color}}>{label}</span>
     {count!=null&&<span style={{fontSize:10,color:T.t4,marginLeft:"auto"}}>{count}</span>}
   </div>
@@ -238,9 +221,24 @@ export default function GroupsTab({groups,goGroup,filt,setFilt,search,setSearch,
             background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:16,lineHeight:1}}>✕</button>}
       </div>
 
-      {/* ── FILTER PILLS ── */}
-      <div className="hide-sb" style={{display:"flex",gap:5,overflowX:"auto",padding:"0 16px 2px",marginBottom:10}}>
-        {FILTERS.map(f=>(
+      {/* ── FILTER PILLS — Row 1: Status ── */}
+      <div className="hide-sb" style={{display:"flex",gap:5,overflowX:"auto",padding:"0 16px 2px",marginBottom:5}}>
+        {STATUS_FILTERS.map(f=>(
+          <button key={f} onClick={()=>setFilt(f)}
+            style={{flexShrink:0,whiteSpace:"nowrap",padding:"5px 12px",borderRadius:7,
+              fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
+              border:`1px solid ${filt===f?"rgba(79,142,247,.35)":T.b2}`,
+              background:filt===f?"rgba(79,142,247,.15)":T.s2,
+              color:filt===f?T.blue:T.t3}}>
+            {f}
+          </button>
+        ))}
+      </div>
+
+      {/* ── FILTER PILLS — Row 2: Dealer ── */}
+      <div className="hide-sb" style={{display:"flex",gap:5,overflowX:"auto",padding:"0 16px 2px",marginBottom:10,alignItems:"center"}}>
+        <span style={{fontSize:9,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:"1px",flexShrink:0,marginRight:2}}>Rep</span>
+        {DEALER_FILTER_LIST.map(f=>(
           <button key={f} onClick={()=>setFilt(f)}
             style={{flexShrink:0,whiteSpace:"nowrap",padding:"5px 12px",borderRadius:7,
               fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
