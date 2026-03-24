@@ -5,7 +5,7 @@ import { T } from "@/lib/tokens";
 import { $$, $f, pc } from "@/lib/format";
 import { getTierLabel } from "@/lib/tier";
 import { BADGER, OVERLAYS_REF } from "@/lib/data";
-import { Back, Chev, Pill, Stat, AccountId, fixGroupName } from "@/components/primitives";
+import { Back, Chev, Pill, Stat, Bar, AccountId, fixGroupName } from "@/components/primitives";
 
 let SCHEIN_REPS: {fsc:any[], es:any[]} = {fsc:[], es:[]};
 try {
@@ -346,14 +346,36 @@ function GroupDetail({group,goMain,goAcct,overlays,saveOverlays,salesStore=null}
     </div>;
   }
 
+  // Health status
+  const healthColor = ret >= 70 ? T.green : ret >= 40 ? T.amber : T.red;
+  const healthLabel = cy > py && py > 0 ? "Growing" : ret >= 60 ? "Stable" : ret >= 25 ? "Recoverable" : py === 0 ? "New" : "Critical";
+
+  // Sort children by gap descending (biggest gap first = highest spend priority)
+  const sortedChildren = useMemo(() => {
+    return [...(group.children||[])].sort((a:any,b:any) => {
+      const aGap = (a.pyQ?.[qk]||0) - (a.cyQ?.[qk]||0);
+      const bGap = (b.pyQ?.[qk]||0) - (b.cyQ?.[qk]||0);
+      return bGap - aGap;
+    });
+  }, [group, qk]);
+
   return <div style={{paddingBottom:80}}>
     <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"10px 16px"}}>
       <button onClick={goMain} style={{background:"none",border:"none",color:T.blue,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:13,fontWeight:600,fontFamily:"inherit"}}><Back/> Groups</button>
     </div>
     <div style={{padding:"16px 16px 0"}}>
       <div className="anim" style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
-        <div style={{fontSize:16,fontWeight:700,marginBottom:4}}>{fixGroupName(group)}</div>
-        <div style={{fontSize:11,color:T.t3,marginBottom:12}}>{group.locs} locations · {getTierLabel(group.tier,group.class2)}</div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:16,fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fixGroupName(group)}</div>
+            <div style={{fontSize:11,color:T.t3,marginTop:2}}>{group.locs} location{group.locs!==1?"s":""} · {getTierLabel(group.tier,group.class2)}</div>
+          </div>
+          <span style={{flexShrink:0,fontSize:10,fontWeight:700,color:healthColor,background:`${healthColor}14`,border:`1px solid ${healthColor}30`,borderRadius:6,padding:"3px 9px",marginLeft:8}}>{healthLabel}</span>
+        </div>
+        {/* Retention bar */}
+        <div style={{margin:"10px 0 12px"}}>
+          <Bar pct={Math.min(ret,100)} color={`linear-gradient(90deg,${healthColor},${healthColor}99)`}/>
+        </div>
         {/* Quarter selector */}
         <div style={{display:"flex",gap:4,marginBottom:12}}>
           {["1","2","3","4","FY"].map(qr=>(
@@ -362,7 +384,7 @@ function GroupDetail({group,goMain,goAcct,overlays,saveOverlays,salesStore=null}
         </div>
         <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t4,marginBottom:4}}>Group Total</div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}>
-          <Stat l="PY" v={$$(py)} c={T.t2}/><Stat l="CY" v={$$(cy)} c={T.blue}/><Stat l="Gap" v={gap<=0?`+${$$(Math.abs(gap))}`:$$(gap)} c={gap<=0?T.green:T.red}/><Stat l="Ret" v={ret+"%"} c={ret>30?T.green:ret>15?T.amber:T.red}/>
+          <Stat l="PY" v={$$(py)} c={T.t2}/><Stat l="CY" v={$$(cy)} c={T.blue}/><Stat l="Gap" v={gap<=0?`+${$$(Math.abs(gap))}`:$$(gap)} c={gap<=0?T.green:T.red}/><Stat l="Ret" v={ret+"%"} c={healthColor}/>
         </div>
       </div>
 
@@ -581,16 +603,17 @@ function GroupDetail({group,goMain,goAcct,overlays,saveOverlays,salesStore=null}
         {/* Buying across group */}
         {groupBuying.length>0&&<div>
           <div style={{fontSize:10,fontWeight:700,color:T.green,marginBottom:8}}>Currently Buying ({groupBuying.length} products)</div>
-          {groupBuying.slice(0,8).map((p,i)=>{
+          {groupBuying.slice(0,10).map((p,i)=>{
             const mx=groupBuying[0]?.cy||1;
             const trend=p.py>0?p.cy/p.py:1;
+            const pGap=p.py-p.cy;
             return <div key={i} onClick={()=>setSelProduct(p.name)} style={{marginBottom:8,cursor:"pointer"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
                 <span style={{fontSize:11,color:T.t2,flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</span>
-                <div style={{display:"flex",gap:8,flexShrink:0,marginLeft:8,alignItems:"center"}}>
-                  <span className="m" style={{fontSize:9,color:T.t3}}>{$$(p.py)}</span>
-                  <span style={{fontSize:9,color:T.t3}}>→</span>
+                <div style={{display:"flex",gap:6,flexShrink:0,marginLeft:8,alignItems:"center"}}>
+                  <span className="m" style={{fontSize:9,color:T.t4}}>{$$(p.py)}</span>
                   <span className="m" style={{fontSize:10,color:trend>=0.8?T.blue:T.amber,fontWeight:600}}>{$$(p.cy)}</span>
+                  {pGap>0&&<span className="m" style={{fontSize:9,color:T.red,fontWeight:600}}>-{$$(pGap)}</span>}
                   <Chev/>
                 </div>
               </div>
@@ -605,16 +628,19 @@ function GroupDetail({group,goMain,goAcct,overlays,saveOverlays,salesStore=null}
         </div>}
       </div>}
 
-      <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3,marginBottom:8}}>Locations ({group.children.length})</div>
-      {group.children.map((c,i)=>{
+      <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3,marginBottom:8}}>Locations ({sortedChildren.length})</div>
+      {sortedChildren.map((c,i)=>{
         const cPy=c.pyQ?.[qk]||0;const cCy=c.cyQ?.[qk]||0;const cGap=cPy-cCy;const cRet=cPy>0?Math.round(cCy/cPy*100):0;
-        return <button key={c.id} className="anim" onClick={()=>goAcct(c)} style={{animationDelay:`${i*30}ms`,width:"100%",textAlign:"left",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:"12px 14px",marginBottom:8,cursor:"pointer"}}>
+        const cRetColor = cRet>=70?T.green:cRet>=40?T.amber:T.red;
+        const borderColor = cGap>2000?"rgba(248,113,113,.2)":cGap<=0&&cPy>0?"rgba(52,211,153,.15)":T.b1;
+        return <button key={c.id} className="anim" onClick={()=>goAcct(c)} style={{animationDelay:`${i*30}ms`,width:"100%",textAlign:"left",background:T.s1,border:`1px solid ${borderColor}`,borderRadius:12,padding:"12px 14px",marginBottom:8,cursor:"pointer"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
             <div style={{fontSize:12,fontWeight:600,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.name}</div><Chev/>
           </div>
-          <div style={{fontSize:10,color:T.t3,marginBottom:6}}>{c.city}, {c.st}{c.dealer&&c.dealer!=="All Other"?<span style={{color:T.cyan}}> · {c.dealer}</span>:""} · Last {c.last}d ago</div>
-          <div style={{display:"flex",gap:12}}>
-            <Pill l="PY" v={$$(cPy)} c={T.t2}/><Pill l="CY" v={$$(cCy)} c={T.blue}/><Pill l="Gap" v={cGap<=0?`+${$$(Math.abs(cGap))}`:$$(cGap)} c={cGap<=0?T.green:T.red}/><div style={{marginLeft:"auto"}}><Pill l="Ret" v={cRet+"%"} c={T.t3}/></div>
+          <div style={{fontSize:10,color:T.t3,marginBottom:6}}>{c.city}, {c.st}{c.dealer&&c.dealer!=="All Other"?<span style={{color:T.cyan}}> · {c.dealer}</span>:""}{c.last!=null?` · Last ${c.last}d ago`:""}</div>
+          <Bar pct={cRet} color={`linear-gradient(90deg,${cRetColor},${cRetColor}99)`}/>
+          <div style={{display:"flex",gap:12,marginTop:6}}>
+            <Pill l="PY" v={$$(cPy)} c={T.t2}/><Pill l="CY" v={$$(cCy)} c={T.blue}/><Pill l="Gap" v={cGap<=0?`+${$$(Math.abs(cGap))}`:$$(cGap)} c={cGap<=0?T.green:T.red}/><div style={{marginLeft:"auto"}}><Pill l="Ret" v={cRet+"%"} c={cRetColor}/></div>
           </div>
           {(c.products||[]).length>0&&<div style={{marginTop:8,display:"flex",gap:4,flexWrap:"wrap"}}>
             {c.products.slice(0,4).map((p,j)=>{
