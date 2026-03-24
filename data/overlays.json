@@ -1,6 +1,45 @@
 {
   "nameOverrides": {},
-  "contacts": {},
+  "contacts": {
+    "Master-CM145846": {
+      "contactName": "Dr. William R. Conroy Jr.",
+      "phone": "(508) 695-7031",
+      "email": "atwillconroy@yahoo.com",
+      "website": "https://www.atwill-conroydental.com",
+      "contacts": [
+        {
+          "name": "Dr. William R. Conroy Jr.",
+          "role": "Owner/DDS",
+          "email": "atwillconroy@yahoo.com",
+          "phone": "(508) 695-7031",
+          "tier": 1
+        },
+        {
+          "name": "Dr. Bakhoum M. Girgis",
+          "role": "Associate DMD",
+          "email": null,
+          "phone": "(508) 695-7031",
+          "tier": 2
+        },
+        {
+          "name": "Dr. Kristofer Haggarty",
+          "role": "Associate DMD",
+          "email": null,
+          "phone": "(508) 695-7031",
+          "tier": 2
+        },
+        {
+          "name": "Dr. Sarah Eager",
+          "role": "Associate DMD",
+          "email": null,
+          "phone": "(508) 695-7031",
+          "tier": 2
+        }
+      ],
+      "savedAt": "2026-03-24T16:17:06.003Z",
+      "practiceName": "ATWILL CONROY DENTAL ASSOCIATES"
+    }
+  },
   "fscReps": {
     "Master-CM1191419": {
       "Schein": {
@@ -43,5 +82,5 @@
   },
   "groupDetaches": [],
   "groupMoves": {},
-  "lastUpdated": "2026-03-24T13:26:02.615Z"
+  "lastUpdated": "2026-03-24T16:17:06.508Z"
 }
