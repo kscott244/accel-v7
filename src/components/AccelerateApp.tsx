@@ -452,7 +452,7 @@ function AppInner() {
       try {
         const text = ev.target.result as string;
         const rows = parseCSV(text);
-        const result = processCSVData(rows);
+        const result = processCSVData(rows, text, file.name);
 
         // Load previous dataset for diff (before overwriting)
         let prevGroups: any[] = [];
@@ -472,6 +472,7 @@ function AppInner() {
         setGroups(applyGroupOverrides(applyOverlays(rollupGroupTotals(hydrateDealer(result.groups)))));
         setDataSource(`CSV uploaded ${result.generated}`);
         localStorage.setItem("accel_data_v2", JSON.stringify(result));
+        try { localStorage.setItem("import_report_v1", JSON.stringify(result.report)); } catch {}
 
         // Build upload message
         let msg = `OK ${result.groups.length} groups`;
