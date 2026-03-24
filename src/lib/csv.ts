@@ -14,52 +14,36 @@ let _dealers: Record<string, string> = {};
 export function setDealers(d: Record<string, string>) { _dealers = d; }
 
 // ─── IMPORT REPORT ───────────────────────────────────────────────
-// Returned alongside groups from processCSVData(). Stored in localStorage
-// under "import_report_v1" so AdminTab can display it persistently.
 export interface ImportReport {
-  // File metadata
-  filename: string;           // Original filename (passed in by caller)
-  timestamp: string;          // ISO timestamp of when upload was processed
-  // File format detection
+  filename: string;
+  timestamp: string;
   delimiterDetected: "comma" | "tab" | "unknown";
   encodingDetected: "UTF-8" | "UTF-8 BOM" | "Windows-1252 (likely)" | "unknown";
-  // Row-level counts (all rows in the raw file)
-  totalRawRows: number;       // All data rows after header (blank line not counted)
-  blankRowsSkipped: number;   // Rows that were entirely blank
-  grandTotalRowsSkipped: number; // Rows where Parent Name starts with "Grand Total"
-  summaryRowsSkipped: number; // Rows where Parent MDM ID === "Total"
-  noDateRowsSkipped: number;  // Rows with missing or unparseable Invoice Date
-  cleanRowsProcessed: number; // Rows that passed all filters and were aggregated
-  // Entity-level output (after aggregation)
-  uniqueParents: number;      // Distinct Parent MDM IDs in output
-  uniqueOffices: number;      // Distinct Child MDM IDs in output (includes zero-rev stubs)
-  zeroRevenueOfficesDropped: number; // Child MDM IDs removed because all PY+CY = 0
-  finalOffices: number;       // Offices in output (uniqueOffices - dropped)
-  finalGroups: number;        // Groups with at least one child (= groups array length)
-  // Warnings — deduplicated and summarized
+  totalRawRows: number;
+  blankRowsSkipped: number;
+  grandTotalRowsSkipped: number;
+  summaryRowsSkipped: number;
+  noDateRowsSkipped: number;
+  cleanRowsProcessed: number;
+  uniqueParents: number;
+  uniqueOffices: number;
+  zeroRevenueOfficesDropped: number;
+  finalOffices: number;
+  finalGroups: number;
   warnings: ImportWarning[];
 }
 
 export interface ImportWarning {
-  code: string;   // Short machine-readable code, e.g. "UNKNOWN_TIER"
-  label: string;  // Human-readable summary
-  count: number;  // How many rows triggered this warning
-  examples: string[]; // Up to 3 example values
+  code: string;
+  label: string;
+  count: number;
+  examples: string[];
 }
 
-// Detect delimiter from header line
-function detectDelimiter(header: string): "comma" | "tab" | "unknown" {
-  const commas = (header.match(/,/g) || []).length;
-  const tabs   = (header.match(/\t/g) || []).length;
-  if (tabs > commas) return "tab";
-  if (commas > 0)    return "comma";
-  return "unknown";
-}
-
-// Rough encoding detection from raw text
+// ─── ENCODING DETECTION ──────────────────────────────────────────
+// Called on raw text BEFORE BOM stripping so BOM is detectable.
 function detectEncoding(text: string): "UTF-8 BOM" | "Windows-1252 (likely)" | "UTF-8" {
   if (text.charCodeAt(0) === 0xFEFF) return "UTF-8 BOM";
-  // Windows-1252 smuggles high bytes (0x80–0x9F range) that are invalid UTF-8
   for (let i = 0; i < Math.min(text.length, 4000); i++) {
     const c = text.charCodeAt(i);
     if (c >= 0x80 && c <= 0x9F) return "Windows-1252 (likely)";
@@ -67,50 +51,207 @@ function detectEncoding(text: string): "UTF-8 BOM" | "Windows-1252 (likely)" | "
   return "UTF-8";
 }
 
-export function parseCSV(text: string): Record<string, string>[] {
-  const lines = text.split("\n");
-  const headers = parseCSVLine(lines[0]);
-  const rows: Record<string, string>[] = [];
-  for (let i = 1; i < lines.length; i++) {
-    if (!lines[i].trim()) continue;
-    const vals = parseCSVLine(lines[i]);
-    const row: Record<string, string> = {};
-    headers.forEach((h, j) => (row[h.trim()] = (vals[j] || "").trim()));
-    rows.push(row);
+// ─── DELIMITER DETECTION ─────────────────────────────────────────
+// Count unquoted tabs vs commas in the header line.
+function detectDelimiter(header: string): "comma" | "tab" {
+  let tabs = 0, commas = 0, inQ = false;
+  for (let i = 0; i < header.length; i++) {
+    const c = header[i];
+    if (c === '"') { inQ = !inQ; continue; }
+    if (inQ) continue;
+    if (c === "\t") tabs++;
+    else if (c === ",") commas++;
   }
-  return rows;
+  return tabs > commas ? "tab" : "comma";
 }
 
-export function parseCSVLine(line: string): string[] {
+// ─── CANONICAL HEADER MAP ─────────────────────────────────────────
+// Tableau column names vary by export settings. This map lets us look up
+// the correct raw header regardless of casing or extra whitespace.
+// Keys are lowercase-trimmed; values are the canonical names the rest of
+// the pipeline uses.
+const HEADER_ALIASES: Record<string, string> = {
+  // MDM IDs
+  "parent mdm id":        "Parent MDM ID",
+  "parentmdmid":          "Parent MDM ID",
+  "child mdm id":         "Child Mdm Id",
+  "childmdmid":           "Child Mdm Id",
+  "child mdm  id":        "Child Mdm Id",   // double-space variant seen in exports
+  // Names
+  "parent name":          "Parent Name",
+  "parentname":           "Parent Name",
+  "child name":           "Child Name",
+  "childname":            "Child Name",
+  // Date
+  "invoice date":         "Invoice Date",
+  "invoicedate":          "Invoice Date",
+  // Revenue
+  "py":                   "PY",
+  "cy":                   "CY",
+  // Product
+  "l3":                   "L3",
+  // Account type / tier
+  "acct type":            "Acct Type",
+  "accttype":             "Acct Type",
+  "account type":         "Acct Type",
+  // Class fields
+  "sds cust class2":      "Sds Cust Class2",
+  "sdscustclass2":        "Sds Cust Class2",
+  "sds cust class 2":     "Sds Cust Class2",
+  "class 4":              "Class 4",
+  "class4":               "Class 4",
+  // Address
+  "city":                 "City",
+  "state":                "State",
+  "addr":                 "Addr",
+  "address":              "Addr",
+  "street":               "Addr",
+};
+
+// Build a lookup from raw header → canonical name.
+// For headers not in the alias map, pass through trimmed as-is.
+function buildHeaderMap(rawHeaders: string[]): (raw: string) => string {
+  const resolved: Record<string, string> = {};
+  for (const h of rawHeaders) {
+    const key = h.trim().toLowerCase().replace(/\s+/g, " ");
+    resolved[h] = HEADER_ALIASES[key] || h.trim();
+  }
+  return (raw: string) => resolved[raw] ?? raw.trim();
+}
+
+// ─── LINE SPLITTER ───────────────────────────────────────────────
+// Handles quoted fields for both comma and tab delimiters.
+function splitLine(line: string, delimiter: string): string[] {
   const result: string[] = [];
   let current = "";
   let inQuotes = false;
   for (let i = 0; i < line.length; i++) {
-    if (line[i] === '"') { inQuotes = !inQuotes; }
-    else if (line[i] === "," && !inQuotes) { result.push(current); current = ""; }
-    else { current += line[i]; }
+    const c = line[i];
+    if (c === '"') {
+      // Handle escaped double-quote ""
+      if (inQuotes && line[i + 1] === '"') { current += '"'; i++; continue; }
+      inQuotes = !inQuotes;
+    } else if (c === delimiter && !inQuotes) {
+      result.push(current);
+      current = "";
+    } else {
+      current += c;
+    }
   }
   result.push(current);
   return result;
 }
 
-// processCSVData now accepts an optional filename and returns an ImportReport
-// alongside the groups output. Signature change is backward-compatible because
-// the caller destructures { groups, generated } — the added `report` key is ignored
-// unless the caller explicitly reads it.
+// ─── NUMERIC COERCION ────────────────────────────────────────────
+// Handles: "1,234.56"  "$1,234.56"  "(1234.56)" [negatives]  " 0 "
+function coerceNumber(raw: string): number {
+  if (!raw) return 0;
+  let s = raw.trim().replace(/\$/g, "").replace(/,/g, "");
+  // Parentheses = negative: (1234) → -1234
+  if (s.startsWith("(") && s.endsWith(")")) s = "-" + s.slice(1, -1);
+  const n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+}
+
+// ─── DATE COERCION ───────────────────────────────────────────────
+// Handles: M/D/YYYY  MM/DD/YYYY  M/D/YY  YYYY-MM-DD
+// Returns { month, year, date } or null if unparseable.
+function coerceDate(raw: string): { month: number; year: number; dt: Date } | null {
+  if (!raw) return null;
+  const s = raw.trim();
+
+  // ISO: YYYY-MM-DD
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) {
+    const year = parseInt(iso[1]), month = parseInt(iso[2]), day = parseInt(iso[3]);
+    if (month < 1 || month > 12) return null;
+    return { month, year, dt: new Date(year, month - 1, day) };
+  }
+
+  // M/D/YYYY or M/D/YY
+  const mdy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if (mdy) {
+    let year = parseInt(mdy[3]);
+    const month = parseInt(mdy[1]);
+    const day   = parseInt(mdy[2]);
+    // 2-digit year: 00–49 → 2000s, 50–99 → 1900s
+    if (year < 100) year += year < 50 ? 2000 : 1900;
+    if (month < 1 || month > 12) return null;
+    return { month, year, dt: new Date(year, month - 1, day) };
+  }
+
+  return null;
+}
+
+// ─── JUNK ROW DETECTION ──────────────────────────────────────────
+// Tableau emits various summary/total rows. Catch all patterns.
+function isJunkRow(row: Record<string, string>): "blank" | "grandtotal" | "summary" | null {
+  // All values empty or whitespace
+  if (Object.values(row).every(v => !v.trim())) return "blank";
+
+  const parentName = (row["Parent Name"] || "").trim().replace(/[()]/g, "").toLowerCase();
+  const parentId   = (row["Parent MDM ID"] || "").trim().toLowerCase();
+  const childId    = (row["Child Mdm Id"] || "").trim().toLowerCase();
+
+  // Grand Total rows (various spellings Tableau uses)
+  if (parentName.startsWith("grand total") || parentName === "grand total") return "grandtotal";
+
+  // Summary rows: "Total" in the ID columns, or both IDs equal "Total"
+  if (parentId === "total" || childId === "total") return "summary";
+  if (parentId === "" && childId === "" && parentName === "") return "blank";
+
+  return null;
+}
+
+// ─── MAIN PARSE ENTRY POINT ──────────────────────────────────────
+// Replaces the old parseCSV + parseCSVLine pair.
+// Returns typed rows with canonical header names.
+export function parseCSV(rawText: string): Record<string, string>[] {
+  // Strip BOM if present
+  const text = rawText.charCodeAt(0) === 0xFEFF ? rawText.slice(1) : rawText;
+
+  // Split into lines — handle \r\n (Windows) and \n (Unix)
+  const lines = text.split(/\r?\n/);
+  if (lines.length === 0) return [];
+
+  const delimiter = detectDelimiter(lines[0]) === "tab" ? "\t" : ",";
+  const rawHeaders = splitLine(lines[0], delimiter);
+  const resolveHeader = buildHeaderMap(rawHeaders);
+
+  const rows: Record<string, string>[] = [];
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line.trim()) continue;
+    const vals = splitLine(line, delimiter);
+    const row: Record<string, string> = {};
+    rawHeaders.forEach((h, j) => {
+      row[resolveHeader(h)] = (vals[j] ?? "").trim();
+    });
+    rows.push(row);
+  }
+  return rows;
+}
+
+// Keep old parseCSVLine exported for any callers that reference it directly
+export function parseCSVLine(line: string): string[] {
+  return splitLine(line, ",");
+}
+
+// ─── MAIN PROCESSOR ──────────────────────────────────────────────
 export function processCSVData(
   rows: Record<string, string>[],
   rawText = "",
   filename = ""
 ) {
-  // ── Format detection ──────────────────────────────────────────
-  const firstLine = rawText ? rawText.split("\n")[0] : "";
+  // ── Format detection (needs rawText before BOM strip) ─────────
+  const encodingDetected  = rawText ? detectEncoding(rawText) : "unknown";
+  const strippedText      = (rawText && rawText.charCodeAt(0) === 0xFEFF) ? rawText.slice(1) : rawText;
+  const firstLine         = strippedText ? strippedText.split(/\r?\n/)[0] : "";
   const delimiterDetected = firstLine ? detectDelimiter(firstLine) : "unknown";
-  const encodingDetected  = rawText   ? detectEncoding(rawText)    : "unknown";
 
   // ── Warning accumulators ──────────────────────────────────────
-  const unknownTierExamples: string[]   = [];
-  const missingParentExamples: string[] = [];
+  const unknownTierCounts: Record<string, number>   = {};
+  const missingParentExamples: string[]              = [];
 
   // ── Row-level skip counters ───────────────────────────────────
   let blankRowsSkipped      = 0;
@@ -119,72 +260,73 @@ export function processCSVData(
   let noDateRowsSkipped     = 0;
   let cleanRowsProcessed    = 0;
 
-  const childInfo:    Record<string, any>                         = {};
-  const childPyQ:     Record<string, Record<string, number>>      = {};
-  const childCyQ:     Record<string, Record<string, number>>      = {};
-  const childProds:   Record<string, Record<string, Record<string, number>>> = {};
-  const parentInfo:   Record<string, any>                         = {};
-  const parentChildren: Record<string, Set<string>>               = {};
-  const childLastDate:  Record<string, Date>                      = {};
-  const allChildIds:    Set<string>                               = new Set();
+  const childInfo:      Record<string, any>                                    = {};
+  const childPyQ:       Record<string, Record<string, number>>                 = {};
+  const childCyQ:       Record<string, Record<string, number>>                 = {};
+  const childProds:     Record<string, Record<string, Record<string, number>>> = {};
+  const parentInfo:     Record<string, any>                                    = {};
+  const parentChildren: Record<string, Set<string>>                            = {};
+  const childLastDate:  Record<string, Date>                                   = {};
+  const allChildIds:    Set<string>                                            = new Set();
   const ref = new Date();
 
   for (const row of rows) {
-    // Count blank rows (all values empty)
-    if (Object.values(row).every(v => !v.trim())) { blankRowsSkipped++; continue; }
+    // ── Junk row filter ──────────────────────────────────────────
+    const junk = isJunkRow(row);
+    if (junk === "blank")      { blankRowsSkipped++;      continue; }
+    if (junk === "grandtotal") { grandTotalRowsSkipped++; continue; }
+    if (junk === "summary")    { summaryRowsSkipped++;    continue; }
 
-    if ((row["Parent Name"] || "").startsWith("Grand Total")) { grandTotalRowsSkipped++; continue; }
-    if ((row["Parent MDM ID"] || "") === "Total")             { summaryRowsSkipped++;    continue; }
+    // ── Date coercion ────────────────────────────────────────────
+    const dateResult = coerceDate(row["Invoice Date"] || "");
+    if (!dateResult) { noDateRowsSkipped++; continue; }
+    const { month, year, dt } = dateResult;
+    const q = Math.ceil(month / 3);
 
-    const inv = row["Invoice Date"];
-    if (!inv) { noDateRowsSkipped++; continue; }
-    const parts = inv.split("/");
-    if (parts.length < 3) { noDateRowsSkipped++; continue; }
-    const month = parseInt(parts[0]);
-    const year  = parseInt(parts[2]);
-    if (isNaN(month) || isNaN(year)) { noDateRowsSkipped++; continue; }
-    const dt = new Date(year, month - 1, parseInt(parts[1]));
-    const q  = Math.ceil(month / 3);
+    // ── Numeric coercion ─────────────────────────────────────────
+    // RULE: PY and CY are already credited wholesale — do NOT re-apply chargeback
+    const py = coerceNumber(row["PY"] || "");
+    const cy = coerceNumber(row["CY"] || "");
 
-    const py      = parseFloat((row["PY"] || "0").replace(/,/g, "")) || 0;
-    const cy      = parseFloat((row["CY"] || "0").replace(/,/g, "")) || 0;
-    const childId  = (row["Child Mdm Id"]   || "").trim();
-    const parentId = (row["Parent MDM ID"]  || "").trim();
-    const l3       = (row["L3"]             || "").trim();
+    const childId  = (row["Child Mdm Id"]  || "").trim();
+    const parentId = (row["Parent MDM ID"] || "").trim();
+    const l3       = (row["L3"]            || "").trim();
 
     if (!childId || !parentId) continue;
 
     allChildIds.add(childId);
 
-    // Warn on unrecognized tier values (collect up to 3 examples)
+    // ── Tier warning accumulation ────────────────────────────────
     const rawTier = (row["Acct Type"] || "").trim();
-    if (rawTier && unknownTierExamples.length < 3) {
+    if (rawTier) {
       const normalized = normalizeTier(rawTier);
-      if (normalized === "Standard" && rawTier !== "" &&
-          !["Standard","Top 100","HOUSE ACCOUNTS","Silver","Gold","Platinum","Diamond",
-            "Top 100-Gold","Top 100-Diamond","Top 100-Platinum"].includes(rawTier)) {
-        if (!unknownTierExamples.includes(rawTier)) unknownTierExamples.push(rawTier);
+      const KNOWN_TIERS = new Set([
+        "Standard","Top 100","HOUSE ACCOUNTS","Silver","Gold","Platinum","Diamond",
+        "Top 100-Gold","Top 100-Diamond","Top 100-Platinum","Top 100-Silver",
+      ]);
+      if (normalized === "Standard" && !KNOWN_TIERS.has(rawTier)) {
+        unknownTierCounts[rawTier] = (unknownTierCounts[rawTier] || 0) + 1;
       }
     }
 
-    // Warn on missing Parent Name (collect up to 3 examples)
+    // ── Missing Parent Name warning ──────────────────────────────
     if (!row["Parent Name"] && missingParentExamples.length < 3) {
       if (!missingParentExamples.includes(parentId)) missingParentExamples.push(parentId);
     }
 
-    // ── RULE: PY and CY from this Tableau export are already credited wholesale ──
-    // Do NOT apply chargeback — they come in post-chargeback
+    // ── Revenue accumulation ─────────────────────────────────────
     if (!childPyQ[childId]) childPyQ[childId] = {};
     if (!childCyQ[childId]) childCyQ[childId] = {};
     if (py !== 0) {
-      childPyQ[childId][q]    = (childPyQ[childId][q]    || 0) + py;
-      childPyQ[childId]["FY"] = (childPyQ[childId]["FY"] || 0) + py;
+      childPyQ[childId][q]     = (childPyQ[childId][q]     || 0) + py;
+      childPyQ[childId]["FY"]  = (childPyQ[childId]["FY"]  || 0) + py;
     }
     if (cy !== 0) {
-      childCyQ[childId][q]    = (childCyQ[childId][q]    || 0) + cy;
-      childCyQ[childId]["FY"] = (childCyQ[childId]["FY"] || 0) + cy;
+      childCyQ[childId][q]     = (childCyQ[childId][q]     || 0) + cy;
+      childCyQ[childId]["FY"]  = (childCyQ[childId]["FY"]  || 0) + cy;
     }
 
+    // ── Product accumulation ─────────────────────────────────────
     if (l3) {
       if (!childProds[childId])      childProds[childId]      = {};
       if (!childProds[childId][l3])  childProds[childId][l3]  = {};
@@ -216,8 +358,7 @@ export function processCSVData(
       };
     }
 
-    // ── RULE: Group name always comes from Parent Name field (strip suffix) ──
-    // ── NEVER use Class 4 as primary — it's often a tier name ──
+    // ── RULE: Group name always from Parent Name — never Class 4 ──
     if (parentId && !parentInfo[parentId]) {
       parentInfo[parentId] = {
         name:   extractGroupName(row["Parent Name"], row["Class 4"], row["Child Name"]),
@@ -226,10 +367,8 @@ export function processCSVData(
       };
     }
 
-    if (parentId) {
-      if (!parentChildren[parentId]) parentChildren[parentId] = new Set();
-      parentChildren[parentId].add(childId);
-    }
+    if (!parentChildren[parentId]) parentChildren[parentId] = new Set();
+    parentChildren[parentId].add(childId);
 
     cleanRowsProcessed++;
   }
@@ -239,24 +378,23 @@ export function processCSVData(
   let finalOffices = 0;
   const groups: any[] = [];
 
-  for (const [pid, childIds] of Object.entries(parentChildren)) {
+  for (const [pid, childIdSet] of Object.entries(parentChildren)) {
     const pi       = parentInfo[pid] || {};
     const children: any[] = [];
     const gPy: Record<string, number> = {};
     const gCy: Record<string, number> = {};
 
-    for (const cid of Array.from(childIds)) {
+    for (const cid of Array.from(childIdSet)) {
       const ci   = childInfo[cid] || {};
       const pyQ: Record<string, number> = {};
       const cyQ: Record<string, number> = {};
-      for (const [k, v] of Object.entries(childPyQ[cid] || {})) { pyQ[String(k)] = Math.round(v); }
-      for (const [k, v] of Object.entries(childCyQ[cid] || {})) { cyQ[String(k)] = Math.round(v); }
+      for (const [k, v] of Object.entries(childPyQ[cid] || {})) { pyQ[String(k)] = Math.round(v as number); }
+      for (const [k, v] of Object.entries(childCyQ[cid] || {})) { cyQ[String(k)] = Math.round(v as number); }
 
-      // ── RULE: PY/CY already credited — no chargeback adjustment needed ──
       const products: any[] = [];
       for (const [l3, vals] of Object.entries(childProds[cid] || {})) {
         const p: any = { n: l3 };
-        for (const [k, v] of Object.entries(vals)) { p[k] = Math.round(v); }
+        for (const [k, v] of Object.entries(vals)) { p[k] = Math.round(v as number); }
         if (Math.abs(p.pyFY || 0) >= 50 || Math.abs(p.cyFY || 0) >= 25) products.push(p);
       }
       products.sort((a, b) => Math.abs(b.pyFY || 0) - Math.abs(a.pyFY || 0));
@@ -264,20 +402,20 @@ export function processCSVData(
       const last      = childLastDate[cid];
       const daysSince = last ? Math.round((ref.getTime() - last.getTime()) / 86400000) : 999;
 
-      const hasMoney  = Object.values(pyQ).some(v => v !== 0) || Object.values(cyQ).some(v => v !== 0);
+      const hasMoney = Object.values(pyQ).some(v => v !== 0) || Object.values(cyQ).some(v => v !== 0);
       if (!hasMoney) { zeroRevenueOfficesDropped++; continue; }
 
       finalOffices++;
       children.push({
-        id:     cid,
-        name:   ci.name,
-        city:   ci.city,
-        st:     ci.st,
-        addr:   ci.addr   || "",
-        tier:   ci.tier   || "Standard",
-        top100: ci.top100 || false,
-        class2: ci.class2 || "",
-        last:   daysSince,
+        id:       cid,
+        name:     ci.name,
+        city:     ci.city,
+        st:       ci.st,
+        addr:     ci.addr   || "",
+        tier:     ci.tier   || "Standard",
+        top100:   ci.top100 || false,
+        class2:   ci.class2 || "",
+        last:     daysSince,
         pyQ,
         cyQ,
         products: products.slice(0, 10),
@@ -295,7 +433,9 @@ export function processCSVData(
 
     const gName =
       pi.name ||
-      (children.length === 1 ? children[0].name : `${children[0].name} (+${children.length - 1})`);
+      (children.length === 1
+        ? children[0].name
+        : `${children[0].name} (+${children.length - 1})`);
 
     groups.push({
       id:     pid,
@@ -315,12 +455,15 @@ export function processCSVData(
 
   // ── Build warnings (deduplicated + summarized) ────────────────
   const warnings: ImportWarning[] = [];
-  if (unknownTierExamples.length > 0) {
+
+  const unknownTierEntries = Object.entries(unknownTierCounts);
+  if (unknownTierEntries.length > 0) {
+    const totalCount = unknownTierEntries.reduce((s, [, n]) => s + n, 0);
     warnings.push({
       code:     "UNKNOWN_TIER",
-      label:    "Rows contained unrecognized Acct Type values — normalized to Standard",
-      count:    unknownTierExamples.length,
-      examples: unknownTierExamples,
+      label:    "Rows had unrecognized Acct Type values — normalized to Standard",
+      count:    totalCount,
+      examples: unknownTierEntries.slice(0, 3).map(([v]) => v),
     });
   }
   if (missingParentExamples.length > 0) {
@@ -343,20 +486,20 @@ export function processCSVData(
   // ── Assemble report ───────────────────────────────────────────
   const report: ImportReport = {
     filename,
-    timestamp: new Date().toISOString(),
-    delimiterDetected,
+    timestamp:              new Date().toISOString(),
+    delimiterDetected:      delimiterDetected as "comma" | "tab" | "unknown",
     encodingDetected,
-    totalRawRows:               rows.length,
+    totalRawRows:           rows.length,
     blankRowsSkipped,
     grandTotalRowsSkipped,
     summaryRowsSkipped,
     noDateRowsSkipped,
     cleanRowsProcessed,
-    uniqueParents:              Object.keys(parentChildren).length,
-    uniqueOffices:              allChildIds.size,
+    uniqueParents:          Object.keys(parentChildren).length,
+    uniqueOffices:          allChildIds.size,
     zeroRevenueOfficesDropped,
     finalOffices,
-    finalGroups:                groups.length,
+    finalGroups:            groups.length,
     warnings,
   };
 
