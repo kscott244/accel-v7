@@ -89,6 +89,7 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup,overlays,saveOverla
   const [savedContacts,setSavedContacts]=useState<any>(null);
   const [showMoveModal,setShowMoveModal]=useState(false);
   const [moveSearch,setMoveSearch]=useState("");
+  const [moveTarget,setMoveTarget]=useState<any>(null);
   const [groupOverride,setGroupOverride]=useState<any>(null);
   const [actLog,setActLog]=useState<any[]>([]);
   const [actType,setActType]=useState("visit");
@@ -545,30 +546,68 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
       <MultiDealerView acct={acct}/>
 
       {/* MOVE TO GROUP MODAL — outside account header card */}
-      {showMoveModal&&<div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.7)",backdropFilter:"blur(8px)",display:"flex",flexDirection:"column",justifyContent:"flex-end"}} onClick={()=>{setShowMoveModal(false);setMoveSearch("");}}>
+      {showMoveModal&&<div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.7)",backdropFilter:"blur(8px)",display:"flex",flexDirection:"column",justifyContent:"flex-end"}} onClick={()=>{setShowMoveModal(false);setMoveSearch("");setMoveTarget(null);}}>
         <div style={{background:T.s1,borderRadius:"20px 20px 0 0",padding:20,maxHeight:"70vh",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-            <div style={{fontSize:13,fontWeight:700}}>Move to Group</div>
-            <button onClick={()=>{setShowMoveModal(false);setMoveSearch("");}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:18}}>✕</button>
+            <div style={{fontSize:13,fontWeight:700}}>{moveTarget?"Confirm Move":"Move to Group"}</div>
+            <button onClick={()=>{setShowMoveModal(false);setMoveSearch("");setMoveTarget(null);}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:18}}>✕</button>
           </div>
-          <div style={{fontSize:11,color:T.t3,marginBottom:12}}>Moving: <strong style={{color:T.t1}}>{acct.name}</strong></div>
-          <input autoFocus type="search" value={moveSearch} onChange={e=>setMoveSearch(e.target.value)}
-            placeholder="Search groups…"
-            style={{width:"100%",height:40,borderRadius:10,border:`1px solid ${T.b1}`,background:T.s2,color:T.t1,fontSize:13,padding:"0 12px",outline:"none",fontFamily:"inherit",marginBottom:12}}/>
-          <div style={{overflowY:"auto",flex:1}}>
-            {moveSearch.trim()&&moveResults.length===0&&<div style={{padding:"20px 0",textAlign:"center",color:T.t4,fontSize:12}}>No groups found</div>}
-            {moveResults.map(g=>(
-              <button key={g.id} onClick={()=>applyGroupOverride(g)}
-                style={{width:"100%",textAlign:"left",background:T.s2,border:`1px solid ${T.b1}`,borderRadius:12,padding:"10px 14px",marginBottom:8,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <div>
-                  <div style={{fontSize:13,fontWeight:600}}>{fixGroupName(g)}</div>
-                  <div style={{fontSize:10,color:T.t3,marginTop:2}}>{g.locs} location{g.locs!==1?"s":""} · {getTierLabel(g.tier,g.class2)}</div>
+
+          {moveTarget ? (
+            /* ── Confirmation view — FROM → TO ── */
+            <div>
+              <div style={{marginBottom:12}}>
+                <div style={{fontSize:9,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:"1px",marginBottom:6}}>From</div>
+                <div style={{background:T.s2,border:`1px solid ${T.b1}`,borderRadius:10,padding:"10px 14px"}}>
+                  <div style={{fontSize:13,fontWeight:600,color:T.t2}}>{acct.gName||"Standalone"}</div>
+                  <div style={{fontSize:10,color:T.t4,marginTop:2}}>{acct.name}</div>
                 </div>
-                <Chev/>
-              </button>
-            ))}
-            {!moveSearch.trim()&&<div style={{padding:"20px 0",textAlign:"center",color:T.t4,fontSize:12}}>Type a group name to search</div>}
-          </div>
+              </div>
+              <div style={{textAlign:"center",fontSize:20,color:T.t4,margin:"4px 0 10px"}}>↓</div>
+              <div style={{marginBottom:20}}>
+                <div style={{fontSize:9,fontWeight:700,color:T.blue,textTransform:"uppercase",letterSpacing:"1px",marginBottom:6}}>To</div>
+                <div style={{background:"rgba(79,142,247,.08)",border:`1px solid rgba(79,142,247,.25)`,borderRadius:10,padding:"10px 14px"}}>
+                  <div style={{fontSize:13,fontWeight:700,color:T.blue}}>{fixGroupName(moveTarget)}</div>
+                  <div style={{fontSize:10,color:T.t4,marginTop:2}}>{moveTarget.locs} location{moveTarget.locs!==1?"s":""} · {getTierLabel(moveTarget.tier,moveTarget.class2)}</div>
+                </div>
+              </div>
+              <div style={{display:"flex",gap:10}}>
+                <button onClick={()=>setMoveTarget(null)}
+                  style={{flex:1,padding:"11px 0",borderRadius:10,border:`1px solid ${T.b1}`,background:"transparent",color:T.t3,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
+                  Back
+                </button>
+                <button onClick={()=>{applyGroupOverride(moveTarget);setMoveTarget(null);}}
+                  style={{flex:2,padding:"11px 0",borderRadius:10,border:"none",background:T.blue,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                  Confirm Move
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* ── Search view ── */
+            <>
+              <div style={{fontSize:11,color:T.t3,marginBottom:10}}>
+                Account: <strong style={{color:T.t1}}>{acct.name}</strong>
+                {acct.gName&&<span style={{color:T.t4}}> · currently in <strong style={{color:T.t3}}>{acct.gName}</strong></span>}
+              </div>
+              <input autoFocus type="search" value={moveSearch} onChange={e=>setMoveSearch(e.target.value)}
+                placeholder="Search groups…"
+                style={{width:"100%",height:40,borderRadius:10,border:`1px solid ${T.b1}`,background:T.s2,color:T.t1,fontSize:13,padding:"0 12px",outline:"none",fontFamily:"inherit",marginBottom:12}}/>
+              <div style={{overflowY:"auto",flex:1}}>
+                {moveSearch.trim()&&moveResults.length===0&&<div style={{padding:"20px 0",textAlign:"center",color:T.t4,fontSize:12}}>No groups found</div>}
+                {moveResults.map(g=>(
+                  <button key={g.id} onClick={()=>setMoveTarget(g)}
+                    style={{width:"100%",textAlign:"left",background:T.s2,border:`1px solid ${T.b1}`,borderRadius:12,padding:"10px 14px",marginBottom:8,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <div>
+                      <div style={{fontSize:13,fontWeight:600}}>{fixGroupName(g)}</div>
+                      <div style={{fontSize:10,color:T.t3,marginTop:2}}>{g.locs} location{g.locs!==1?"s":""} · {getTierLabel(g.tier,g.class2)}</div>
+                    </div>
+                    <Chev/>
+                  </button>
+                ))}
+                {!moveSearch.trim()&&<div style={{padding:"20px 0",textAlign:"center",color:T.t4,fontSize:12}}>Type a group name to search</div>}
+              </div>
+            </>
+          )}
         </div>
       </div>}
 
