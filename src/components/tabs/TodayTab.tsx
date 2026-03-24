@@ -375,7 +375,8 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
       {/* ── WEEKLY DELTA ── */}
       {weeklyDelta && (weeklyDelta.reactivated.length > 0 || weeklyDelta.wentDark.length > 0 || weeklyDelta.bigMovers.length > 0) && (()=>{
         const {reactivated,wentDark,bigMovers,snapshotAge,q} = weeklyDelta;
-        const [deltaOpen, setDeltaOpen] = [deltaOpenState, setDeltaOpenState];
+        const deltaOpen = deltaOpenState;
+        const setDeltaOpen = setDeltaOpenState;
         return <div className="anim" style={{background:T.s1,border:,borderRadius:16,marginBottom:12,overflow:"hidden"}}>
           <button onClick={()=>setDeltaOpen(!deltaOpen)} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit"}}>
             <div style={{display:"flex",alignItems:"center",gap:8}}>
