@@ -7,6 +7,7 @@
 // Used by: AdminTab (CSV upload), preloaded-data.ts generation
 
 import { normalizeTier, isTop100, normalizePracticeType, extractGroupName } from "./tier";
+import type { RawSalesRow } from "./sales";
 
 // DEALERS is loaded at call time via the caller passing it in,
 // or falls back to empty. This keeps the module free of direct data imports.
@@ -268,6 +269,7 @@ export function processCSVData(
   const parentChildren: Record<string, Set<string>>                            = {};
   const childLastDate:  Record<string, Date>                                   = {};
   const allChildIds:    Set<string>                                            = new Set();
+  const rawSalesRows:   RawSalesRow[]                                          = [];
   const ref = new Date();
 
   for (const row of rows) {
@@ -295,6 +297,13 @@ export function processCSVData(
     if (!childId || !parentId) continue;
 
     allChildIds.add(childId);
+
+    // ── Raw sales row — for persistent sales-history layer ───────
+    // Captured before any aggregation so each invoice row is recorded
+    // individually. buildSalesRecords() in sales.ts will skip py=cy=0 rows.
+    if (py !== 0 || cy !== 0) {
+      rawSalesRows.push({ childId, parentId, year, month, quarter: q, l3, py, cy });
+    }
 
     // ── Tier warning accumulation ────────────────────────────────
     const rawTier = (row["Acct Type"] || "").trim();
@@ -525,5 +534,6 @@ export function processCSVData(
     };
   }
 
-  return { groups, generated: new Date().toISOString().slice(0, 10), report, crmCandidates };
+  return { groups, generated: new Date().toISOString().slice(0, 10), report, crmCandidates, rawSalesRows };
 }
+
