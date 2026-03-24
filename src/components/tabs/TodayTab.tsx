@@ -8,7 +8,7 @@ import { Bar, Chev, AccountId } from "@/components/primitives";
 import { BADGER } from "@/lib/data";
 import { scorePriority, BUCKET_STYLE } from "@/lib/priority";
 
-function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGroup,activeQ:activeQProp}) {
+function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGroup,activeQ:activeQProp,weeklyDelta}) {
   const [search, setSearch] = useState("");
   const [odDone, setOdDone] = useState<Record<string,{outcome:string,amt:number,note?:string}>>(() => {
     try { return JSON.parse(localStorage.getItem("overdrive_done") || "{}"); } catch { return {}; }
@@ -16,6 +16,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
   const [odNotePrompt, setOdNotePrompt] = useState<{id:string,outcome:string,amt:number}|null>(null);
   const [odNoteText, setOdNoteText] = useState("");
   const [tripAnchor, setTripAnchor] = useState<any>(null);
+  const [deltaOpenState, setDeltaOpenState] = useState(true);
 
   const saveDone = (id: string, outcome: string, amt: number, note?: string) => {
     const updated = {...odDone, [id]: {outcome, amt, ...(note ? {note} : {})}};
@@ -370,6 +371,55 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
 
     /* ── COMMAND CENTER ── */
     <div style={{padding:"0 16px"}}>
+
+      {/* ── WEEKLY DELTA ── */}
+      {weeklyDelta && (weeklyDelta.reactivated.length > 0 || weeklyDelta.wentDark.length > 0 || weeklyDelta.bigMovers.length > 0) && (()=>{
+        const {reactivated,wentDark,bigMovers,snapshotAge,q} = weeklyDelta;
+        const [deltaOpen, setDeltaOpen] = [deltaOpenState, setDeltaOpenState];
+        return <div className="anim" style={{background:T.s1,border:,borderRadius:16,marginBottom:12,overflow:"hidden"}}>
+          <button onClick={()=>setDeltaOpen(!deltaOpen)} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit"}}>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <span style={{fontSize:11,fontWeight:700,color:T.t1}}>What changed</span>
+              <span style={{fontSize:9,color:T.t4}}>vs {snapshotAge}</span>
+              {reactivated.length>0&&<span style={{fontSize:9,fontWeight:700,color:T.green,background:"rgba(52,211,153,.1)",borderRadius:4,padding:"1px 6px"}}>+{reactivated.length} back</span>}
+              {wentDark.length>0&&<span style={{fontSize:9,fontWeight:700,color:T.red,background:"rgba(248,113,113,.1)",borderRadius:4,padding:"1px 6px"}}>{wentDark.length} dark</span>}
+              {bigMovers.length>0&&<span style={{fontSize:9,fontWeight:700,color:T.amber,background:"rgba(251,191,36,.1)",borderRadius:4,padding:"1px 6px"}}>{bigMovers.length} moved</span>}
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T.t4} strokeWidth="2" style={{transform:deltaOpen?"rotate(180deg)":"none",transition:"transform .2s"}}><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          {deltaOpen && <div style={{padding:"0 16px 14px"}}>
+            {reactivated.length>0&&<>
+              <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.green,marginBottom:6}}>Reactivated — back from /bin/sh</div>
+              {reactivated.map((item:any)=>(
+                <button key={item.id} onClick={()=>goAcct(scored.find((a:any)=>a.id===item.id)||item)} style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",padding:"7px 0",borderBottom:,background:"none",border:"none",borderBottom:,cursor:"pointer",fontFamily:"inherit"}}>
+                  <div style={{textAlign:"left"}}><div style={{fontSize:12,fontWeight:600,color:T.t1}}>{item.name}</div><div style={{fontSize:9,color:T.t4}}>{item.city}, {item.st} · PY {41(item.py)}</div></div>
+                  <div style={{textAlign:"right",flexShrink:0}}><div className="m" style={{fontSize:12,fontWeight:700,color:T.green}}>+{41(item.currCY)}</div><div style={{fontSize:9,color:T.t4}}>was /bin/sh</div></div>
+                </button>
+              ))}
+              <div style={{marginBottom:10}}/>
+            </>}
+            {wentDark.length>0&&<>
+              <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.red,marginBottom:6,marginTop:reactivated.length>0?4:0}}>Went dark — dropped to /bin/sh</div>
+              {wentDark.map((item:any)=>(
+                <button key={item.id} onClick={()=>goAcct(scored.find((a:any)=>a.id===item.id)||item)} style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",padding:"7px 0",background:"none",border:"none",borderBottom:,cursor:"pointer",fontFamily:"inherit"}}>
+                  <div style={{textAlign:"left"}}><div style={{fontSize:12,fontWeight:600,color:T.t1}}>{item.name}</div><div style={{fontSize:9,color:T.t4}}>{item.city}, {item.st} · PY {41(item.py)}</div></div>
+                  <div style={{textAlign:"right",flexShrink:0}}><div className="m" style={{fontSize:12,fontWeight:700,color:T.red}}>-{41(item.prevCY)}</div><div style={{fontSize:9,color:T.t4}}>now /bin/sh</div></div>
+                </button>
+              ))}
+              <div style={{marginBottom:10}}/>
+            </>}
+            {bigMovers.length>0&&<>
+              <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.amber,marginBottom:6,marginTop:(reactivated.length>0||wentDark.length>0)?4:0}}>Big movers — significant change</div>
+              {bigMovers.map((item:any)=>(
+                <button key={item.id} onClick={()=>goAcct(scored.find((a:any)=>a.id===item.id)||item)} style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",padding:"7px 0",background:"none",border:"none",borderBottom:,cursor:"pointer",fontFamily:"inherit"}}>
+                  <div style={{textAlign:"left"}}><div style={{fontSize:12,fontWeight:600,color:T.t1}}>{item.name}</div><div style={{fontSize:9,color:T.t4}}>{item.city}, {item.st} · PY {41(item.py)}</div></div>
+                  <div style={{textAlign:"right",flexShrink:0}}><div className="m" style={{fontSize:12,fontWeight:700,color:item.diff>0?T.green:T.red}}>{item.diff>0?"+":""}{41(item.diff)}</div><div style={{fontSize:9,color:T.t4}}>{41(item.prevCY)} → {41(item.currCY)}</div></div>
+                </button>
+              ))}
+            </>}
+          </div>}
+        </div>;
+      })()}
 
       {/* ── KPI STRIP ── */}
       <div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(79,142,247,.05))`,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16,boxShadow:"0 4px 24px rgba(0,0,0,.4)"}}>
