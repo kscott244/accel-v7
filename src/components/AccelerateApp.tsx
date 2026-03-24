@@ -886,7 +886,7 @@ function AppInner() {
           {!view && tab==="map" && <MapTab/>}
           {!view && tab==="calc" && <DashTab groups={groups||[]} q1CY={q1CY} q1Att={q1Att} q1Gap={q1Gap} scored={scored} goAcct={goSmartFn} activeQ={activeQ||"1"}/>}
           {!view && tab==="est" && <EstTab pct={estPct} setPct={setEstPct} q1CY={q1CY} groups={groups||[]} goAcct={goSmartFn}/>}
-          {!view && tab==="dealers" && <DealersTab scored={scored} groups={groups||[]} goAcct={goAcctFn} goGroup={goGroupFn} activeQ={activeQ||"1"}/>}
+          {!view && tab==="dealers" && <DealersTab scored={scored} groups={groups||[]} goAcct={goSmartFn} goGroup={goGroupFn} activeQ={activeQ||"1"}/>}
           {!view && tab==="outreach" && <OutreachTab scored={scored}/>}
           {!view && tab==="admin" && <AdminTab groups={groups||[]} scored={scored} overlays={overlays} saveOverlays={saveOverlays} salesStore={salesStore}/>}
           {view?.type==="group" && <GroupDetail group={view.data} goMain={()=>setView(null)} overlays={overlays} saveOverlays={saveOverlays} goAcct={(a:any)=>setView({type:"acct",data:{...a,gName:fixGroupName(view.data),gId:view.data.id,gTier:view.data.tier},from:view.data})} salesStore={salesStore}/>}

@@ -702,7 +702,7 @@ function DealersTab({scored,groups,goAcct,goGroup,activeQ:activeQProp}:{scored:a
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:5}}>
                   <div style={{display:"flex",alignItems:"center",gap:7,flex:1,minWidth:0}}>
                     <span style={{fontSize:13,fontWeight:800,color:T.purple,flexShrink:0,width:20}}>{i+1}</span>
-                    <AccountId name={a.name} size="md"/>
+                    <AccountId name={a.name} gName={isMultiLoc?a.gName:undefined} size="md"/>
                     <span style={{flexShrink:0,fontSize:8,fontWeight:700,borderRadius:4,padding:"2px 5px",background:`${chipColor}20`,color:chipColor}}>{a.visitPriority}</span>
                   </div>
                   <span style={{fontSize:13,fontWeight:700,color:T.red,fontFamily:"'JetBrains Mono',monospace",flexShrink:0,marginLeft:8}}>-{$$(a.gap)}</span>
@@ -715,10 +715,10 @@ function DealersTab({scored,groups,goAcct,goGroup,activeQ:activeQProp}:{scored:a
                   </div>
                   {a.deadProducts?.length>0&&<div style={{fontSize:9,color:T.amber,marginTop:3}}>Lost: {a.deadProducts.slice(0,3).map((p:any)=>p.n).join(", ")}</div>}
                 </div>
-                {/* Row 3: Parent group context — only for multi-location groups */}
+                {/* Row 3: Parent group financials — only for multi-location groups */}
                 {isMultiLoc&&<div style={{paddingLeft:27,marginTop:4,paddingTop:6,borderTop:`1px solid ${T.b1}`}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                    <div style={{fontSize:9,color:T.cyan}}>↳ {a.gName?.slice(0,30)} · {gLocs} locs{distLocs<gLocs?` (${distLocs} ${cocallDist})`:""}</div>
+                    <div style={{fontSize:9,color:T.cyan}}>{gLocs} locs{distLocs<gLocs?` (${distLocs} ${cocallDist})`:""}</div>
                     <div style={{fontSize:9,color:T.cyan,fontFamily:"'JetBrains Mono',monospace"}}>Group: PY {$$(gPY)} → CY {$$(gCY)}{gGap>0?<span style={{color:"#f87171"}}> (-{$$(gGap)})</span>:""}</div>
                   </div>
                 </div>}
