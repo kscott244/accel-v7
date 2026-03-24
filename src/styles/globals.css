@@ -21,6 +21,9 @@
     --red: #f87171;
     --purple: #a78bfa;
     --gold: #f59e0b;
+    --root: #c8933a;
+    --root-dim: rgba(200, 147, 58, 0.08);
+    --root-border: rgba(200, 147, 58, 0.20);
     --t1: #f0f0fa;
     --t2: #9898b8;
     --t3: #5c5c7a;
@@ -211,6 +214,36 @@
     color: var(--t4);
   }
 }
+  /* ═══════════════════════════════════════════
+     STEMM — ROOT DEPTH SYSTEM
+     Organic intelligence model: root depth = relationship strength.
+     High root + high gap = recoverable. Low root = build first.
+     ═══════════════════════════════════════════ */
+  .root-track {
+    height: 4px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .root-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .root-fill-deep {
+    background: linear-gradient(90deg, #c8933a, #f59e0b);
+  }
+
+  .root-fill-mid {
+    background: linear-gradient(90deg, rgba(200, 147, 58, 0.7), #c8933a);
+  }
+
+  .root-fill-shallow {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
 
 @layer utilities {
   .text-gradient {
