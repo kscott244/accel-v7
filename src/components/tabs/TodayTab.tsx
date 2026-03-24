@@ -1,14 +1,14 @@
 "use client";
 // @ts-nocheck
 import { useState, useMemo } from "react";
-import { T, Q1_TARGET, FY_TARGET, DAYS_LEFT, HOME_LAT, HOME_LNG } from "@/lib/tokens";
+import { T, Q1_TARGET, FY_TARGET, DAYS_LEFT, QUARTER_TARGETS, daysLeftInQuarter, HOME_LAT, HOME_LNG } from "@/lib/tokens";
 import { normalizeTier, isAccelTier } from "@/lib/tier";
 import { $$, $f, pc } from "@/lib/format";
 import { Bar, Chev, AccountId } from "@/components/primitives";
 import { BADGER } from "@/lib/data";
 import { scorePriority, BUCKET_STYLE } from "@/lib/priority";
 
-function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGroup}) {
+function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGroup,activeQ:activeQProp}) {
   const [search, setSearch] = useState("");
   const [odDone, setOdDone] = useState<Record<string,{outcome:string,amt:number,note?:string}>>(() => {
     try { return JSON.parse(localStorage.getItem("overdrive_done") || "{}"); } catch { return {}; }
@@ -40,20 +40,8 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
     try { localStorage.setItem("overdrive_done", JSON.stringify(updated)); } catch {}
   };
 
-  // ── Auto-detect active quarter from CSV data ──
-  const activeQ = useMemo(() => {
-    const qTotals: Record<string, number> = {};
-    scored.forEach((a: any) => {
-      for (const [q, v] of Object.entries(a.cyQ || {})) {
-        if (!isNaN(Number(q)) && Number(q) >= 1 && Number(q) <= 4)
-          qTotals[q] = (qTotals[q] || 0) + (v as number);
-      }
-    });
-    const highest = Object.entries(qTotals)
-      .filter(([,v]) => v > 0)
-      .sort(([a],[b]) => parseInt(b) - parseInt(a))[0];
-    return highest ? highest[0] : "1";
-  }, [scored]);
+  // ── Active quarter — comes from parent (AccelerateApp), falls back to "1" ──
+  const activeQ = activeQProp || "1";
 
   // ── KPI scope: 2-button [Qn] / [FY] — auto-defaults to activeQ ──
   const [kpiScopePref, setKpiScopePref] = useState<string>(() => {
@@ -75,25 +63,28 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
       const gap = Math.max(0, FY_TARGET - cy);
       return { cy, py, target: FY_TARGET, att, gap, perDay: 0, isFY: true };
     }
-    if (kpiScope === "1") {
-      const py = (groups||[]).reduce((s:number,g:any)=>s+(g.pyQ?.["1"]||0),0);
-      return { cy: q1CY, py, target: Q1_TARGET, att: q1Att, gap: Math.max(0, q1Gap),
-               perDay: DAYS_LEFT > 0 && q1Gap > 0 ? q1Gap / DAYS_LEFT : 0, isFY: false };
+    if (kpiScope === activeQ) {
+      const py = (groups||[]).reduce((s:number,g:any)=>s+(g.pyQ?.[activeQ]||0),0);
+      const target = QUARTER_TARGETS[activeQ] || Q1_TARGET;
+      const dLeft = daysLeftInQuarter(activeQ);
+      return { cy: q1CY, py, target, att: q1Att, gap: Math.max(0, q1Gap),
+               perDay: dLeft > 0 && q1Gap > 0 ? q1Gap / dLeft : 0, isFY: false };
     }
     const cy = (groups||[]).reduce((s:number,g:any)=>s+(g.cyQ?.[kpiScope]||0),0);
     const py = (groups||[]).reduce((s:number,g:any)=>s+(g.pyQ?.[kpiScope]||0),0);
     const att = py > 0 ? cy / py : 0;
     const gap = Math.max(0, py - cy);
-    return { cy, py, target: py, att, gap, perDay: DAYS_LEFT > 0 && gap > 0 ? gap / DAYS_LEFT : 0, isFY: false };
-  }, [kpiScope, groups, q1CY, q1Gap, q1Att]);
+    return { cy, py, target: py, att, gap, perDay: daysLeftInQuarter(kpiScope) > 0 && gap > 0 ? gap / daysLeftInQuarter(kpiScope) : 0, isFY: false };
+  }, [kpiScope, groups, q1CY, q1Gap, q1Att, activeQ]);
 
   // ── OVERDRIVE ENGINE ──
   const overdrive = useMemo(() => {
     if (!scored.length) return null;
 
-    const isEndgame = DAYS_LEFT <= 5;
-    const isSprint  = DAYS_LEFT <= 14;
-    const isCruise  = DAYS_LEFT > 30;
+    const dLeft = daysLeftInQuarter(activeQ);
+    const isEndgame = dLeft <= 5;
+    const isSprint  = dLeft <= 14;
+    const isCruise  = dLeft > 30;
     const modeLabel = isEndgame ? "🔴 Endgame" : isSprint ? "🟡 Sprint" : isCruise ? "🟢 Pipeline" : "🟠 Push";
 
     const distMiles = (lat?: number, lng?: number): number => {
@@ -106,8 +97,8 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
     };
 
     const scoreAccount = (a: any, track: string) => {
-      const py = a.pyQ?.["1"] || 0;
-      const cy = a.cyQ?.["1"] || 0;
+      const py = a.pyQ?.[activeQ] || 0;
+      const cy = a.cyQ?.[activeQ] || 0;
       const gap = py - cy;
       const retPct = py > 0 ? cy / py : 0;
       const badger = BADGER[a.id] || BADGER[a.gId] || null;
@@ -191,10 +182,10 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
 
     const darkMaxPY = isEndgame ? 800 : isSprint ? 2000 : 999999;
     const upliftRaw = scored
-      .filter((a: any) => (a.cyQ?.["1"]||0) > 0 && (a.pyQ?.["1"]||0) > (a.cyQ?.["1"]||0))
+      .filter((a: any) => (a.cyQ?.[activeQ]||0) > 0 && (a.pyQ?.[activeQ]||0) > (a.cyQ?.[activeQ]||0))
       .map((a: any) => scoreAccount(a, "uplift"));
     const darkRaw = scored
-      .filter((a: any) => (a.cyQ?.["1"]||0) === 0 && (a.pyQ?.["1"]||0) > 200 && (a.pyQ?.["1"]||0) <= darkMaxPY)
+      .filter((a: any) => (a.cyQ?.[activeQ]||0) === 0 && (a.pyQ?.[activeQ]||0) > 200 && (a.pyQ?.[activeQ]||0) <= darkMaxPY)
       .map((a: any) => scoreAccount(a, "dark"));
     const allCandidates = [...new Map([...upliftRaw, ...darkRaw].map((a: any) => [a.id, a])).values()];
 
@@ -349,7 +340,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
       <div style={{fontSize:10,color:T.t4,marginBottom:10}}>{searchResults.length} result{searchResults.length!==1?"s":""} for "{search}"</div>
       {searchResults.length===0&&<div style={{padding:"24px 0",textAlign:"center",color:T.t4,fontSize:12}}>No accounts found.</div>}
       {searchResults.map((a,i)=>{
-        const py=a.pyQ?.["1"]||0; const cy=a.cyQ?.["1"]||0; const gap=py-cy;
+        const py=a.pyQ?.[activeQ]||0; const cy=a.cyQ?.[activeQ]||0; const gap=py-cy;
         const ret=py>0?cy/py:0;
         return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
           style={{animationDelay:`${i*15}ms`,width:"100%",textAlign:"left",background:T.s1,
@@ -705,3 +696,4 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
 }
 
 export default DashboardTab;
+
