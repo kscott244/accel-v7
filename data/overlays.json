@@ -330,11 +330,25 @@
       "score": 98,
       "createdAt": "2026-03-24T20:29:17.796Z",
       "updatedAt": "2026-03-24T20:29:17.796Z"
+    },
+    "Master-CM265093": {
+      "id": "Master-CM265093",
+      "name": "CARING DENTAL GROUP",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM265093",
+        "Master-CM867844"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 98,
+      "createdAt": "2026-03-24T20:29:19.060Z",
+      "updatedAt": "2026-03-24T20:29:19.060Z"
     }
   },
   "groupDetaches": [],
   "groupMoves": {},
-  "lastUpdated": "2026-03-24T20:29:17.666Z",
+  "lastUpdated": "2026-03-24T20:29:18.937Z",
   "groupNotes": {
     "Master-CM175757": "The account is lost - unless we can get another distributor to try and take business from Schein then we are not going to win.  The large order they placed in Dec-2025 was to get the chargeback Kerr offered.  I mention to AJ we could probably work out another chargeback and he said no\n",
     "Master-CM591885": "Spoke with both Rich and Lori from Schein - They are actually losing the business as well so this is not just dealer switched to another product "
