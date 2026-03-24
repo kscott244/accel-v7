@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { T } from "@/lib/tokens";
 import { $$, $f, pc } from "@/lib/format";
 import { getTierLabel } from "@/lib/tier";
-import { BADGER } from "@/lib/data";
+import { BADGER, OVERLAYS_REF } from "@/lib/data";
 import { Back, Chev, Pill, Stat, AccountId, fixGroupName } from "@/components/primitives";
 
 let SCHEIN_REPS: {fsc:any[], es:any[]} = {fsc:[], es:[]};

@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { T } from "@/lib/tokens";
 import { $$, $f, pc } from "@/lib/format";
-import { BADGER, DEALERS, DEALER_REPS } from "@/lib/data";
+import { BADGER, DEALERS, DEALER_REPS, OVERLAYS_REF } from "@/lib/data";
 import { Back, Chev, Stat, AccountId } from "@/components/primitives";
 
 // ─── STANDALONE CALCULATOR TAB ───────────────────────────────────

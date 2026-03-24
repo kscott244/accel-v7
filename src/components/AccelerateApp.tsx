@@ -25,17 +25,14 @@ class ErrorBoundary extends Component<{children:any},{err:any,info:any}> {
 }
 
 // Static data — single source of truth in src/lib/data.ts
-import { BADGER, PARENT_NAMES, DEALERS, PARENT_DEALERS, WEEK_ROUTES } from "@/lib/data";
+import { BADGER, PARENT_NAMES, DEALERS, PARENT_DEALERS, WEEK_ROUTES, OVERLAYS_REF as _OVERLAYS_REF_INIT, EMPTY_OVERLAYS } from "@/lib/data";
+import * as DataModule from "@/lib/data";
 
 // OVERLAYS: runtime-loaded from data/overlays.json via API — NOT a static import
 // Default empty shape used until loadOverlays() resolves on app mount
-const EMPTY_OVERLAYS: any = {
-  schemaVersion: 2, lastUpdated: new Date().toISOString(),
-  groups: {}, groupDetaches: [], groupMoves: {}, nameOverrides: {},
-  contacts: {}, fscReps: {}, activityLogs: {}, research: {}, dealerOverrides: {},
-};
-// Module-level ref so applyOverlays() (called outside React) can access current overlays
-let OVERLAYS_REF: any = EMPTY_OVERLAYS;
+// OVERLAYS_REF and EMPTY_OVERLAYS live in @/lib/data — imported above
+// All tabs import OVERLAYS_REF from there so mutations are shared
+let OVERLAYS_REF: any = _OVERLAYS_REF_INIT;
 
 // ─── APPLY OVERLAYS ─────────────────────────────────────────────
 // Applies all user-authored overlays on top of base data.
@@ -253,9 +250,10 @@ function AppInner() {
   const [overlaySaveStatus, setOverlaySaveStatus] = useState<"idle"|"saving"|"saved"|"error">("idle");
   const [overlaySaveError, setOverlaySaveError] = useState<string|null>(null);
 
-  // Keep OVERLAYS_REF in sync so applyOverlays() (called outside React) always has current data
+  // Keep OVERLAYS_REF in sync — both local and shared DataModule ref
   const setOverlays = (next: any) => {
     OVERLAYS_REF = next;
+    DataModule.OVERLAYS_REF = next;
     setOverlaysState(next);
   };
 

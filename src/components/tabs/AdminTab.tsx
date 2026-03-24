@@ -6,7 +6,7 @@ import { $$ } from "@/lib/format";
 import CPID_MERGES from "@/data/cpid-pending-merges.json";
 import CPID_REVIEW from "@/data/cpid-review-queue.json";
 
-import { BADGER } from "@/lib/data";
+import { BADGER, OVERLAYS_REF } from "@/lib/data";
 import { AccountId } from "@/components/primitives";
 
 function AdminTab({groups, scored, overlays, saveOverlays}:{groups:any[], scored:any[], overlays:any, saveOverlays:any}) {

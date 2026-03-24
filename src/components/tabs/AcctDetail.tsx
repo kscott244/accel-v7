@@ -5,7 +5,7 @@ import { T } from "@/lib/tokens";
 import { normalizeTier, getTierRate, getTierLabel, isAccelTier } from "@/lib/tier";
 import { $$, $f, pc, getHealthStatus } from "@/lib/format";
 import { SKU } from "@/data/sku-data";
-import { BADGER } from "@/lib/data";
+import { BADGER, OVERLAYS_REF } from "@/lib/data";
 import { Back, Chev, Pill, Stat, Bar, AccountId, fixGroupName } from "@/components/primitives";
 import { scorePriority } from "@/lib/priority";
 import { branchSpread } from "@/lib/stemm";

@@ -14,6 +14,16 @@ export let PARENT_DEALERS: Record<string, string> = {};
 export let WEEK_ROUTES: any = { routes: {}, unplaced: [] };
 export let DEALER_REPS: Record<string, any> = {};
 
+// Mutable overlay ref — shared across all tabs.
+// AccelerateApp.applyOverlays() writes into this at runtime.
+// All tabs that read or mutate overlays must import from here.
+export const EMPTY_OVERLAYS: any = {
+  schemaVersion: 2, lastUpdated: new Date().toISOString(),
+  groups: {}, groupDetaches: [], groupMoves: {}, nameOverrides: {},
+  contacts: {}, fscReps: {}, activityLogs: {}, research: {}, dealerOverrides: {},
+};
+export let OVERLAYS_REF: any = EMPTY_OVERLAYS;
+
 try { BADGER        = require("@/data/badger-lookup.json");        } catch(e) {}
 try { PARENT_NAMES  = require("@/data/parent-names.json");         } catch(e) {}
 try { DEALERS       = require("@/data/dealers").DEALERS;           } catch(e) {}
