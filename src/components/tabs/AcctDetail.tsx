@@ -10,6 +10,71 @@ import { Back, Chev, Pill, Stat, Bar, AccountId, fixGroupName } from "@/componen
 import { scorePriority } from "@/lib/priority";
 import { branchSpread } from "@/lib/stemm";
 
+// ─── MULTI-DEALER COMBINED VIEW ──────────────────────────────────
+function MultiDealerView({acct}) {
+  const [expanded, setExpanded] = useState(false);
+  const sibs:any[] = acct.addrSiblings || [];
+  if(sibs.length === 0) return null;
+  const combPY = acct.combinedPY ?? ((acct.pyQ?.["1"]||0) + sibs.reduce((s:number,x:any)=>s+(x.pyQ1||0),0));
+  const combCY = acct.combinedCY ?? ((acct.cyQ?.["1"]||0) + sibs.reduce((s:number,x:any)=>s+(x.cyQ1||0),0));
+  const combGap = combPY - combCY;
+  const combRet = combPY > 0 ? Math.round(combCY/combPY*100) : 0;
+  const allAccts = [
+    {name: acct.name, dealer: acct.dealer||'Unknown', pyQ1: acct.pyQ?.["1"]||0, cyQ1: acct.cyQ?.["1"]||0, id: acct.id, isSelf: true},
+    ...sibs.map((s:any) => ({...s, isSelf: false}))
+  ].filter(a => (a.pyQ1||0) > 0 || (a.cyQ1||0) > 0)
+   .sort((a,b) => (b.pyQ1||0) - (a.pyQ1||0));
+  const isActuallyUp = combGap <= 0;
+  return <div className="anim" style={{animationDelay:"30ms",background:"rgba(34,211,238,.04)",border:`1px solid rgba(34,211,238,.15)`,borderRadius:16,padding:14,marginBottom:12}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+      <div style={{display:"flex",alignItems:"center",gap:6}}>
+        <span style={{fontSize:10,fontWeight:700,color:T.cyan,textTransform:"uppercase",letterSpacing:"1px"}}>All Distributors</span>
+        <span style={{fontSize:9,color:T.cyan,background:"rgba(34,211,238,.1)",borderRadius:4,padding:"1px 5px",border:"1px solid rgba(34,211,238,.2)"}}>{sibs.length+1} dealers</span>
+      </div>
+      <button onClick={()=>setExpanded(!expanded)} style={{background:"none",border:"none",color:T.cyan,cursor:"pointer",fontSize:10,fontWeight:600,fontFamily:"inherit"}}>{expanded?"Hide":"Breakdown"}</button>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8,marginBottom:expanded?12:0}}>
+      <Stat l="PY" v={$$(combPY)} c={T.t2}/>
+      <Stat l="CY" v={$$(combCY)} c={T.blue}/>
+      <Stat l="True Gap" v={combGap<=0?`+${$$(Math.abs(combGap))}`:$$(combGap)} c={isActuallyUp?T.green:T.red}/>
+      <Stat l="Ret" v={combRet+"%"} c={combRet>30?T.green:combRet>15?T.amber:T.red}/>
+    </div>
+    {isActuallyUp&&<div style={{fontSize:10,color:T.green,marginBottom:expanded?10:0}}>✓ Account is net positive across all distributors</div>}
+    {expanded&&<div>
+      <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t4,marginBottom:8}}>Dealer Share</div>
+      {allAccts.map((a,i)=>{
+        const py = a.pyQ1||0; const cy = a.cyQ1||0;
+        const pyPct = combPY > 0 ? Math.round(py/combPY*100) : 0;
+        const cyPct = combCY > 0 ? Math.round(cy/combCY*100) : 0;
+        const pctShift = cyPct - pyPct;
+        return <div key={a.id} style={{marginBottom:10,padding:"8px 10px",borderRadius:8,background:a.isSelf?"rgba(79,142,247,.06)":T.s2,border:`1px solid ${a.isSelf?"rgba(79,142,247,.15)":T.b2}`}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+            <div style={{flex:1,minWidth:0}}>
+              <span style={{fontSize:11,fontWeight:600,color:a.isSelf?T.blue:T.t1}}>{a.name}</span>
+              {a.isSelf&&<span style={{fontSize:8,color:T.blue,marginLeft:5}}>← this account</span>}
+              <div style={{fontSize:9,color:T.t4}}>{a.dealer}</div>
+            </div>
+            <div style={{textAlign:"right",flexShrink:0,marginLeft:8}}>
+              <div style={{fontSize:10,fontWeight:600,fontFamily:"'DM Mono',monospace",color:T.blue}}>{$$(cy)}</div>
+              <div style={{fontSize:9,color:T.t4,fontFamily:"'DM Mono',monospace"}}>{$$(py)} PY</div>
+            </div>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+            <div style={{flex:1,height:4,borderRadius:2,background:T.s3,overflow:"hidden"}}>
+              <div style={{height:"100%",borderRadius:2,width:`${Math.min(cyPct,100)}%`,background:cyPct>=pyPct?`linear-gradient(90deg,${T.blue},${T.cyan})`:T.amber,transition:"width .4s ease"}}/>
+            </div>
+            <span style={{fontSize:9,color:T.t3,flexShrink:0,minWidth:50,textAlign:"right"}}>
+              <span style={{color:T.t2,fontWeight:600}}>{cyPct}%</span>
+              {pctShift !== 0 && <span style={{color:pctShift>0?T.green:T.red,marginLeft:3}}>{pctShift>0?"+":""}{pctShift}%</span>}
+              {" PY "+pyPct+"%"}
+            </span>
+          </div>
+        </div>;
+      })}
+    </div>}
+  </div>;
+}
+
 function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup,overlays,saveOverlays,reapplyGroupOverrides=null,goAcct=null,salesStore=null}) {
   const [q,setQ]=useState("1");
   const [showForm,setShowForm]=useState(false);
@@ -477,74 +542,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
       </div>
 
       {/* MULTI-DEALER COMBINED VIEW */}
-      {(()=>{
-        const sibs:any[] = acct.addrSiblings || [];
-        if(sibs.length === 0) return null;
-        const [expanded, setExpanded] = useState(false);
-        const combPY = acct.combinedPY ?? ((acct.pyQ?.["1"]||0) + sibs.reduce((s:number,x:any)=>s+(x.pyQ1||0),0));
-        const combCY = acct.combinedCY ?? ((acct.cyQ?.["1"]||0) + sibs.reduce((s:number,x:any)=>s+(x.cyQ1||0),0));
-        const combGap = combPY - combCY;
-        const combRet = combPY > 0 ? Math.round(combCY/combPY*100) : 0;
-        // Build dealer share rows — this account + siblings
-        const allAccts = [
-          {name: acct.name, dealer: acct.dealer||'Unknown', pyQ1: acct.pyQ?.["1"]||0, cyQ1: acct.cyQ?.["1"]||0, id: acct.id, isSelf: true},
-          ...sibs.map((s:any) => ({...s, isSelf: false}))
-        ].filter(a => (a.pyQ1||0) > 0 || (a.cyQ1||0) > 0)
-         .sort((a,b) => (b.pyQ1||0) - (a.pyQ1||0));
-        const isActuallyUp = combGap <= 0;
-        return <div className="anim" style={{animationDelay:"30ms",background:"rgba(34,211,238,.04)",border:`1px solid rgba(34,211,238,.15)`,borderRadius:16,padding:14,marginBottom:12}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-            <div style={{display:"flex",alignItems:"center",gap:6}}>
-              <span style={{fontSize:10,fontWeight:700,color:T.cyan,textTransform:"uppercase",letterSpacing:"1px"}}>All Distributors</span>
-              <span style={{fontSize:9,color:T.cyan,background:"rgba(34,211,238,.1)",borderRadius:4,padding:"1px 5px",border:"1px solid rgba(34,211,238,.2)"}}>{sibs.length+1} dealers</span>
-            </div>
-            <button onClick={()=>setExpanded(!expanded)} style={{background:"none",border:"none",color:T.cyan,cursor:"pointer",fontSize:10,fontWeight:600,fontFamily:"inherit"}}>{expanded?"Hide":"Breakdown"}</button>
-          </div>
-          {/* Combined totals — the TRUE number */}
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8,marginBottom:expanded?12:0}}>
-            <Stat l="PY" v={$$(combPY)} c={T.t2}/>
-            <Stat l="CY" v={$$(combCY)} c={T.blue}/>
-            <Stat l="True Gap" v={combGap<=0?`+${$$(Math.abs(combGap))}`:$$(combGap)} c={isActuallyUp?T.green:T.red}/>
-            <Stat l="Ret" v={combRet+"%"} c={combRet>30?T.green:combRet>15?T.amber:T.red}/>
-          </div>
-          {isActuallyUp&&<div style={{fontSize:10,color:T.green,marginBottom:expanded?10:0}}>✓ Account is net positive across all distributors</div>}
-          {/* Dealer breakdown — expandable */}
-          {expanded&&<div>
-            <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t4,marginBottom:8}}>Dealer Share</div>
-            {allAccts.map((a,i)=>{
-              const py = a.pyQ1||0; const cy = a.cyQ1||0;
-              const pyPct = combPY > 0 ? Math.round(py/combPY*100) : 0;
-              const cyPct = combCY > 0 ? Math.round(cy/combCY*100) : 0;
-              const pctShift = cyPct - pyPct;
-              const barW = Math.max(cyPct, pyPct);
-              return <div key={a.id} style={{marginBottom:10,padding:"8px 10px",borderRadius:8,background:a.isSelf?"rgba(79,142,247,.06)":T.s2,border:`1px solid ${a.isSelf?"rgba(79,142,247,.15)":T.b2}`}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-                  <div style={{flex:1,minWidth:0}}>
-                    <span style={{fontSize:11,fontWeight:600,color:a.isSelf?T.blue:T.t1}}>{a.name}</span>
-                    {a.isSelf&&<span style={{fontSize:8,color:T.blue,marginLeft:5}}>← this account</span>}
-                    <div style={{fontSize:9,color:T.t4}}>{a.dealer}</div>
-                  </div>
-                  <div style={{textAlign:"right",flexShrink:0,marginLeft:8}}>
-                    <div style={{fontSize:10,fontWeight:600,fontFamily:"'DM Mono',monospace",color:T.blue}}>{$$(cy)}</div>
-                    <div style={{fontSize:9,color:T.t4,fontFamily:"'DM Mono',monospace"}}>{$$(py)} PY</div>
-                  </div>
-                </div>
-                {/* Share bar */}
-                <div style={{display:"flex",alignItems:"center",gap:6}}>
-                  <div style={{flex:1,height:4,borderRadius:2,background:T.s3,overflow:"hidden"}}>
-                    <div style={{height:"100%",borderRadius:2,width:`${Math.min(cyPct,100)}%`,background:cyPct>=pyPct?`linear-gradient(90deg,${T.blue},${T.cyan})`:T.amber,transition:"width .4s ease"}}/>
-                  </div>
-                  <span style={{fontSize:9,color:T.t3,flexShrink:0,minWidth:50,textAlign:"right"}}>
-                    <span style={{color:T.t2,fontWeight:600}}>{cyPct}%</span>
-                    {pctShift !== 0 && <span style={{color:pctShift>0?T.green:T.red,marginLeft:3}}>{pctShift>0?"+":""}{pctShift}%</span>}
-                    {" PY "+pyPct+"%"}
-                  </span>
-                </div>
-              </div>;
-            })}
-          </div>}
-        </div>;
-      })()}
+      <MultiDealerView acct={acct}/>
 
       {/* MOVE TO GROUP MODAL — outside account header card */}
       {showMoveModal&&<div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.7)",backdropFilter:"blur(8px)",display:"flex",flexDirection:"column",justifyContent:"flex-end"}} onClick={()=>{setShowMoveModal(false);setMoveSearch("");}}>

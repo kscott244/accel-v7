@@ -377,7 +377,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
         const {reactivated,wentDark,bigMovers,snapshotAge,q} = weeklyDelta;
         const deltaOpen = deltaOpenState;
         const setDeltaOpen = setDeltaOpenState;
-        return <div className="anim" style={{background:T.s1,border:,borderRadius:16,marginBottom:12,overflow:"hidden"}}>
+        return <div className="anim" style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,marginBottom:12,overflow:"hidden"}}>
           <button onClick={()=>setDeltaOpen(!deltaOpen)} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit"}}>
             <div style={{display:"flex",alignItems:"center",gap:8}}>
               <span style={{fontSize:11,fontWeight:700,color:T.t1}}>What changed</span>
@@ -390,21 +390,21 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
           </button>
           {deltaOpen && <div style={{padding:"0 16px 14px"}}>
             {reactivated.length>0&&<>
-              <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.green,marginBottom:6}}>Reactivated — back from /bin/sh</div>
+              <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.green,marginBottom:6}}>Reactivated — back from $0</div>
               {reactivated.map((item:any)=>(
-                <button key={item.id} onClick={()=>goAcct(scored.find((a:any)=>a.id===item.id)||item)} style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",padding:"7px 0",borderBottom:,background:"none",border:"none",borderBottom:,cursor:"pointer",fontFamily:"inherit"}}>
-                  <div style={{textAlign:"left"}}><div style={{fontSize:12,fontWeight:600,color:T.t1}}>{item.name}</div><div style={{fontSize:9,color:T.t4}}>{item.city}, {item.st} · PY {41(item.py)}</div></div>
-                  <div style={{textAlign:"right",flexShrink:0}}><div className="m" style={{fontSize:12,fontWeight:700,color:T.green}}>+{41(item.currCY)}</div><div style={{fontSize:9,color:T.t4}}>was /bin/sh</div></div>
+                <button key={item.id} onClick={()=>goAcct(scored.find((a:any)=>a.id===item.id)||item)} style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",padding:"7px 0",background:"none",border:"none",borderBottom:`1px solid ${T.b2}`,cursor:"pointer",fontFamily:"inherit"}}>
+                  <div style={{textAlign:"left"}}><div style={{fontSize:12,fontWeight:600,color:T.t1}}>{item.name}</div><div style={{fontSize:9,color:T.t4}}>{item.city}, {item.st} · PY {$$(item.py)}</div></div>
+                  <div style={{textAlign:"right",flexShrink:0}}><div className="m" style={{fontSize:12,fontWeight:700,color:T.green}}>+{$$(item.currCY)}</div><div style={{fontSize:9,color:T.t4}}>was $0</div></div>
                 </button>
               ))}
               <div style={{marginBottom:10}}/>
             </>}
             {wentDark.length>0&&<>
-              <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.red,marginBottom:6,marginTop:reactivated.length>0?4:0}}>Went dark — dropped to /bin/sh</div>
+              <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.red,marginBottom:6,marginTop:reactivated.length>0?4:0}}>Went dark — dropped to $0</div>
               {wentDark.map((item:any)=>(
-                <button key={item.id} onClick={()=>goAcct(scored.find((a:any)=>a.id===item.id)||item)} style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",padding:"7px 0",background:"none",border:"none",borderBottom:,cursor:"pointer",fontFamily:"inherit"}}>
-                  <div style={{textAlign:"left"}}><div style={{fontSize:12,fontWeight:600,color:T.t1}}>{item.name}</div><div style={{fontSize:9,color:T.t4}}>{item.city}, {item.st} · PY {41(item.py)}</div></div>
-                  <div style={{textAlign:"right",flexShrink:0}}><div className="m" style={{fontSize:12,fontWeight:700,color:T.red}}>-{41(item.prevCY)}</div><div style={{fontSize:9,color:T.t4}}>now /bin/sh</div></div>
+                <button key={item.id} onClick={()=>goAcct(scored.find((a:any)=>a.id===item.id)||item)} style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",padding:"7px 0",background:"none",border:"none",borderBottom:`1px solid ${T.b2}`,cursor:"pointer",fontFamily:"inherit"}}>
+                  <div style={{textAlign:"left"}}><div style={{fontSize:12,fontWeight:600,color:T.t1}}>{item.name}</div><div style={{fontSize:9,color:T.t4}}>{item.city}, {item.st} · PY {$$(item.py)}</div></div>
+                  <div style={{textAlign:"right",flexShrink:0}}><div className="m" style={{fontSize:12,fontWeight:700,color:T.red}}>-{$$(item.prevCY)}</div><div style={{fontSize:9,color:T.t4}}>now $0</div></div>
                 </button>
               ))}
               <div style={{marginBottom:10}}/>
@@ -412,9 +412,9 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
             {bigMovers.length>0&&<>
               <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.amber,marginBottom:6,marginTop:(reactivated.length>0||wentDark.length>0)?4:0}}>Big movers — significant change</div>
               {bigMovers.map((item:any)=>(
-                <button key={item.id} onClick={()=>goAcct(scored.find((a:any)=>a.id===item.id)||item)} style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",padding:"7px 0",background:"none",border:"none",borderBottom:,cursor:"pointer",fontFamily:"inherit"}}>
-                  <div style={{textAlign:"left"}}><div style={{fontSize:12,fontWeight:600,color:T.t1}}>{item.name}</div><div style={{fontSize:9,color:T.t4}}>{item.city}, {item.st} · PY {41(item.py)}</div></div>
-                  <div style={{textAlign:"right",flexShrink:0}}><div className="m" style={{fontSize:12,fontWeight:700,color:item.diff>0?T.green:T.red}}>{item.diff>0?"+":""}{41(item.diff)}</div><div style={{fontSize:9,color:T.t4}}>{41(item.prevCY)} → {41(item.currCY)}</div></div>
+                <button key={item.id} onClick={()=>goAcct(scored.find((a:any)=>a.id===item.id)||item)} style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",padding:"7px 0",background:"none",border:"none",borderBottom:`1px solid ${T.b2}`,cursor:"pointer",fontFamily:"inherit"}}>
+                  <div style={{textAlign:"left"}}><div style={{fontSize:12,fontWeight:600,color:T.t1}}>{item.name}</div><div style={{fontSize:9,color:T.t4}}>{item.city}, {item.st} · PY {$$(item.py)}</div></div>
+                  <div style={{textAlign:"right",flexShrink:0}}><div className="m" style={{fontSize:12,fontWeight:700,color:item.diff>0?T.green:T.red}}>{item.diff>0?"+":""}{$$(item.diff)}</div><div style={{fontSize:9,color:T.t4}}>{$$(item.prevCY)} → {$$(item.currCY)}</div></div>
                 </button>
               ))}
             </>}
