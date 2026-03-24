@@ -10,7 +10,7 @@ import { Back, Chev, Pill, Stat, Bar, AccountId, fixGroupName } from "@/componen
 import { scorePriority } from "@/lib/priority";
 import { branchSpread } from "@/lib/stemm";
 
-function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup,overlays,saveOverlays,reapplyGroupOverrides=null,goAcct=null}) {
+function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup,overlays,saveOverlays,reapplyGroupOverrides=null,goAcct=null,salesStore=null}) {
   const [q,setQ]=useState("1");
   const [showForm,setShowForm]=useState(false);
   const [toast,setToast]=useState(null);
@@ -924,6 +924,41 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
       })()}
     </div>
 
+    {/* SALES HISTORY CARD */}
+    {(()=>{
+      const records = salesStore?.records ? Object.values(salesStore.records).filter((r:any) => r.childId === acct.id) : [];
+      // Sort newest-first: year desc, month desc
+      records.sort((a:any,b:any) => b.year!==a.year ? b.year-a.year : b.month-a.month);
+      const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      return (
+        <div className="anim" style={{animationDelay:"300ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12}}>
+          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3,marginBottom:10}}>Sales History</div>
+          {records.length===0
+            ? <div style={{fontSize:11,color:T.t4,textAlign:"center",padding:"6px 0"}}>No history on record — upload a CSV to populate.</div>
+            : <>
+                {/* Table header */}
+                <div style={{display:"grid",gridTemplateColumns:"80px 48px 1fr 1fr",gap:4,marginBottom:6,paddingBottom:6,borderBottom:`1px solid ${T.b1}`}}>
+                  <span style={{fontSize:9,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:.5}}>Month</span>
+                  <span style={{fontSize:9,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:.5}}>Q</span>
+                  <span style={{fontSize:9,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:.5,textAlign:"right"}}>PY</span>
+                  <span style={{fontSize:9,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:.5,textAlign:"right"}}>CY</span>
+                </div>
+                {/* Table rows */}
+                {records.map((r:any,i:number)=>(
+                  <div key={r.txKey} style={{display:"grid",gridTemplateColumns:"80px 48px 1fr 1fr",gap:4,padding:"5px 0",borderBottom:i<records.length-1?`1px solid ${T.b1}`:"none",alignItems:"center"}}>
+                    <span style={{fontSize:11,color:T.t2}}>{MONTHS[(r.month||1)-1]} {r.year}</span>
+                    <span style={{fontSize:11,color:T.t3}}>Q{r.quarter}</span>
+                    <span style={{fontSize:11,fontFamily:"'JetBrains Mono',monospace",color:r.py>0?T.t2:T.t4,textAlign:"right"}}>{r.py>0?`$${r.py.toLocaleString()}`:"—"}</span>
+                    <span style={{fontSize:11,fontFamily:"'JetBrains Mono',monospace",color:r.cy>0?T.cyan:T.t4,textAlign:"right"}}>{r.cy>0?`$${r.cy.toLocaleString()}`:"—"}</span>
+                  </div>
+                ))}
+                <div style={{fontSize:9,color:T.t4,marginTop:8,textAlign:"right"}}>{records.length} record{records.length!==1?"s":""}</div>
+              </>
+          }
+        </div>
+      );
+    })()}
+
     {/* GROUP LINK MODAL */}
     {suggestModal&&<div style={{position:"fixed",inset:0,zIndex:210,background:"rgba(0,0,0,.75)",backdropFilter:"blur(8px)",display:"flex",alignItems:"flex-end"}} onClick={()=>setSuggestModal(false)}>
       <div style={{width:"100%",background:T.s1,borderRadius:"20px 20px 0 0",padding:20,maxHeight:"80vh",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
@@ -1078,3 +1113,4 @@ function SaleCalculator({acctTier,tierRate,isAccel,acctType,onAdd}) {
 }
 
 export default AcctDetail;
+
