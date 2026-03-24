@@ -579,9 +579,9 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
             <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan}}>Field Intel</span>
           </div>
           {badger.feel&&<div style={{display:"flex",gap:2}}>{[1,2,3,4,5].map(i=><div key={i} style={{width:8,height:8,borderRadius:"50%",background:i<=parseFloat(badger.feel)?T.amber:"rgba(255,255,255,.1)"}}/>)}</div>}
-        {/* ROOT DEPTH — STEMM relationship strength indicator */}
+        {/* ROOT DEPTH — STEMM relationship strength */}
         <div style={{marginTop:10,paddingTop:8,borderTop:"1px solid rgba(255,255,255,.05)"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}> 
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
             <span style={{fontSize:9,textTransform:"uppercase",color:"var(--t3)",letterSpacing:"1px"}}>Root Depth</span>
             <span style={{fontSize:9,fontWeight:700,fontFamily:"JetBrains Mono,monospace",color:rootStrength>=60?"var(--root)":rootStrength>=30?"rgba(200,147,58,.7)":"var(--t4)"}}>
               {rootStrength>=70?"Deep":rootStrength>=45?"Established":rootStrength>=25?"Developing":"Uncharted"}
@@ -611,9 +611,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
             <div style={{fontSize:11,fontWeight:600,color:T.amber}}>{badger.accelLevel}</div>
           </div>}
         </div>
-        {badger.notes&&<div style={{fontSize:11,color:T.t2,lineHeight:1.5,background:T.s2,borderRadius:8,padding:"8px 10px",marginBottom:badger.visitNotes?8:0,whiteSpace:"pre-wrap"}}>{badger.notes.replace(/
-/g,'
-')}</div>}
+        {badger.notes&&<div style={{fontSize:11,color:T.t2,lineHeight:1.5,background:T.s2,borderRadius:8,padding:"8px 10px",marginBottom:badger.visitNotes?8:0,whiteSpace:"pre-wrap"}}>{badger.notes.replace(/\\n/g,'\n')}</div>}
         {badger.visitNotes&&<div>
           <div style={{fontSize:9,textTransform:"uppercase",color:T.t3,marginBottom:3}}>Last Visit{badger.lastVisit?` · ${badger.lastVisit}`:""}</div>
           <div style={{fontSize:11,color:T.t3,lineHeight:1.5,fontStyle:"italic"}}>"{badger.visitNotes}"</div>
