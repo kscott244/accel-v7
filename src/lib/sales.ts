@@ -137,6 +137,161 @@ export function mergeSalesRecords(
   };
 }
 
+// ─── DERIVE SALES ROLLUPS ─────────────────────────────────────────
+// Re-derive pyQ / cyQ / products / last for each child account from the
+// full accumulated SalesStore, then patch those values into the groups
+// array that came from the CSV processor (or preloaded data).
+//
+// Design:
+// - Groups array structure (group → children hierarchy) comes from the
+//   CSV parser as before. Only the sales fields on each child are replaced.
+// - Children with NO records in the store are left unchanged — the
+//   preloaded-data baseline continues to supply their figures.
+// - Group-level pyQ / cyQ are re-summed from children after patching,
+//   so rollupGroupTotals() downstream will always see fresh group totals.
+// - Output shape is identical to processCSVData output — all downstream
+//   pipeline steps (hydrateDealer, applyCrmToGroups, applyOverlays, etc.)
+//   are untouched.
+//
+// Products shape (matches csv.ts):
+//   { n: l3, py1, py2, py3, py4, pyFY, cy1, cy2, cy3, cy4, cyFY }
+//   Capped at top 10 by pyFY descending. Rows with |pyFY| < 50 and
+//   |cyFY| < 25 are filtered out (same threshold as csv.ts).
+//
+// last (daysSince):
+//   Derived from the most recent year+month across all records for that
+//   child. If no records exist for a child, the existing value is kept.
+
+export function deriveSalesRollups(
+  store:  SalesStore,
+  groups: any[]
+): any[] {
+  if (!store || Object.keys(store.records).length === 0) return groups;
+
+  const ref = new Date();
+
+  // ── Index records by childId ──────────────────────────────────
+  const byChild: Record<string, SalesRecord[]> = {};
+  for (const rec of Object.values(store.records)) {
+    if (!byChild[rec.childId]) byChild[rec.childId] = [];
+    byChild[rec.childId].push(rec);
+  }
+
+  // ── Build per-child rollups ───────────────────────────────────
+  const childRollups: Record<string, {
+    pyQ:      Record<string, number>;
+    cyQ:      Record<string, number>;
+    products: any[];
+    last:     number;
+  }> = {};
+
+  for (const [childId, recs] of Object.entries(byChild)) {
+    const pyQ: Record<string, number> = {};
+    const cyQ: Record<string, number> = {};
+    // product accumulator: l3 → { py1..4, pyFY, cy1..4, cyFY }
+    const prodMap: Record<string, Record<string, number>> = {};
+    let latestYear  = 0;
+    let latestMonth = 0;
+
+    for (const rec of recs) {
+      const q = String(rec.quarter);
+
+      // Revenue by quarter
+      if (rec.py !== 0) {
+        pyQ[q]    = (pyQ[q]    || 0) + rec.py;
+        pyQ["FY"] = (pyQ["FY"] || 0) + rec.py;
+      }
+      if (rec.cy !== 0) {
+        cyQ[q]    = (cyQ[q]    || 0) + rec.cy;
+        cyQ["FY"] = (cyQ["FY"] || 0) + rec.cy;
+      }
+
+      // Products — only when l3 is set
+      if (rec.l3) {
+        if (!prodMap[rec.l3]) prodMap[rec.l3] = {};
+        if (rec.py !== 0) {
+          prodMap[rec.l3][`py${q}`]  = (prodMap[rec.l3][`py${q}`]  || 0) + rec.py;
+          prodMap[rec.l3]["pyFY"]    = (prodMap[rec.l3]["pyFY"]    || 0) + rec.py;
+        }
+        if (rec.cy !== 0) {
+          prodMap[rec.l3][`cy${q}`]  = (prodMap[rec.l3][`cy${q}`]  || 0) + rec.cy;
+          prodMap[rec.l3]["cyFY"]    = (prodMap[rec.l3]["cyFY"]    || 0) + rec.cy;
+        }
+      }
+
+      // Track most recent period for daysSince
+      if (
+        rec.year > latestYear ||
+        (rec.year === latestYear && rec.month > latestMonth)
+      ) {
+        latestYear  = rec.year;
+        latestMonth = rec.month;
+      }
+    }
+
+    // Round all revenue values (match csv.ts rounding)
+    for (const k of Object.keys(pyQ)) pyQ[k] = Math.round(pyQ[k]);
+    for (const k of Object.keys(cyQ)) cyQ[k] = Math.round(cyQ[k]);
+
+    // Build products array — filter + sort same as csv.ts
+    const products: any[] = [];
+    for (const [l3, vals] of Object.entries(prodMap)) {
+      const p: any = { n: l3 };
+      for (const [k, v] of Object.entries(vals)) p[k] = Math.round(v);
+      if (Math.abs(p.pyFY || 0) >= 50 || Math.abs(p.cyFY || 0) >= 25) {
+        products.push(p);
+      }
+    }
+    products.sort((a, b) => Math.abs(b.pyFY || 0) - Math.abs(a.pyFY || 0));
+
+    // Compute daysSince from latest year+month
+    let last = 999;
+    if (latestYear > 0 && latestMonth > 0) {
+      // Use the last day of the latest month as the reference date
+      const latestDate = new Date(latestYear, latestMonth - 1, 28);
+      last = Math.round((ref.getTime() - latestDate.getTime()) / 86400000);
+    }
+
+    childRollups[childId] = {
+      pyQ,
+      cyQ,
+      products: products.slice(0, 10),
+      last,
+    };
+  }
+
+  // ── Patch groups array ────────────────────────────────────────
+  return groups.map((g: any) => {
+    const patchedChildren = (g.children || []).map((c: any) => {
+      const rollup = childRollups[c.id];
+      if (!rollup) return c; // no store data — keep preloaded baseline
+      return {
+        ...c,
+        pyQ:      rollup.pyQ,
+        cyQ:      rollup.cyQ,
+        products: rollup.products,
+        last:     rollup.last,
+      };
+    });
+
+    // Re-sum group-level totals from patched children
+    // (same logic as rollupGroupTotals, but always re-sums regardless of
+    //  whether group already had pyQ set — needed because we're replacing values)
+    const gPyQ: Record<string, number> = {};
+    const gCyQ: Record<string, number> = {};
+    for (const c of patchedChildren) {
+      for (const [k, v] of Object.entries(c.pyQ || {})) {
+        gPyQ[k] = (gPyQ[k] || 0) + (v as number);
+      }
+      for (const [k, v] of Object.entries(c.cyQ || {})) {
+        gCyQ[k] = (gCyQ[k] || 0) + (v as number);
+      }
+    }
+
+    return { ...g, children: patchedChildren, pyQ: gPyQ, cyQ: gCyQ };
+  });
+}
+
 // ─── STORE SIZE SUMMARY ──────────────────────────────────────────
 // Quick diagnostic: how many records and batches are in the store.
 export function salesStoreSummary(store: SalesStore) {
