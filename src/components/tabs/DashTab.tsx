@@ -2,22 +2,23 @@
 // @ts-nocheck
 
 import { useState, useMemo } from "react";
-import { T, Q1_TARGET } from "@/lib/tokens";
+import { T, Q1_TARGET, QUARTER_TARGETS } from "@/lib/tokens";
 import { ACCEL_RATES, normalizeTier, isAccelTier, getTierRate, getTierLabel } from "@/lib/tier";
 import { $$, $f, pc } from "@/lib/format";
 import { SKU } from "@/data/sku-data";
 import { fixGroupName, Stat, Bar, AccountId, Chev } from "@/components/primitives";
 
-export default function DashTab({groups, q1CY, q1Att, q1Gap, scored, goAcct}) {
-  const totalPY = groups.reduce((s,g) => s+(g.pyQ?.["1"]||0), 0);
+export default function DashTab({groups, q1CY, q1Att, q1Gap, scored, goAcct, activeQ: activeQProp}) {
+  const activeQ = activeQProp || "1";
+  const totalPY = groups.reduce((s,g) => s+(g.pyQ?.[activeQ]||0), 0);
   const totalLocs = groups.reduce((s,g) => s+g.locs, 0);
-  const activeAccts = groups.reduce((s,g) => s+g.children.filter(c=>(c.cyQ?.["1"]||0)>0).length, 0);
+  const activeAccts = groups.reduce((s,g) => s+g.children.filter(c=>(c.cyQ?.[activeQ]||0)>0).length, 0);
 
   // Revenue by tier
   const tierRevenue = {Standard:0, Silver:0, Gold:0, Platinum:0, Diamond:0};
   groups.forEach(g => {
     g.children.forEach(c => {
-      const cy = c.cyQ?.["1"]||0;
+      const cy = c.cyQ?.[activeQ]||0;
       if (cy <= 0) return;
       const t = normalizeTier(g.tier||c.tier);
       if (t in tierRevenue) tierRevenue[t] += cy;
@@ -29,8 +30,8 @@ export default function DashTab({groups, q1CY, q1Att, q1Gap, scored, goAcct}) {
 
   // Top 5 groups by CY
   const top5 = [...groups]
-    .filter(g => (g.cyQ?.["1"]||0) > 0)
-    .sort((a,b) => (b.cyQ?.["1"]||0)-(a.cyQ?.["1"]||0))
+    .filter(g => (g.cyQ?.[activeQ]||0) > 0)
+    .sort((a,b) => (b.cyQ?.[activeQ]||0)-(a.cyQ?.[activeQ]||0))
     .slice(0,5);
 
   // Q1 attainment status
@@ -74,7 +75,7 @@ export default function DashTab({groups, q1CY, q1Att, q1Gap, scored, goAcct}) {
 
     {/* ── CY REVENUE + ATTAINMENT ── */}
     <div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(79,142,247,.06))`,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12,boxShadow:"0 4px 24px rgba(0,0,0,.4)"}}>
-      <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color:T.t3,marginBottom:12}}>Territory · Q1 {new Date().getFullYear()}</div>
+      <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color:T.t3,marginBottom:12}}>Territory · Q{activeQ} {new Date().getFullYear()}</div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
         <div>
           <div style={{fontSize:9,color:T.t4,marginBottom:3}}>CY Revenue</div>
@@ -84,7 +85,7 @@ export default function DashTab({groups, q1CY, q1Att, q1Gap, scored, goAcct}) {
         <div>
           <div style={{fontSize:9,color:T.t4,marginBottom:3}}>Attainment</div>
           <div className="m" style={{fontSize:22,fontWeight:800,color:statusColor}}>{pc(q1Att)}</div>
-          <div style={{fontSize:10,color:T.t3,marginTop:2}}>of {$$(778915)} target</div>
+          <div style={{fontSize:10,color:T.t3,marginTop:2}}>of {$$(QUARTER_TARGETS[activeQ]||778915)} target</div>
         </div>
       </div>
       <Bar pct={q1Att*100} color={`linear-gradient(90deg,${statusColor},${ahead?T.cyan:onTrack?T.orange:T.red})`}/>
@@ -129,7 +130,7 @@ export default function DashTab({groups, q1CY, q1Att, q1Gap, scored, goAcct}) {
       <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3,marginBottom:10}}>Top 5 Groups by CY Revenue</div>
       {top5.length===0&&<div style={{fontSize:11,color:T.t4}}>No data — upload a CSV.</div>}
       {top5.map((g,i)=>{
-        const cy=g.cyQ?.["1"]||0; const py=g.pyQ?.["1"]||0;
+        const cy=g.cyQ?.[activeQ]||0; const py=g.pyQ?.[activeQ]||0;
         const up=cy>=py;
         return <div key={g.id} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:i<top5.length-1?`1px solid ${T.b1}`:"none"}}>
           <span className="m" style={{fontSize:11,color:T.t4,minWidth:16}}>#{i+1}</span>
@@ -147,7 +148,7 @@ export default function DashTab({groups, q1CY, q1Att, q1Gap, scored, goAcct}) {
 
     {/* ── GAP LEADERBOARD ── */}
     {(()=>{
-      const topGap = scored.filter(a=>(a.pyQ?.["1"]||0)>0&&a.gap>0).slice(0,10);
+      const topGap = scored.filter(a=>(a.pyQ?.[activeQ]||0)>0&&a.gap>0).slice(0,10);
       if (!topGap.length) return null;
       const maxGap = topGap[0]?.gap||1;
       return <div className="anim" style={{background:T.s1,border:`1px solid rgba(248,113,113,.15)`,borderRadius:14,padding:14,marginBottom:12}}>
@@ -227,4 +228,5 @@ export default function DashTab({groups, q1CY, q1Att, q1Gap, scored, goAcct}) {
     </div>
   </div>;
 }
+
 
