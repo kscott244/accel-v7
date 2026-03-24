@@ -218,11 +218,25 @@
       "score": 92,
       "createdAt": "2026-03-24T20:29:05.665Z",
       "updatedAt": "2026-03-24T20:29:05.665Z"
+    },
+    "Master-CM086385": {
+      "id": "Master-CM086385",
+      "name": "AAROHI DENTAL",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM086385",
+        "Master-CM986961"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 92,
+      "createdAt": "2026-03-24T20:29:06.717Z",
+      "updatedAt": "2026-03-24T20:29:06.718Z"
     }
   },
   "groupDetaches": [],
   "groupMoves": {},
-  "lastUpdated": "2026-03-24T20:29:05.557Z",
+  "lastUpdated": "2026-03-24T20:29:06.586Z",
   "groupNotes": {
     "Master-CM175757": "The account is lost - unless we can get another distributor to try and take business from Schein then we are not going to win.  The large order they placed in Dec-2025 was to get the chargeback Kerr offered.  I mention to AJ we could probably work out another chargeback and he said no\n",
     "Master-CM591885": "Spoke with both Rich and Lori from Schein - They are actually losing the business as well so this is not just dealer switched to another product "
