@@ -6,6 +6,7 @@ import { normalizeTier, isAccelTier } from "@/lib/tier";
 import { $$, $f, pc } from "@/lib/format";
 import { Bar, Chev, AccountId } from "@/components/primitives";
 import { BADGER } from "@/lib/data";
+import { scorePriority, BUCKET_STYLE } from "@/lib/priority";
 
 function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGroup}) {
   const [search, setSearch] = useState("");
@@ -282,15 +283,20 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
     return list;
   }, [overdrive]);
 
-  // ── Recovery: next accounts beyond Today Focus ──
+  // ── Recovery: next accounts beyond Today Focus, sorted by priority score ──
   const recovery = useMemo(() => {
     if (!overdrive) return [];
     const focusIds = new Set(todayFocus.map((a:any) => a.id));
     return overdrive.allCandidates
       .filter((a:any) => !focusIds.has(a.id))
-      .sort((a:any,b:any) => (b.ask * b.prob) - (a.ask * a.prob))
+      .map((a:any) => {
+        const p = scorePriority(a, activeQ);
+        return {...a, _priorityScore:p.priorityScore, _priorityBucket:p.priorityBucket,
+                _priorityReason:p.priorityReason, _rootStrength:p.rootStrength};
+      })
+      .sort((a:any,b:any) => b._priorityScore - a._priorityScore)
       .slice(0, 8);
-  }, [overdrive, todayFocus]);
+  }, [overdrive, todayFocus, activeQ]);
 
   // ── Protect: strong accounts worth defending (always uses activeQ) ──
   const protect = useMemo(() => {
@@ -521,18 +527,19 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
             const done=odDone[a.id];
             const isDark=a.track==="dark";
             const isLast=i===recovery.length-1;
+            const bStyle = BUCKET_STYLE[a._priorityBucket ?? "Recover"];
             return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
               style={{animationDelay:`${i*15}ms`,width:"100%",textAlign:"left",
                 background:done?"rgba(52,211,153,.04)":"transparent",
                 border:"none",borderBottom:isLast?"none":`1px solid ${T.b2}`,
-                borderLeft:`3px solid ${isDark?T.red:T.orange}`,
+                borderLeft:`3px solid ${bStyle.leftAccent}`,
                 padding:"9px 12px",cursor:"pointer",
                 display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:11,fontWeight:600,color:done?T.t3:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textDecoration:done?"line-through":"none"}}>{a.name}</div>
                 {a.gName&&a.gName!==a.name&&<div style={{fontSize:9,color:T.cyan,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.gName}</div>}
                 <div style={{fontSize:9,color:T.t3,marginTop:1}}>
-                  {isDark?<span style={{color:T.red}}>gone dark — </span>:<span style={{color:T.orange}}>partial — </span>}
+                  {a._priorityReason&&<span style={{color:bStyle.color}}>{a._priorityReason} — </span>}
                   {$f(a.ask)} ask · {Math.round(a.prob*100)}%
                 </div>
               </div>

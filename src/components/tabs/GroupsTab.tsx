@@ -6,6 +6,7 @@ import { T } from "@/lib/tokens";
 import { getTierLabel } from "@/lib/tier";
 import { $$, pc } from "@/lib/format";
 import { fixGroupName, Pill, Bar, Chev } from "@/components/primitives";
+import { scorePriority, BUCKET_STYLE } from "@/lib/priority";
 
 // Filters: grouped by intent but rendered in one scrollable row
 const FILTERS = [
@@ -18,20 +19,19 @@ const DEALER_FILTERS = new Set(["Schein","Patterson","Benco","Darby"]);
 // ── ACCOUNT CARD ─────────────────────────────────────────────────
 // Single design for all views. Status communicated by left-accent + bar color.
 function AccountCard({g, i, goGroup, isDealerFilt, filt}) {
-  const isUrgent  = g._gap > 2000 && g._ret < 0.3;
-  const isGrowing = g._cy1 > g._py1 && g._py1 > 0;
+  const bucket    = g._priorityBucket ?? "Watch";
+  const bStyle    = BUCKET_STYLE[bucket];
   const retPct    = Math.min(100, Math.round(g._ret * 100));
   const retColor  = g._ret >= 0.7 ? T.green : g._ret >= 0.4 ? T.amber : T.red;
-  const accentBorder = isUrgent ? "rgba(248,113,113,.22)" : isGrowing ? "rgba(52,211,153,.18)" : T.b1;
-  const leftAccent   = isUrgent ? T.red : isGrowing ? T.green : "transparent";
-  const barColor     = `linear-gradient(90deg,${retColor},${retColor}99)`;
+  const barColor  = `linear-gradient(90deg,${retColor},${retColor}99)`;
+  const rootDots  = (g._rootStrength ?? 0) >= 60 ? 3 : (g._rootStrength ?? 0) >= 30 ? 2 : (g._rootStrength ?? 0) > 0 ? 1 : 0;
 
   return (
     <button className="anim" onClick={() => goGroup(g)}
       style={{animationDelay:`${i*15}ms`, width:"100%", textAlign:"left",
         background:T.s1, borderRadius:14, padding:"12px 14px", marginBottom:7,
-        cursor:"pointer", border:`1px solid ${accentBorder}`,
-        borderLeft:`3px solid ${leftAccent}`}}>
+        cursor:"pointer", border:`1px solid ${bStyle.border}`,
+        borderLeft:`3px solid ${bStyle.leftAccent}`}}>
 
       {/* Row 1: name + gap */}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:5}}>
@@ -58,16 +58,18 @@ function AccountCard({g, i, goGroup, isDealerFilt, filt}) {
       {/* Row 2: retention bar */}
       <Bar pct={retPct} color={barColor}/>
 
-      {/* Row 3: PY / CY / status badge */}
+      {/* Row 3: PY / CY / priority bucket badge + root strength */}
       <div style={{display:"flex",alignItems:"center",gap:14,marginTop:7}}>
         <Pill l="PY" v={$$(g._py1)} c={T.t2}/>
         <Pill l="CY" v={$$(g._cy1)} c={T.blue}/>
-        {isUrgent&&!isGrowing&&<span style={{marginLeft:"auto",fontSize:9,fontWeight:700,color:T.red,
-          background:"rgba(248,113,113,.08)",borderRadius:4,padding:"2px 7px",
-          border:"1px solid rgba(248,113,113,.18)"}}>Urgent</span>}
-        {isGrowing&&<span style={{marginLeft:"auto",fontSize:9,fontWeight:700,color:T.green,
-          background:"rgba(52,211,153,.08)",borderRadius:4,padding:"2px 7px",
-          border:"1px solid rgba(52,211,153,.18)"}}>Growing</span>}
+        <div style={{display:"flex",alignItems:"center",gap:6,marginLeft:"auto"}}>
+          {rootDots > 0 && <span style={{fontSize:8,letterSpacing:1,color:T.t4,fontFamily:"monospace"}}>
+            {"●".repeat(rootDots)}{"○".repeat(3-rootDots)}
+          </span>}
+          <span style={{fontSize:9,fontWeight:700,color:bStyle.color,
+            background:bStyle.bg,borderRadius:4,padding:"2px 7px",
+            border:`1px solid ${bStyle.border}`}}>{bucket}</span>
+        </div>
         <Chev/>
       </div>
     </button>
@@ -158,7 +160,10 @@ export default function GroupsTab({groups,goGroup,filt,setFilt,search,setSearch,
     const gap  = py1 - cy1;
     const ret  = py1 > 0 ? cy1/py1 : 1;
     const locs = isDealerFilt ? kids.length : g.locs;
-    return {...g, _py1:py1, _cy1:cy1, _gap:gap, _ret:ret, _locs:locs};
+    const base = {...g, _py1:py1, _cy1:cy1, _gap:gap, _ret:ret, _locs:locs};
+    const p = scorePriority(base, "1");
+    return {...base, _priorityScore:p.priorityScore, _priorityBucket:p.priorityBucket,
+            _rootStrength:p.rootStrength, _priorityReason:p.priorityReason};
   }), [groups, filt, isDealerFilt]);
 
   const list = useMemo(() => {
@@ -178,7 +183,7 @@ export default function GroupsTab({groups,goGroup,filt,setFilt,search,setSearch,
     else if (filt==="DSO")        l = l.filter(g=>g.locs>=3||g.class2==="DSO"||g.class2==="EMERGING DSO");
     else if (isDealerFilt)        l = l.filter(g=>g._locs>0);
     else if (filt!=="All")        l = l.filter(g=>g.tier===filt||g.tier?.includes(filt));
-    if (!isDealerFilt) l.sort((a,b) => b._gap - a._gap);
+    if (!isDealerFilt) l.sort((a,b) => b._priorityScore - a._priorityScore);
     return l;
   }, [enriched, filt, search, isDealerFilt, gpGroupIds]);
 
