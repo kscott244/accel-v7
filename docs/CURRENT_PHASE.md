@@ -1,54 +1,59 @@
 # CURRENT PHASE — accel-v7
 
-## Active: Phase 9 — Import Cleanup Pipeline ✅ Complete
+## Active: Phase 10 — CRM / Sales Data Split ✅ Complete
 
-### What Was Done (Phase 9)
-1. **`src/lib/csv.ts` — full parser hardening**
-   - `parseCSV` is now delimiter-aware: detects tab vs comma from unquoted char counts in header line
-   - BOM (`\uFEFF`) stripped before any parsing so UTF-8 BOM exports don't poison the first header key
-   - Windows CRLF (`\r\n`) handled in line splitting
-   - Escaped double-quotes inside quoted fields (`""`) handled correctly
-   - `buildHeaderMap()` — canonical header alias table: 20+ known Tableau column name variants (lowercase, no-space, alternate spellings) all resolve to the one name the pipeline expects. New exports with different casing or spacing work without code changes.
-   - `coerceNumber()` — handles `$1,234`, `1,234.56`, `(500)` negatives, leading/trailing whitespace
-   - `coerceDate()` — handles `M/D/YYYY`, `MM/DD/YYYY` (leading zeros), `M/D/YY` (2-digit year), `YYYY-MM-DD` (ISO)
-   - `isJunkRow()` — catches all Tableau summary row patterns: blank rows, `Grand Total` / `Grand Total (All)` / any `parentName.startsWith("grand total")`, `Parent MDM ID === "Total"`, `Child Mdm Id === "Total"`
-   - Warning accumulation now counts unknown tier occurrences (not just collects examples), so `ImportReport` count is accurate
-   - All public API backward-compatible: `parseCSV`, `parseCSVLine`, `processCSVData` signatures unchanged
+### What Was Done (Phase 10)
 
-2. **`src/__tests__/csv.test.ts` — extended test coverage**
-   - 37 tests (was 8) covering: encoding/BOM stripping, CRLF line endings, tab delimiter detection, header alias normalization, escaped quotes, `$`/`,`/`()` numeric coercion, ISO date format, `M/D/YYYY`, `MM/DD/YYYY`, junk row variants, ImportReport counters
+**Goal**: Stop treating CSV uploads as the source of truth for account identity.
+Separate persistent CRM identity data from upload-driven sales activity data.
+
+#### Data model split
+| Field | Owner | Survives upload |
+|-------|-------|----------------|
+| name, city, st, addr, zip, email | CRM | ✅ Yes |
+| tier, top100, class2, dealer | CRM | ✅ Yes |
+| firstSeenDate, lastSeenDate | CRM | ✅ Yes |
+| pyQ, cyQ, products, last | Sales (upload) | Replaced each upload |
+| contacts, notes, research, groups | Overlays | ✅ Yes (unchanged) |
+
+#### Files added
+1. **`src/lib/crm.ts`** — `CrmAccount` + `CrmStore` types, `mergeCrmCandidates()` (fill-blanks-only merge policy — uploaded CSV never overwrites a populated CRM field), `applyCrmToGroups()` (hydrates identity fields from CRM onto groups array before rendering)
+2. **`src/app/api/load-crm/route.ts`** — GET `data/crm-accounts.json` from GitHub; returns `{ crm: null }` on 404 (first run) instead of error
+3. **`src/app/api/save-crm/route.ts`** — POST `data/crm-accounts.json` to GitHub; handles first-write (no SHA) and subsequent updates
+
+#### Files modified
+4. **`src/lib/csv.ts`** — `processCSVData()` now extracts `crmCandidates` (identity fields only, no pyQ/cyQ/products) and returns them alongside `groups`/`generated`/`report`
+5. **`src/components/AccelerateApp.tsx`** — 5 targeted patches:
+   - Import `mergeCrmCandidates`, `applyCrmToGroups`, `EMPTY_CRM_STORE` from `@/lib/crm`
+   - `crmStore` state initialized to `EMPTY_CRM_STORE`
+   - Boot sequence loads CRM from localStorage cache then fetches fresh from GitHub in background
+   - Upload handler merges `crmCandidates` into CRM store (fill-blanks policy), persists async to GitHub, non-fatal on failure
+   - `setGroups` in upload handler now pipes through `applyCrmToGroups` before overlays
+
+#### Behavior
+- On first run: CRM store is empty, app works exactly as before
+- After first CSV upload: CRM records created for all ~984 offices, persisted to `data/crm-accounts.json`
+- On subsequent uploads: only blank fields are filled — existing identity data is never overwritten
+- CRM load is async/non-blocking — never delays app startup
+- CRM save is fire-and-forget — upload flow is never blocked by save failure
 
 ### Completion Criteria — All Met ✅
-- `npm run test` 69 tests passing (37 csv + 16 dataDiff + 16 scoring) ✅
-- `npm run build` clean ✅
-- No UI changes — zero impact on current app data flow ✅
-- All public exports backward-compatible ✅
+- `npm run test` 69/69 passing ✅
+- `npm run build` clean — `/api/load-crm` and `/api/save-crm` appear in route table ✅
+- No UI changes ✅
+- Existing overlays.json untouched ✅
+- All existing behavior preserved ✅
 
 ---
+
+## Previously Completed: Phase 9 — Import Cleanup Pipeline ✅ Complete
+- csv.ts hardened: tab/BOM/CRLF/header-alias/coerceNumber/coerceDate/junk-row
+- 37 csv tests, 69 total
 
 ## Previously Completed: Phase 8 — Import Manager ✅ Complete
-
-### What Was Done (Phase 8)
-1. **`src/lib/csv.ts`** — Added `ImportReport` type + instrumented `processCSVData()` to return encoding/delimiter/row counts/entity stats/warnings
-2. **`src/components/tabs/AdminTab.tsx`** — Replaced "💾 Data" section with Import Manager: File Stats, Cleanup Stats, Entity Output, Warnings sections
-3. **`src/components/AccelerateApp.tsx`** — Pass filename + rawText to processCSVData, persist `import_report_v1` to localStorage
-
----
-
 ## Previously Completed: Phase 7 — Data Pipeline Upgrade ✅ Complete
-
-### What Was Done (Phase 7)
-1. **`src/lib/dataDiff.ts`** — `diffDatasets()` + `checkOverlayIntegrity()`
-2. **CSV upload diff view** — shows added/removed/updated accounts + orphaned overlay refs on upload
-3. **16 tests** in `src/__tests__/dataDiff.test.ts`
-
----
-
 ## Previously Completed: Phase 6 — Foundation Hardening ✅ Complete
-- Fixed all 18 TypeScript errors, fixed runtime bug in AcctDetail, installed Jest + 34 tests, fixed overlay data-loss vulnerability
-
 ## Previously Completed: Phases 1–5 ✅
-- Foundation audit, stabilize, decompose monolith, extract tabs
 
 ---
 
