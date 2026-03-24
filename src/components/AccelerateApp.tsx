@@ -195,6 +195,7 @@ import { parseCSV, parseCSVLine, processCSVData, setDealers } from "@/lib/csv";
 import { diffDatasets, checkOverlayIntegrity } from "@/lib/dataDiff";
 import { mergeCrmCandidates, applyCrmToGroups, EMPTY_CRM_STORE } from "@/lib/crm";
 import { buildSalesRecords, mergeSalesRecords, deriveSalesRollups, EMPTY_SALES_STORE } from "@/lib/sales";
+import { buildSnapshot, computeDelta, saveSnapshot, loadSnapshot } from "@/lib/weeklyDelta";
 
 import { SKU } from "@/data/sku-data";
 import GroupsTab from "@/components/tabs/GroupsTab";
@@ -262,6 +263,7 @@ function AppInner() {
   const [overlays, setOverlaysState] = useState<any>(EMPTY_OVERLAYS);
   const [crmStore, setCrmStore] = useState<any>(EMPTY_CRM_STORE);
   const [salesStore, setSalesStore] = useState<any>(EMPTY_SALES_STORE);
+  const [weeklyDelta, setWeeklyDelta] = useState<any>(null);
   const [overlaySaveStatus, setOverlaySaveStatus] = useState<"idle"|"saving"|"saved"|"error">("idle");
   const [overlaySaveError, setOverlaySaveError] = useState<string|null>(null);
 
@@ -836,7 +838,7 @@ function AppInner() {
         const goGroupFn = (g:any) => setView({type:"group", data:g});
         const goAcctFn = (a:any, from?:any) => setView({type:"acct", data:a, from});
         return <>
-          {!view && tab==="today" && <DashboardTab scored={scored} goAcct={goSmartFn} q1CY={q1CY} q1Gap={q1Gap} q1Att={q1Att} adjCount={adjs.length} totalAdj={totalAdjQ1} groups={groups||[]} goGroup={goGroupFn} activeQ={activeQ||"1"}/>}
+          {!view && tab==="today" && <DashboardTab scored={scored} goAcct={goSmartFn} q1CY={q1CY} q1Gap={q1Gap} q1Att={q1Att} adjCount={adjs.length} totalAdj={totalAdjQ1} groups={groups||[]} goGroup={goGroupFn} activeQ={activeQ||"1"} weeklyDelta={weeklyDelta}/> }
           {!view && tab==="groups" && <GroupsTab groups={groups||[]} goGroup={goGroupFn} filt={gFilt} setFilt={setGFilt} search={gSearch} setSearch={setGSearch} groupedPrivates={groupedPrivates}/>}
           {!view && tab==="map" && <MapTab/>}
           {!view && tab==="calc" && <DashTab groups={groups||[]} q1CY={q1CY} q1Att={q1Att} q1Gap={q1Gap} scored={scored} goAcct={goSmartFn} activeQ={activeQ||"1"}/>}
