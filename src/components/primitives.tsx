@@ -39,6 +39,6 @@ export const AccountId = ({name,gName,size="md",color}:{name:string,gName?:strin
   const pfs = size==="sm"?9:size==="lg"?11:10;
   return <div style={{minWidth:0,overflow:"hidden"}}>
     <div style={{fontSize:fs,fontWeight:fw,color:color||T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{name}</div>
-    {showParent&&<div style={{fontSize:pfs,color:T.cyan,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginTop:1}}>↳ {gName}</div>}
+    {showParent&&<div style={{fontSize:pfs,color:T.blue,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginTop:1}}>↳ {gName}</div>}
   </div>;
 };

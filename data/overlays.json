@@ -456,11 +456,25 @@
       "score": 98,
       "createdAt": "2026-03-24T20:29:31.887Z",
       "updatedAt": "2026-03-24T20:29:31.887Z"
+    },
+    "Master-CM175757": {
+      "id": "Master-CM175757",
+      "name": "ABRA DENTAL",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM491938",
+        "Master-CM17672868"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 98,
+      "createdAt": "2026-03-24T20:28:55.101Z",
+      "updatedAt": "2026-03-24T21:41:48.585Z"
     }
   },
   "groupDetaches": [],
   "groupMoves": {},
-  "lastUpdated": "2026-03-24T21:40:22.556Z",
+  "lastUpdated": "2026-03-24T21:41:48.586Z",
   "groupNotes": {
     "Master-CM175757": "The account is lost - unless we can get another distributor to try and take business from Schein then we are not going to win.  The large order they placed in Dec-2025 was to get the chargeback Kerr offered.  I mention to AJ we could probably work out another chargeback and he said no\n",
     "Master-CM591885": "Spoke with both Rich and Lori from Schein - They are actually losing the business as well so this is not just dealer switched to another product "
