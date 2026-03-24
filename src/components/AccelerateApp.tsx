@@ -264,6 +264,9 @@ function AppInner() {
   const [overlays, setOverlaysState] = useState<any>(EMPTY_OVERLAYS);
   const [crmStore, setCrmStore] = useState<any>(EMPTY_CRM_STORE);
   const [salesStore, setSalesStore] = useState<any>(EMPTY_SALES_STORE);
+  const salesStoreRef = useRef<any>(EMPTY_SALES_STORE);
+  // Keep ref in sync so handleUpload (useCallback []) always sees current store
+  salesStoreRef.current = salesStore;
   const [weeklyDelta, setWeeklyDelta] = useState<any>(null);
   const [overlaySaveStatus, setOverlaySaveStatus] = useState<"idle"|"saving"|"saved"|"error">("idle");
   const [overlaySaveError, setOverlaySaveError] = useState<string|null>(null);
@@ -588,34 +591,34 @@ function AppInner() {
         if (result.rawSalesRows && result.rawSalesRows.length > 0) {
           const batchId = `batch_${Date.now()}_${result.rawSalesRows.length}`;
           const newRecords = buildSalesRecords(result.rawSalesRows, batchId);
-          setSalesStore((prevSales: any) => {
-            const nextSales = mergeSalesRecords(
-              prevSales || EMPTY_SALES_STORE,
-              newRecords,
-              { id: batchId, filename: result.report?.filename || "", uploadedAt: new Date().toISOString(), rowCount: result.rawSalesRows.length }
-            );
-            try { localStorage.setItem("sales_history_v1", JSON.stringify(nextSales)); } catch {}
-            // Async GitHub persist — fire and forget, failure is non-fatal
-            fetch("/api/save-sales", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ sales: nextSales }),
-            }).catch(() => { /* sales save failed — cached locally */ });
-            return nextSales;
-          });
-          // Re-derive rollups from the merged store synchronously.
-          // Read from localStorage since setSalesStore is async.
-          try {
-            const stored = localStorage.getItem("sales_history_v1");
-            if (stored) {
-              const storedSales = JSON.parse(stored);
-              baseGroupsForDisplay = deriveSalesRollups(storedSales, result.groups);
-            }
-          } catch { /* fallback: use result.groups as-is */ }
+          // Compute merged store directly using ref — no localStorage dependency
+          const nextSales = mergeSalesRecords(
+            salesStoreRef.current || EMPTY_SALES_STORE,
+            newRecords,
+            { id: batchId, filename: result.report?.filename || "", uploadedAt: new Date().toISOString(), rowCount: result.rawSalesRows.length }
+          );
+          setSalesStore(nextSales);
+          // Try localStorage cache — may fail on large stores, that's OK
+          try { localStorage.setItem("sales_history_v1", JSON.stringify(nextSales)); } catch {}
+          // GitHub is the primary persistent store — fire and forget
+          fetch("/api/save-sales", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sales: nextSales }),
+          }).catch(() => {});
+          // Re-derive rollups directly from merged store — no localStorage needed
+          baseGroupsForDisplay = deriveSalesRollups(nextSales, result.groups);
         }
 
         // Apply CRM identity, then overlays on top of derived base data
         const uploadedGroups = applyGroupOverrides(applyOverlays(applyCrmToGroups(rollupGroupTotals(hydrateDealer(baseGroupsForDisplay)), crmStore)));
+        // Guard: never wipe existing state with an empty/zero result
+        const totalRev = uploadedGroups.reduce((s:number,g:any)=>(s+(g.pyQ?.["1"]||0)+(g.cyQ?.["1"]||0)),0);
+        if (uploadedGroups.length === 0 || totalRev === 0) {
+          setUploadMsg("ERR CSV parsed but found no revenue — app data unchanged");
+          setTimeout(() => setUploadMsg(null), 7000);
+          return;
+        }
         setGroups(uploadedGroups);
         // Auto-detect activeQ from uploaded data
         setActiveQState(prev => {
@@ -629,7 +632,14 @@ function AppInner() {
           return detected;
         });
         setDataSource(`CSV uploaded ${result.generated}`);
-        localStorage.setItem("accel_data_v2", JSON.stringify(result));
+        // Save groups + metadata only — omit rawSalesRows (too large for localStorage)
+        try {
+          localStorage.setItem("accel_data_v2", JSON.stringify({
+            groups: result.groups,
+            generated: result.generated,
+            report: result.report,
+          }));
+        } catch {}
         try { localStorage.setItem("import_report_v1", JSON.stringify(result.report)); } catch {}
 
         // Build upload message
