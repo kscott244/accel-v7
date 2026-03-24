@@ -134,11 +134,25 @@
       "score": 92,
       "createdAt": "2026-03-24T20:28:57.715Z",
       "updatedAt": "2026-03-24T20:28:57.715Z"
+    },
+    "Master-CM1969858": {
+      "id": "Master-CM1969858",
+      "name": "FARMINGTON FAMILY DENTAL GROUP",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM1969858",
+        "Master-CM888684"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 90,
+      "createdAt": "2026-03-24T20:28:59.299Z",
+      "updatedAt": "2026-03-24T20:28:59.299Z"
     }
   },
   "groupDetaches": [],
   "groupMoves": {},
-  "lastUpdated": "2026-03-24T20:28:57.635Z",
+  "lastUpdated": "2026-03-24T20:28:59.161Z",
   "groupNotes": {
     "Master-CM175757": "The account is lost - unless we can get another distributor to try and take business from Schein then we are not going to win.  The large order they placed in Dec-2025 was to get the chargeback Kerr offered.  I mention to AJ we could probably work out another chargeback and he said no\n",
     "Master-CM591885": "Spoke with both Rich and Lori from Schein - They are actually losing the business as well so this is not just dealer switched to another product "
