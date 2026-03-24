@@ -186,5 +186,5 @@ export const BUCKET_STYLE: Record<PriorityBucket, { color: string; bg: string; b
   Recover: { color: T.red,    bg: "rgba(248,113,113,.08)", border: "rgba(248,113,113,.22)", leftAccent: T.red },
   Protect: { color: T.amber,  bg: "rgba(251,191,36,.08)",  border: "rgba(251,191,36,.22)",  leftAccent: T.amber },
   Grow:    { color: T.green,  bg: "rgba(52,211,153,.08)",  border: "rgba(52,211,153,.18)",  leftAccent: T.green },
-  Watch:   { color: T.cyan,   bg: "rgba(34,211,238,.08)",  border: "rgba(34,211,238,.12)",  leftAccent: "transparent" },
+  Watch:   { color: T.cyan,   bg: "rgba(34,211,238,.08)",  border: "rgba(34,211,238,.12)",  leftAccent: "rgba(200,147,58,.25)" },
 };
