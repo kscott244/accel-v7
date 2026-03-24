@@ -193,6 +193,7 @@ import { $$, $f, pc, scoreAccount, getHealthStatus } from "@/lib/format";
 import { Back, Chev, Pill, Stat, Bar, AccountId, fixGroupName, cleanParentName, BAD_GROUP_NAMES } from "@/components/primitives";
 import { parseCSV, parseCSVLine, processCSVData, setDealers } from "@/lib/csv";
 import { diffDatasets, checkOverlayIntegrity } from "@/lib/dataDiff";
+import { mergeCrmCandidates, applyCrmToGroups, EMPTY_CRM_STORE } from "@/lib/crm";
 
 import { SKU } from "@/data/sku-data";
 import GroupsTab from "@/components/tabs/GroupsTab";
@@ -247,6 +248,7 @@ function AppInner() {
   // ── OVERLAY STATE ─────────────────────────────────────────────
   // overlays: runtime-loaded from data/overlays.json, never wiped by CSV upload
   const [overlays, setOverlaysState] = useState<any>(EMPTY_OVERLAYS);
+  const [crmStore, setCrmStore] = useState<any>(EMPTY_CRM_STORE);
   const [overlaySaveStatus, setOverlaySaveStatus] = useState<"idle"|"saving"|"saved"|"error">("idle");
   const [overlaySaveError, setOverlaySaveError] = useState<string|null>(null);
 
@@ -417,6 +419,26 @@ function AppInner() {
       } catch {}
       setOverlays(loadedOverlays);
 
+      // ── Load CRM Accounts ──
+      // Try localStorage cache first (fast path), then fetch from GitHub in background.
+      // Never blocks rendering — if CRM is empty the app works normally.
+      try {
+        const cachedCrm = localStorage.getItem("crm_accounts_v1");
+        if (cachedCrm) {
+          const parsed = JSON.parse(cachedCrm);
+          setCrmStore(parsed);
+        }
+      } catch {}
+      fetch("/api/load-crm").then(async (res) => {
+        if (res.ok) {
+          const { crm: freshCrm } = await res.json();
+          if (freshCrm?.accounts) {
+            setCrmStore(freshCrm);
+            try { localStorage.setItem("crm_accounts_v1", JSON.stringify(freshCrm)); } catch {}
+          }
+        }
+      }).catch(() => { /* CRM fetch failed — using cache */ });
+
       // ── Load Base Data ──
       try {
         const saved = localStorage.getItem("accel_data_v2");
@@ -468,8 +490,25 @@ function AppInner() {
         // Check all overlay sections for orphaned references
         const integrity = checkOverlayIntegrity(OVERLAYS_REF, result.groups);
 
-        // Apply overlays on top of new base data
-        setGroups(applyGroupOverrides(applyOverlays(rollupGroupTotals(hydrateDealer(result.groups)))));
+        // Merge CRM candidates — identity fields extracted from this upload
+        // merged into the persistent CRM store (fill-blanks-only policy).
+        // Persisted to GitHub async so it never blocks the upload flow.
+        if (result.crmCandidates && Object.keys(result.crmCandidates).length > 0) {
+          setCrmStore((prevCrm: any) => {
+            const nextCrm = mergeCrmCandidates(prevCrm || EMPTY_CRM_STORE, result.crmCandidates);
+            try { localStorage.setItem("crm_accounts_v1", JSON.stringify(nextCrm)); } catch {}
+            // Async GitHub persist — fire and forget, failure is non-fatal
+            fetch("/api/save-crm", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ crm: nextCrm }),
+            }).catch(() => { /* CRM save failed — cached locally */ });
+            return nextCrm;
+          });
+        }
+
+        // Apply CRM identity, then overlays on top of new base data
+        setGroups(applyGroupOverrides(applyOverlays(applyCrmToGroups(rollupGroupTotals(hydrateDealer(result.groups)), crmStore))));
         setDataSource(`CSV uploaded ${result.generated}`);
         localStorage.setItem("accel_data_v2", JSON.stringify(result));
         try { localStorage.setItem("import_report_v1", JSON.stringify(result.report)); } catch {}
