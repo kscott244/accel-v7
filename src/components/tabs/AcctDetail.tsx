@@ -508,7 +508,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
       {/* ACCOUNT HEADER */}
       <div className="anim" style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-          <div style={{flex:1,minWidth:0,paddingRight:8}}><AccountId name={acct.name} gName={acct.gName} size="lg"/></div>
+          <div style={{flex:1,minWidth:0,paddingRight:8}}><AccountId name={acct.name} gName={acct.gName} size="lg" locs={parentGroup?.locs}/></div>
           <button onClick={()=>setShowMoveModal(true)} style={{flexShrink:0,background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.18)",borderRadius:8,padding:"4px 9px",fontSize:10,fontWeight:600,color:T.blue,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>Move →</button>
         </div>
         <div style={{fontSize:11,color:T.t3,marginTop:2}}>{acct.city}, {acct.st} · <span style={{color:isAccel?T.amber:T.t3}}>{acctType}</span> · Last {acct.last}d ago</div>

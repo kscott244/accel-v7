@@ -349,7 +349,7 @@ function DealersTab({scored,groups,goAcct,goGroup,activeQ:activeQProp}:{scored:a
               borderRadius:12,padding:"11px 13px",marginBottom:7,cursor:"pointer"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
               <div style={{display:"flex",alignItems:"center",gap:6,flex:1,minWidth:0}}>
-                <AccountId name={a.name} gName={a.gName} size="md"/>
+                <AccountId name={a.name} gName={a.gName} size="md" locs={groupLocsMap[a.gId]}/>
                 <span style={{flexShrink:0,fontSize:8,fontWeight:700,borderRadius:4,padding:"1px 5px",background:chip.bg,color:chip.color}}>{a.visitPriority}</span>
                 {a.dealerFlag&&<span style={{flexShrink:0,fontSize:8,fontWeight:700,color:T.amber,background:"rgba(251,191,36,.1)",borderRadius:4,padding:"1px 5px",border:"1px solid rgba(251,191,36,.25)"}}>⚠ verify</span>}
               </div>
@@ -702,7 +702,7 @@ function DealersTab({scored,groups,goAcct,goGroup,activeQ:activeQProp}:{scored:a
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:5}}>
                   <div style={{display:"flex",alignItems:"center",gap:7,flex:1,minWidth:0}}>
                     <span style={{fontSize:13,fontWeight:800,color:T.purple,flexShrink:0,width:20}}>{i+1}</span>
-                    <AccountId name={a.name} gName={isMultiLoc?a.gName:undefined} size="md"/>
+                    <AccountId name={a.name} gName={isMultiLoc?a.gName:undefined} size="md" locs={isMultiLoc?gLocs:undefined}/>
                     <span style={{flexShrink:0,fontSize:8,fontWeight:700,borderRadius:4,padding:"2px 5px",background:`${chipColor}20`,color:chipColor}}>{a.visitPriority}</span>
                   </div>
                   <span style={{fontSize:13,fontWeight:700,color:T.red,fontFamily:"'JetBrains Mono',monospace",flexShrink:0,marginLeft:8}}>-{$$(a.gap)}</span>

@@ -378,6 +378,13 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
 
   const visitIds = useMemo(() => new Set((overdrive?.visitList||[]).map((a:any)=>a.id)), [overdrive]);
 
+  // Lookup: gId → locs count for passing to AccountId
+  const groupLocsMap = useMemo(() => {
+    const m: Record<string,number> = {};
+    (groups||[]).forEach((g:any) => { m[g.id] = g.locs || 1; });
+    return m;
+  }, [groups]);
+
   return <div style={{padding:"0 0 80px"}}>
 
     {/* ── SEARCH BAR ── */}
@@ -434,7 +441,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
             border:`1px solid ${T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:8,cursor:"pointer"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
             <div style={{flex:1,minWidth:0}}>
-              <AccountId name={a.name} gName={a.gName} size="md"/>
+              <AccountId name={a.name} gName={a.gName} size="md" locs={groupLocsMap[a.gId]}/>
               <div style={{fontSize:10,color:T.t3,marginTop:2}}>
                 {a.addr ? a.addr + ', ' : ''}{a.city}, {a.st}
                 {isAccelTier(a.gTier||a.tier)&&<span style={{color:T.amber}}> · {normalizeTier(a.gTier||a.tier)}</span>}
@@ -609,7 +616,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
                     borderRadius:4,padding:"1px 5px"}}>{isVisit?"🚗 Visit":"📞 Call"}</span>
                   <span className="m" style={{fontSize:9,fontWeight:700,color:T.amber,background:"rgba(251,191,36,.08)",borderRadius:4,padding:"1px 5px"}}>{$f(a.ask)} ask · {Math.round(a.prob*100)}%</span>
                 </div>
-                <AccountId name={a.name} gName={a.gName} size="md" color={done?T.t3:undefined}/>
+                <AccountId name={a.name} gName={a.gName} size="md" color={done?T.t3:undefined} locs={groupLocsMap[a.gId]}/>
                 {!done&&<div style={{fontSize:10,color:T.t3,marginTop:2}}>
                   {a.city}, {a.st}{a.miles&&a.miles<100?<span style={{color:T.t4}}> · {Math.round(a.miles)}mi</span>:""}
                 </div>}
@@ -786,7 +793,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
                       <span style={{fontSize:9,fontWeight:700,color:isAnchor?T.amber:T.t4,background:isAnchor?"rgba(251,191,36,.1)":T.s1,borderRadius:4,padding:"1px 5px"}}>{isAnchor?"ANCHOR":`STOP ${i+1}`}</span>
                       {done&&<span style={{fontSize:9,fontWeight:700,color:done.outcome==="lost"?T.red:T.green}}>{done.outcome==="lost"?"✗ Lost":`✓ ${done.outcome}`}</span>}
                     </div>
-                    <AccountId name={a.name} gName={a.gName} size="md"/>
+                    <AccountId name={a.name} gName={a.gName} size="md" locs={groupLocsMap[a.gId]}/>
                     <div style={{fontSize:10,color:T.t3,marginTop:1}}>{a.city}, {a.st} · {Math.round(a.miles||0)}mi from home</div>
                     <div style={{fontSize:10,color:T.t3,marginTop:1}}>Ask <span style={{color:T.amber,fontWeight:600}}>{$f(a.ask)}</span> · {Math.round((a.prob||0)*100)}% likely</div>
                     {done?.note&&<div style={{fontSize:9,color:T.t4,marginTop:3,fontStyle:"italic"}}>"{done.note}"</div>}
