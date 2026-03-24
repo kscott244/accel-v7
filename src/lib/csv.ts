@@ -503,5 +503,27 @@ export function processCSVData(
     warnings,
   };
 
-  return { groups, generated: new Date().toISOString().slice(0, 10), report };
+  // ── Build CRM candidates from child identity fields ─────────────
+  // These are extracted here but NOT written to storage — the caller
+  // (AccelerateApp.handleUpload) decides whether and when to persist them.
+  // Only identity fields are captured; sales fields (pyQ/cyQ/products) are excluded.
+  const crmCandidates: Record<string, any> = {};
+  for (const [cid, ci] of Object.entries(childInfo)) {
+    crmCandidates[cid] = {
+      id:       cid,
+      parentId: ci.parentId || "",
+      name:     ci.name     || "",
+      city:     ci.city     || "",
+      st:       ci.st       || "",
+      addr:     ci.addr     || "",
+      zip:      (ci.zip     || ""),
+      email:    (ci.email   || ""),
+      tier:     ci.tier     || "Standard",
+      top100:   ci.top100   || false,
+      class2:   ci.class2   || "",
+      dealer:   _dealers[cid] || "All Other",
+    };
+  }
+
+  return { groups, generated: new Date().toISOString().slice(0, 10), report, crmCandidates };
 }
