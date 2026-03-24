@@ -1,89 +1,45 @@
 # CURRENT PHASE — accel-v7
 
-## Active: Phase 12 — Incremental Rollup Derivation ✅ Complete
+## Active: Phase 13 — Sales History UI in Admin Tab ✅ Complete
 
 ### Goal
-Use the Phase 11 sales-history layer to drive rollup display. Instead of
-replacing pyQ/cyQ from scratch on every upload, re-derive from accumulated
-history so overlapping weekly Tableau exports accumulate correctly.
+Surface the sales-history layer in the Admin tab so Ken can see which CSVs
+have been uploaded, when, and how many new records each one contributed.
 
-### deriveSalesRollups Design
+### What Was Built
+A new **📜 History** section tab added to the existing AdminTab section nav.
+No existing sections were touched. Purely additive.
 
-**Location**: `src/lib/sales.ts` — exported alongside the existing merge functions
+**History section displays:**
+- **Store Totals card**: total upload batches, total de-duped records, last updated date
+- **Upload Batches card**: reverse-chronological list of every batch — filename,
+  date/time, row count, and new records added (green when > 0, dimmed when 0 = all deduped)
 
-**Inputs**:
-- `store: SalesStore` — the full accumulated sales history
-- `groups: any[]` — the groups array from the CSV processor (or preloaded data)
-  used as the structural skeleton (hierarchy, identity fields)
+**Empty state**: shown when no uploads have been recorded yet.
 
-**Algorithm**:
-1. Index all `SalesRecord` entries by `childId`
-2. For each child with records: sum `py`/`cy` into `pyQ[quarter]` + `pyQ["FY"]`,
-   build `products` map keyed by `l3`, track latest `year+month` for `daysSince`
-3. Round all revenue values (matches csv.ts rounding)
-4. Filter products: `|pyFY| >= 50 || |cyFY| >= 25` (same threshold as csv.ts)
-5. Sort products by `|pyFY|` descending, cap at 10 (same as csv.ts)
-6. Patch each child in the groups array: replace `pyQ`, `cyQ`, `products`, `last`
-   — children with **no store records** are left unchanged (preloaded baseline kept)
-7. Re-sum group-level `pyQ`/`cyQ` from patched children (always, replacing old values)
-
-**Output**: same `groups` shape as `processCSVData` — all downstream pipeline
-steps (`rollupGroupTotals → hydrateDealer → applyCrmToGroups → applyOverlays →
-applyGroupOverrides → scoreAccount`) are untouched.
-
-### Upload Flow (new)
-
-```
-CSV upload
-  → processCSVData()        — extracts groups skeleton + rawSalesRows
-  → buildSalesRecords()     — assigns txKeys
-  → mergeSalesRecords()     — dedupes into SalesStore, persists to GitHub async
-  → deriveSalesRollups()    — re-derives pyQ/cyQ/products/last from FULL history
-  → rollupGroupTotals()     — re-sums group totals (now a no-op since deriveSalesRollups does it)
-  → hydrateDealer()
-  → applyCrmToGroups()
-  → applyOverlays()
-  → applyGroupOverrides()
-  → setGroups()             — UI updates
-```
-
-### Boot Flow (new)
-
-```
-Boot
-  → load sales_history_v1 from localStorage → setSalesStore + bootSalesStore local var
-  → fetch /api/load-sales in background (same non-blocking pattern as CRM)
-  → load accel_data_v2 from localStorage
-  → deriveSalesRollups(bootSalesStore, parsed.groups)  ← NEW
-  → rollupGroupTotals → hydrateDealer → applyOverlays → applyGroupOverrides → setGroups
-```
+**Styling**: uses the exact `Section` / `StatRow` component pattern already in the
+`data` section — same `T.s1` background, same monospace values, same border tokens.
 
 ### Files Modified
 
 | File | Change |
 |------|--------|
-| `src/lib/sales.ts` | Added `deriveSalesRollups(store, groups)` — 80 lines; produces fully-derived pyQ/cyQ/products/last per child from accumulated store records |
-| `src/components/AccelerateApp.tsx` | 3 patches: (1) added `deriveSalesRollups` to import; (2) wired re-derive in `handleUpload` after `mergeSalesRecords`; (3) wired re-derive in boot sequence after sales localStorage load |
-
-### Behavior
-
-- **First upload**: sales history has only this upload's rows → rollups identical to before
-- **Second upload (overlapping export)**: duplicate rows deduped by txKey → rollups unchanged (correct — not double-counted)
-- **Third upload (new week's data)**: net-new rows merged → rollups reflect all history since first upload
-- **Boot with existing sales_history_v1**: rollups re-derived from full store, not just last-uploaded snapshot
-- **No upload yet (preloaded data path)**: `deriveSalesRollups` receives `EMPTY_SALES_STORE` → returns groups unchanged (preloaded baseline fully preserved)
-- UI, scoring, overlays, CRM — all unchanged
+| `src/components/tabs/AdminTab.tsx` | (1) Added `salesStore?:any` to props; (2) Added `"📜 History"` nav button; (3) Added `section==="history"` render block |
+| `src/components/AccelerateApp.tsx` | Added `salesStore={salesStore}` prop to `<AdminTab>` render call |
 
 ### Commits
-- `36fb306bd1` — `deriveSalesRollups` added to `src/lib/sales.ts`
-- `808cb74f44` — AccelerateApp.tsx wired (import + upload + boot)
+- `b0a23cff7b` — AdminTab: add Sales History section
+- `bc14ab8f6c` — AccelerateApp: pass salesStore prop to AdminTab
 
 ---
 
+## Previously Completed: Phase 12 — Incremental Rollup Derivation ✅
+- `deriveSalesRollups()` re-derives pyQ/cyQ/products/last from full history
+- Wired into upload handler and boot sequence
+
 ## Previously Completed: Phase 11 — Sales History Layer ✅
-- `src/lib/sales.ts` (types + buildSalesRecords + mergeSalesRecords)
-- `/api/load-sales`, `/api/save-sales`
-- `csv.ts` emits `rawSalesRows`; AccelerateApp persists on upload
+- `src/lib/sales.ts`, `/api/load-sales`, `/api/save-sales`
+- `csv.ts` emits `rawSalesRows`, AccelerateApp persists on upload
 
 ## Previously Completed: Phase 10 — CRM / Sales Data Split ✅
 ## Previously Completed: Phase 9 — Import Cleanup Pipeline ✅
