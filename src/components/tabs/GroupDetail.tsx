@@ -416,29 +416,33 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
     setSavedResContacts(new Set());
     setResWebsiteSaved(false);
     const groupName = fixGroupName(group);
-    const firstChild = (group.children||[])[0] || {};
-    const topCities = [...new Set((group.children||[]).map((c:any)=>c.city).filter(Boolean))].slice(0,3).join(", ");
+    const children = group.children || [];
+    const firstChild = children[0] || {};
+    const childNames = [...new Set(children.map((c:any)=>c.name).filter(Boolean))];
+    const addresses = children.map((c:any)=>[c.address,c.city,c.st,c.zip].filter(Boolean).join(" ")).filter(Boolean).slice(0,3);
+    const topCities = [...new Set(children.map((c:any)=>c.city).filter(Boolean))].slice(0,4).join(", ");
     const topDealer = distBreakdown.rows[0]?.dist || "";
     const topProds = groupBuying.slice(0,5).map((p:any)=>p.name);
     const ownerType = group.class2 || "Private Practice";
     const ownership = ownerType.toLowerCase().includes("dso") ? "dso" : "independent";
+    const savedDoctors = (overlays?.groupContacts?.[group.id]||[]).filter((c:any)=>c.name?.toLowerCase().startsWith("dr")).map((c:any)=>c.name).slice(0,2);
     try {
       const res = await fetch("/api/deep-research", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: groupName,
+          childNames,
           city: topCities,
           state: firstChild.st || "",
+          address: addresses[0] || "",
+          addresses,
           dealer: topDealer,
           products: topProds,
           ownership,
           gName: groupName,
-            childNames,
-            address: addresses[0] || "",
-            addresses,
-            doctor: savedDoctors[0] || "",
           acctId: group.id,
+          doctor: savedDoctors[0] || "",
         }),
       });
       const data = await res.json();
@@ -447,7 +451,6 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
         setResResult({ status: data.error || "No intel found. The practice may not have a web presence.", ownership: "", website: "", contacts: [], hooks: [], talkingPoints: [] });
         setResLoading(false); return;
       }
-      // Normalize API fields to what the render panel expects
       setResResult({
         status: intel.statusNote || intel.status || "Practice found.",
         ownership: intel.ownershipNote || "",
