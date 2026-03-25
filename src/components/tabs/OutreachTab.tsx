@@ -18,9 +18,12 @@ function OutreachTab({scored}:{scored:any[]}) {
   const [editIdx, setEditIdx] = useState<number|null>(null);
   const [editBody, setEditBody] = useState("");
   const [researching, setResearching] = useState(false);
-  const [researchProgress, setResearchProgress] = useState<{done:number,total:number,current:string}|null>(null);
+  const [researchProgress, setResearchProgress] = useState<{done:number,total:number,current:string,cached:number}|null>(null);
   const [researchDone, setResearchDone] = useState<string[]>([]); // account ids researched this session
-  const [refreshCount, setRefreshCount] = useState(0); // incremented after research to force queue recompute
+  const [refreshCount, setRefreshCount] = useState(0);
+  const [driveStatus, setDriveStatus] = useState<string|null>(null); // "saving" | "saved" | "loading" | "loaded" | "error"
+  const [driveCacheCount, setDriveCacheCount] = useState(0);
+  const [importing, setImporting] = useState(false);
 
   useEffect(()=>{
     try { const t = localStorage.getItem("gmail_refresh_token"); if(t) setGmailToken(t); } catch {}
@@ -37,11 +40,81 @@ function OutreachTab({scored}:{scored:any[]}) {
     }
   }, []);
 
+  // On mount with gmail token — check Drive cache count
+  useEffect(()=>{
+    if(!gmailToken) return;
+    (async()=>{
+      try {
+        const res = await fetch("/api/load-research", {
+          method: "POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({ refreshToken: gmailToken })
+        });
+        const data = await res.json();
+        if(data.totalCached) setDriveCacheCount(data.totalCached);
+      } catch {}
+    })();
+  }, [gmailToken]);
 
-  // Research top 25 down accounts via Deep Research API and save to contact cards
+  // Save a single research result to Google Drive
+  async function saveToDrive(accountId: string, researchData: any) {
+    if(!gmailToken) return;
+    try {
+      await fetch("/api/save-research", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ refreshToken: gmailToken, accountId, researchData })
+      });
+    } catch { /* silent — don't block research */ }
+  }
+
+  // Import all research from Google Drive into localStorage
+  async function importFromDrive() {
+    if(!gmailToken) { alert("Connect Gmail first (includes Drive access)"); return; }
+    setImporting(true);
+    setDriveStatus("loading");
+    try {
+      const res = await fetch("/api/load-research", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ refreshToken: gmailToken })
+      });
+      const data = await res.json();
+      if(data.error) { setDriveStatus("error"); alert("Drive error: " + data.error); return; }
+
+      const accounts = data.accounts || {};
+      let restored = 0;
+      for(const [id, intel] of Object.entries(accounts) as [string, any][]) {
+        const contacts = {
+          contactName: intel.contactName || null,
+          phone: intel.phone || null,
+          email: intel.email || null,
+          website: intel.website || null,
+          savedAt: intel.cachedAt || intel.searchedAt || new Date().toISOString(),
+          practiceName: intel.practiceName || null,
+          talkingPoints: intel.talkingPoints || [],
+          hooks: intel.hooks || [],
+          ownershipNote: intel.ownershipNote || null,
+        };
+        try { localStorage.setItem(`contact:${id}`, JSON.stringify(contacts)); restored++; } catch {}
+      }
+
+      setDriveCacheCount(data.totalCached || 0);
+      setDriveStatus("loaded");
+      setRefreshCount(c => c + 1);
+      alert(`Restored ${restored} accounts from Google Drive backup.`);
+    } catch(e: any) {
+      setDriveStatus("error");
+      alert("Import failed: " + e.message);
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  // Research top 25 — checks Drive cache first to avoid paying twice
   async function researchTop25() {
     setResearching(true);
-    setResearchProgress({done:0, total:25, current:""});
+    setResearchProgress({done:0, total:25, current:"", cached:0});
     setResearchDone([]);
 
     const top25 = [...scored]
@@ -49,10 +122,53 @@ function OutreachTab({scored}:{scored:any[]}) {
       .sort((a,b) => (a.combinedGap??a.q1_gap??0) - (b.combinedGap??b.q1_gap??0))
       .slice(0, 25);
 
+    // Step 1: Check Drive cache for these accounts
+    let driveCache: Record<string,any> = {};
+    if(gmailToken) {
+      try {
+        const cacheRes = await fetch("/api/load-research", {
+          method: "POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({ refreshToken: gmailToken, accountIds: top25.map(a=>a.id) })
+        });
+        const cacheData = await cacheRes.json();
+        driveCache = cacheData.accounts || {};
+      } catch {}
+    }
+
     const found: string[] = [];
+    let cachedCount = 0;
+
     for(let i = 0; i < top25.length; i++) {
       const a = top25[i];
-      setResearchProgress({done:i, total:top25.length, current:a.name});
+      setResearchProgress({done:i, total:top25.length, current:a.name, cached:cachedCount});
+
+      // Check if we have cached data (less than 14 days old)
+      const cached = driveCache[a.id];
+      if(cached?.cachedAt) {
+        const age = Date.now() - new Date(cached.cachedAt).getTime();
+        const maxAge = 14 * 24 * 60 * 60 * 1000; // 14 days
+        if(age < maxAge) {
+          // Use cached — no API call needed
+          const contacts = {
+            contactName: cached.contactName || null,
+            phone: cached.phone || null,
+            email: cached.email || null,
+            website: cached.website || null,
+            savedAt: cached.cachedAt,
+            practiceName: a.name,
+            talkingPoints: cached.talkingPoints || [],
+            hooks: cached.hooks || [],
+            ownershipNote: cached.ownershipNote || null,
+          };
+          try { localStorage.setItem(`contact:${a.id}`, JSON.stringify(contacts)); } catch {}
+          found.push(a.id);
+          cachedCount++;
+          continue; // Skip API call — saved money!
+        }
+      }
+
+      // No cache hit — call the API
       try {
         const badger = BADGER[a.id] || BADGER[a.gId] || null;
         const res = await fetch("/api/deep-research", {
@@ -86,14 +202,17 @@ function OutreachTab({scored}:{scored:any[]}) {
           if(hasContact) {
             try { localStorage.setItem(`contact:${a.id}`, JSON.stringify(contacts)); } catch {}
             found.push(a.id);
+
+            // Auto-save to Google Drive backup
+            saveToDrive(a.id, { ...intel, practiceName: a.name });
           }
         }
       } catch(e) { /* skip */ }
       await new Promise(r => setTimeout(r, 800));
     }
     setResearchDone(found);
-    setResearchProgress({done:25, total:25, current:""});
-    setRefreshCount(c => c + 1); // force downAccounts + withEmail to recompute
+    setResearchProgress({done:25, total:25, current:"", cached:cachedCount});
+    setRefreshCount(c => c + 1);
     setResearching(false);
   }
 
@@ -155,23 +274,18 @@ function OutreachTab({scored}:{scored:any[]}) {
   async function generatePreviews() {
     setLoading(true); setPreviews([]); setResults([]);
     try {
-      // Enrich each account with saved contact data from localStorage (Deep Research results)
       const enriched = downAccounts.map(a => {
-        try {
-          const saved = localStorage.getItem(`contact:${a.id}`);
-          if(saved) {
-            const contacts = JSON.parse(saved);
-            return {
-              ...a,
-              email: a.email || contacts.email || null,
-              doctor: a.doctor || contacts.contactName || null,
-              talkingPoints: contacts.talkingPoints || [],
-              hooks: contacts.hooks || [],
-              ownershipNote: contacts.ownershipNote || null,
-            };
-          }
-        } catch {}
-        return a;
+        const badger = BADGER[a.id] || BADGER[a.gId] || null;
+        return {
+          ...a,
+          contactName: a.contactName || badger?.contactName || a.doctor || null,
+          doctor: a.doctor || badger?.doctor || null,
+          email: a.email || badger?.email || null,
+          phone: a.phone || badger?.phone || null,
+          address: a.address || badger?.address || null,
+          city: a.city,
+          state: a.st || a.state || "CT",
+        };
       });
       const res = await fetch("/api/send-outreach", {
         method:"POST", headers:{"Content-Type":"application/json"},
@@ -207,6 +321,31 @@ function OutreachTab({scored}:{scored:any[]}) {
       <div style={{fontSize:12,color:T.t3}}>Personalized emails to down accounts — AI writes each one based on their actual data</div>
     </div>
 
+    {/* Google Drive Backup Card */}
+    <div style={{background:T.s1,border:`1px solid ${driveCacheCount>0?"rgba(52,211,153,.25)":T.b1}`,borderRadius:12,padding:12,marginBottom:12}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div>
+          <div style={{fontSize:12,fontWeight:700,color:driveCacheCount>0?T.green:T.t2}}>
+            {driveCacheCount>0?`☁️ ${driveCacheCount} accounts backed up to Drive`:"☁️ Google Drive Backup"}
+          </div>
+          <div style={{fontSize:10,color:T.t4,marginTop:2}}>
+            {driveCacheCount>0
+              ? "Research auto-saves to Drive · Survives any app rebuild"
+              : gmailToken
+                ? "Connect includes Drive access · Research will auto-save"
+                : "Connect Gmail to enable Drive backup"}
+          </div>
+        </div>
+        <button onClick={importFromDrive} disabled={importing||!gmailToken}
+          style={{flexShrink:0,marginLeft:12,padding:"8px 14px",borderRadius:8,border:"none",
+            background:(!gmailToken||importing)?T.s2:"rgba(52,211,153,.2)",
+            color:(!gmailToken||importing)?T.t4:T.green,fontSize:11,fontWeight:700,
+            cursor:(!gmailToken||importing)?"not-allowed":"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>
+          {importing?"Loading...":"Import from Drive"}
+        </button>
+      </div>
+    </div>
+
     {/* Research Top 25 */}
     <div style={{background:T.s1,border:`1px solid ${researching?"rgba(167,139,250,.35)":researchDone.length>0?"rgba(52,211,153,.25)":T.b1}`,borderRadius:12,padding:12,marginBottom:12}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:researching||researchDone.length>0?8:0}}>
@@ -215,7 +354,9 @@ function OutreachTab({scored}:{scored:any[]}) {
             {researchDone.length>0?`✅ Researched ${researchDone.length} accounts`:"🔬 Research Top 25 Down Accounts"}
           </div>
           <div style={{fontSize:10,color:T.t4,marginTop:2}}>
-            {researchDone.length>0?"Contact cards updated · emails + doctor names found":"AI searches the web for each practice — finds emails, doctor names, contact info"}
+            {researchDone.length>0
+              ? "Contact cards updated · auto-saved to Google Drive"
+              : "AI searches the web — skips accounts already cached in Drive (saves $)"}
           </div>
         </div>
         <button onClick={researchTop25} disabled={researching||scored.length===0}
@@ -231,7 +372,10 @@ function OutreachTab({scored}:{scored:any[]}) {
           <span style={{fontSize:10,color:T.t3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>
             {researchProgress.current ? `Researching: ${researchProgress.current}` : "Finishing up..."}
           </span>
-          <span style={{fontSize:10,color:T.purple,flexShrink:0,marginLeft:8}}>{researchProgress.done}/{researchProgress.total}</span>
+          <span style={{fontSize:10,color:T.purple,flexShrink:0,marginLeft:8}}>
+            {researchProgress.done}/{researchProgress.total}
+            {researchProgress.cached>0&&<span style={{color:T.green,marginLeft:4}}>({researchProgress.cached} cached)</span>}
+          </span>
         </div>
         <div style={{height:4,background:T.s2,borderRadius:2,overflow:"hidden"}}>
           <div style={{height:"100%",background:T.purple,borderRadius:2,width:`${(researchProgress.done/researchProgress.total)*100}%`,transition:"width .3s"}}/>
@@ -241,12 +385,12 @@ function OutreachTab({scored}:{scored:any[]}) {
 
     <div style={{background:T.s1,border:`1px solid ${gmailToken?T.green:T.b1}`,borderRadius:12,padding:12,marginBottom:12,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
       <div>
-        <div style={{fontSize:12,fontWeight:700,color:gmailToken?T.green:T.t2}}>{gmailToken?"✅ Gmail Connected":"📧 Gmail Not Connected"}</div>
-        <div style={{fontSize:10,color:T.t4,marginTop:2}}>{gmailToken?"Emails send from your Gmail automatically":"Connect once to enable auto-send"}</div>
+        <div style={{fontSize:12,fontWeight:700,color:gmailToken?T.green:T.t2}}>{gmailToken?"✅ Gmail + Drive Connected":"📧 Gmail Not Connected"}</div>
+        <div style={{fontSize:10,color:T.t4,marginTop:2}}>{gmailToken?"Emails send from your Gmail · Research backs up to Drive":"Connect once to enable auto-send + Drive backup"}</div>
       </div>
       {gmailToken
         ? <button onClick={()=>{localStorage.removeItem("gmail_refresh_token");setGmailToken(null);}} style={{fontSize:10,color:T.t4,background:"none",border:`1px solid ${T.b1}`,borderRadius:6,padding:"4px 8px",cursor:"pointer",fontFamily:"inherit"}}>Disconnect</button>
-        : <button onClick={()=>{ window.location.href="/api/gmail-auth"; }} style={{fontSize:12,fontWeight:700,color:"#fff",background:T.blue,border:"none",borderRadius:8,padding:"8px 14px",cursor:"pointer",fontFamily:"inherit"}}>Connect Gmail</button>
+        : <button onClick={()=>{ window.location.href="/api/gmail-auth"; }} style={{fontSize:12,fontWeight:700,color:"#fff",background:T.blue,border:"none",borderRadius:8,padding:"8px 14px",cursor:"pointer",fontFamily:"inherit"}}>Connect Gmail + Drive</button>
       }
     </div>
 
