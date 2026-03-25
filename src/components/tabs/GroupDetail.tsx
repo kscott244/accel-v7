@@ -769,7 +769,7 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
         setMergeSearch("");
         setTimeout(() => setMergeToast(null), 4000);
         // Reload to see merged group
-        setTimeout(() => window.location.reload(), 1500);
+        // reload removed — merge is already in memory via setOverlays; reload caused stale GitHub fetch to wipe the save
       } else {
         setMergeToast("❌ Save failed — try again");
         setTimeout(() => setMergeToast(null), 3000);
