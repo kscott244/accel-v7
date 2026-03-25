@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-25T06:55:50.515Z",
+  "lastUpdated": "2026-03-25T06:56:01.807Z",
   "groups": {
     "Master-CM1873360": {
       "id": "Master-CM1873360",
@@ -136,6 +136,15 @@
         "email": "",
         "notes": "From AI research",
         "savedAt": "2026-03-25T06:55:49.892Z"
+      },
+      {
+        "id": 1774421761311,
+        "name": "Andrew Luccio, DMD",
+        "role": "Co-Lead Dentist (Attleboro Dental Group & Clear Coast Dental)",
+        "phone": "",
+        "email": "",
+        "notes": "From AI research",
+        "savedAt": "2026-03-25T06:56:01.310Z"
       }
     ]
   }
