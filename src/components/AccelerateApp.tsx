@@ -220,10 +220,12 @@ import AcctDetail from "@/components/tabs/AcctDetail";
 import DealersTab from "@/components/tabs/DealersTab";
 import OutreachTab from "@/components/tabs/OutreachTab";
 import AdminTab from "@/components/tabs/AdminTab";
+import TasksTab from "@/components/tabs/TasksTab";
 // ─── PHASE 5: Tab components extracted to src/components/tabs/ ────
 
 // ─── ICONS (local — nav bar only) ────────────────────────────────
 const UploadIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>;
+const IconTask    = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>;
 const IconBolt    = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>;
 const IconGroup   = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
 const IconChart   = ({c}:{c:string}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>;
@@ -246,6 +248,44 @@ export default function App() {
 }
 function AppInner() {
   const [tab, setTab] = useState("today");
+  const [tasks, setTasks] = useState<any[]>(() => {
+    try {
+      const cached = localStorage.getItem("overlay_cache_v2");
+      if (cached) { const ov = JSON.parse(cached); if (Array.isArray(ov?.tasks)) return ov.tasks; }
+    } catch {}
+    return [];
+  });
+  const addTask = (data: any, linkedAcct?: any, linkedGroup?: any) => {
+    const newTask = {
+      id: Date.now(),
+      ...data,
+      accountId: linkedAcct?.id || null,
+      accountName: linkedAcct?.name || null,
+      groupId: linkedGroup?.id || null,
+      groupName: linkedGroup ? (linkedGroup.name || linkedGroup.id) : null,
+      completed: false,
+      createdAt: new Date().toISOString(),
+    };
+    setTasks(prev => {
+      const next = [newTask, ...prev];
+      try { localStorage.setItem("accel_tasks_v1", JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
+  const completeTask = (id: number) => {
+    setTasks(prev => {
+      const next = prev.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+      try { localStorage.setItem("accel_tasks_v1", JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
+  const deleteTask = (id: number) => {
+    setTasks(prev => {
+      const next = prev.filter(t => t.id !== id);
+      try { localStorage.setItem("accel_tasks_v1", JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
   const [view, setView] = useState(null);
   const [showMore, setShowMore] = useState(false);
   const [adjs, setAdjs] = useState<any[]>(() => {
@@ -918,13 +958,14 @@ function AppInner() {
         const goGroupFn = (g:any) => { window.scrollTo(0,0); setView({type:"group", data:g}); };
         const goAcctFn = (a:any, from?:any) => { window.scrollTo(0,0); setView({type:"acct", data:a, from}); };
         return <>
-          {!view && tab==="today" && <DashboardTab scored={scored} goAcct={goSmartFn} q1CY={q1CY} q1Gap={q1Gap} q1Att={q1Att} adjCount={adjs.length} totalAdj={totalAdjQ1} groups={groups||[]} goGroup={goGroupFn} activeQ={activeQ||"1"} weeklyDelta={weeklyDelta}/> }
+          {!view && tab==="today" && <DashboardTab scored={scored} goAcct={goSmartFn} q1CY={q1CY} q1Gap={q1Gap} q1Att={q1Att} adjCount={adjs.length} totalAdj={totalAdjQ1} groups={groups||[]} goGroup={goGroupFn} activeQ={activeQ||"1"} weeklyDelta={weeklyDelta} tasks={tasks} onCompleteTask={completeTask} onGoTasks={()=>{setTab("tasks");setView(null);}}/> }
           {!view && tab==="groups" && <GroupsTab groups={groups||[]} goGroup={goGroupFn} filt={gFilt} setFilt={setGFilt} search={gSearch} setSearch={setGSearch} groupedPrivates={groupedPrivates}/>}
           {!view && tab==="map" && <MapTab/>}
           {!view && tab==="calc" && <DashTab groups={groups||[]} q1CY={q1CY} q1Att={q1Att} q1Gap={q1Gap} scored={scored} goAcct={goSmartFn} activeQ={activeQ||"1"}/>}
           {!view && tab==="est" && <EstTab pct={estPct} setPct={setEstPct} q1CY={q1CY} groups={groups||[]} goAcct={goSmartFn}/>}
           {!view && tab==="dealers" && <DealersTab scored={scored} groups={groups||[]} goAcct={goSmartFn} goGroup={goGroupFn} activeQ={activeQ||"1"} overlays={overlays} saveOverlays={saveOverlays}/>}
           {!view && tab==="outreach" && <OutreachTab scored={scored}/>}
+          {!view && tab==="tasks" && <TasksTab tasks={tasks} onAddTask={(data)=>addTask(data)} onCompleteTask={completeTask} onDeleteTask={deleteTask}/>}
           {!view && tab==="admin" && <AdminTab groups={groups||[]} scored={scored} overlays={overlays} saveOverlays={saveOverlays} salesStore={salesStore}/>}
           {view?.type==="group" && <GroupDetail group={view.data} groups={groups||[]} goMain={()=>setView(null)} overlays={overlays} saveOverlays={saveOverlays} goAcct={(a:any)=>setView({type:"acct",data:{...a,gName:fixGroupName(view.data),gId:view.data.id,gTier:view.data.tier},from:view.data})} salesStore={salesStore}/>}
           {view?.type==="acct" && <AcctDetail acct={view.data} goBack={()=>view?.from?setView({type:"group",data:view.from}):setView(null)} adjs={adjs} setAdjs={setAdjs} groups={groups||[]} goGroup={goGroupFn} overlays={overlays} saveOverlays={saveOverlays} reapplyGroupOverrides={reapplyGroupOverrides} goAcct={(s:any)=>setView({type:"acct",data:{...s,gId:view.data.gId,gName:view.data.gName},from:view?.from})} salesStore={salesStore}/>}
@@ -949,7 +990,7 @@ function AppInner() {
       {/* NAV BAR */}
       <nav style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:960,zIndex:100,borderTop:`1px solid ${T.b1}`,background:"rgba(10,10,15,.92)",backdropFilter:"blur(32px)"}}>
         <div style={{display:"flex",height:56,alignItems:"center",justifyContent:"space-around",padding:"0 4px"}}>
-          {[{k:"today",l:"Today",I:IconBolt},{k:"groups",l:"Accounts",I:IconGroup},{k:"dealers",l:"Dealers",I:IconDealer}].map(t=>(
+          {[{k:"today",l:"Today",I:IconBolt},{k:"groups",l:"Accounts",I:IconGroup},{k:"dealers",l:"Dealers",I:IconDealer},{k:"tasks",l:"Tasks",I:IconTask}].map(t=>(
             <button key={t.k} onClick={()=>{setTab(t.k);setView(null);setShowMore(false)}} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 16px",cursor:"pointer",color:tab===t.k&&!view&&!showMore?T.blue:T.t4}}>
               <t.I c={tab===t.k&&!view&&!showMore?T.blue:T.t4}/>
               <span style={{fontSize:9,fontWeight:600,letterSpacing:".5px"}}>{t.l}</span>
