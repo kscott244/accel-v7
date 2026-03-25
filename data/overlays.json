@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-25T16:04:37.549Z",
+  "lastUpdated": "2026-03-25T16:04:41.106Z",
   "groups": {
     "Master-CM1873360": {
       "id": "Master-CM1873360",
@@ -71,6 +71,34 @@
       "score": 92,
       "createdAt": "2026-03-25T16:04:37.043Z",
       "updatedAt": "2026-03-25T16:04:37.043Z"
+    },
+    "Master-CM1969858": {
+      "id": "Master-CM1969858",
+      "name": "FARMINGTON FAMILY DENTAL GROUP",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM1969858",
+        "Master-CM888684"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 90,
+      "createdAt": "2026-03-25T16:04:37.769Z",
+      "updatedAt": "2026-03-25T16:04:37.769Z"
+    },
+    "Master-CM17688756": {
+      "id": "Master-CM17688756",
+      "name": "CANTON VALLEY DENTAL",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM17688756",
+        "Master-CM137511"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 98,
+      "createdAt": "2026-03-25T16:04:40.546Z",
+      "updatedAt": "2026-03-25T16:04:40.546Z"
     }
   },
   "groupDetaches": [],
