@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-25T15:59:19.539Z",
+  "lastUpdated": "2026-03-25T16:02:00.933Z",
   "groups": {
     "Master-CM1873360": {
       "id": "Master-CM1873360",
@@ -16,6 +16,19 @@
       "source": "manual-merge",
       "createdAt": "2026-03-25T12:00:00.000Z",
       "updatedAt": "2026-03-25T12:00:00.000Z"
+    },
+    "Master-CM1921839": {
+      "id": "Master-CM1921839",
+      "name": "MIDDLETOWN DENTAL ASSOCIATES",
+      "tier": "Standard",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM1921839",
+        "Master-CM047997"
+      ],
+      "source": "manual-merge",
+      "createdAt": "2026-03-25T16:02:00.120Z",
+      "updatedAt": "2026-03-25T16:02:00.120Z"
     }
   },
   "groupDetaches": [],
