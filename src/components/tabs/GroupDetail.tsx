@@ -385,6 +385,76 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
     return moves.slice(0,4);
   },[sortedChildren, groupStopped, groupBuying, group, qk]);
 
+
+  // ── Account Brief (deterministic, no API) ────────────────────────────
+  const [briefOpen, setBriefOpen] = useState(false);
+
+  const briefLines = useMemo(()=>{
+    const lines: {text:string; color:string}[] = [];
+    const numLocs = (group.children||[]).length || 1;
+    const groupName = fixGroupName(group);
+
+    // 1. Health summary sentence
+    if (cy > py && py > 0) {
+      const pct = Math.round(cy/py*100-100);
+      lines.push({ text: `${groupName} is growing — up ${pct}% vs PY with ${$$(cy)} CY.`, color: T.green });
+    } else if (py === 0) {
+      lines.push({ text: `${groupName} is a new account with no prior-year baseline yet.`, color: T.blue });
+    } else if (ret >= 70) {
+      lines.push({ text: `${groupName} is tracking well at ${ret}% of PY (${$$(cy)} of ${$$(py)}).`, color: T.green });
+    } else if (ret >= 40) {
+      const gapAmt = py - cy;
+      lines.push({ text: `${groupName} is at risk — ${ret}% retention leaves a ${$$(gapAmt)} gap vs PY.`, color: T.amber });
+    } else {
+      const gapAmt = py - cy;
+      lines.push({ text: `${groupName} is in a critical state — only ${ret}% of PY, down ${$$(gapAmt)}.`, color: T.red });
+    }
+
+    // 2. Biggest risk: top-gap child or top at-risk product
+    const topChild = sortedChildren[0];
+    const topChildGap = topChild ? ((topChild.pyQ?.[qk]||0) - (topChild.cyQ?.[qk]||0)) : 0;
+    const topAtRisk = groupBuying.filter((p:any)=>p.py>500&&p.cy/p.py<0.6&&p.cy>0).sort((a:any,b:any)=>(b.py-b.cy)-(a.py-a.cy))[0];
+    if (topChildGap > 1000 && numLocs > 1) {
+      const shortName = topChild.name?.split(" ").slice(0,3).join(" ") || "top location";
+      lines.push({ text: `Biggest drag is ${shortName}, which is down ${$$(topChildGap)} vs PY.`, color: T.red });
+    } else if (topAtRisk) {
+      const pShort = topAtRisk.name.split(" ").slice(0,3).join(" ");
+      const pct = Math.round(topAtRisk.cy/topAtRisk.py*100);
+      lines.push({ text: `${pShort} is at risk — only ${pct}% of PY with a ${$$(topAtRisk.py-topAtRisk.cy)} gap.`, color: T.amber });
+    }
+
+    // 3. Biggest opportunity: win-back or expansion
+    const topStop = groupStopped.filter((p:any)=>p.py>=500)[0];
+    const partial = numLocs > 1
+      ? groupBuying.filter((p:any)=>p.locsCY.length>0 && p.locsCY.length < numLocs*0.6 && p.cy>300).sort((a:any,b:any)=>b.cy-a.cy)[0]
+      : null;
+    if (topStop) {
+      const pShort = topStop.name.split(" ").slice(0,3).join(" ");
+      const lc = topStop.locsDown?.length || 0;
+      lines.push({ text: `Biggest win-back is ${pShort}${lc>0?`, stopped at ${lc} loc${lc!==1?"s":""}`:""} after ${$$(topStop.py)} PY.`, color: T.red });
+    } else if (partial) {
+      const pShort = partial.name.split(" ").slice(0,3).join(" ");
+      const missing = numLocs - partial.locsCY.length;
+      lines.push({ text: `${pShort} is only at ${partial.locsCY.length} of ${numLocs} locs — ${missing} location${missing!==1?"s":""} not yet buying.`, color: T.purple });
+    }
+
+    // 4. Momentum signal if any
+    const topGrowing = groupBuying.filter((p:any)=>p.py>200&&p.cy/p.py>1.15).sort((a:any,b:any)=>(b.cy/b.py)-(a.cy/a.py))[0];
+    if (topGrowing) {
+      const pShort = topGrowing.name.split(" ").slice(0,3).join(" ");
+      const pct = Math.round(topGrowing.cy/topGrowing.py*100-100);
+      lines.push({ text: `${pShort} is showing momentum at +${pct}% vs PY — worth reinforcing.`, color: T.green });
+    }
+
+    // 5. Best immediate move (mirror top nextBestMove)
+    const topMove = nextBestMoves[0];
+    if (topMove) {
+      lines.push({ text: `Best immediate move: ${topMove.action.toLowerCase()} — ${topMove.why.toLowerCase()}.`, color: T.blue });
+    }
+
+    return lines.slice(0,5);
+  },[group, cy, py, ret, qk, sortedChildren, groupStopped, groupBuying, nextBestMoves]);
+
   // ── Path 2: Product drill → which child accounts are up/down on this product ──
   if (selProduct) {
     const allProds = [...groupBuying, ...groupStopped];
@@ -600,6 +670,21 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}>
           <Stat l="PY" v={$$(py)} c={T.t2}/><Stat l="CY" v={$$(cy)} c={T.blue}/><Stat l="Gap" v={gap<=0?`+${$$(Math.abs(gap))}`:$$(gap)} c={gap<=0?T.green:T.red}/><Stat l="Ret" v={ret+"%"} c={healthColor}/>
         </div>
+        {/* ACCOUNT BRIEF toggle */}
+        {briefLines.length>0&&<div style={{marginTop:12,borderTop:`1px solid ${T.b2}`,paddingTop:10}}>
+          <button onClick={()=>setBriefOpen(v=>!v)} style={{background:"none",border:"none",padding:0,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"inherit",width:"100%",textAlign:"left"}}>
+            <span style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan}}>Account Brief</span>
+            <span style={{fontSize:10,color:T.t4,marginLeft:"auto",transition:"transform .2s",display:"inline-block",transform:briefOpen?"rotate(90deg)":"rotate(0deg)"}}>›</span>
+          </button>
+          {briefOpen&&<div style={{marginTop:8,display:"flex",flexDirection:"column",gap:6}}>
+            {briefLines.map((line,i)=>(
+              <div key={i} style={{display:"flex",gap:8,alignItems:"flex-start"}}>
+                <span style={{width:5,height:5,borderRadius:"50%",background:line.color,flexShrink:0,marginTop:5}}/>
+                <span style={{fontSize:11,color:T.t2,lineHeight:1.5}}>{line.text}</span>
+              </div>
+            ))}
+          </div>}
+        </div>}
       </div>
 
 
