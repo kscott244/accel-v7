@@ -1,20 +1,12 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-25T05:48:16.233Z",
+  "lastUpdated": "2026-03-25T05:48:41.144Z",
   "groups": {},
   "groupDetaches": [],
   "groupMoves": {},
   "nameOverrides": {},
   "contacts": {},
-  "fscReps": {
-    "Master-CM680778": {
-      "Schein": {
-        "name": "Schein",
-        "phone": "",
-        "notes": ""
-      }
-    }
-  },
+  "fscReps": {},
   "activityLogs": {},
   "research": {},
   "dealerOverrides": {},
