@@ -92,6 +92,8 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
 
   const [selProduct, setSelProduct] = useState<string|null>(null);
   const [prodView, setProdView] = useState<string>("location");
+  // Inline month expansion — separate from full-screen selProduct drill
+  const [expandedProduct, setExpandedProduct] = useState<string|null>(null);
   const [editDist, setEditDist] = useState<string|null>(null);
   const [editName, setEditName] = useState("");
   const [editPhone, setEditPhone] = useState("");
@@ -647,27 +649,61 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
       {hasProducts&&<div className="anim" style={{animationDelay:"40ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
         <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue,marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <span>Group Product Health</span>
-          <span style={{fontSize:9,color:T.t4,fontWeight:400,textTransform:"none",letterSpacing:0}}>Tap product to see by location</span>
+          <span style={{fontSize:9,color:T.t4,fontWeight:400,textTransform:"none",letterSpacing:0}}>Tap row · monthly history</span>
         </div>
 
         {/* Stopped across group */}
         {groupStopped.length>0&&<div style={{marginBottom:groupBuying.length>0?14:0}}>
           <div style={{fontSize:10,fontWeight:700,color:T.red,marginBottom:8}}>Stopped Buying ({groupStopped.length} products)</div>
-          {groupStopped.map((p,i)=>(
-            <div key={i} onClick={()=>setSelProduct(p.name)} style={{marginBottom:10,padding:"8px 10px",borderRadius:8,background:"rgba(248,113,113,.04)",border:"1px solid rgba(248,113,113,.08)",cursor:"pointer"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:p.locsDown.length>0?4:0}}>
-                <span style={{fontSize:12,fontWeight:600,color:T.t1}}>{p.name}</span>
-                <div style={{display:"flex",alignItems:"center",gap:8}}>
-                  <span className="m" style={{fontSize:10,color:T.red,flexShrink:0}}>Was {$$(p.py)} → $0</span>
-                  <Chev/>
+          {groupStopped.map((p,i)=>{
+            const isExp = expandedProduct === p.name;
+            const childIds2 = new Set((group.children||[]).map((c:any)=>c.id));
+            const recs = salesStore?.records ? (Object.values(salesStore.records) as any[]).filter((r:any)=>childIds2.has(r.childId)&&r.l3===p.name) : [];
+            // Build month rows newest-first: months 1-12, filter to rows with any data
+            const MONTHS_SHORT2 = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+            const QMAP: Record<number,string> = {1:"Q1",2:"Q1",3:"Q1",4:"Q2",5:"Q2",6:"Q2",7:"Q3",8:"Q3",9:"Q3",10:"Q4",11:"Q4",12:"Q4"};
+            const mb: Record<number,{py:number,cy:number}> = {};
+            for(let m=1;m<=12;m++) mb[m]={py:0,cy:0};
+            recs.forEach((r:any)=>{ const m=r.month||1; if(m>=1&&m<=12){mb[m].py+=r.py||0;mb[m].cy+=r.cy||0;} });
+            const monthRows = [12,11,10,9,8,7,6,5,4,3,2,1].filter(m=>mb[m].py>0||mb[m].cy>0).map(m=>({m,label:MONTHS_SHORT2[m-1],q:QMAP[m],py:mb[m].py,cy:mb[m].cy}));
+            return <div key={i} style={{marginBottom:10,borderRadius:8,background:"rgba(248,113,113,.04)",border:`1px solid ${isExp?"rgba(248,113,113,.25)":"rgba(248,113,113,.08)"}`,overflow:"hidden"}}>
+              {/* Summary row — tap to toggle inline expansion */}
+              <div onClick={()=>setExpandedProduct(isExp?null:p.name)} style={{padding:"8px 10px",cursor:"pointer"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:p.locsDown.length>0?4:0}}>
+                  <span style={{fontSize:12,fontWeight:600,color:T.t1}}>{p.name}</span>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <span className="m" style={{fontSize:10,color:T.red,flexShrink:0}}>Was {$$(p.py)} → $0</span>
+                    {/* Details link → full-screen drill */}
+                    <span onClick={e=>{e.stopPropagation();setSelProduct(p.name);}} style={{fontSize:9,color:T.t4,cursor:"pointer",textDecoration:"underline",flexShrink:0}}>Locs</span>
+                    <span style={{fontSize:10,color:T.t3,transition:"transform .2s",display:"inline-block",transform:isExp?"rotate(90deg)":"rotate(0deg)"}}>›</span>
+                  </div>
                 </div>
+                {p.locsDown.length>0&&<div style={{fontSize:9,color:T.t4,lineHeight:1.5}}>
+                  {p.locsDown.slice(0,3).map(l=>l.split(" ").slice(0,2).join(" ")).join(" · ")}
+                  {p.locsDown.length>3&&<span> +{p.locsDown.length-3} more</span>}
+                </div>}
               </div>
-              {p.locsDown.length>0&&<div style={{fontSize:9,color:T.t4,lineHeight:1.5}}>
-                {p.locsDown.slice(0,3).map(l=>l.split(' ').slice(0,2).join(' ')).join(' · ')}
-                {p.locsDown.length>3&&<span> +{p.locsDown.length-3} more</span>}
+              {/* Inline month table */}
+              {isExp&&<div style={{borderTop:"1px solid rgba(248,113,113,.1)",background:"rgba(0,0,0,.2)",padding:"8px 10px"}}>
+                {monthRows.length===0
+                  ? <div style={{fontSize:10,color:T.t4,textAlign:"center",padding:"6px 0"}}>No monthly history — upload a CSV with sales data to populate</div>
+                  : <>
+                      <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:4,marginBottom:4,paddingBottom:4,borderBottom:"1px solid rgba(255,255,255,.05)"}}>
+                        {["Month","Q","PY","CY"].map(h=><span key={h} style={{fontSize:8,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:"0.5px"}}>{h}</span>)}
+                      </div>
+                      {monthRows.map(({m,label,q,py,cy})=>(
+                        <div key={m} style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:4,padding:"3px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}>
+                          <span style={{fontSize:10,color:T.t2}}>{label}</span>
+                          <span style={{fontSize:9,color:T.t4}}>{q}</span>
+                          <span className="m" style={{fontSize:10,color:T.t3,fontFamily:"monospace"}}>{$$(py)}</span>
+                          <span className="m" style={{fontSize:10,color:cy>0?T.blue:T.red,fontFamily:"monospace",fontWeight:cy>0?400:600}}>{cy>0?$$(cy):"–"}</span>
+                        </div>
+                      ))}
+                    </>
+                }
               </div>}
-            </div>
-          ))}
+            </div>;
+          })}
         </div>}
 
         {/* Buying across group */}
@@ -677,21 +713,54 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
             const mx=groupBuying[0]?.cy||1;
             const trend=p.py>0?p.cy/p.py:1;
             const pGap=p.py-p.cy;
-            return <div key={i} onClick={()=>setSelProduct(p.name)} style={{marginBottom:8,cursor:"pointer"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
-                <span style={{fontSize:11,color:T.t2,flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</span>
-                <div style={{display:"flex",gap:6,flexShrink:0,marginLeft:8,alignItems:"center"}}>
-                  <span className="m" style={{fontSize:9,color:T.t4}}>{$$(p.py)}</span>
-                  <span className="m" style={{fontSize:10,color:trend>=0.8?T.blue:T.amber,fontWeight:600}}>{$$(p.cy)}</span>
-                  {pGap>0&&<span className="m" style={{fontSize:9,color:T.red,fontWeight:600}}>-{$$(pGap)}</span>}
-                  <Chev/>
+            const isExp2 = expandedProduct === p.name;
+            const childIds3 = new Set((group.children||[]).map((c:any)=>c.id));
+            const recs2 = salesStore?.records ? (Object.values(salesStore.records) as any[]).filter((r:any)=>childIds3.has(r.childId)&&r.l3===p.name) : [];
+            const MONTHS_SHORT3 = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+            const QMAP2: Record<number,string> = {1:"Q1",2:"Q1",3:"Q1",4:"Q2",5:"Q2",6:"Q2",7:"Q3",8:"Q3",9:"Q3",10:"Q4",11:"Q4",12:"Q4"};
+            const mb2: Record<number,{py:number,cy:number}> = {};
+            for(let m=1;m<=12;m++) mb2[m]={py:0,cy:0};
+            recs2.forEach((r:any)=>{ const m=r.month||1; if(m>=1&&m<=12){mb2[m].py+=r.py||0;mb2[m].cy+=r.cy||0;} });
+            const monthRows2 = [12,11,10,9,8,7,6,5,4,3,2,1].filter(m=>mb2[m].py>0||mb2[m].cy>0).map(m=>({m,label:MONTHS_SHORT3[m-1],q:QMAP2[m],py:mb2[m].py,cy:mb2[m].cy}));
+            return <div key={i} style={{marginBottom:8,borderRadius:8,border:`1px solid ${isExp2?"rgba(79,142,247,.2)":"transparent"}`,overflow:"hidden"}}>
+              {/* Summary row */}
+              <div onClick={()=>setExpandedProduct(isExp2?null:p.name)} style={{cursor:"pointer"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
+                  <span style={{fontSize:11,color:T.t2,flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</span>
+                  <div style={{display:"flex",gap:6,flexShrink:0,marginLeft:8,alignItems:"center"}}>
+                    <span className="m" style={{fontSize:9,color:T.t4}}>{$$(p.py)}</span>
+                    <span className="m" style={{fontSize:10,color:trend>=0.8?T.blue:T.amber,fontWeight:600}}>{$$(p.cy)}</span>
+                    {pGap>0&&<span className="m" style={{fontSize:9,color:T.red,fontWeight:600}}>-{$$(pGap)}</span>}
+                    <span onClick={e=>{e.stopPropagation();setSelProduct(p.name);}} style={{fontSize:9,color:T.t4,cursor:"pointer",textDecoration:"underline",flexShrink:0}}>Locs</span>
+                    <span style={{fontSize:10,color:T.t3,transition:"transform .2s",display:"inline-block",transform:isExp2?"rotate(90deg)":"rotate(0deg)"}}>›</span>
+                  </div>
                 </div>
+                <div style={{height:4,borderRadius:2,background:T.s3,overflow:"hidden"}}>
+                  <div className="bar-g" style={{animationDelay:`${i*40}ms`,height:"100%",borderRadius:2,width:`${Math.min(p.cy/mx*100,100)}%`,background:trend>=0.8?`linear-gradient(90deg,${T.blue},${T.cyan})`:T.amber}}/>
+                </div>
+                {p.locsDown.length>0&&<div style={{fontSize:9,color:T.amber,marginTop:2}}>
+                  ⚠ {p.locsDown.slice(0,2).map(l=>l.split(" ").slice(0,2).join(" ")).join(", ")} stopped
+                </div>}
               </div>
-              <div style={{height:4,borderRadius:2,background:T.s3,overflow:"hidden"}}>
-                <div className="bar-g" style={{animationDelay:`${i*40}ms`,height:"100%",borderRadius:2,width:`${Math.min(p.cy/mx*100,100)}%`,background:trend>=0.8?`linear-gradient(90deg,${T.blue},${T.cyan})`:T.amber}}/>
-              </div>
-              {p.locsDown.length>0&&<div style={{fontSize:9,color:T.amber,marginTop:2}}>
-                ⚠ {p.locsDown.slice(0,2).map(l=>l.split(' ').slice(0,2).join(' ')).join(', ')} stopped
+              {/* Inline month table */}
+              {isExp2&&<div style={{borderTop:"1px solid rgba(79,142,247,.1)",background:"rgba(0,0,0,.15)",padding:"8px 4px 4px",marginTop:6}}>
+                {monthRows2.length===0
+                  ? <div style={{fontSize:10,color:T.t4,textAlign:"center",padding:"6px 0"}}>No monthly history — upload a CSV with sales data to populate</div>
+                  : <>
+                      <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:4,marginBottom:4,paddingBottom:4,borderBottom:"1px solid rgba(255,255,255,.05)"}}>
+                        {["Month","Q","PY","CY"].map(h=><span key={h} style={{fontSize:8,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:"0.5px"}}>{h}</span>)}
+                      </div>
+                      {monthRows2.map(({m,label,q,py,cy})=>{
+                        const mGap=py-cy;
+                        return <div key={m} style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:4,padding:"3px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}>
+                          <span style={{fontSize:10,color:T.t2}}>{label}</span>
+                          <span style={{fontSize:9,color:T.t4}}>{q}</span>
+                          <span className="m" style={{fontSize:10,color:T.t3,fontFamily:"monospace"}}>{$$(py)}</span>
+                          <span className="m" style={{fontSize:10,color:mGap>0?T.red:mGap<0?T.green:T.blue,fontFamily:"monospace",fontWeight:600}}>{$$(cy)}</span>
+                        </div>;
+                      })}
+                    </>
+                }
               </div>}
             </div>;
           })}
@@ -825,4 +894,5 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
 
 
 export default GroupDetail;
+
 
