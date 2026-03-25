@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-25T05:02:47.192Z",
+  "lastUpdated": "2026-03-25T05:02:49.071Z",
   "groups": {},
   "groupDetaches": [],
   "groupMoves": {},
@@ -60,6 +60,24 @@
         "email": "info@godental365.com",
         "notes": "From AI research",
         "savedAt": "2026-03-25T05:02:46.519Z"
+      },
+      {
+        "id": 1774414967418,
+        "name": "Dr. Eric George",
+        "role": "Lead Doctor / Owner, Eric George DMD & Associates (Coventry RI)",
+        "phone": "(401) 822-3352",
+        "email": "sfillmore@ericgeorgedmd.com",
+        "notes": "From AI research",
+        "savedAt": "2026-03-25T05:02:47.417Z"
+      },
+      {
+        "id": 1774414968643,
+        "name": "Dr. Joel Picard",
+        "role": "Lead Doctor / Owner, Picard Dental Associates (Woonsocket RI)",
+        "phone": "(401) 769-0047",
+        "email": "",
+        "notes": "From AI research",
+        "savedAt": "2026-03-25T05:02:48.641Z"
       }
     ]
   }
