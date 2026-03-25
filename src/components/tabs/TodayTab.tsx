@@ -8,7 +8,7 @@ import { Bar, Chev, AccountId, fixGroupName } from "@/components/primitives";
 import { BADGER } from "@/lib/data";
 import { scorePriority, BUCKET_STYLE } from "@/lib/priority";
 
-function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGroup,activeQ:activeQProp,weeklyDelta}) {
+function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGroup,activeQ:activeQProp,weeklyDelta,tasks=[],onCompleteTask,onGoTasks}) {
   const [search, setSearch] = useState("");
   const [odDone, setOdDone] = useState<Record<string,{outcome:string,amt:number,note?:string}>>(() => {
     try { return JSON.parse(localStorage.getItem("overdrive_done") || "{}"); } catch { return {}; }
@@ -386,6 +386,30 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
   }, [groups]);
 
   return <div style={{padding:"0 0 80px"}}>
+
+    {/* ── TODAY'S TASKS ── */}
+    {(() => {
+      const todayStr = new Date().toISOString().slice(0,10);
+      const dueTasks = (tasks||[]).filter((t:any) => !t.completed && t.dueDate <= todayStr);
+      if (!dueTasks.length) return null;
+      return <div style={{margin:"16px 16px 0",background:T.s1,borderRadius:14,padding:"12px 14px",border:`1px solid rgba(251,191,36,.2)`,borderLeft:`3px solid ${T.amber}`}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.amber}}>📋 Due Today · {dueTasks.length}</div>
+          <button onClick={onGoTasks} style={{background:"none",border:"none",color:T.blue,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>See all →</button>
+        </div>
+        {dueTasks.slice(0,3).map((t:any)=>(
+          <div key={t.id} style={{display:"flex",alignItems:"center",gap:10,paddingTop:8,borderTop:`1px solid ${T.b2}`}}>
+            <button onClick={()=>onCompleteTask&&onCompleteTask(t.id)} style={{width:18,height:18,borderRadius:5,border:`2px solid ${T.b2}`,background:"none",cursor:"pointer",flexShrink:0}}/>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:12,fontWeight:600,color:T.t1}}>{t.action}</div>
+              {(t.accountName||t.groupName)&&<div style={{fontSize:10,color:T.cyan}}>{t.accountName||t.groupName}</div>}
+            </div>
+            <span style={{fontSize:10,fontWeight:600,color:t.dueDate<todayStr?T.red:T.amber}}>{t.dueDate<todayStr?"Overdue":"Today"}</span>
+          </div>
+        ))}
+        {dueTasks.length>3&&<div style={{fontSize:10,color:T.t4,marginTop:8,textAlign:"center"}}>+{dueTasks.length-3} more</div>}
+      </div>;
+    })()}
 
     {/* ── SEARCH BAR ── */}
     <div style={{position:"relative",margin:"16px 16px 12px"}}>
