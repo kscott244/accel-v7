@@ -386,6 +386,103 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
   },[sortedChildren, groupStopped, groupBuying, group, qk]);
 
 
+
+  // ── Group-level AI research state ──────────────────────────────────────
+  const [grpResState, setGrpResState] = useState<"idle"|"loading"|"done"|"error">("idle");
+  const [grpResIntel, setGrpResIntel] = useState<any>(null);
+  const [grpResSaveToast, setGrpResSaveToast] = useState<string|null>(null);
+
+  const SCOPE_LABEL: Record<number,string> = {
+    1: "Owner / Lead Dr",
+    2: "Office-level",
+    3: "Group / Regional",
+    4: "Coordinator",
+    5: "Front Office",
+  };
+
+  const runGroupResearch = async () => {
+    setGrpResState("loading");
+    setGrpResIntel(null);
+    try {
+      // Build a rich context payload from the group
+      const topChildren = (group.children||[]).slice(0,3);
+      const topDealer = (group.children||[]).reduce((acc:any,c:any)=>{
+        const d=c.dealer||"All Other"; acc[d]=(acc[d]||0)+1; return acc;
+      },{});
+      const dealerStr = Object.entries(topDealer).sort((a:any,b:any)=>b[1]-a[1]).map(([d])=>d).slice(0,2).join(", ");
+      const topProds = groupBuying.slice(0,5).map((p:any)=>p.name);
+      const cityList = [...new Set(topChildren.map((c:any)=>c.city).filter(Boolean))].join(", ");
+      const stateVal = topChildren[0]?.st || "";
+      const numLocs2 = (group.children||[]).length;
+      const res = await fetch("/api/deep-research", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({
+          name: fixGroupName(group),
+          city: cityList,
+          state: stateVal,
+          dealer: dealerStr,
+          products: topProds,
+          gName: fixGroupName(group),
+          acctId: group.id,
+          ownership: group.class2==="DSO"||group.class2==="Emerging DSO" ? "dso" : numLocs2>2 ? "emerging_dso" : null,
+          isGroupLevel: true,
+          numLocations: numLocs2,
+        })
+      });
+      const data = await res.json();
+      if (data?.intel) {
+        setGrpResIntel(data.intel);
+        setGrpResState("done");
+      } else {
+        setGrpResState("error");
+        setGrpResIntel({error: data?.error || "Research failed. Try again."});
+      }
+    } catch(e:any) {
+      setGrpResState("error");
+      setGrpResIntel({error:"Connection error. Check network and try again."});
+    }
+  };
+
+  const saveResContact = (c:any) => {
+    const entry = {
+      id: Date.now() + Math.random(),
+      name: c.name,
+      role: c.role || "",
+      phone: c.phone || "",
+      email: c.email || "",
+      notes: `Scope: ${SCOPE_LABEL[c.tier||2]||"Unknown"} · From AI research`,
+      savedAt: new Date().toISOString(),
+    };
+    const updated = [...groupContacts, entry];
+    setGroupContacts(updated);
+    try { localStorage.setItem(`grpContacts:${group.id}`, JSON.stringify(updated)); } catch {}
+    if (saveOverlays) {
+      const next = { ...OVERLAYS_REF, groupContacts: { ...(OVERLAYS_REF.groupContacts||{}), [group.id]: updated } };
+      saveOverlays(next);
+    }
+    setGrpResSaveToast(`✓ Saved ${c.name}`);
+    setTimeout(()=>setGrpResSaveToast(null), 2500);
+  };
+
+  const saveResWebsite = (url:string) => {
+    if (!saveOverlays) return;
+    const next = { ...OVERLAYS_REF, groupWebsite: { ...(OVERLAYS_REF.groupWebsite||{}), [group.id]: url } };
+    saveOverlays(next);
+    setGrpResSaveToast("✓ Website saved");
+    setTimeout(()=>setGrpResSaveToast(null), 2500);
+  };
+
+  const saveResNote = (text:string) => {
+    const newNote = (groupNote ? groupNote + "
+
+" : "") + "— AI Research Intel —
+" + text;
+    saveNote(newNote);
+    setGrpResSaveToast("✓ Added to group notes");
+    setTimeout(()=>setGrpResSaveToast(null), 2500);
+  };
+
   // ── Account Brief (deterministic, no API) ────────────────────────────
   const [briefOpen, setBriefOpen] = useState(false);
 
@@ -640,8 +737,15 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
   };
 
   return <div style={{paddingBottom:80}}>
-    <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"10px 16px"}}>
+    <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"10px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
       <button onClick={goMain} style={{background:"none",border:"none",color:T.blue,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:13,fontWeight:600,fontFamily:"inherit"}}><Back/> Groups</button>
+      <button onClick={()=>grpResState==="idle"||grpResState==="error"?runGroupResearch():null}
+        disabled={grpResState==="loading"}
+        style={{background:grpResState==="done"?"rgba(34,211,238,.1)":"rgba(79,142,247,.1)",border:`1px solid ${grpResState==="done"?"rgba(34,211,238,.25)":"rgba(79,142,247,.25)"}`,borderRadius:8,padding:"4px 11px",fontSize:10,fontWeight:700,color:grpResState==="done"?T.cyan:T.blue,cursor:grpResState==="loading"?"not-allowed":"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:5}}>
+        {grpResState==="loading"
+          ? <><span style={{animation:"pulse 1s infinite",fontSize:9}}>●</span> Searching…</>
+          : grpResState==="done" ? "🔍 Re-research" : "🔍 Research"}
+      </button>
     </div>
     <div style={{padding:"16px 16px 0"}}>
       <div className="anim" style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
@@ -687,6 +791,107 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
         </div>}
       </div>
 
+
+
+      {/* GROUP AI INTEL PANEL */}
+      {(grpResState==="loading"||grpResState==="done"||grpResState==="error")&&<div className="anim" style={{background:`linear-gradient(135deg,rgba(34,211,238,.04),rgba(79,142,247,.04))`,border:`1px solid rgba(34,211,238,.2)`,borderRadius:16,padding:16,marginBottom:16}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+          <div style={{display:"flex",alignItems:"center",gap:7}}>
+            <span style={{fontSize:12}}>🔍</span>
+            <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan}}>Group Intel</span>
+            {grpResSaveToast&&<span style={{fontSize:9,color:T.green,fontWeight:600,marginLeft:4}}>{grpResSaveToast}</span>}
+          </div>
+          <button onClick={()=>{setGrpResState("idle");setGrpResIntel(null);}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:16,lineHeight:1,padding:"0 2px"}}>✕</button>
+        </div>
+
+        {grpResState==="loading"&&<div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {[90,70,80,55,85].map((w,i)=><div key={i} style={{height:10,borderRadius:5,background:T.s3,width:`${w}%`,animation:"pulse 1.2s ease-in-out infinite",animationDelay:`${i*120}ms`}}/>)}
+          <div style={{fontSize:11,color:T.t4,marginTop:4}}>Searching web for group practice intel…</div>
+        </div>}
+
+        {grpResState==="error"&&<div style={{fontSize:12,color:T.red}}>{grpResIntel?.error||"Research failed."}</div>}
+
+        {grpResState==="done"&&grpResIntel&&!grpResIntel.parseError&&<div>
+          {/* Status */}
+          {grpResIntel.statusNote&&<div style={{marginBottom:10,padding:"8px 10px",borderRadius:8,background:grpResIntel.status==="open"?"rgba(52,211,153,.08)":grpResIntel.status==="closed"?"rgba(248,113,113,.08)":"rgba(120,120,160,.08)",border:`1px solid ${grpResIntel.status==="open"?"rgba(52,211,153,.2)":grpResIntel.status==="closed"?"rgba(248,113,113,.2)":"rgba(120,120,160,.15)"}`}}>
+            <div style={{fontSize:9,textTransform:"uppercase",color:T.t4,marginBottom:2}}>Practice Status</div>
+            <div style={{fontSize:11,fontWeight:600,color:grpResIntel.status==="open"?T.green:grpResIntel.status==="closed"?T.red:T.amber}}>{grpResIntel.statusNote}</div>
+          </div>}
+
+          {/* Ownership */}
+          {grpResIntel.ownershipNote&&<div style={{marginBottom:10}}>
+            <div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:3}}>Ownership</div>
+            <div style={{fontSize:11,color:T.t2,lineHeight:1.5}}>{grpResIntel.ownershipNote}</div>
+          </div>}
+
+          {/* Website */}
+          {grpResIntel.website&&<div style={{marginBottom:10,display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
+            <div style={{minWidth:0}}>
+              <div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:2}}>Website</div>
+              <a href={grpResIntel.website} target="_blank" rel="noreferrer" style={{fontSize:11,color:T.blue,textDecoration:"none",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",display:"block"}}>{grpResIntel.website}</a>
+            </div>
+            <button onClick={()=>saveResWebsite(grpResIntel.website)} style={{flexShrink:0,fontSize:9,fontWeight:700,color:T.cyan,background:"rgba(34,211,238,.08)",border:"1px solid rgba(34,211,238,.2)",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontFamily:"inherit"}}>Save</button>
+          </div>}
+
+          {/* Contacts with scope labels + individual save */}
+          {grpResIntel.contacts?.length>0&&<div style={{marginBottom:10}}>
+            <div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:8}}>Contacts Found</div>
+            {grpResIntel.contacts.map((c:any,i:number)=>{
+              const scopeLabel = SCOPE_LABEL[c.tier||2]||"Unknown";
+              const scopeColor = c.tier===1?T.cyan:c.tier===3?T.purple:T.t3;
+              const alreadySaved = groupContacts.some((gc:any)=>gc.name===c.name);
+              return <div key={i} style={{background:T.s2,borderRadius:10,padding:"10px 12px",marginBottom:7,border:`1px solid ${T.b2}`}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",marginBottom:3}}>
+                      <span style={{fontSize:12,fontWeight:700,color:T.t1}}>{c.name}</span>
+                      <span style={{fontSize:8,fontWeight:700,color:scopeColor,background:`${scopeColor}14`,borderRadius:4,padding:"1px 5px",border:`1px solid ${scopeColor}30`,whiteSpace:"nowrap"}}>{scopeLabel}</span>
+                    </div>
+                    {c.role&&<div style={{fontSize:10,color:T.t3,marginBottom:4}}>{c.role}</div>}
+                    <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+                      {c.phone&&<a href={`tel:${c.phone.replace(/\D/g,"")}`} style={{fontSize:10,color:T.green,textDecoration:"none"}}>{c.phone}</a>}
+                      {c.email&&<a href={`mailto:${c.email}`} style={{fontSize:10,color:T.blue,textDecoration:"none",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:180}}>{c.email}</a>}
+                    </div>
+                  </div>
+                  <button onClick={()=>!alreadySaved&&saveResContact(c)} disabled={alreadySaved}
+                    style={{flexShrink:0,fontSize:9,fontWeight:700,color:alreadySaved?T.t4:T.green,background:alreadySaved?"rgba(120,120,160,.06)":"rgba(52,211,153,.08)",border:`1px solid ${alreadySaved?"rgba(120,120,160,.12)":"rgba(52,211,153,.2)"}`,borderRadius:6,padding:"3px 8px",cursor:alreadySaved?"default":"pointer",fontFamily:"inherit"}}>
+                    {alreadySaved?"✓ Saved":"+ Save"}
+                  </button>
+                </div>
+              </div>;
+            })}
+          </div>}
+
+          {/* Hooks — saveable to group notes */}
+          {grpResIntel.hooks?.length>0&&<div style={{marginBottom:10}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+              <div style={{fontSize:9,color:T.t3,textTransform:"uppercase"}}>Relationship Hooks</div>
+              <button onClick={()=>saveResNote(grpResIntel.hooks.join("
+• "))} style={{fontSize:9,fontWeight:700,color:T.amber,background:"rgba(251,191,36,.06)",border:"1px solid rgba(251,191,36,.15)",borderRadius:6,padding:"2px 7px",cursor:"pointer",fontFamily:"inherit"}}>+ Notes</button>
+            </div>
+            {grpResIntel.hooks.map((h:string,i:number)=>(
+              <div key={i} style={{display:"flex",gap:6,alignItems:"flex-start",marginBottom:5}}>
+                <span style={{color:T.amber,marginTop:1,fontSize:10,flexShrink:0}}>◆</span>
+                <span style={{fontSize:11,color:T.t2,lineHeight:1.5}}>{h}</span>
+              </div>
+            ))}
+          </div>}
+
+          {/* Talking points */}
+          {grpResIntel.talkingPoints?.length>0&&<div>
+            <div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:6}}>Talking Points</div>
+            {grpResIntel.talkingPoints.map((p:string,i:number)=>(
+              <div key={i} style={{display:"flex",gap:6,alignItems:"flex-start",marginBottom:6}}>
+                <span style={{color:T.blue,fontWeight:700,fontSize:10,marginTop:1,flexShrink:0}}>{i+1}.</span>
+                <span style={{fontSize:11,color:T.t1,lineHeight:1.5}}>{p}</span>
+              </div>
+            ))}
+          </div>}
+
+          {grpResIntel.searchedAt&&<div style={{fontSize:9,color:T.t4,marginTop:8,textAlign:"right"}}>Researched {new Date(grpResIntel.searchedAt).toLocaleDateString()}</div>}
+        </div>}
+        {grpResState==="done"&&grpResIntel?.parseError&&<div style={{fontSize:11,color:T.t2,lineHeight:1.6,whiteSpace:"pre-wrap"}}>{grpResIntel.rawText}</div>}
+      </div>}
 
       {/* NEXT BEST MOVES */}
       {nextBestMoves.length>0&&<div className="anim" style={{animationDelay:"12ms",background:T.s1,border:`1px solid rgba(79,142,247,.15)`,borderRadius:16,padding:16,marginBottom:16}}>
