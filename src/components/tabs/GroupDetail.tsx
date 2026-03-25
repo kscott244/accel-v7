@@ -1163,7 +1163,7 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
               {/* Inline month table */}
               {isExp&&<div style={{borderTop:"1px solid rgba(248,113,113,.1)",background:"rgba(0,0,0,.2)",padding:"8px 10px"}}>
                 {monthRows.length===0
-                  ? <div style={{fontSize:10,color:T.t4,textAlign:"center",padding:"6px 0"}}>No monthly history — upload a CSV with sales data to populate</div>
+                  ? <div style={{fontSize:10,color:T.t4,textAlign:"center",padding:"6px 0"}}>No monthly data — upload a CSV with sales data to populate</div>
                   : <>
                       <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:4,marginBottom:4,paddingBottom:4,borderBottom:"1px solid rgba(255,255,255,.05)"}}>
                         {["Month","Q","PY","CY"].map(h=><span key={h} style={{fontSize:8,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:"0.5px"}}>{h}</span>)}
@@ -1222,7 +1222,7 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
               {/* Inline month table */}
               {isExp2&&<div style={{borderTop:"1px solid rgba(79,142,247,.1)",background:"rgba(0,0,0,.15)",padding:"8px 4px 4px",marginTop:6}}>
                 {monthRows2.length===0
-                  ? <div style={{fontSize:10,color:T.t4,textAlign:"center",padding:"6px 0"}}>No monthly history — upload a CSV with sales data to populate</div>
+                  ? <div style={{fontSize:10,color:T.t4,textAlign:"center",padding:"6px 0"}}>No monthly data — upload a CSV with sales data to populate</div>
                   : <>
                       <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:4,marginBottom:4,paddingBottom:4,borderBottom:"1px solid rgba(255,255,255,.05)"}}>
                         {["Month","Q","PY","CY"].map(h=><span key={h} style={{fontSize:8,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:"0.5px"}}>{h}</span>)}
