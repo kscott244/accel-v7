@@ -1,19 +1,21 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-25T06:10:02.474Z",
+  "lastUpdated": "2026-03-25T12:00:00.000Z",
   "groups": {
-    "Master-CM1991085": {
-      "id": "Master-CM1991085",
-      "name": "DENTAL 365 OF STAMFORD",
+    "Master-CM1873360": {
+      "id": "Master-CM1873360",
+      "name": "DENTAL 365",
       "tier": "Standard",
-      "class2": "Private Practice",
+      "class2": "DSO",
       "childIds": [
+        "Master-CM1873360",
+        "Master-CM680778",
         "Master-CM1991085",
-        "Master-CM1873360"
+        "Master-CM1835757"
       ],
       "source": "manual-merge",
-      "createdAt": "2026-03-25T06:04:05.050Z",
-      "updatedAt": "2026-03-25T06:04:05.050Z"
+      "createdAt": "2026-03-25T12:00:00.000Z",
+      "updatedAt": "2026-03-25T12:00:00.000Z"
     }
   },
   "groupDetaches": [],
