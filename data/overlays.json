@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-25T03:59:11.835Z",
+  "lastUpdated": "2026-03-25T04:00:23.283Z",
   "groups": {},
   "groupDetaches": [],
   "groupMoves": {},
@@ -40,6 +40,15 @@
         "email": "",
         "notes": "From AI research",
         "savedAt": "2026-03-25T03:59:11.435Z"
+      },
+      {
+        "id": 1774411222761,
+        "name": "Dr. John J. Conroy, DMD",
+        "role": "Owner/Orthodontist - Conroy Orthodontics (Wethersfield/Middletown/South Windsor)",
+        "phone": "860-529-7200",
+        "email": "info@conroyortho.com",
+        "notes": "From AI research",
+        "savedAt": "2026-03-25T04:00:22.759Z"
       }
     ]
   }
