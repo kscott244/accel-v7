@@ -25,9 +25,16 @@ try {
   };
 } catch(e) {}
 
-function GroupDetail({group,goMain,goAcct,overlays,saveOverlays,salesStore=null}) {
+function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesStore=null}) {
   const [q,setQ]=useState("1");
   const qk=q;
+
+  // ── Merge group state ──
+  const [showMerge, setShowMerge] = useState(false);
+  const [mergeSearch, setMergeSearch] = useState("");
+  const [mergeTarget, setMergeTarget] = useState<any>(null);
+  const [mergeSaving, setMergeSaving] = useState(false);
+  const [mergeToast, setMergeToast] = useState<string|null>(null);
   const py=group.pyQ?.[qk]||0;const cy=group.cyQ?.[qk]||0;
   const gap=py-cy;const ret=py>0?Math.round(cy/py*100):0;
 
@@ -359,6 +366,65 @@ function GroupDetail({group,goMain,goAcct,overlays,saveOverlays,salesStore=null}
     });
   }, [group, qk]);
 
+  // ── Merge: search results ──
+  const alreadyMergedIds = useMemo(() => {
+    const ids = new Set<string>();
+    Object.values(OVERLAYS_REF.groups||{}).forEach((g:any) => {
+      (g.childIds||[]).forEach((cid:string) => ids.add(cid));
+    });
+    return ids;
+  }, [overlays]);
+
+  const mergeResults = useMemo(() => {
+    if (!mergeSearch.trim()) return [];
+    const mq = mergeSearch.trim().toLowerCase();
+    return groups.filter((g:any) => {
+      if (g.id === group.id) return false; // can't merge with self
+      if (alreadyMergedIds.has(g.id)) return false; // already absorbed elsewhere
+      return fixGroupName(g).toLowerCase().includes(mq) ||
+        g.name?.toLowerCase().includes(mq) ||
+        g.children?.some((c:any) => c.name?.toLowerCase().includes(mq));
+    }).slice(0, 10);
+  }, [mergeSearch, groups, group.id, alreadyMergedIds]);
+
+  const executeMerge = (target:any) => {
+    if (!target || mergeSaving) return;
+    setMergeSaving(true);
+    // Collect childIds: current group's existing children + target group's ID (applyOverlays expands group IDs)
+    const existingEntry = OVERLAYS_REF.groups?.[group.id];
+    const currentChildIds: string[] = existingEntry?.childIds
+      ? [...existingEntry.childIds]
+      : (group.children||[]).map((c:any) => c.id);
+    // Add target group ID — applyOverlays Step 4d will expand it to all its children
+    if (!currentChildIds.includes(target.id)) currentChildIds.push(target.id);
+    const groupEntry = {
+      id: group.id,
+      name: fixGroupName(group),
+      tier: group.tier || "Standard",
+      class2: group.class2 || "Private Practice",
+      childIds: currentChildIds,
+      source: "manual-merge",
+      createdAt: existingEntry?.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    const next = { ...OVERLAYS_REF, groups: { ...(OVERLAYS_REF.groups||{}), [group.id]: groupEntry } };
+    saveOverlays(next).then((ok:boolean) => {
+      setMergeSaving(false);
+      if (ok) {
+        setMergeToast(`✅ Merged ${fixGroupName(target)} into ${fixGroupName(group)}`);
+        setMergeTarget(null);
+        setShowMerge(false);
+        setMergeSearch("");
+        setTimeout(() => setMergeToast(null), 4000);
+        // Reload to see merged group
+        setTimeout(() => window.location.reload(), 1500);
+      } else {
+        setMergeToast("❌ Save failed — try again");
+        setTimeout(() => setMergeToast(null), 3000);
+      }
+    });
+  };
+
   return <div style={{paddingBottom:80}}>
     <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"10px 16px"}}>
       <button onClick={goMain} style={{background:"none",border:"none",color:T.blue,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:13,fontWeight:600,fontFamily:"inherit"}}><Back/> Groups</button>
@@ -370,8 +436,12 @@ function GroupDetail({group,goMain,goAcct,overlays,saveOverlays,salesStore=null}
             <div style={{fontSize:16,fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fixGroupName(group)}</div>
             <div style={{fontSize:11,color:T.t3,marginTop:2}}>{group.locs} location{group.locs!==1?"s":""} · {getTierLabel(group.tier,group.class2)}</div>
           </div>
-          <span style={{flexShrink:0,fontSize:10,fontWeight:700,color:healthColor,background:`${healthColor}14`,border:`1px solid ${healthColor}30`,borderRadius:6,padding:"3px 9px",marginLeft:8}}>{healthLabel}</span>
+          <div style={{display:"flex",gap:6,flexShrink:0,marginLeft:8,alignItems:"center"}}>
+            <span style={{fontSize:10,fontWeight:700,color:healthColor,background:`${healthColor}14`,border:`1px solid ${healthColor}30`,borderRadius:6,padding:"3px 9px"}}>{healthLabel}</span>
+            <button onClick={()=>{setShowMerge(true);setMergeSearch("");setMergeTarget(null);}} style={{fontSize:9,fontWeight:700,color:T.purple,background:"rgba(167,139,250,.08)",border:"1px solid rgba(167,139,250,.18)",borderRadius:6,padding:"3px 9px",cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>⊕ Merge</button>
+          </div>
         </div>
+        {mergeToast&&<div style={{marginBottom:8,padding:"8px 12px",borderRadius:8,fontSize:11,fontWeight:600,color:mergeToast.startsWith("✅")?T.green:T.red,background:mergeToast.startsWith("✅")?"rgba(52,211,153,.08)":"rgba(248,113,113,.08)",border:`1px solid ${mergeToast.startsWith("✅")?"rgba(52,211,153,.2)":"rgba(248,113,113,.2)"}`}}>{mergeToast}</div>}
         {/* Retention bar */}
         <div style={{margin:"10px 0 12px"}}>
           <Bar pct={Math.min(ret,100)} color={`linear-gradient(90deg,${healthColor},${healthColor}99)`}/>
@@ -651,6 +721,105 @@ function GroupDetail({group,goMain,goAcct,overlays,saveOverlays,salesStore=null}
         </button>;
       })}
     </div>
+
+    {/* ── MERGE GROUP MODAL ── */}
+    {showMerge&&<div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.75)",backdropFilter:"blur(8px)",display:"flex",flexDirection:"column",justifyContent:"flex-end"}} onClick={()=>{setShowMerge(false);setMergeTarget(null);}}>
+      <div style={{background:T.s1,borderRadius:"20px 20px 0 0",padding:20,maxHeight:"80vh",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
+
+        {!mergeTarget ? <>
+          {/* ── SEARCH STEP ── */}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+            <div>
+              <div style={{fontSize:14,fontWeight:700}}>Absorb Group</div>
+              <div style={{fontSize:10,color:T.t3,marginTop:2}}>Merge another group into <span style={{color:T.cyan,fontWeight:600}}>{fixGroupName(group)}</span></div>
+            </div>
+            <button onClick={()=>setShowMerge(false)} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:18}}>✕</button>
+          </div>
+          <input autoFocus type="text" value={mergeSearch} onChange={e=>setMergeSearch(e.target.value)}
+            placeholder="Search by group or office name…"
+            style={{width:"100%",height:42,borderRadius:10,border:`1px solid ${mergeSearch?T.blue+"44":T.b1}`,background:T.s2,color:T.t1,fontSize:13,padding:"0 14px",outline:"none",fontFamily:"inherit",boxSizing:"border-box",marginBottom:10}}/>
+          <div style={{overflowY:"auto",flex:1,maxHeight:"50vh"}}>
+            {mergeSearch.trim() && mergeResults.length===0 && <div style={{fontSize:11,color:T.t4,textAlign:"center",padding:"16px 0"}}>No groups found.</div>}
+            {mergeResults.map((g:any,i:number) => {
+              const gpy=g.pyQ?.["1"]||0; const gcy=g.cyQ?.["1"]||0; const ggap=gpy-gcy;
+              const topDealer = (g.children||[]).reduce((acc:any,c:any) => {
+                const d=c.dealer||"All Other"; acc[d]=(acc[d]||0)+1; return acc;
+              }, {} as Record<string,number>);
+              const dealerStr = Object.entries(topDealer).sort((a:any,b:any)=>b[1]-a[1]).slice(0,2).map(([d,n])=>`${d} ${n}`).join(", ");
+              const childNames = (g.children||[]).slice(0,2).map((c:any) => c.name).filter(Boolean);
+              const cityStr = g.children?.[0]?.city && g.children?.[0]?.st ? `${g.children[0].city}, ${g.children[0].st}` : "";
+              return <button key={g.id} onClick={()=>setMergeTarget(g)}
+                style={{width:"100%",textAlign:"left",background:T.s2,border:`1px solid ${T.b2}`,borderRadius:12,padding:"12px 14px",marginBottom:7,cursor:"pointer",fontFamily:"inherit"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:13,fontWeight:700,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fixGroupName(g)}</div>
+                    <div style={{fontSize:10,color:T.t3,marginTop:2}}>{g.locs||1} loc{(g.locs||1)!==1?"s":""}{cityStr?` · ${cityStr}`:""}{dealerStr?` · ${dealerStr}`:""}</div>
+                    {childNames.length>0&&<div style={{fontSize:9,color:T.t4,marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                      Offices: {childNames.join(", ")}{(g.children||[]).length>2?` +${(g.children||[]).length-2} more`:""}
+                    </div>}
+                  </div>
+                  <div style={{textAlign:"right",flexShrink:0,marginLeft:10}}>
+                    <div className="m" style={{fontSize:11,fontWeight:700,color:ggap>0?T.red:ggap<0?T.green:T.t4}}>{ggap>0?`-${$$(ggap)}`:ggap<0?`+${$$(-ggap)}`:"Even"}</div>
+                  </div>
+                </div>
+                <div style={{display:"flex",gap:10}}>
+                  <Pill l="PY" v={$$(gpy)} c={T.t2}/><Pill l="CY" v={$$(gcy)} c={T.blue}/>
+                </div>
+              </button>;
+            })}
+          </div>
+        </> : <>
+          {/* ── CONFIRM STEP ── */}
+          {(()=>{
+            const tpy=mergeTarget.pyQ?.["1"]||0; const tcy=mergeTarget.cyQ?.["1"]||0;
+            const combinedLocs = (group.locs||1) + (mergeTarget.locs||1);
+            const combinedPY = py + tpy;
+            const combinedCY = cy + tcy;
+            const combinedGap = combinedPY - combinedCY;
+            const isLarge = combinedLocs > 30;
+            return <>
+              <div style={{fontSize:14,fontWeight:700,marginBottom:12}}>Confirm Merge</div>
+              {/* Current group */}
+              <div style={{background:T.s2,border:`1px solid rgba(34,211,238,.2)`,borderLeft:`3px solid ${T.cyan}`,borderRadius:10,padding:"10px 14px",marginBottom:8}}>
+                <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",color:T.cyan,letterSpacing:"1px",marginBottom:4}}>Destination (this group)</div>
+                <div style={{fontSize:13,fontWeight:700,color:T.t1}}>{fixGroupName(group)}</div>
+                <div style={{fontSize:10,color:T.t3,marginTop:2}}>{group.locs} loc{group.locs!==1?"s":""} · PY {$$(py)} · CY {$$(cy)}</div>
+              </div>
+              <div style={{textAlign:"center",fontSize:12,color:T.purple,fontWeight:700,margin:"4px 0"}}>⊕ absorbs</div>
+              {/* Target group */}
+              <div style={{background:T.s2,border:`1px solid rgba(167,139,250,.2)`,borderLeft:`3px solid ${T.purple}`,borderRadius:10,padding:"10px 14px",marginBottom:12}}>
+                <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",color:T.purple,letterSpacing:"1px",marginBottom:4}}>Will be merged in</div>
+                <div style={{fontSize:13,fontWeight:700,color:T.t1}}>{fixGroupName(mergeTarget)}</div>
+                <div style={{fontSize:10,color:T.t3,marginTop:2}}>{mergeTarget.locs||1} loc{(mergeTarget.locs||1)!==1?"s":""} · PY {$$(tpy)} · CY {$$(tcy)}</div>
+                {(mergeTarget.children||[]).length>0&&<div style={{fontSize:9,color:T.t4,marginTop:3}}>
+                  Offices: {(mergeTarget.children||[]).slice(0,3).map((c:any)=>c.name).join(", ")}{(mergeTarget.children||[]).length>3?` +${(mergeTarget.children||[]).length-3} more`:""}
+                </div>}
+              </div>
+              {/* Combined result */}
+              <div style={{background:"rgba(79,142,247,.06)",border:"1px solid rgba(79,142,247,.15)",borderRadius:10,padding:"10px 14px",marginBottom:12}}>
+                <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",color:T.blue,letterSpacing:"1px",marginBottom:4}}>Combined Result</div>
+                <div style={{display:"flex",gap:14,alignItems:"center"}}>
+                  <span style={{fontSize:12,fontWeight:700,color:T.t1}}>{combinedLocs} locations</span>
+                  <Pill l="PY" v={$$(combinedPY)} c={T.t2}/><Pill l="CY" v={$$(combinedCY)} c={T.blue}/>
+                  <span className="m" style={{fontSize:10,fontWeight:700,color:combinedGap>0?T.red:T.green}}>{combinedGap>0?`-${$$(combinedGap)}`:`+${$$(Math.abs(combinedGap))}`}</span>
+                </div>
+              </div>
+              {isLarge&&<div style={{background:"rgba(251,191,36,.08)",border:"1px solid rgba(251,191,36,.2)",borderRadius:8,padding:"8px 12px",marginBottom:12,fontSize:11,color:T.amber,fontWeight:600}}>
+                ⚠ This creates a large group ({combinedLocs} locations). Make sure these practices are actually related.
+              </div>}
+              <div style={{display:"flex",gap:10}}>
+                <button onClick={()=>setMergeTarget(null)} style={{flex:1,padding:"11px 0",borderRadius:10,fontSize:13,fontWeight:600,cursor:"pointer",border:`1px solid ${T.b1}`,background:T.s2,color:T.t3,fontFamily:"inherit"}}>Back</button>
+                <button onClick={()=>executeMerge(mergeTarget)} disabled={mergeSaving}
+                  style={{flex:2,padding:"11px 0",borderRadius:10,fontSize:13,fontWeight:700,cursor:mergeSaving?"not-allowed":"pointer",border:"none",
+                    background:mergeSaving?"rgba(167,139,250,.3)":`linear-gradient(90deg,${T.purple},${T.blue})`,color:"#fff",fontFamily:"inherit"}}>
+                  {mergeSaving?"Saving…":"Absorb Group"}
+                </button>
+              </div>
+            </>;
+          })()}
+        </>}
+      </div>
+    </div>}
   </div>;
 }
 
