@@ -310,6 +310,16 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
 
 
 
+
+  // Sort children by gap descending (biggest gap first = highest spend priority)
+  const sortedChildren = useMemo(() => {
+    return [...(group.children||[])].sort((a:any,b:any) => {
+      const aGap = (a.pyQ?.[qk]||0) - (a.cyQ?.[qk]||0);
+      const bGap = (b.pyQ?.[qk]||0) - (b.cyQ?.[qk]||0);
+      return bGap - aGap;
+    });
+  }, [group, qk]);
+
   // ── Next Best Moves ───────────────────────────────────────────────────
   const nextBestMoves = useMemo(()=>{
     const moves: {rank:number; action:string; why:string; color:string}[] = [];
@@ -681,14 +691,6 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
   const healthColor = ret >= 70 ? T.green : ret >= 40 ? T.amber : T.red;
   const healthLabel = cy > py && py > 0 ? "Growing" : ret >= 60 ? "Stable" : ret >= 25 ? "Recoverable" : py === 0 ? "New" : "Critical";
 
-  // Sort children by gap descending (biggest gap first = highest spend priority)
-  const sortedChildren = useMemo(() => {
-    return [...(group.children||[])].sort((a:any,b:any) => {
-      const aGap = (a.pyQ?.[qk]||0) - (a.cyQ?.[qk]||0);
-      const bGap = (b.pyQ?.[qk]||0) - (b.cyQ?.[qk]||0);
-      return bGap - aGap;
-    });
-  }, [group, qk]);
 
   // ── Merge: search results ──
   const alreadyMergedIds = useMemo(() => {
