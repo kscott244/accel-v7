@@ -25,6 +25,7 @@ export interface ImportReport {
   grandTotalRowsSkipped: number;
   summaryRowsSkipped: number;
   noDateRowsSkipped: number;
+  noMdmRowsSkipped: number;
   cleanRowsProcessed: number;
   uniqueParents: number;
   uniqueOffices: number;
@@ -259,6 +260,7 @@ export function processCSVData(
   let grandTotalRowsSkipped = 0;
   let summaryRowsSkipped    = 0;
   let noDateRowsSkipped     = 0;
+  let noMdmRowsSkipped      = 0;
   let cleanRowsProcessed    = 0;
 
   const childInfo:      Record<string, any>                                    = {};
@@ -294,7 +296,7 @@ export function processCSVData(
     const parentId = (row["Parent MDM ID"] || "").trim();
     const l3       = (row["L3"]            || "").trim();
 
-    if (!childId || !parentId) continue;
+    if (!childId || !parentId) { noMdmRowsSkipped++; continue; }
 
     allChildIds.add(childId);
 
@@ -483,6 +485,14 @@ export function processCSVData(
       examples: missingParentExamples,
     });
   }
+  if (noMdmRowsSkipped > 0) {
+    warnings.push({
+      code:     "MISSING_MDM",
+      label:    `${noMdmRowsSkipped} rows dropped — missing Child MDM ID or Parent MDM ID (revenue not counted)`,
+      count:    noMdmRowsSkipped,
+      examples: [],
+    });
+  }
   if (noDateRowsSkipped > 0) {
     warnings.push({
       code:     "BAD_DATE",
@@ -503,6 +513,7 @@ export function processCSVData(
     grandTotalRowsSkipped,
     summaryRowsSkipped,
     noDateRowsSkipped,
+    noMdmRowsSkipped,
     cleanRowsProcessed,
     uniqueParents:          Object.keys(parentChildren).length,
     uniqueOffices:          allChildIds.size,
