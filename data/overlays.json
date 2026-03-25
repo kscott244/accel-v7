@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-25T16:04:41.106Z",
+  "lastUpdated": "2026-03-25T16:04:43.601Z",
   "groups": {
     "Master-CM1873360": {
       "id": "Master-CM1873360",
@@ -99,6 +99,20 @@
       "score": 98,
       "createdAt": "2026-03-25T16:04:40.546Z",
       "updatedAt": "2026-03-25T16:04:40.546Z"
+    },
+    "Master-CM1390287": {
+      "id": "Master-CM1390287",
+      "name": "DR EDLY DESTINE",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM1390287",
+        "Master-CM836239"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 92,
+      "createdAt": "2026-03-25T16:04:42.619Z",
+      "updatedAt": "2026-03-25T16:04:42.619Z"
     }
   },
   "groupDetaches": [],
