@@ -434,8 +434,7 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
       "scope values: 1=Owner/Lead Dr, 2=Office-level, 3=Group/Regional, 4=Coordinator",
       "Return max 4 contacts. If no data found leave field empty string or empty array.",
       "Return ONLY the JSON object."
-    ].join("
-");
+    ].join("\n");
     try {
       const res = await fetch("/api/deep-research", {
         method: "POST",
