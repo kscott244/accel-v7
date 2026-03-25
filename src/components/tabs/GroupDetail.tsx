@@ -443,13 +443,13 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
       });
       const data = await res.json();
       const intel = data.intel || {};
-      if (data.error || !intel.statusNote) {
-        setResResult({ status: data.error || "No intel found for this group. Try a more specific group name.", ownership: "", website: "", contacts: [], hooks: [], talkingPoints: [] });
+      if (data.error && !intel.statusNote && !intel.status && !(intel.contacts?.length)) {
+        setResResult({ status: data.error || "No intel found. The practice may not have a web presence.", ownership: "", website: "", contacts: [], hooks: [], talkingPoints: [] });
         setResLoading(false); return;
       }
       // Normalize API fields to what the render panel expects
       setResResult({
-        status: intel.statusNote || intel.status || "",
+        status: intel.statusNote || intel.status || "Practice found.",
         ownership: intel.ownershipNote || "",
         website: intel.website || "",
         contacts: (intel.contacts||[]).map((c:any) => ({
