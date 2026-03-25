@@ -1,22 +1,7 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-25T05:42:42.154Z",
-  "groups": {
-    "Master-CM680778": {
-      "id": "Master-CM680778",
-      "name": "DENTAL 365",
-      "tier": "Diamond",
-      "class2": "DSO",
-      "childIds": [
-        "Master-CM188502",
-        "Master-CM906343",
-        "Master-CM1991085"
-      ],
-      "source": "manual-merge",
-      "createdAt": "2026-03-25T05:42:41.503Z",
-      "updatedAt": "2026-03-25T05:42:41.503Z"
-    }
-  },
+  "lastUpdated": "2026-03-25T05:42:45.942Z",
+  "groups": {},
   "groupDetaches": [],
   "groupMoves": {},
   "nameOverrides": {},
