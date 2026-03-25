@@ -1,38 +1,37 @@
 # CURRENT PHASE — accel-v7
 
-## Active: Phase A11 — Group Product Month Drilldown ✅ Complete
+## Active: Phase A12 — Group-Level Opportunity Signals ✅ Complete
 
 ### Goal
-Make product rows in GroupDetail inline-drillable so a parent/group acts as a real product command center — without leaving the group screen.
+Surface product/opportunity signals inside GroupDetail so the view is more actionable — not just historical numbers but specific next-step signals.
 
 ### Baseline
-A10 complete: Merge Group workflow verified (already implemented in Phase 23). Commit `192a468`.
+A11 complete: Inline month drilldown for products in GroupDetail. Commit `d9563fc`.
 
 ### What Was Built
 
-**`src/components/tabs/GroupDetail.tsx`** (commit `d9563fc`)
+**`src/components/tabs/GroupDetail.tsx`** (commit `61c1310`)
 
-Added `expandedProduct` state (string|null). Product rows in both "Stopped Buying" and "Currently Buying" sections now toggle an inline month table on tap.
+Added `opportunitySignals` useMemo and a new **Opportunities** section rendered between Group Notes and Group Product Health.
 
-**Interaction:**
-- Tap any product row → expands a Month | Q | PY | CY table inline beneath it (newest-first)
-- Tap again → collapses
-- Small **"Locs"** underline link preserved → still navigates to the existing full-screen by-location drill
-- Rotating `›` chevron indicates expand/collapse state
-- Border highlight activates on the expanded row (red for stopped, blue for buying)
+**Signal types (computed from existing groupBuying / groupStopped data):**
+- **Win-back** — products in `groupStopped` with PY ≥ $500 → "Win-back: [Product] — Was $X PY — now $0"
+- **Momentum** — products growing >15% vs PY → "[Product] momentum — +N% vs PY · $X CY"
+- **At-risk** — active products below 60% of PY → "[Product] at risk — N% of PY · gap $X"
+- **Partial penetration** — product bought at <60% of locations (multi-loc groups only) → "[Product] partial — N of M locs buying"
 
-**Month data:**
-- Aggregates `salesStore.records` across all children in the group where `r.l3 === productName`
-- Buckets by `r.month` (1–12), rolled up across all child locations
-- Displays newest-first (Dec → Jan), filtered to months with any PY or CY data
-- Quarter column derived from month: Q1=Jan–Mar, Q2=Apr–Jun, Q3=Jul–Sep, Q4=Oct–Dec
-- Empty state: "No monthly history — upload a CSV with sales data to populate"
+**UI:**
+- Orange "OPPORTUNITIES" section header
+- Each signal: icon + bold label + muted detail line + colored right-bar accent
+- Max 6 signals shown, section hidden if zero signals
+- No new state, no API calls, no changes to data architecture
 
-**No changes to:** merge workflow, search, upload pipeline, full-screen drill, data architecture.
+**No changes to:** merge workflow, search, upload pipeline, product health section, or any other tab.
 
 ---
 
 ## Previously Completed
+- A11 — Group Product Month Drilldown (d9563fc) ✅
 - A10 — Merge Group workflow verified (192a468) ✅
 - A9 — adjs cross-device via overlays (f2475b9 + 0a4c11d) ✅
 - A8 — Cross-device state audit ✅
@@ -44,4 +43,4 @@ Added `expandedProduct` state (string|null). Product rows in both "Stopped Buyin
 ---
 
 ## Last Updated
-March 25, 2026
+March 24, 2026
