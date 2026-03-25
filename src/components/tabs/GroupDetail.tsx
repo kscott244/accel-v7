@@ -434,6 +434,10 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
           products: topProds,
           ownership,
           gName: groupName,
+            childNames,
+            address: addresses[0] || "",
+            addresses,
+            doctor: savedDoctors[0] || "",
           acctId: group.id,
         }),
       });
