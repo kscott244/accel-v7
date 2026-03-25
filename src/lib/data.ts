@@ -20,7 +20,7 @@ export let DEALER_REPS: Record<string, any> = {};
 export const EMPTY_OVERLAYS: any = {
   schemaVersion: 2, lastUpdated: new Date().toISOString(),
   groups: {}, groupDetaches: [], groupMoves: {}, nameOverrides: {},
-  contacts: {}, fscReps: {}, activityLogs: {}, research: {}, dealerOverrides: {}, dealerManualReps: {},
+  contacts: {}, fscReps: {}, activityLogs: {}, research: {}, dealerOverrides: {}, dealerManualReps: {}, adjs: [],
 };
 export let OVERLAYS_REF: any = EMPTY_OVERLAYS;
 
@@ -30,3 +30,4 @@ try { DEALERS       = require("@/data/dealers").DEALERS;           } catch(e) {}
 try { PARENT_DEALERS = require("@/data/parentDealers").PARENT_DEALERS; } catch(e) {}
 try { WEEK_ROUTES   = require("@/data/week-routes.json");          } catch(e) {}
 try { DEALER_REPS   = require("@/data/dealer-reps.json");          } catch(e) {}
+
