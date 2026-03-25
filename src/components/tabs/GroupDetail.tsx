@@ -1420,6 +1420,34 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
           </div>}
         </button>;
       })}
+
+      {/* GHOST LOCATIONS — found in research, not in CSV */}
+      {ghostLocations.map((c:any, i:number) => (
+        <div key={c.id} style={{
+          background: "rgba(167,139,250,.04)",
+          border: "1px dashed rgba(167,139,250,.3)",
+          borderRadius: 12, padding: "12px 14px", marginBottom: 8,
+          opacity: 0.8
+        }}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+            <div style={{fontSize:12,fontWeight:600,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",color:T.t2}}>{c.name}</div>
+            <span style={{fontSize:9,fontWeight:700,color:T.purple,background:"rgba(167,139,250,.15)",borderRadius:4,padding:"2px 7px",border:"1px solid rgba(167,139,250,.3)",flexShrink:0,marginLeft:8}}>NEW ✦</span>
+          </div>
+          {(c.city||c.addr) && (
+            <div style={{fontSize:10,color:T.t4,marginBottom:6}}>
+              {c.addr ? `${c.addr}, ` : ""}{c.city}{c.st ? `, ${c.st}` : ""}{c.zip ? ` ${c.zip}` : ""}
+            </div>
+          )}
+          <div style={{fontSize:10,color:T.purple,fontStyle:"italic"}}>Found in research · not yet in your territory data</div>
+          <button onClick={() => setGhostLocations(prev => {
+            const next = prev.filter((_:any, j:number) => j !== i);
+            try { localStorage.setItem(`ghost_locs:${group.id}`, JSON.stringify(next)); } catch {}
+            return next;
+          })} style={{marginTop:8,background:"none",border:"none",color:T.t4,fontSize:10,cursor:"pointer",fontFamily:"inherit",padding:0}}>
+            dismiss
+          </button>
+        </div>
+      ))}
     </div>
 
     {/* ── MERGE GROUP MODAL ── */}
