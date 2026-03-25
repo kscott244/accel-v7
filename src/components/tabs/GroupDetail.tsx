@@ -243,6 +243,69 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
 
   const hasProducts = groupBuying.length>0 || groupStopped.length>0;
 
+  // ── Opportunity signals ──────────────────────────────────────────────
+  const opportunitySignals = useMemo(()=>{
+    const signals: {type:string; label:string; detail:string; color:string; icon:string}[] = [];
+    const numLocs = (group.children||[]).length || 1;
+
+    // Win-back: stopped products with meaningful PY
+    const topStopped = groupStopped.filter((p:any)=>p.py>=500).slice(0,3);
+    topStopped.forEach((p:any)=>{
+      signals.push({
+        type:"winback",
+        label: `Win-back: ${p.name.split(" ").slice(0,2).join(" ")}`,
+        detail: `Was ${$$(p.py)} PY — now $0`,
+        color: T.red,
+        icon: "↩",
+      });
+    });
+
+    // Momentum: products growing >15% vs PY
+    const growing = groupBuying.filter((p:any)=>p.py>200&&p.cy/p.py>1.15).sort((a:any,b:any)=>(b.cy/b.py)-(a.cy/a.py)).slice(0,2);
+    growing.forEach((p:any)=>{
+      const pct = Math.round(p.cy/p.py*100-100);
+      signals.push({
+        type:"momentum",
+        label: `${p.name.split(" ").slice(0,2).join(" ")} momentum`,
+        detail: `+${pct}% vs PY · ${$$(p.cy)} CY`,
+        color: T.green,
+        icon: "↑",
+      });
+    });
+
+    // At-risk: products declining 40–99% (bought but shrinking fast)
+    const atRisk = groupBuying.filter((p:any)=>p.py>500&&p.cy/p.py<0.6&&p.cy>0).sort((a:any,b:any)=>(b.py-b.cy)-(a.py-a.cy)).slice(0,2);
+    atRisk.forEach((p:any)=>{
+      const pct = Math.round(p.cy/p.py*100);
+      signals.push({
+        type:"atrisk",
+        label: `${p.name.split(" ").slice(0,2).join(" ")} at risk`,
+        detail: `${pct}% of PY · gap ${$$(p.py-p.cy)}`,
+        color: T.amber,
+        icon: "⚠",
+      });
+    });
+
+    // Partial penetration: active product at <60% of locations
+    if (numLocs > 1) {
+      const partial = groupBuying
+        .filter((p:any)=>p.locsCY.length>0 && p.locsCY.length < numLocs * 0.6 && p.cy>300)
+        .sort((a:any,b:any)=>b.cy-a.cy).slice(0,2);
+      partial.forEach((p:any)=>{
+        signals.push({
+          type:"partial",
+          label: `${p.name.split(" ").slice(0,2).join(" ")} partial`,
+          detail: `${p.locsCY.length} of ${numLocs} locs buying`,
+          color: T.purple,
+          icon: "◑",
+        });
+      });
+    }
+
+    return signals.slice(0,6);
+  },[groupBuying, groupStopped, group, qk]);
+
+
   // ── Path 2: Product drill → which child accounts are up/down on this product ──
   if (selProduct) {
     const allProds = [...groupBuying, ...groupStopped];
@@ -645,6 +708,24 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
         </div>
       </div>}
 
+
+      {/* OPPORTUNITIES */}
+      {opportunitySignals.length>0&&<div className="anim" style={{animationDelay:"38ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
+        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.orange,marginBottom:12}}>Opportunities</div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {opportunitySignals.map((sig,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:10,background:T.s2,borderRadius:10,padding:"9px 12px",border:`1px solid ${sig.color}18`}}>
+              <span style={{fontSize:14,width:20,textAlign:"center",flexShrink:0,color:sig.color}}>{sig.icon}</span>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:11,fontWeight:700,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{sig.label}</div>
+                <div style={{fontSize:10,color:T.t3,marginTop:1}}>{sig.detail}</div>
+              </div>
+              <div style={{width:3,height:28,borderRadius:2,background:sig.color,flexShrink:0}}/>
+            </div>
+          ))}
+        </div>
+      </div>}
+
       {/* GROUP PRODUCT ROLLUP */}
       {hasProducts&&<div className="anim" style={{animationDelay:"40ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
         <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue,marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -894,5 +975,6 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
 
 
 export default GroupDetail;
+
 
 
