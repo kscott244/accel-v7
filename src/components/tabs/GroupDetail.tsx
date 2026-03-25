@@ -474,10 +474,7 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
   };
 
   const saveResNote = (text:string) => {
-    const newNote = (groupNote ? groupNote + "
-
-" : "") + "— AI Research Intel —
-" + text;
+    const newNote = (groupNote ? groupNote + "\n\n" : "") + "\u2014 AI Research Intel \u2014\n" + text;
     saveNote(newNote);
     setGrpResSaveToast("✓ Added to group notes");
     setTimeout(()=>setGrpResSaveToast(null), 2500);
