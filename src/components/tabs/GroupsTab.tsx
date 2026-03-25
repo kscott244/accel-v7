@@ -164,7 +164,18 @@ export default function GroupsTab({ groups, goGroup, filt, setFilt, search, setS
   const typeFilt = ["DSO", "Mid-Market", "Private"].includes(filt) ? filt : "All";
   const setType  = (t: string) => { setFilt(t === "All" ? "All" : t); setView("all"); };
 
-  const enriched = useMemo(() => groups.map(g => {
+  const enriched = useMemo(() => groups
+    .filter(g => {
+      // Hide groups with zero PY and zero CY unless user is actively searching
+      if (search) return true;
+      const py = g.pyQ?.["1"] || 0;
+      const cy = g.cyQ?.["1"] || 0;
+      // Also sum all quarters in case Q1 is 0 but others aren't
+      const pyTotal = Object.values(g.pyQ || {}).reduce((s: any, v: any) => s + v, 0);
+      const cyTotal = Object.values(g.cyQ || {}).reduce((s: any, v: any) => s + v, 0);
+      return pyTotal > 0 || cyTotal > 0;
+    })
+    .map(g => {
     const py1 = g.pyQ?.["1"] || 0;
     const cy1 = g.cyQ?.["1"] || 0;
     const gap = py1 - cy1;
@@ -181,7 +192,7 @@ export default function GroupsTab({ groups, goGroup, filt, setFilt, search, setS
       _isMid: locs === 2,
       _isPrivate: locs <= 1,
     };
-  }), [groups]);
+  }), [groups, search]);
 
   // ── Step 1: apply TYPE filter ─────────────────────────────────
   const byType = useMemo(() => {
