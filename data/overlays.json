@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-25T07:24:02.070Z",
+  "lastUpdated": "2026-03-25T07:32:14.681Z",
   "groups": {
     "Master-CM1873360": {
       "id": "Master-CM1873360",
@@ -44,7 +44,15 @@
   },
   "nameOverrides": {},
   "contacts": {},
-  "fscReps": {},
+  "fscReps": {
+    "Master-CM591885": {
+      "Schein": {
+        "name": "Lori Martin",
+        "phone": "401-487-9018",
+        "notes": "lori.martin@henryschein.com"
+      }
+    }
+  },
   "activityLogs": {},
   "research": {},
   "dealerOverrides": {},
