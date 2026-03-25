@@ -406,6 +406,9 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
   const [resLoading, setResLoading] = useState(false);
   const [resResult, setResResult] = useState<any>(null);
   const [resDismissed, setResDismissed] = useState(false);
+  const [suggestedMerges, setSuggestedMerges] = useState<any[]>([]);
+  const [mergeMatchLoading, setMergeMatchLoading] = useState(false);
+  const [dismissedSuggestions, setDismissedSuggestions] = useState<Set<string>>(()=>new Set());
   const [savedResContacts, setSavedResContacts] = useState<Set<number>>(()=>new Set());
   const [resWebsiteSaved, setResWebsiteSaved] = useState(false);
 
@@ -451,7 +454,7 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
         setResResult({ status: data.error || "No intel found. The practice may not have a web presence.", ownership: "", website: "", contacts: [], hooks: [], talkingPoints: [] });
         setResLoading(false); return;
       }
-      setResResult({
+      const intelResult = {
         status: intel.statusNote || intel.status || "Practice found.",
         ownership: intel.ownershipNote || "",
         website: intel.website || "",
@@ -464,7 +467,34 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
         })),
         hooks: intel.hooks || [],
         talkingPoints: intel.talkingPoints || [],
-      });
+      };
+      setResResult(intelResult);
+      // Auto-trigger merge matching if intel has useful signals
+      const hasSignals = (intel.hooks?.length||0) + (intel.ownershipNote?.length||0) > 0;
+      if (hasSignals && groups?.length > 0) {
+        setMergeMatchLoading(true);
+        setSuggestedMerges([]);
+        try {
+          const existingChildIds = new Set((group.children||[]).map((c:any)=>c.id));
+          const candidates = groups
+            .filter((g:any) => g.id !== group.id)
+            .map((g:any) => ({
+              id: g.id,
+              name: g.name,
+              city: (g.children||[])[0]?.city || "",
+              st: (g.children||[])[0]?.st || "",
+            }));
+          const matchRes = await fetch("/api/find-group-matches", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ intel, acct: { name: fixGroupName(group), city: topCities, st: firstChild.st||"" }, accounts: candidates }),
+          });
+          const matchData = await matchRes.json();
+          const matches = (matchData.matches||[]).filter((m:any) => m.id && !existingChildIds.has(m.id));
+          setSuggestedMerges(matches);
+        } catch(e) {}
+        setMergeMatchLoading(false);
+      }
     } catch(e) {
       setResResult({ status: "Research unavailable. Check connection.", ownership: "", website: "", contacts: [], hooks: [], talkingPoints: [] });
     }
@@ -898,6 +928,62 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
             ))}
           </div>}
         </>}
+      </div>}
+
+      {/* SUGGESTED MERGES FROM RESEARCH */}
+      {(mergeMatchLoading || suggestedMerges.filter(m=>!dismissedSuggestions.has(m.id)).length > 0) && <div className="anim" style={{background:T.s1,border:`1px solid rgba(167,139,250,.25)`,borderRadius:16,padding:16,marginBottom:16}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.purple}}>🔗 Suggested Merges</div>
+          {mergeMatchLoading && <div style={{fontSize:10,color:T.t4}}>Scanning...</div>}
+        </div>
+        {mergeMatchLoading && <div style={{height:10,borderRadius:5,background:T.s3,width:"60%",opacity:.5}}/>}
+        {suggestedMerges.filter(m=>!dismissedSuggestions.has(m.id)).map((m:any)=>{
+          const matchedGroup = groups.find((g:any)=>g.id===m.id);
+          const mName = matchedGroup ? fixGroupName(matchedGroup) : m.id;
+          const mLocs = matchedGroup?.locs || matchedGroup?.children?.length || 1;
+          const mPY = matchedGroup ? Object.values(matchedGroup.pyQ||{}).reduce((s:any,v:any)=>s+v,0) : 0;
+          return <div key={m.id} style={{padding:"10px 12px",background:T.s2,borderRadius:10,marginBottom:8,border:`1px solid ${T.purple}20`}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:12,fontWeight:700,color:T.t1}}>{mName}</div>
+                <div style={{fontSize:10,color:T.t3,marginTop:1}}>{mLocs} loc{mLocs!==1?"s":""} · PY ${(mPY/1000).toFixed(1)}k</div>
+                <div style={{fontSize:10,color:T.purple,marginTop:3,fontStyle:"italic"}}>{m.reason}</div>
+              </div>
+            </div>
+            <div style={{display:"flex",gap:6,marginTop:8}}>
+              <button onClick={async ()=>{
+                if (!saveOverlays) return;
+                const canonicalId = group.id;
+                const existingChildIds = (group.childIds||[group.id,...(group.children||[]).map((c:any)=>c.id)]);
+                const newChildIds = [...new Set([...existingChildIds, m.id])];
+                const next = {
+                  ...OVERLAYS_REF,
+                  groups: {
+                    ...OVERLAYS_REF.groups,
+                    [canonicalId]: {
+                      ...(OVERLAYS_REF.groups?.[canonicalId]||{}),
+                      id: canonicalId,
+                      name: fixGroupName(group),
+                      tier: group.tier||"Standard",
+                      class2: group.class2||"Private Practice",
+                      childIds: newChildIds,
+                      source: "manual-merge",
+                      updatedAt: new Date().toISOString(),
+                    }
+                  }
+                };
+                await saveOverlays(next);
+                setSuggestedMerges(prev=>prev.filter(s=>s.id!==m.id));
+              }} style={{flex:1,padding:"7px 0",borderRadius:8,background:`${T.purple}18`,border:`1px solid ${T.purple}40`,color:T.purple,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                + Merge
+              </button>
+              <button onClick={()=>setDismissedSuggestions(prev=>new Set([...prev,m.id]))}
+                style={{padding:"7px 14px",borderRadius:8,background:T.s1,border:`1px solid ${T.b2}`,color:T.t4,fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>
+                Skip
+              </button>
+            </div>
+          </div>;
+        })}
       </div>}
 
       {/* NEXT BEST MOVES */}
