@@ -13,11 +13,14 @@ export async function POST(req: NextRequest) {
     if (!apiKey) return NextResponse.json({ error: "No API key" }, { status: 500 });
 
     // Build a condensed account list (cap at 500 to stay within context)
-    const accountList = accounts.slice(0, 500).map((a: any, i: number) => {
-      let line = `${i+1}. ID:${a.id} | "${a.name}" | ${a.city}, ${a.st}`;
-      if (a.address) line += ` | ${a.address}`;
-      if (a.doctor) line += ` | Doctor: ${a.doctor}`;
+    const accountList = accounts.slice(0, 800).map((a: any, i: number) => {
+      let line = `${i+1}. ID:${a.id} | "${a.name}"`;
+      if (a.locationName && a.locationName !== a.name) line += ` (loc: "${a.locationName}")`;
+      line += ` | ${a.city}, ${a.st}`;
+      if (a.zip) line += ` ${a.zip}`;
+      if (a.address) line += ` | Addr: ${a.address}`;
       if (a.email) line += ` | Email: ${a.email}`;
+      if (a.doctor) line += ` | Dr: ${a.doctor}`;
       return line;
     }).join("\n");
 
@@ -33,7 +36,7 @@ ${intel.hooks?.length ? "Key findings:\n" + intel.hooks.map((h: string) => "- " 
 ${intel.statusNote ? "Status: " + intel.statusNote : ""}
 ${intel.talkingPoints?.length ? "Talking points:\n" + intel.talkingPoints.map((t: string) => "- " + t).join("\n") : ""}
 
-TERRITORY ACCOUNTS (${accounts.length} total, showing up to 500):
+TERRITORY ACCOUNTS (${accounts.length} total, showing up to 800):
 ${accountList}
 
 TASK: Identify which accounts from the list above are likely the SAME PRACTICE or SAME OWNERSHIP GROUP as the researched account. Use ALL available signals:
