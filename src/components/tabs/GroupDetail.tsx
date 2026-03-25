@@ -406,51 +406,46 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
     setSavedResContacts(new Set());
     setResWebsiteSaved(false);
     const groupName = fixGroupName(group);
+    const firstChild = (group.children||[])[0] || {};
     const topCities = [...new Set((group.children||[]).map((c:any)=>c.city).filter(Boolean))].slice(0,3).join(", ");
     const topDealer = distBreakdown.rows[0]?.dist || "";
-    const topProds = groupBuying.slice(0,5).map((p:any)=>p.name.split(" ").slice(0,3).join(" ")).join(", ");
-    const locCount = (group.children||[]).length;
+    const topProds = groupBuying.slice(0,5).map((p:any)=>p.name);
     const ownerType = group.class2 || "Private Practice";
-    const prompt = [
-      "You are a dental sales intelligence assistant.",
-      "Research the following dental practice group and return a JSON object ONLY (no markdown, no prose).",
-      "",
-      "Group: " + groupName,
-      "Locations: " + locCount,
-      "Cities: " + topCities,
-      "Type: " + ownerType,
-      "Main dealer: " + topDealer,
-      "Products buying: " + topProds,
-      "",
-      "Return ONLY this JSON shape:",
-      "{",
-      '  "status": "short 1-sentence practice status",',
-      '  "ownership": "ownership/DSO note if applicable",',
-      '  "website": "URL or empty string",',
-      '  "contacts": [',
-      '    { "name": "...", "role": "...", "phone": "...", "email": "...", "scope": 1 }',
-      "  ],",
-      '  "hooks": ["talking point 1", "talking point 2"],',
-      '  "talkingPoints": ["specific upsell or recovery idea"]',
-      "}",
-      "",
-      "scope values: 1=Owner/Lead Dr, 2=Office-level, 3=Group/Regional, 4=Coordinator",
-      "Return max 4 contacts. If no data found leave field empty string or empty array.",
-      "Return ONLY the JSON object."
-    ].join("\n");
+    const ownership = ownerType.toLowerCase().includes("dso") ? "dso" : "independent";
     try {
       const res = await fetch("/api/deep-research", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, accountId: group.id, accountName: groupName }),
+        body: JSON.stringify({
+          name: groupName,
+          city: topCities,
+          state: firstChild.st || "",
+          dealer: topDealer,
+          products: topProds,
+          ownership,
+          gName: groupName,
+          acctId: group.id,
+        }),
       });
       const data = await res.json();
-      const raw = (data.result || data.text || "").trim();
-      const jsonStr = raw.replace(/^```(?:json)?/,"").replace(/```$/,"").trim();
-      const parsed = JSON.parse(jsonStr);
-      setResResult(parsed);
+      const intel = data.intel || {};
+      // Normalize API fields to what the render panel expects
+      setResResult({
+        status: intel.statusNote || intel.status || "",
+        ownership: intel.ownershipNote || "",
+        website: intel.website || "",
+        contacts: (intel.contacts||[]).map((c:any) => ({
+          name: c.name,
+          role: c.role,
+          phone: c.phone || "",
+          email: c.email || "",
+          scope: c.tier || 2,
+        })),
+        hooks: intel.hooks || [],
+        talkingPoints: intel.talkingPoints || [],
+      });
     } catch(e) {
-      setResResult({ status: "Research unavailable. Check API connection.", ownership: "", website: "", contacts: [], hooks: [], talkingPoints: [] });
+      setResResult({ status: "Research unavailable. Check connection.", ownership: "", website: "", contacts: [], hooks: [], talkingPoints: [] });
     }
     setResLoading(false);
   };
