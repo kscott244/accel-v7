@@ -249,11 +249,36 @@ function AppInner() {
   const [view, setView] = useState(null);
   const [showMore, setShowMore] = useState(false);
   const [adjs, setAdjs] = useState<any[]>(() => {
+    // Seed from overlay cache first (cross-device durable), fallback to legacy localStorage key
+    try {
+      const cached = localStorage.getItem("overlay_cache_v2");
+      if (cached) {
+        const ov = JSON.parse(cached);
+        if (Array.isArray(ov?.adjs)) return ov.adjs;
+      }
+    } catch {}
     try { return JSON.parse(localStorage.getItem("accel_adjs_v1") || "[]"); } catch { return []; }
   });
-  // Persist adjs across sessions — these are real pending orders, not just what-ifs
+  // Persist adjs to overlays (cross-device durable) + localStorage cache (fast path)
+  // Debounced 800ms so rapid adj taps don't spam GitHub with commits
+  const adjsSaveTimerRef = useRef<any>(null);
   useEffect(() => {
     try { localStorage.setItem("accel_adjs_v1", JSON.stringify(adjs)); } catch {}
+    if (adjsSaveTimerRef.current) clearTimeout(adjsSaveTimerRef.current);
+    adjsSaveTimerRef.current = setTimeout(() => {
+      setOverlaysState((prev: any) => {
+        const next = { ...prev, adjs, lastUpdated: new Date().toISOString() };
+        OVERLAYS_REF = next;
+        DataModule.OVERLAYS_REF = next;
+        try { localStorage.setItem("overlay_cache_v2", JSON.stringify(next)); } catch {}
+        fetch("/api/save-overlay", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ overlays: next }),
+        }).catch(() => {});
+        return next;
+      });
+    }, 800);
   }, [adjs]);
 
   const [estPct, setEstPct] = useState(90);
@@ -446,6 +471,11 @@ function AppInner() {
               if (freshTime >= cachedTime) {
                 setOverlays(fresh);
                 try { localStorage.setItem("overlay_cache_v2", JSON.stringify(fresh)); } catch {}
+                // Restore adjs from GitHub overlays (cross-device sync)
+                if (Array.isArray(fresh.adjs)) {
+                  setAdjs(fresh.adjs);
+                  try { localStorage.setItem("accel_adjs_v1", JSON.stringify(fresh.adjs)); } catch {}
+                }
                 // Reapply overlays onto current groups with fresh data
                 setGroups(prev => prev ? applyGroupOverrides(applyOverlays(prev.map((g:any) => ({...g})))) : prev);
               }
@@ -934,6 +964,7 @@ function AppInner() {
     </div>
   );
 }
+
 
 
 
