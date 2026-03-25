@@ -477,9 +477,7 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
     const hooks = (resResult.hooks||[]).join("; ");
     const pts = (resResult.talkingPoints||[]).join("; ");
     const intel = "[AI Intel] " + hooks + (pts ? " | " + pts : "");
-    const newNote = groupNote ? groupNote + "
-
-" + intel : intel;
+    const newNote = groupNote ? groupNote + "\n\n" + intel : intel;
     saveNote(newNote);
   };
 
