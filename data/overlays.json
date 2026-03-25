@@ -1,7 +1,21 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-25T05:40:08.287Z",
-  "groups": {},
+  "lastUpdated": "2026-03-25T05:41:54.545Z",
+  "groups": {
+    "Master-CM1991085": {
+      "id": "Master-CM1991085",
+      "name": "DENTAL 365 OF STAMFORD",
+      "tier": "Standard",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM1991085",
+        "Master-CM1873360"
+      ],
+      "source": "manual-merge",
+      "createdAt": "2026-03-25T05:41:53.737Z",
+      "updatedAt": "2026-03-25T05:41:53.737Z"
+    }
+  },
   "groupDetaches": [],
   "groupMoves": {},
   "nameOverrides": {},
