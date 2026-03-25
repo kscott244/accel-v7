@@ -469,30 +469,59 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
         talkingPoints: intel.talkingPoints || [],
       };
       setResResult(intelResult);
-      // Auto-trigger merge matching if intel has useful signals
-      const hasSignals = (intel.hooks?.length||0) + (intel.ownershipNote?.length||0) > 0;
-      if (hasSignals && groups?.length > 0) {
+      // Auto-trigger merge matching whenever intel returns
+      if (groups?.length > 0) {
         setMergeMatchLoading(true);
         setSuggestedMerges([]);
         try {
-          const existingChildIds = new Set((group.children||[]).map((c:any)=>c.id));
-          const candidates = groups
+          const existingIds = new Set([
+            group.id,
+            ...(group.children||[]).map((c:any)=>c.id),
+            ...(OVERLAYS_REF.groups?.[group.id]?.childIds||[]),
+          ]);
+          // Build rich candidates: one entry per child location with all available signals
+          const candidates: any[] = [];
+          groups
             .filter((g:any) => g.id !== group.id)
-            .map((g:any) => ({
-              id: g.id,
-              name: g.name,
-              city: (g.children||[])[0]?.city || "",
-              st: (g.children||[])[0]?.st || "",
-            }));
+            .forEach((g:any) => {
+              if (existingIds.has(g.id)) return;
+              const gLabel = fixGroupName(g);
+              (g.children||[g]).forEach((c:any) => {
+                candidates.push({
+                  id: g.id,
+                  name: gLabel,
+                  city: c.city || "",
+                  st: c.st || "",
+                  address: c.addr || c.address || "",
+                  zip: c.zip || "",
+                  email: c.email || "",
+                  doctor: c.doctor || "",
+                  locationName: c.name || "",
+                });
+              });
+            });
+          // Dedupe by group id, keeping richest entry per group
+          const seen = new Map<string,any>();
+          candidates.forEach(c => {
+            const ex = seen.get(c.id);
+            const score = (c.address?1:0)+(c.email?1:0)+(c.zip?1:0);
+            const exScore = ex ? (ex.address?1:0)+(ex.email?1:0)+(ex.zip?1:0) : -1;
+            if (!ex || score > exScore) seen.set(c.id, c);
+          });
+          const deduped = [...seen.values()].slice(0, 800);
           const matchRes = await fetch("/api/find-group-matches", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ intel, acct: { name: fixGroupName(group), city: topCities, st: firstChild.st||"" }, accounts: candidates }),
+            body: JSON.stringify({
+              intel,
+              acct: { name: fixGroupName(group), city: topCities, st: firstChild.st||"", address: addresses[0]||"" },
+              accounts: deduped,
+            }),
           });
           const matchData = await matchRes.json();
-          const matches = (matchData.matches||[]).filter((m:any) => m.id && !existingChildIds.has(m.id));
+          const matches = (matchData.matches||[]).filter((m:any) => m.id && !existingIds.has(m.id));
           setSuggestedMerges(matches);
-        } catch(e) {}
+        } catch(e) { console.error("merge match error", e); }
         setMergeMatchLoading(false);
       }
     } catch(e) {
