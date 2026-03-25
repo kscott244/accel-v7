@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-25T03:59:04.963Z",
+  "lastUpdated": "2026-03-25T03:59:10.440Z",
   "groups": {},
   "groupDetaches": [],
   "groupMoves": {},
@@ -22,6 +22,15 @@
         "email": "",
         "notes": "Website: https://www.kozbraces.com",
         "savedAt": "2026-03-25T03:59:04.339Z"
+      },
+      {
+        "id": 1774411150020,
+        "name": "Dr. Jeffrey Kozlowski, DDS",
+        "role": "Owner/Orthodontist - Kozlowski DePascale Orthodontics (New London & East Lyme)",
+        "phone": "860-442-4421",
+        "email": "",
+        "notes": "From AI research",
+        "savedAt": "2026-03-25T03:59:10.020Z"
       }
     ]
   }
