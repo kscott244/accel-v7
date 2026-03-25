@@ -25,6 +25,9 @@ try {
   };
 } catch(e) {}
 
+const SCOPE_LABELS = ["Owner / Lead Dr","Office-level","Group / Regional","Coordinator"];
+const SCOPE_COLORS_KEYS = ["cyan","t3","purple","t4"];
+
 function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesStore=null}) {
   const [q,setQ]=useState("1");
   const qk=q;
@@ -830,10 +833,8 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
           {(resResult.contacts||[]).length>0&&<div style={{marginBottom:10}}>
             <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",color:T.t4,letterSpacing:"1px",marginBottom:6}}>Contacts Found</div>
             {(resResult.contacts||[]).map((c:any,i:number)=>{
-              const SCOPE_LABELS = ["Owner / Lead Dr","Office-level","Group / Regional","Coordinator"];
-              const SCOPE_COLORS = [T.cyan, T.t3, T.purple, T.t4];
               const sl = SCOPE_LABELS[(c.scope||1)-1] || SCOPE_LABELS[0];
-              const sc = SCOPE_COLORS[(c.scope||1)-1] || SCOPE_COLORS[0];
+              const sc = T[SCOPE_COLORS_KEYS[(c.scope||1)-1]] || T.t4;
               const isSaved = savedResContacts.has(i);
               return <div key={i} style={{padding:"8px 10px",background:T.s2,borderRadius:8,marginBottom:6}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
