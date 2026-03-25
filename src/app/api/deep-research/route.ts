@@ -31,7 +31,7 @@ function getContactTier(role: string): number {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, city, state, address, dealer, products, doctor, gName, acctId, ownership } = body;
+    const { name, childNames, city, state, address, addresses, dealer, products, doctor, gName, acctId, ownership } = body;
 
     if (!name) return NextResponse.json({ error: "No account name" }, { status: 400 });
     const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -52,12 +52,16 @@ Always search the web before answering. If you cannot find specific information,
 
     const userPrompt = `Research this dental practice for a sales call:
 
-Practice: ${practiceLabel}
+Practice / group name: ${practiceLabel}
+${childNames?.length ? `Individual location names: ${(childNames as string[]).slice(0,6).join(", ")}` : ""}
 Location: ${location}
+${addresses?.length ? `Addresses: ${(addresses as string[]).join(" | ")}` : ""}
 Account type: ${accountType}
 Distributor: ${dealer || "All Other"}
 ${doctor ? `Known doctor: ${doctor}` : ""}
 ${products?.length ? `Currently buying: ${products.slice(0,5).join(", ")}` : ""}
+
+IMPORTANT: The group name may be a distributor label, not the real practice name. Search the individual location names and addresses. Try each separately if needed.
 
 Search the web and find:
 
