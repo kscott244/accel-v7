@@ -131,7 +131,16 @@ Return ONLY valid JSON, no markdown, no preamble.`;
 
     const textBlocks = (data?.content || []).filter((b: any) => b.type === "text");
     const rawText = textBlocks.map((b: any) => b.text).join("").trim();
-    const clean = rawText.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
+    // Extract JSON robustly — Claude sometimes adds prose before/after fences
+    let clean = rawText.trim();
+    const fenceMatch = clean.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fenceMatch) {
+      clean = fenceMatch[1].trim();
+    } else {
+      const first = clean.indexOf("{");
+      const last = clean.lastIndexOf("}");
+      if (first !== -1 && last !== -1) clean = clean.slice(first, last + 1);
+    }
 
     let intel: any = {};
     try {
