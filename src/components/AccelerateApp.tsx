@@ -915,8 +915,8 @@ function AppInner() {
             setView({type:"acct", data: a, from: fromGroup});
           }
         };
-        const goGroupFn = (g:any) => setView({type:"group", data:g});
-        const goAcctFn = (a:any, from?:any) => setView({type:"acct", data:a, from});
+        const goGroupFn = (g:any) => { window.scrollTo(0,0); setView({type:"group", data:g}); };
+        const goAcctFn = (a:any, from?:any) => { window.scrollTo(0,0); setView({type:"acct", data:a, from}); };
         return <>
           {!view && tab==="today" && <DashboardTab scored={scored} goAcct={goSmartFn} q1CY={q1CY} q1Gap={q1Gap} q1Att={q1Att} adjCount={adjs.length} totalAdj={totalAdjQ1} groups={groups||[]} goGroup={goGroupFn} activeQ={activeQ||"1"} weeklyDelta={weeklyDelta}/> }
           {!view && tab==="groups" && <GroupsTab groups={groups||[]} goGroup={goGroupFn} filt={gFilt} setFilt={setGFilt} search={gSearch} setSearch={setGSearch} groupedPrivates={groupedPrivates}/>}
