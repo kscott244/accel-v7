@@ -407,6 +407,9 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
   const [resResult, setResResult] = useState<any>(null);
   const [resDismissed, setResDismissed] = useState(false);
   const [suggestedMerges, setSuggestedMerges] = useState<any[]>([]);
+  const [ghostLocations, setGhostLocations] = useState<any[]>(() => {
+    try { return JSON.parse(localStorage.getItem(`ghost_locs:${group.id}`) || "[]"); } catch { return []; }
+  });
   const [mergeMatchLoading, setMergeMatchLoading] = useState(false);
   const [dismissedSuggestions, setDismissedSuggestions] = useState<Set<string>>(()=>new Set());
   const [savedResContacts, setSavedResContacts] = useState<Set<number>>(()=>new Set());
@@ -469,6 +472,42 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
         talkingPoints: intel.talkingPoints || [],
       };
       setResResult(intelResult);
+      // Cross-reference research locations against existing children — add unknowns as ghost locations
+      const resLocations: any[] = intel.locations || [];
+      if (resLocations.length > 0) {
+        const existingAddrs = new Set(
+          (group.children||[]).map((c:any) => (c.addr||c.address||"").toLowerCase().trim()).filter(Boolean)
+        );
+        const existingNames = new Set(
+          (group.children||[]).map((c:any) => (c.name||"").toLowerCase().replace(/[^a-z0-9]/g,""))
+        );
+        const newGhosts = resLocations.filter((loc:any) => {
+          const locAddr = (loc.address||"").toLowerCase().trim();
+          const locName = (loc.name||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+          const addrMatch = locAddr && existingAddrs.has(locAddr);
+          const nameMatch = locName.length > 4 && existingNames.has(locName);
+          return !addrMatch && !nameMatch;
+        }).map((loc:any) => ({
+          id: `ghost-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
+          name: loc.name || "Unknown Location",
+          city: loc.city || "",
+          st: loc.state || loc.st || "",
+          addr: loc.address || "",
+          zip: loc.zip || "",
+          isGhost: true,
+          pyQ: {}, cyQ: {}, products: [],
+        }));
+        if (newGhosts.length > 0) {
+          setGhostLocations(prev => {
+            // Dedupe by name
+            const existingGhostNames = new Set(prev.map((g:any) => g.name.toLowerCase()));
+            const fresh = newGhosts.filter((g:any) => !existingGhostNames.has(g.name.toLowerCase()));
+            const next = [...prev, ...fresh];
+            try { localStorage.setItem(`ghost_locs:${group.id}`, JSON.stringify(next)); } catch {}
+            return next;
+          });
+        }
+      }
       // Auto-trigger merge matching whenever intel returns
       if (groups?.length > 0) {
         setMergeMatchLoading(true);
