@@ -439,6 +439,10 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
       });
       const data = await res.json();
       const intel = data.intel || {};
+      if (data.error || !intel.statusNote) {
+        setResResult({ status: data.error || "No intel found for this group. Try a more specific group name.", ownership: "", website: "", contacts: [], hooks: [], talkingPoints: [] });
+        setResLoading(false); return;
+      }
       // Normalize API fields to what the render panel expects
       setResResult({
         status: intel.statusNote || intel.status || "",
@@ -575,6 +579,28 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
     return lines.slice(0,5);
   },[group, cy, py, ret, qk, sortedChildren, groupStopped, groupBuying, nextBestMoves]);
 
+
+  // ── Merge: search results ──
+  const alreadyMergedIds = useMemo(() => {
+    const ids = new Set<string>();
+    Object.values(OVERLAYS_REF.groups||{}).forEach((g:any) => {
+      (g.childIds||[]).forEach((cid:string) => ids.add(cid));
+    });
+    return ids;
+  }, [overlays]);
+
+  const mergeResults = useMemo(() => {
+    if (!mergeSearch.trim()) return [];
+    const mq = mergeSearch.trim().toLowerCase();
+    return groups.filter((g:any) => {
+      if (g.id === group.id) return false; // can't merge with self
+      if (alreadyMergedIds.has(g.id)) return false; // already absorbed elsewhere
+      return fixGroupName(g).toLowerCase().includes(mq) ||
+        g.name?.toLowerCase().includes(mq) ||
+        g.children?.some((c:any) => c.name?.toLowerCase().includes(mq));
+    }).slice(0, 10);
+  }, [mergeSearch, groups, group.id, alreadyMergedIds]);
+
   // ── Path 2: Product drill → which child accounts are up/down on this product ──
   if (selProduct) {
     const allProds = [...groupBuying, ...groupStopped];
@@ -692,26 +718,6 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
   const healthLabel = cy > py && py > 0 ? "Growing" : ret >= 60 ? "Stable" : ret >= 25 ? "Recoverable" : py === 0 ? "New" : "Critical";
 
 
-  // ── Merge: search results ──
-  const alreadyMergedIds = useMemo(() => {
-    const ids = new Set<string>();
-    Object.values(OVERLAYS_REF.groups||{}).forEach((g:any) => {
-      (g.childIds||[]).forEach((cid:string) => ids.add(cid));
-    });
-    return ids;
-  }, [overlays]);
-
-  const mergeResults = useMemo(() => {
-    if (!mergeSearch.trim()) return [];
-    const mq = mergeSearch.trim().toLowerCase();
-    return groups.filter((g:any) => {
-      if (g.id === group.id) return false; // can't merge with self
-      if (alreadyMergedIds.has(g.id)) return false; // already absorbed elsewhere
-      return fixGroupName(g).toLowerCase().includes(mq) ||
-        g.name?.toLowerCase().includes(mq) ||
-        g.children?.some((c:any) => c.name?.toLowerCase().includes(mq));
-    }).slice(0, 10);
-  }, [mergeSearch, groups, group.id, alreadyMergedIds]);
 
   const executeMerge = (target:any) => {
     if (!target || mergeSaving) return;
