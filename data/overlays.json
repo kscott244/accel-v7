@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-25T16:05:08.524Z",
+  "lastUpdated": "2026-03-25T16:05:11.908Z",
   "groups": {
     "Master-CM1873360": {
       "id": "Master-CM1873360",
@@ -295,6 +295,20 @@
       "score": 98,
       "createdAt": "2026-03-25T16:05:08.046Z",
       "updatedAt": "2026-03-25T16:05:08.046Z"
+    },
+    "Master-CM1542348": {
+      "id": "Master-CM1542348",
+      "name": "NORTHEAST IMPLANT AND ORAL SURGERY",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM1542348",
+        "Master-CM314640"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 92,
+      "createdAt": "2026-03-25T16:05:11.126Z",
+      "updatedAt": "2026-03-25T16:05:11.126Z"
     }
   },
   "groupDetaches": [],
