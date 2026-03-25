@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-25T16:04:57.857Z",
+  "lastUpdated": "2026-03-25T16:05:01.044Z",
   "groups": {
     "Master-CM1873360": {
       "id": "Master-CM1873360",
@@ -225,6 +225,20 @@
       "score": 98,
       "createdAt": "2026-03-25T16:04:57.417Z",
       "updatedAt": "2026-03-25T16:04:57.417Z"
+    },
+    "Master-CM1238996": {
+      "id": "Master-CM1238996",
+      "name": "STONY POINT DENTAL PC",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM1238996",
+        "Master-CM247393"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 92,
+      "createdAt": "2026-03-25T16:05:00.562Z",
+      "updatedAt": "2026-03-25T16:05:00.563Z"
     }
   },
   "groupDetaches": [],
