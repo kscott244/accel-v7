@@ -1,44 +1,41 @@
 # CURRENT PHASE — accel-v7
 
-## Active: Phase A12 — Group-Level Opportunity Signals ✅ Complete
+## Active: Phase A13 — Next Best Moves in GroupDetail ✅ Complete
 
 ### Goal
-Surface product/opportunity signals inside GroupDetail so the view is more actionable — not just historical numbers but specific next-step signals.
+Make GroupDetail action-oriented by surfacing a ranked "Next Best Move" list of 3–4 specific, verb-first actions based on actual group/product/location data.
 
 ### Baseline
-A11 complete: Inline month drilldown for products in GroupDetail. Commit `d9563fc`.
+A12 complete: Opportunity signals (win-back, momentum, at-risk, partial penetration) in GroupDetail. Commit `61c1310`.
 
 ### What Was Built
 
-**`src/components/tabs/GroupDetail.tsx`** (commit `61c1310`)
+**`src/components/tabs/GroupDetail.tsx`** (commit `8c6a244`)
 
-Added `opportunitySignals` useMemo and a new **Opportunities** section rendered between Group Notes and Group Product Health.
+Added `nextBestMoves` useMemo and a **Next Best Move** section rendered directly below the hero stats card (before Distributor Split).
 
-**Signal types (computed from existing groupBuying / groupStopped data):**
-- **Win-back** — products in `groupStopped` with PY ≥ $500 → "Win-back: [Product] — Was $X PY — now $0"
-- **Momentum** — products growing >15% vs PY → "[Product] momentum — +N% vs PY · $X CY"
-- **At-risk** — active products below 60% of PY → "[Product] at risk — N% of PY · gap $X"
-- **Partial penetration** — product bought at <60% of locations (multi-loc groups only) → "[Product] partial — N of M locs buying"
+**Action types (in priority order):**
+1. **Prioritize [Location] first** — highest-gap child in the group with gap > $500
+2. **Win back [Product]** — top stopped product (PY ≥ $500) with loc count and PY dollar
+3. **Expand [Product] to N more locs** — partial-penetration product at <60% of locations
+4. **Reinforce [Product] momentum** — fastest-growing active product (>15% vs PY)
+5. **Defend [Product] — declining fast** — biggest at-risk active product (<60% of PY)
 
-**UI:**
-- Orange "OPPORTUNITIES" section header
-- Each signal: icon + bold label + muted detail line + colored right-bar accent
-- Max 6 signals shown, section hidden if zero signals
-- No new state, no API calls, no changes to data architecture
+Max 4 moves shown. Each has a numbered circle badge, bold action verb, specific "why" sub-line, and color-coded accent bar. Section hidden when no moves apply.
 
-**No changes to:** merge workflow, search, upload pipeline, product health section, or any other tab.
+**No changes to:** merge workflow, search, upload pipeline, Opportunities section, product health, data architecture.
 
 ---
 
 ## Previously Completed
+- A12 — Group Opportunity Signals (61c1310) ✅
 - A11 — Group Product Month Drilldown (d9563fc) ✅
 - A10 — Merge Group workflow verified (192a468) ✅
-- A9 — adjs cross-device via overlays (f2475b9 + 0a4c11d) ✅
+- A9 — adjs cross-device via overlays ✅
 - A8 — Cross-device state audit ✅
-- A7 — Overlay schema hardening (dealerManualReps) ✅
+- A7 — Overlay schema hardening ✅
 - A6 — DealersTab durable rep persistence ✅
-- Phase 23 — GroupDetail Upgrade ✅
-- Phases 1–22 ✅
+- Phases 1–23 ✅
 
 ---
 
