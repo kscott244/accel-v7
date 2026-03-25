@@ -10,9 +10,20 @@ export async function GET() {
       return NextResponse.json({ error: "No GitHub PAT configured" }, { status: 500 });
     }
 
+    // Cache-bust: append timestamp so GitHub API never serves a stale cached response.
+    // Critical after a merge/save — without this, reload() can fetch the pre-save version.
+    const bust = Date.now();
     const res = await fetch(
-      `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`,
-      { headers: { Authorization: `token ${GITHUB_PAT}`, "User-Agent": "accel-v7" } }
+      `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?t=${bust}`,
+      {
+        headers: {
+          Authorization: `token ${GITHUB_PAT}`,
+          "User-Agent": "accel-v7",
+          // Tell GitHub not to serve a cached response
+          "Cache-Control": "no-cache",
+        },
+        cache: "no-store",
+      }
     );
 
     if (!res.ok) {
