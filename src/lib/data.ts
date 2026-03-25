@@ -20,7 +20,7 @@ export let DEALER_REPS: Record<string, any> = {};
 export const EMPTY_OVERLAYS: any = {
   schemaVersion: 2, lastUpdated: new Date().toISOString(),
   groups: {}, groupDetaches: [], groupMoves: {}, nameOverrides: {},
-  contacts: {}, fscReps: {}, activityLogs: {}, research: {}, dealerOverrides: {},
+  contacts: {}, fscReps: {}, activityLogs: {}, research: {}, dealerOverrides: {}, dealerManualReps: {},
 };
 export let OVERLAYS_REF: any = EMPTY_OVERLAYS;
 
