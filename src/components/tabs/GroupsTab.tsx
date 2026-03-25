@@ -8,35 +8,66 @@ import { $$, pc } from "@/lib/format";
 import { fixGroupName, Pill, Bar, Chev } from "@/components/primitives";
 import { scorePriority } from "@/lib/priority";
 
-// ── Single filter row — only the filters Ken actually uses ────────
-const FILTERS = ["All","Urgent","Multi-loc","DSO","Schein","Patterson","Benco","Darby"];
-const DEALER_SET = new Set(["Schein","Patterson","Benco","Darby"]);
+// ── Row 1: Account type ───────────────────────────────────────────
+// DSO = 3+ locs or class2 DSO/EMERGING DSO
+// Mid-Market = 2 locs (group practice, not full DSO)
+// Private = single office
+const TYPE_FILTERS = ["All", "DSO", "Mid-Market", "Private"];
 
-// ── Color system — simple and clear ──────────────────────────────
-// Cyan  = group account (2+ locations) — multi-location practice
-// Purple = single-location account
-// Gap number: green = ahead of PY, red = behind PY (unchanged)
-const GROUP_ACCENT  = T.cyan;    // multi-location
-const SINGLE_ACCENT = T.purple;  // single office
+// ── Row 2: Sort / view mode ───────────────────────────────────────
+const VIEW_MODES = [
+  { k: "all",         l: "All" },
+  { k: "urgent",      l: "Urgent" },
+  { k: "top-spend",   l: "Top Spend" },
+  { k: "growing",     l: "Growing" },
+  { k: "win-back",    l: "Win Back" },
+  { k: "new-product", l: "New Product" },
+];
 
-// ── ACCOUNT CARD ─────────────────────────────────────────────────
-function AccountCard({g, i, goGroup, isDealerFilt, filt}) {
-  const isGroup   = (g._locs ?? g.locs ?? 1) >= 2;
-  const accent    = isGroup ? GROUP_ACCENT : SINGLE_ACCENT;
-  const retPct    = Math.min(100, Math.round((g._ret ?? 1) * 100));
-  const retColor  = g._ret >= 0.7 ? T.green : g._ret >= 0.4 ? T.amber : T.red;
-  const barColor  = `linear-gradient(90deg,${retColor},${retColor}99)`;
-  const locs      = g._locs ?? g.locs ?? 1;
+// ── Color system ──────────────────────────────────────────────────
+const GROUP_ACCENT  = T.cyan;    // multi-location (DSO + Mid-Market)
+const SINGLE_ACCENT = T.purple;  // single office (Private)
 
-  // Subtitle: best available signal
+// ── Helpers ───────────────────────────────────────────────────────
+function getAccent(locs: number) {
+  return locs >= 2 ? GROUP_ACCENT : SINGLE_ACCENT;
+}
+
+// New Product: has a CY product that had $0 PY (brand new this year)
+function hasNewProduct(g: any): boolean {
+  const children = g.children || [];
+  for (const c of children) {
+    const prods = c.products || [];
+    for (const p of prods) {
+      const cyVal = p.cyQ?.["1"] || p.cy || 0;
+      const pyVal = p.pyQ?.["1"] || p.py || 0;
+      if (cyVal > 200 && pyVal === 0) return true;
+    }
+  }
+  return false;
+}
+
+// Win Back: had meaningful PY spend, CY near zero
+function isWinBack(g: any): boolean {
+  return (g._py1 || 0) > 500 && (g._cy1 || 0) < 100;
+}
+
+// ── ACCOUNT CARD ──────────────────────────────────────────────────
+function AccountCard({ g, i, goGroup }) {
+  const locs     = g._locs ?? g.locs ?? 1;
+  const accent   = getAccent(locs);
+  const retPct   = Math.min(100, Math.round((g._ret ?? 1) * 100));
+  const retColor = g._ret >= 0.7 ? T.green : g._ret >= 0.4 ? T.amber : T.red;
+  const isGroup  = locs >= 2;
+
   const subtitle = g._priorityReason
-    ? g._priorityReason + (isDealerFilt ? ` · ${filt}` : "")
-    : `${locs} loc${locs !== 1 ? "s" : ""} · ${getTierLabel(g.tier, g.class2)}${isDealerFilt ? ` · ${filt}` : ""}`;
+    ? g._priorityReason
+    : `${locs} loc${locs !== 1 ? "s" : ""} · ${getTierLabel(g.tier, g.class2)}`;
 
   return (
     <button className="anim" onClick={() => goGroup(g)}
       style={{
-        animationDelay: `${i * 15}ms`,
+        animationDelay: `${i * 12}ms`,
         width: "100%", textAlign: "left",
         background: T.s1, borderRadius: 14, padding: "12px 14px", marginBottom: 7,
         cursor: "pointer",
@@ -45,273 +76,266 @@ function AccountCard({g, i, goGroup, isDealerFilt, filt}) {
       }}>
 
       {/* Row 1: name + gap */}
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:5}}>
-        <div style={{flex:1,minWidth:0}}>
-          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:1}}>
-            <div style={{fontSize:13,fontWeight:700,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 5 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: T.t1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {fixGroupName(g)}
             </div>
-            {/* Location count badge — cyan for groups, muted for singles */}
             {isGroup && (
-              <span style={{flexShrink:0,fontSize:9,fontWeight:700,color:GROUP_ACCENT,
-                background:`${GROUP_ACCENT}18`,borderRadius:4,padding:"1px 5px",
-                border:`1px solid ${GROUP_ACCENT}33`}}>
+              <span style={{ flexShrink: 0, fontSize: 9, fontWeight: 700, color: accent,
+                background: `${accent}18`, borderRadius: 4, padding: "1px 5px",
+                border: `1px solid ${accent}33` }}>
                 {locs} locs
               </span>
             )}
           </div>
-          <div style={{fontSize:10,color:T.t3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+          <div style={{ fontSize: 10, color: T.t3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {subtitle}
           </div>
         </div>
-        <div style={{flexShrink:0,marginLeft:12,textAlign:"right"}}>
-          {/* Gap: green = ahead of PY, red = behind */}
-          <div className="m" style={{fontSize:13,fontWeight:700,color:g._gap<=0?T.green:T.red}}>
-            {g._gap<=0 ? `+${$$(Math.abs(g._gap))}` : `-${$$(g._gap)}`}
+        <div style={{ flexShrink: 0, marginLeft: 12, textAlign: "right" }}>
+          <div className="m" style={{ fontSize: 13, fontWeight: 700, color: g._gap <= 0 ? T.green : T.red }}>
+            {g._gap <= 0 ? `+${$$(Math.abs(g._gap))}` : `-${$$(g._gap)}`}
           </div>
-          <div style={{fontSize:10,color:retColor,fontWeight:600,marginTop:1}}>{retPct}% ret</div>
+          <div style={{ fontSize: 10, color: retColor, fontWeight: 600, marginTop: 1 }}>{retPct}% ret</div>
         </div>
       </div>
 
-      {/* Row 2: retention bar */}
-      <Bar pct={retPct} color={barColor}/>
+      {/* Retention bar */}
+      <Bar pct={retPct} color={`linear-gradient(90deg,${retColor},${retColor}99)`} />
 
-      {/* Row 3: PY / CY */}
-      <div style={{display:"flex",alignItems:"center",gap:14,marginTop:7}}>
-        <Pill l="PY" v={$$(g._py1)} c={T.t2}/>
-        <Pill l="CY" v={$$(g._cy1)} c={T.blue}/>
-        <Chev/>
+      {/* PY / CY */}
+      <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 7 }}>
+        <Pill l="PY" v={$$(g._py1)} c={T.t2} />
+        <Pill l="CY" v={$$(g._cy1)} c={T.blue} />
+        {/* Win Back tag */}
+        {isWinBack(g) && (
+          <span style={{ fontSize: 9, fontWeight: 700, color: T.amber,
+            background: "rgba(251,191,36,.1)", borderRadius: 4, padding: "1px 6px",
+            border: "1px solid rgba(251,191,36,.25)" }}>WIN BACK</span>
+        )}
+        {/* New Product tag */}
+        {hasNewProduct(g) && (
+          <span style={{ fontSize: 9, fontWeight: 700, color: T.green,
+            background: "rgba(52,211,153,.1)", borderRadius: 4, padding: "1px 6px",
+            border: "1px solid rgba(52,211,153,.25)" }}>NEW PROD</span>
+        )}
+        <Chev />
       </div>
     </button>
   );
 }
 
-// ── GP CARD — same-address multi-dealer practice ──────────────────
-function GPCard({gp, i, goGroup}) {
-  const ret      = gp._ret ?? 1;
-  const retColor = ret >= 0.7 ? T.green : ret >= 0.4 ? T.amber : T.red;
-  const retPct   = Math.min(100, Math.round(ret * 100));
-
-  return (
-    <div className="anim" style={{
-      animationDelay: `${i * 15}ms`,
-      background: T.s1,
-      border: `1px solid ${GROUP_ACCENT}22`,
-      borderLeft: `3px solid ${GROUP_ACCENT}`,
-      borderRadius: 14, padding: "12px 14px", marginBottom: 7,
-    }}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:5}}>
-        <div style={{flex:1,minWidth:0}}>
-          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:1}}>
-            <div style={{fontSize:13,fontWeight:700,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-              {gp.name}
-            </div>
-            <span style={{flexShrink:0,fontSize:9,fontWeight:700,color:GROUP_ACCENT,
-              background:`${GROUP_ACCENT}18`,borderRadius:4,padding:"1px 5px",
-              border:`1px solid ${GROUP_ACCENT}33`}}>
-              {gp.dealers.length} dealers
-            </span>
-          </div>
-          <div style={{fontSize:10,color:T.t3,marginTop:1}}>
-            {gp.city}{gp.st ? `, ${gp.st}` : ""} · Private
-          </div>
-        </div>
-        <div style={{flexShrink:0,marginLeft:12,textAlign:"right"}}>
-          <div className="m" style={{fontSize:13,fontWeight:700,color:gp._gap<=0?T.green:T.red}}>
-            {gp._gap<=0 ? `+${$$(Math.abs(gp._gap))}` : `-${$$(gp._gap)}`}
-          </div>
-          <div style={{fontSize:10,color:retColor,fontWeight:600,marginTop:1}}>{retPct}% ret</div>
-        </div>
-      </div>
-
-      <Bar pct={retPct} color={`linear-gradient(90deg,${retColor},${retColor}99)`}/>
-
-      {/* Dealer chips */}
-      <div style={{display:"flex",gap:5,flexWrap:"wrap",marginTop:8,marginBottom:6}}>
-        {gp._groups.map((g:any) => {
-          const d  = g.children?.[0]?.dealer || "All Other";
-          const py = g.pyQ?.["1"] || 0;
-          return (
-            <button key={g.id} onClick={e=>{e.stopPropagation();goGroup(g);}}
-              style={{fontSize:9,padding:"3px 9px",borderRadius:6,
-                background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.2)",
-                color:T.blue,cursor:"pointer",fontFamily:"inherit",fontWeight:600}}>
-              {d} · {$$(py)}
-            </button>
-          );
-        })}
-      </div>
-
-      <div style={{display:"flex",alignItems:"center",gap:14}}>
-        <Pill l="PY" v={$$(gp._py1)} c={T.t2}/>
-        <Pill l="CY" v={$$(gp._cy1)} c={T.blue}/>
-      </div>
-    </div>
-  );
-}
-
 // ── SECTION LABEL ─────────────────────────────────────────────────
-const SectionLabel = ({label, color, count=null}) => (
-  <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:10,marginTop:4}}>
-    <div style={{width:7,height:7,borderRadius:"50%",background:color,flexShrink:0}}/>
-    <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color}}>{label}</span>
-    {count!=null&&<span style={{fontSize:10,color:T.t4,marginLeft:"auto"}}>{count}</span>}
+const SectionLabel = ({ label, color, count = null }) => (
+  <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 10, marginTop: 4 }}>
+    <div style={{ width: 7, height: 7, borderRadius: "50%", background: color, flexShrink: 0 }} />
+    <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1.2px", color }}>{label}</span>
+    {count != null && <span style={{ fontSize: 10, color: T.t4, marginLeft: "auto" }}>{count}</span>}
   </div>
 );
 
 // ── LEGEND ────────────────────────────────────────────────────────
 const Legend = () => (
-  <div style={{display:"flex",gap:14,padding:"0 16px",marginBottom:10,alignItems:"center"}}>
-    <div style={{display:"flex",alignItems:"center",gap:5}}>
-      <div style={{width:3,height:14,borderRadius:2,background:GROUP_ACCENT}}/>
-      <span style={{fontSize:9,color:T.t4,fontWeight:600}}>GROUP (2+ locs)</span>
+  <div style={{ display: "flex", gap: 12, padding: "0 16px", marginBottom: 10, flexWrap: "wrap", alignItems: "center" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+      <div style={{ width: 3, height: 12, borderRadius: 2, background: GROUP_ACCENT }} />
+      <span style={{ fontSize: 9, color: T.t4, fontWeight: 600 }}>MULTI-LOC</span>
     </div>
-    <div style={{display:"flex",alignItems:"center",gap:5}}>
-      <div style={{width:3,height:14,borderRadius:2,background:SINGLE_ACCENT}}/>
-      <span style={{fontSize:9,color:T.t4,fontWeight:600}}>SINGLE OFFICE</span>
+    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+      <div style={{ width: 3, height: 12, borderRadius: 2, background: SINGLE_ACCENT }} />
+      <span style={{ fontSize: 9, color: T.t4, fontWeight: 600 }}>SINGLE</span>
     </div>
-    <div style={{display:"flex",alignItems:"center",gap:5,marginLeft:"auto"}}>
-      <span style={{fontSize:9,color:T.green,fontWeight:600}}>+$ = ahead</span>
-      <span style={{fontSize:9,color:T.red,fontWeight:600}}>-$ = gap</span>
+    <div style={{ display: "flex", alignItems: "center", gap: 4, marginLeft: "auto" }}>
+      <span style={{ fontSize: 9, color: T.green, fontWeight: 600 }}>+$ ahead</span>
+      <span style={{ fontSize: 9, color: T.red, fontWeight: 600 }}>-$ gap</span>
     </div>
   </div>
 );
 
 // ── MAIN COMPONENT ────────────────────────────────────────────────
-export default function GroupsTab({groups,goGroup,filt,setFilt,search,setSearch,groupedPrivates=[]}) {
-  const isDealerFilt = DEALER_SET.has(filt);
+export default function GroupsTab({ groups, goGroup, filt, setFilt, search, setSearch, groupedPrivates = [] }) {
+  // filt is now the TYPE filter (Row 1). View mode is local state.
+  const [view, setView] = useState("all");
 
-  const gpGroupIds = useMemo(
-    () => new Set(groupedPrivates.flatMap(gp => gp._groups.map(g => g.id))),
-    [groupedPrivates]
-  );
+  // Normalise incoming filt to our new type keys
+  // (AccelerateApp passes filt/setFilt from parent state — we reuse for type)
+  const typeFilt = ["DSO", "Mid-Market", "Private"].includes(filt) ? filt : "All";
+  const setType  = (t: string) => { setFilt(t === "All" ? "All" : t); setView("all"); };
 
   const enriched = useMemo(() => groups.map(g => {
-    const kids = isDealerFilt ? g.children?.filter(c=>c.dealer===filt)||[] : g.children||[];
-    const py1  = isDealerFilt ? kids.reduce((s,c)=>s+(c.pyQ?.["1"]||0),0) : (g.pyQ?.["1"]||0);
-    const cy1  = isDealerFilt ? kids.reduce((s,c)=>s+(c.cyQ?.["1"]||0),0) : (g.cyQ?.["1"]||0);
-    const gap  = py1 - cy1;
-    const ret  = py1 > 0 ? cy1/py1 : 1;
-    const locs = isDealerFilt ? kids.length : g.locs;
-    const base = {...g, _py1:py1, _cy1:cy1, _gap:gap, _ret:ret, _locs:locs};
-    const p    = scorePriority(base, "1");
-    return {...base, _priorityScore:p.priorityScore, _priorityBucket:p.priorityBucket,
-            _rootStrength:p.rootStrength, _priorityReason:p.priorityReason};
-  }), [groups, filt, isDealerFilt]);
+    const py1 = g.pyQ?.["1"] || 0;
+    const cy1 = g.cyQ?.["1"] || 0;
+    const gap = py1 - cy1;
+    const ret = py1 > 0 ? cy1 / py1 : 1;
+    const locs = g.locs ?? 1;
+    const base = { ...g, _py1: py1, _cy1: cy1, _gap: gap, _ret: ret, _locs: locs };
+    const p = scorePriority(base, "1");
+    return {
+      ...base,
+      _priorityScore: p.priorityScore,
+      _priorityBucket: p.priorityBucket,
+      _priorityReason: p.priorityReason,
+      _isDSO: locs >= 3 || g.class2 === "DSO" || g.class2 === "EMERGING DSO",
+      _isMid: locs === 2,
+      _isPrivate: locs <= 1,
+    };
+  }), [groups]);
 
-  const list = useMemo(() => {
+  // ── Step 1: apply TYPE filter ─────────────────────────────────
+  const byType = useMemo(() => {
     let l = [...enriched];
     if (search) {
       const q = search.toLowerCase();
       l = l.filter(g =>
         fixGroupName(g).toLowerCase().includes(q) ||
         g.name.toLowerCase().includes(q) ||
-        g.children?.some(c=>c.name.toLowerCase().includes(q))
+        g.children?.some((c: any) => c.name.toLowerCase().includes(q))
       );
     }
-    if (filt==="Urgent")       l = l.filter(g=>g._gap>2000&&g._ret<0.3);
-    else if (filt==="Multi-loc") l = l.filter(g=>g.locs>=2);
-    else if (filt==="DSO")     l = l.filter(g=>g.locs>=3||g.class2==="DSO"||g.class2==="EMERGING DSO");
-    else if (isDealerFilt)     l = l.filter(g=>g._locs>0);
-    if (!isDealerFilt) l.sort((a,b) => b._priorityScore - a._priorityScore);
+    if (typeFilt === "DSO")        l = l.filter(g => g._isDSO);
+    else if (typeFilt === "Mid-Market") l = l.filter(g => g._isMid);
+    else if (typeFilt === "Private")    l = l.filter(g => g._isPrivate);
     return l;
-  }, [enriched, filt, search, isDealerFilt, gpGroupIds]);
+  }, [enriched, typeFilt, search]);
 
-  const gpList = useMemo(() => {
-    if (filt!=="All") return [];
-    let gps = [...groupedPrivates];
-    if (search) {
-      const q = search.toLowerCase();
-      gps = gps.filter(gp=>gp.name.toLowerCase().includes(q)||gp.addr?.toLowerCase().includes(q)||gp.city?.toLowerCase().includes(q));
+  // ── Step 2: apply VIEW mode ───────────────────────────────────
+  const list = useMemo(() => {
+    let l = [...byType];
+    if (view === "urgent") {
+      l = l.filter(g => g._gap > 1500 && g._ret < 0.4);
+      l.sort((a, b) => b._gap - a._gap);
+    } else if (view === "top-spend") {
+      l.sort((a, b) => b._py1 - a._py1);
+    } else if (view === "growing") {
+      l = l.filter(g => g._cy1 > g._py1 && g._py1 > 0);
+      l.sort((a, b) => (b._cy1 - b._py1) - (a._cy1 - a._py1));
+    } else if (view === "win-back") {
+      l = l.filter(g => isWinBack(g));
+      l.sort((a, b) => b._py1 - a._py1);
+    } else if (view === "new-product") {
+      l = l.filter(g => hasNewProduct(g));
+      l.sort((a, b) => b._cy1 - a._cy1);
+    } else {
+      // "all" — sort by priority score
+      l.sort((a, b) => b._priorityScore - a._priorityScore);
     }
-    return gps.sort((a,b)=>b._gap-a._gap);
-  }, [groupedPrivates, filt, search]);
+    return l;
+  }, [byType, view]);
 
-  const dealerTop  = useMemo(() => isDealerFilt ? [...list].filter(g=>g._cy1>0&&g._ret>=0.7&&g._py1>0).sort((a,b)=>b._cy1-a._cy1) : [], [list,isDealerFilt]);
-  const dealerHurt = useMemo(() => isDealerFilt ? [...list].filter(g=>g._gap>500&&g._ret<0.6).sort((a,b)=>b._gap-a._gap) : [], [list,isDealerFilt]);
-
-  const totalGroups  = enriched.filter(g=>(g._locs??g.locs??1)>=2).length;
-  const totalSingles = enriched.filter(g=>(g._locs??g.locs??1)<2).length;
-
-  const statusLine = filt==="All"
-    ? `${totalGroups} groups · ${totalSingles} singles · ${groupedPrivates.length} multi-dealer`
-    : filt==="Multi-loc" ? `${list.length} multi-location practices`
-    : filt==="Urgent"    ? `${list.length} accounts need attention`
-    : filt==="DSO"       ? `${list.length} DSO / group practices`
-    : isDealerFilt       ? `${list.length} ${filt} accounts · ${dealerTop.length} strong · ${dealerHurt.length} hurting`
-    : `${list.length} accounts`;
+  // Status line
+  const statusLine = useMemo(() => {
+    const typeLabel = typeFilt === "All" ? "All accounts" : typeFilt;
+    const viewLabel = VIEW_MODES.find(v => v.k === view)?.l || "All";
+    const extra =
+      view === "urgent"      ? `${list.length} need attention` :
+      view === "top-spend"   ? `ranked by PY spend` :
+      view === "growing"     ? `${list.length} ahead of last year` :
+      view === "win-back"    ? `${list.length} stopped buying` :
+      view === "new-product" ? `${list.length} with new products this year` :
+      `${list.length} accounts`;
+    return `${typeLabel} · ${viewLabel} · ${extra}`;
+  }, [list.length, typeFilt, view]);
 
   return (
-    <div style={{padding:"0 0 80px"}}>
+    <div style={{ padding: "0 0 80px" }}>
 
       {/* ── SEARCH ── */}
-      <div style={{position:"relative",margin:"16px 16px 10px"}}>
-        <svg style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",
-          width:14,height:14,color:T.t4,pointerEvents:"none"}}
+      <div style={{ position: "relative", margin: "16px 16px 10px" }}>
+        <svg style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)",
+          width: 14, height: 14, color: T.t4, pointerEvents: "none" }}
           viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
         </svg>
-        <input type="search" value={search} onChange={e=>setSearch(e.target.value)}
+        <input type="search" value={search} onChange={e => setSearch(e.target.value)}
           placeholder="Search accounts…"
-          style={{width:"100%",height:42,borderRadius:12,
-            border:`1px solid ${search?T.blue+"44":T.b1}`,
-            background:T.s1,color:T.t1,fontSize:13,
-            paddingLeft:36,paddingRight:search?34:12,
-            outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}/>
-        {search&&<button onClick={()=>setSearch("")}
-          style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",
-            background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:16,lineHeight:1}}>✕</button>}
+          style={{
+            width: "100%", height: 42, borderRadius: 12,
+            border: `1px solid ${search ? T.blue + "44" : T.b1}`,
+            background: T.s1, color: T.t1, fontSize: 13,
+            paddingLeft: 36, paddingRight: search ? 34 : 12,
+            outline: "none", fontFamily: "inherit", boxSizing: "border-box"
+          }} />
+        {search && (
+          <button onClick={() => setSearch("")}
+            style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
+              background: "none", border: "none", color: T.t4, cursor: "pointer", fontSize: 16, lineHeight: 1 }}>✕</button>
+        )}
       </div>
 
-      {/* ── FILTER PILLS — single row ── */}
-      <div className="hide-sb" style={{display:"flex",gap:5,overflowX:"auto",padding:"0 16px 2px",marginBottom:10}}>
-        {FILTERS.map(f=>(
-          <button key={f} onClick={()=>setFilt(f)}
-            style={{flexShrink:0,whiteSpace:"nowrap",padding:"5px 12px",borderRadius:7,
-              fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
-              border:`1px solid ${filt===f?"rgba(79,142,247,.35)":T.b2}`,
-              background:filt===f?"rgba(79,142,247,.15)":T.s2,
-              color:filt===f?T.blue:T.t3}}>
-            {f}
-          </button>
-        ))}
+      {/* ── ROW 1: Account Type ── */}
+      <div style={{ padding: "0 16px 2px", marginBottom: 2 }}>
+        <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", color: T.t4, marginBottom: 5 }}>
+          Account Type
+        </div>
+        <div className="hide-sb" style={{ display: "flex", gap: 5, overflowX: "auto" }}>
+          {TYPE_FILTERS.map(t => (
+            <button key={t} onClick={() => setType(t)}
+              style={{
+                flexShrink: 0, whiteSpace: "nowrap", padding: "5px 14px", borderRadius: 7,
+                fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
+                border: `1px solid ${typeFilt === t ? "rgba(79,142,247,.35)" : T.b2}`,
+                background: typeFilt === t ? "rgba(79,142,247,.15)" : T.s2,
+                color: typeFilt === t ? T.blue : T.t3,
+              }}>
+              {t}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── ROW 2: View Mode ── */}
+      <div style={{ padding: "8px 16px 2px", marginBottom: 8 }}>
+        <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", color: T.t4, marginBottom: 5 }}>
+          Show Me
+        </div>
+        <div className="hide-sb" style={{ display: "flex", gap: 5, overflowX: "auto" }}>
+          {VIEW_MODES.map(m => {
+            // Each view mode gets its own accent color when selected
+            const activeColors: Record<string, string> = {
+              all:         T.blue,
+              urgent:      T.red,
+              "top-spend": T.amber,
+              growing:     T.green,
+              "win-back":  T.orange,
+              "new-product": T.cyan,
+            };
+            const ac = activeColors[m.k] || T.blue;
+            const isActive = view === m.k;
+            return (
+              <button key={m.k} onClick={() => setView(m.k)}
+                style={{
+                  flexShrink: 0, whiteSpace: "nowrap", padding: "5px 14px", borderRadius: 7,
+                  fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
+                  border: `1px solid ${isActive ? ac + "55" : T.b2}`,
+                  background: isActive ? ac + "18" : T.s2,
+                  color: isActive ? ac : T.t3,
+                }}>
+                {m.l}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* ── LEGEND ── */}
-      <Legend/>
+      <Legend />
 
       {/* ── STATUS LINE ── */}
-      <div style={{padding:"0 16px",marginBottom:12,fontSize:10,color:T.t4}}>
+      <div style={{ padding: "0 16px", marginBottom: 12, fontSize: 10, color: T.t4 }}>
         {statusLine}
       </div>
 
-      {/* ── CONTENT ── */}
-      <div style={{padding:"0 16px"}}>
-
-        {isDealerFilt ? <>
-          <SectionLabel label={`${filt} — Strong`} color={T.green} count={dealerTop.length}/>
-          {dealerTop.length===0
-            ? <div style={{fontSize:11,color:T.t4,padding:"10px 14px",background:T.s1,borderRadius:12,marginBottom:12}}>No active {filt} accounts this quarter</div>
-            : dealerTop.map((g,i)=><AccountCard key={g.id} g={g} i={i} goGroup={goGroup} isDealerFilt filt={filt}/>)
-          }
-          <div style={{marginTop:4}}/>
-          <SectionLabel label={`${filt} — Hurting`} color={T.red} count={dealerHurt.length}/>
-          {dealerHurt.length===0
-            ? <div style={{fontSize:11,color:T.t4,padding:"10px 14px",background:T.s1,borderRadius:12}}>No significant gaps with {filt}</div>
-            : dealerHurt.map((g,i)=><AccountCard key={g.id} g={g} i={i} goGroup={goGroup} isDealerFilt filt={filt}/>)
-          }
-        </> : <>
-          {gpList.length>0&&<>
-            <SectionLabel label="Multi-Dealer Practices" color={GROUP_ACCENT} count={gpList.length}/>
-            {gpList.map((gp,i)=><GPCard key={gp.id} gp={gp} i={i} goGroup={goGroup}/>)}
-            {list.length>0&&<div style={{borderTop:`1px solid ${T.b2}`,margin:"12px 0 12px",opacity:.5}}/>}
-          </>}
-          {list.length===0&&!gpList.length
-            ? <div style={{padding:"40px 0",textAlign:"center",color:T.t4,fontSize:12}}>No accounts match this filter.</div>
-            : list.map((g,i)=><AccountCard key={g.id} g={g} i={i} goGroup={goGroup} isDealerFilt={isDealerFilt} filt={filt}/>)
-          }
-        </>}
-
+      {/* ── LIST ── */}
+      <div style={{ padding: "0 16px" }}>
+        {list.length === 0 ? (
+          <div style={{ padding: "40px 0", textAlign: "center", color: T.t4, fontSize: 12 }}>
+            No accounts match this filter.
+          </div>
+        ) : (
+          list.map((g, i) => <AccountCard key={g.id} g={g} i={i} goGroup={goGroup} />)
+        )}
       </div>
     </div>
   );
