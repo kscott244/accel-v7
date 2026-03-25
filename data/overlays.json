@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-25T16:04:46.605Z",
+  "lastUpdated": "2026-03-25T16:04:49.030Z",
   "groups": {
     "Master-CM1873360": {
       "id": "Master-CM1873360",
@@ -141,6 +141,20 @@
       "score": 98,
       "createdAt": "2026-03-25T16:04:46.157Z",
       "updatedAt": "2026-03-25T16:04:46.157Z"
+    },
+    "Master-CM1434211": {
+      "id": "Master-CM1434211",
+      "name": "JOSEPH J GARGANO",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM1434211",
+        "Master-CM100288"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 92,
+      "createdAt": "2026-03-25T16:04:48.544Z",
+      "updatedAt": "2026-03-25T16:04:48.544Z"
     }
   },
   "groupDetaches": [],
