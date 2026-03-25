@@ -202,7 +202,13 @@ export default function GroupsTab({ groups, goGroup, filt, setFilt, search, setS
       l = l.filter(g =>
         fixGroupName(g).toLowerCase().includes(q) ||
         g.name.toLowerCase().includes(q) ||
-        g.children?.some((c: any) => c.name.toLowerCase().includes(q))
+        g.children?.some((c: any) =>
+          c.name?.toLowerCase().includes(q) ||
+          c.addr?.toLowerCase().includes(q) ||
+          c.address?.toLowerCase().includes(q) ||
+          c.city?.toLowerCase().includes(q) ||
+          c.zip?.toLowerCase().includes(q)
+        )
       );
     }
     if (typeFilt === "DSO")        l = l.filter(g => g._isDSO);
