@@ -101,8 +101,13 @@ Return ONLY valid JSON with these exact keys:
   "hooks": ["hook1", "hook2"],
   "competitive": "one sentence or null",
   "talkingPoints": ["point1", "point2", "point3"],
+  "locations": [
+    {"name": "Practice Name", "address": "123 Main St", "city": "City", "state": "ST", "zip": "00000"}
+  ],
   "searchedAt": "${new Date().toISOString()}"
 }
+
+For the "locations" array: List ALL physical locations you find for this practice/group — include name, address, city, state, zip for each. If only one location exists, still include it. This is critical for multi-location groups. If you cannot find an address, include the name and city at minimum.
 
 For the contacts array: tier 1=owner/primary doctor, tier 2=associate doctor/practice manager, tier 3=regional/ops manager, tier 4=coordinator/front office lead. Only include contacts you actually found with real names.
 Return ONLY valid JSON, no markdown, no preamble.`;
