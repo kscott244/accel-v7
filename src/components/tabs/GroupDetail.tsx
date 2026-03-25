@@ -25,14 +25,6 @@ try {
   };
 } catch(e) {}
 
-const SCOPE_LABEL: Record<number,string> = {
-  1: "Owner / Lead Dr",
-  2: "Office-level",
-  3: "Group / Regional",
-  4: "Coordinator",
-  5: "Front Office",
-};
-
 function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesStore=null}) {
   const [q,setQ]=useState("1");
   const qk=q;
@@ -394,94 +386,123 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
   },[sortedChildren, groupStopped, groupBuying, group, qk]);
 
 
+  // ── Account Brief (deterministic, no API) ────────────────────────────
+  const [briefOpen, setBriefOpen] = useState(false);
 
-  // ── Group-level AI research state ──────────────────────────────────────
-  const [grpResState, setGrpResState] = useState<"idle"|"loading"|"done"|"error">("idle");
-  const [grpResIntel, setGrpResIntel] = useState<any>(null);
-  const [grpResSaveToast, setGrpResSaveToast] = useState<string|null>(null);
+  // ── Group AI Research (A15) ──
+  const [resLoading, setResLoading] = useState(false);
+  const [resResult, setResResult] = useState<any>(null);
+  const [resDismissed, setResDismissed] = useState(false);
+  const [savedResContacts, setSavedResContacts] = useState<Set<number>>(()=>new Set());
+  const [resWebsiteSaved, setResWebsiteSaved] = useState(false);
 
   const runGroupResearch = async () => {
-    setGrpResState("loading");
-    setGrpResIntel(null);
+    setResLoading(true);
+    setResDismissed(false);
+    setResResult(null);
+    setSavedResContacts(new Set());
+    setResWebsiteSaved(false);
+    const groupName = fixGroupName(group);
+    const topCities = [...new Set((group.children||[]).map((c:any)=>c.city).filter(Boolean))].slice(0,3).join(", ");
+    const topDealer = distBreakdown.rows[0]?.dist || "";
+    const topProds = groupBuying.slice(0,5).map((p:any)=>p.name.split(" ").slice(0,3).join(" ")).join(", ");
+    const locCount = (group.children||[]).length;
+    const ownerType = group.class2 || "Private Practice";
+    const prompt = [
+      "You are a dental sales intelligence assistant.",
+      "Research the following dental practice group and return a JSON object ONLY (no markdown, no prose).",
+      "",
+      "Group: " + groupName,
+      "Locations: " + locCount,
+      "Cities: " + topCities,
+      "Type: " + ownerType,
+      "Main dealer: " + topDealer,
+      "Products buying: " + topProds,
+      "",
+      "Return ONLY this JSON shape:",
+      "{",
+      '  "status": "short 1-sentence practice status",',
+      '  "ownership": "ownership/DSO note if applicable",',
+      '  "website": "URL or empty string",',
+      '  "contacts": [',
+      '    { "name": "...", "role": "...", "phone": "...", "email": "...", "scope": 1 }',
+      "  ],",
+      '  "hooks": ["talking point 1", "talking point 2"],',
+      '  "talkingPoints": ["specific upsell or recovery idea"]',
+      "}",
+      "",
+      "scope values: 1=Owner/Lead Dr, 2=Office-level, 3=Group/Regional, 4=Coordinator",
+      "Return max 4 contacts. If no data found leave field empty string or empty array.",
+      "Return ONLY the JSON object."
+    ].join("
+");
     try {
-      // Build a rich context payload from the group
-      const topChildren = (group.children||[]).slice(0,3);
-      const topDealer = (group.children||[]).reduce((acc:any,c:any)=>{
-        const d=c.dealer||"All Other"; acc[d]=(acc[d]||0)+1; return acc;
-      },{});
-      const dealerStr = Object.entries(topDealer).sort((a:any,b:any)=>b[1]-a[1]).map(([d])=>d).slice(0,2).join(", ");
-      const topProds = groupBuying.slice(0,5).map((p:any)=>p.name);
-      const cityList = [...new Set(topChildren.map((c:any)=>c.city).filter(Boolean))].join(", ");
-      const stateVal = topChildren[0]?.st || "";
-      const numLocs2 = (group.children||[]).length;
       const res = await fetch("/api/deep-research", {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({
-          name: fixGroupName(group),
-          city: cityList,
-          state: stateVal,
-          dealer: dealerStr,
-          products: topProds,
-          gName: fixGroupName(group),
-          acctId: group.id,
-          ownership: group.class2==="DSO"||group.class2==="Emerging DSO" ? "dso" : numLocs2>2 ? "emerging_dso" : null,
-          isGroupLevel: true,
-          numLocations: numLocs2,
-        })
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, accountId: group.id, accountName: groupName }),
       });
       const data = await res.json();
-      if (data?.intel) {
-        setGrpResIntel(data.intel);
-        setGrpResState("done");
-      } else {
-        setGrpResState("error");
-        setGrpResIntel({error: data?.error || "Research failed. Try again."});
-      }
-    } catch(e:any) {
-      setGrpResState("error");
-      setGrpResIntel({error:"Connection error. Check network and try again."});
+      const raw = (data.result || data.text || "").trim();
+      const jsonStr = raw.replace(/^```(?:json)?/,"").replace(/```$/,"").trim();
+      const parsed = JSON.parse(jsonStr);
+      setResResult(parsed);
+    } catch(e) {
+      setResResult({ status: "Research unavailable. Check API connection.", ownership: "", website: "", contacts: [], hooks: [], talkingPoints: [] });
     }
+    setResLoading(false);
   };
 
-  const saveResContact = (c:any) => {
+  const saveResContact = (c:any, idx:number) => {
     const entry = {
-      id: Date.now() + Math.random(),
+      id: Date.now() + idx,
       name: c.name,
       role: c.role || "",
       phone: c.phone || "",
       email: c.email || "",
-      notes: `Scope: ${SCOPE_LABEL[c.tier||2]||"Unknown"} · From AI research`,
+      notes: "From AI research",
       savedAt: new Date().toISOString(),
     };
     const updated = [...groupContacts, entry];
     setGroupContacts(updated);
-    try { localStorage.setItem(`grpContacts:${group.id}`, JSON.stringify(updated)); } catch {}
+    try { localStorage.setItem("grpContacts:" + group.id, JSON.stringify(updated)); } catch {}
     if (saveOverlays) {
       const next = { ...OVERLAYS_REF, groupContacts: { ...(OVERLAYS_REF.groupContacts||{}), [group.id]: updated } };
       saveOverlays(next);
     }
-    setGrpResSaveToast(`✓ Saved ${c.name}`);
-    setTimeout(()=>setGrpResSaveToast(null), 2500);
+    setSavedResContacts(prev => new Set([...prev, idx]));
   };
 
-  const saveResWebsite = (url:string) => {
-    if (!saveOverlays) return;
-    const next = { ...OVERLAYS_REF, groupWebsite: { ...(OVERLAYS_REF.groupWebsite||{}), [group.id]: url } };
-    saveOverlays(next);
-    setGrpResSaveToast("✓ Website saved");
-    setTimeout(()=>setGrpResSaveToast(null), 2500);
-  };
+  const saveResNotes = () => {
+    if (!resResult) return;
+    const hooks = (resResult.hooks||[]).join("; ");
+    const pts = (resResult.talkingPoints||[]).join("; ");
+    const intel = "[AI Intel] " + hooks + (pts ? " | " + pts : "");
+    const newNote = groupNote ? groupNote + "
 
-  const saveResNote = (text:string) => {
-    const newNote = (groupNote ? groupNote + "\n\n" : "") + "\u2014 AI Research Intel \u2014\n" + text;
+" + intel : intel;
     saveNote(newNote);
-    setGrpResSaveToast("✓ Added to group notes");
-    setTimeout(()=>setGrpResSaveToast(null), 2500);
   };
 
-  // ── Account Brief (deterministic, no API) ────────────────────────────
-  const [briefOpen, setBriefOpen] = useState(false);
+  const saveResWebsite = () => {
+    if (!resResult?.website) return;
+    const updated = [...groupContacts, {
+      id: Date.now(),
+      name: "Website",
+      role: "Online",
+      phone: "",
+      email: "",
+      notes: "Website: " + resResult.website,
+      savedAt: new Date().toISOString(),
+    }];
+    setGroupContacts(updated);
+    try { localStorage.setItem("grpContacts:" + group.id, JSON.stringify(updated)); } catch {}
+    if (saveOverlays) {
+      const next = { ...OVERLAYS_REF, groupContacts: { ...(OVERLAYS_REF.groupContacts||{}), [group.id]: updated } };
+      saveOverlays(next);
+    }
+    setResWebsiteSaved(true);
+  };
 
   const briefLines = useMemo(()=>{
     const lines: {text:string; color:string}[] = [];
@@ -734,15 +755,14 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
   };
 
   return <div style={{paddingBottom:80}}>
-    <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"10px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-      <button onClick={goMain} style={{background:"none",border:"none",color:T.blue,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:13,fontWeight:600,fontFamily:"inherit"}}><Back/> Groups</button>
-      <button onClick={()=>grpResState==="idle"||grpResState==="error"?runGroupResearch():null}
-        disabled={grpResState==="loading"}
-        style={{background:grpResState==="done"?"rgba(34,211,238,.1)":"rgba(79,142,247,.1)",border:`1px solid ${grpResState==="done"?"rgba(34,211,238,.25)":"rgba(79,142,247,.25)"}`,borderRadius:8,padding:"4px 11px",fontSize:10,fontWeight:700,color:grpResState==="done"?T.cyan:T.blue,cursor:grpResState==="loading"?"not-allowed":"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:5}}>
-        {grpResState==="loading"
-          ? <><span style={{animation:"pulse 1s infinite",fontSize:9}}>●</span> Searching…</>
-          : grpResState==="done" ? "🔍 Re-research" : "🔍 Research"}
-      </button>
+    <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"10px 16px"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%"}}>
+        <button onClick={goMain} style={{background:"none",border:"none",color:T.blue,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:13,fontWeight:600,fontFamily:"inherit"}}><Back/> Groups</button>
+        <button onClick={runGroupResearch} disabled={resLoading}
+          style={{background:"rgba(34,211,238,.08)",border:"1px solid rgba(34,211,238,.2)",borderRadius:8,padding:"4px 12px",fontSize:10,fontWeight:700,color:resLoading?"rgba(34,211,238,.5)":T.cyan,cursor:resLoading?"not-allowed":"pointer",fontFamily:"inherit",letterSpacing:".3px"}}>
+          {resLoading ? "Searching..." : (resResult ? "Re-research" : "Research")}
+        </button>
+      </div>
     </div>
     <div style={{padding:"16px 16px 0"}}>
       <div className="anim" style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
@@ -789,105 +809,74 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
       </div>
 
 
-
-      {/* GROUP AI INTEL PANEL */}
-      {(grpResState==="loading"||grpResState==="done"||grpResState==="error")&&<div className="anim" style={{background:`linear-gradient(135deg,rgba(34,211,238,.04),rgba(79,142,247,.04))`,border:`1px solid rgba(34,211,238,.2)`,borderRadius:16,padding:16,marginBottom:16}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-          <div style={{display:"flex",alignItems:"center",gap:7}}>
-            <span style={{fontSize:12}}>🔍</span>
-            <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan}}>Group Intel</span>
-            {grpResSaveToast&&<span style={{fontSize:9,color:T.green,fontWeight:600,marginLeft:4}}>{grpResSaveToast}</span>}
-          </div>
-          <button onClick={()=>{setGrpResState("idle");setGrpResIntel(null);}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:16,lineHeight:1,padding:"0 2px"}}>✕</button>
+      {/* GROUP AI INTEL (A15) */}
+      {(resLoading || (resResult && !resDismissed)) && <div className="anim" style={{background:T.s1,border:"1px solid rgba(34,211,238,.2)",borderRadius:16,padding:16,marginBottom:16}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan}}>Group Intel</div>
+          {!resLoading&&<button onClick={()=>setResDismissed(true)} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:16,lineHeight:1,padding:"0 4px",fontFamily:"inherit"}}>x</button>}
         </div>
-
-        {grpResState==="loading"&&<div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {[90,70,80,55,85].map((w,i)=><div key={i} style={{height:10,borderRadius:5,background:T.s3,width:`${w}%`,animation:"pulse 1.2s ease-in-out infinite",animationDelay:`${i*120}ms`}}/>)}
-          <div style={{fontSize:11,color:T.t4,marginTop:4}}>Searching web for group practice intel…</div>
+        {resLoading && <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {[80,60,90].map((w,i)=>(
+            <div key={i} style={{height:12,borderRadius:6,background:T.s3,width:w+"%",opacity:.6}}/>
+          ))}
         </div>}
-
-        {grpResState==="error"&&<div style={{fontSize:12,color:T.red}}>{grpResIntel?.error||"Research failed."}</div>}
-
-        {grpResState==="done"&&grpResIntel&&!grpResIntel.parseError&&<div>
-          {/* Status */}
-          {grpResIntel.statusNote&&<div style={{marginBottom:10,padding:"8px 10px",borderRadius:8,background:grpResIntel.status==="open"?"rgba(52,211,153,.08)":grpResIntel.status==="closed"?"rgba(248,113,113,.08)":"rgba(120,120,160,.08)",border:`1px solid ${grpResIntel.status==="open"?"rgba(52,211,153,.2)":grpResIntel.status==="closed"?"rgba(248,113,113,.2)":"rgba(120,120,160,.15)"}`}}>
-            <div style={{fontSize:9,textTransform:"uppercase",color:T.t4,marginBottom:2}}>Practice Status</div>
-            <div style={{fontSize:11,fontWeight:600,color:grpResIntel.status==="open"?T.green:grpResIntel.status==="closed"?T.red:T.amber}}>{grpResIntel.statusNote}</div>
+        {resResult && !resLoading && <>
+          {resResult.status&&<div style={{fontSize:12,color:T.t2,lineHeight:1.5,marginBottom:10}}>{resResult.status}</div>}
+          {resResult.ownership&&<div style={{fontSize:11,color:T.t3,marginBottom:10,fontStyle:"italic"}}>{resResult.ownership}</div>}
+          {resResult.website&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,padding:"8px 10px",background:T.s2,borderRadius:8}}>
+            <span style={{fontSize:11,color:T.blue,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{resResult.website}</span>
+            <button onClick={saveResWebsite} disabled={resWebsiteSaved}
+              style={{background:resWebsiteSaved?"rgba(52,211,153,.1)":"rgba(79,142,247,.1)",border:"1px solid "+(resWebsiteSaved?"rgba(52,211,153,.2)":"rgba(79,142,247,.2)"),borderRadius:6,padding:"2px 8px",fontSize:9,fontWeight:700,color:resWebsiteSaved?T.green:T.blue,cursor:resWebsiteSaved?"default":"pointer",fontFamily:"inherit",flexShrink:0,marginLeft:8}}>
+              {resWebsiteSaved ? "Saved" : "Save"}
+            </button>
           </div>}
-
-          {/* Ownership */}
-          {grpResIntel.ownershipNote&&<div style={{marginBottom:10}}>
-            <div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:3}}>Ownership</div>
-            <div style={{fontSize:11,color:T.t2,lineHeight:1.5}}>{grpResIntel.ownershipNote}</div>
-          </div>}
-
-          {/* Website */}
-          {grpResIntel.website&&<div style={{marginBottom:10,display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
-            <div style={{minWidth:0}}>
-              <div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:2}}>Website</div>
-              <a href={grpResIntel.website} target="_blank" rel="noreferrer" style={{fontSize:11,color:T.blue,textDecoration:"none",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",display:"block"}}>{grpResIntel.website}</a>
-            </div>
-            <button onClick={()=>saveResWebsite(grpResIntel.website)} style={{flexShrink:0,fontSize:9,fontWeight:700,color:T.cyan,background:"rgba(34,211,238,.08)",border:"1px solid rgba(34,211,238,.2)",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontFamily:"inherit"}}>Save</button>
-          </div>}
-
-          {/* Contacts with scope labels + individual save */}
-          {grpResIntel.contacts?.length>0&&<div style={{marginBottom:10}}>
-            <div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:8}}>Contacts Found</div>
-            {grpResIntel.contacts.map((c:any,i:number)=>{
-              const scopeLabel = SCOPE_LABEL[c.tier||2]||"Unknown";
-              const scopeColor = c.tier===1?T.cyan:c.tier===3?T.purple:T.t3;
-              const alreadySaved = groupContacts.some((gc:any)=>gc.name===c.name);
-              return <div key={i} style={{background:T.s2,borderRadius:10,padding:"10px 12px",marginBottom:7,border:`1px solid ${T.b2}`}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
+          {(resResult.contacts||[]).length>0&&<div style={{marginBottom:10}}>
+            <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",color:T.t4,letterSpacing:"1px",marginBottom:6}}>Contacts Found</div>
+            {(resResult.contacts||[]).map((c:any,i:number)=>{
+              const SCOPE_LABELS = ["Owner / Lead Dr","Office-level","Group / Regional","Coordinator"];
+              const SCOPE_COLORS = [T.cyan, T.t3, T.purple, T.t4];
+              const sl = SCOPE_LABELS[(c.scope||1)-1] || SCOPE_LABELS[0];
+              const sc = SCOPE_COLORS[(c.scope||1)-1] || SCOPE_COLORS[0];
+              const isSaved = savedResContacts.has(i);
+              return <div key={i} style={{padding:"8px 10px",background:T.s2,borderRadius:8,marginBottom:6}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",marginBottom:3}}>
-                      <span style={{fontSize:12,fontWeight:700,color:T.t1}}>{c.name}</span>
-                      <span style={{fontSize:8,fontWeight:700,color:scopeColor,background:`${scopeColor}14`,borderRadius:4,padding:"1px 5px",border:`1px solid ${scopeColor}30`,whiteSpace:"nowrap"}}>{scopeLabel}</span>
-                    </div>
-                    {c.role&&<div style={{fontSize:10,color:T.t3,marginBottom:4}}>{c.role}</div>}
-                    <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-                      {c.phone&&<a href={`tel:${c.phone.replace(/\D/g,"")}`} style={{fontSize:10,color:T.green,textDecoration:"none"}}>{c.phone}</a>}
-                      {c.email&&<a href={`mailto:${c.email}`} style={{fontSize:10,color:T.blue,textDecoration:"none",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:180}}>{c.email}</a>}
+                    <div style={{fontSize:12,fontWeight:700,color:T.t1}}>{c.name||"Unknown"}</div>
+                    {c.role&&<div style={{fontSize:10,color:T.t3,marginTop:1}}>{c.role}</div>}
+                    <span style={{fontSize:9,fontWeight:700,color:sc,background:sc+"18",borderRadius:4,padding:"1px 5px",display:"inline-block",marginTop:3}}>{sl}</span>
+                    <div style={{display:"flex",gap:8,marginTop:4,flexWrap:"wrap"}}>
+                      {c.phone&&<span style={{fontSize:10,color:T.cyan}}>{c.phone}</span>}
+                      {c.email&&<span style={{fontSize:10,color:T.blue}}>{c.email}</span>}
                     </div>
                   </div>
-                  <button onClick={()=>!alreadySaved&&saveResContact(c)} disabled={alreadySaved}
-                    style={{flexShrink:0,fontSize:9,fontWeight:700,color:alreadySaved?T.t4:T.green,background:alreadySaved?"rgba(120,120,160,.06)":"rgba(52,211,153,.08)",border:`1px solid ${alreadySaved?"rgba(120,120,160,.12)":"rgba(52,211,153,.2)"}`,borderRadius:6,padding:"3px 8px",cursor:alreadySaved?"default":"pointer",fontFamily:"inherit"}}>
-                    {alreadySaved?"✓ Saved":"+ Save"}
+                  <button onClick={()=>saveResContact(c,i)} disabled={isSaved}
+                    style={{background:isSaved?"rgba(52,211,153,.1)":"rgba(79,142,247,.1)",border:"1px solid "+(isSaved?"rgba(52,211,153,.2)":"rgba(79,142,247,.2)"),borderRadius:6,padding:"3px 9px",fontSize:10,fontWeight:700,color:isSaved?T.green:T.blue,cursor:isSaved?"default":"pointer",fontFamily:"inherit",flexShrink:0,marginLeft:8}}>
+                    {isSaved ? "Saved" : "+ Save"}
                   </button>
                 </div>
               </div>;
             })}
           </div>}
-
-          {/* Hooks — saveable to group notes */}
-          {grpResIntel.hooks?.length>0&&<div style={{marginBottom:10}}>
+          {(resResult.hooks||[]).length>0&&<div style={{marginBottom:10}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-              <div style={{fontSize:9,color:T.t3,textTransform:"uppercase"}}>Relationship Hooks</div>
-              <button onClick={()=>saveResNote(grpResIntel.hooks.join("
-• "))} style={{fontSize:9,fontWeight:700,color:T.amber,background:"rgba(251,191,36,.06)",border:"1px solid rgba(251,191,36,.15)",borderRadius:6,padding:"2px 7px",cursor:"pointer",fontFamily:"inherit"}}>+ Notes</button>
+              <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",color:T.t4,letterSpacing:"1px"}}>Hooks</div>
+              <button onClick={saveResNotes} style={{background:"rgba(251,191,36,.08)",border:"1px solid rgba(251,191,36,.2)",borderRadius:5,padding:"1px 7px",fontSize:9,fontWeight:700,color:T.amber,cursor:"pointer",fontFamily:"inherit"}}>+ Notes</button>
             </div>
-            {grpResIntel.hooks.map((h:string,i:number)=>(
-              <div key={i} style={{display:"flex",gap:6,alignItems:"flex-start",marginBottom:5}}>
-                <span style={{color:T.amber,marginTop:1,fontSize:10,flexShrink:0}}>◆</span>
-                <span style={{fontSize:11,color:T.t2,lineHeight:1.5}}>{h}</span>
+            {(resResult.hooks||[]).map((h:string,i:number)=>(
+              <div key={i} style={{fontSize:11,color:T.t2,lineHeight:1.5,display:"flex",gap:6,alignItems:"flex-start",marginBottom:4}}>
+                <span style={{color:T.t4,flexShrink:0}}>-</span><span>{h}</span>
               </div>
             ))}
           </div>}
-
-          {/* Talking points */}
-          {grpResIntel.talkingPoints?.length>0&&<div>
-            <div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:6}}>Talking Points</div>
-            {grpResIntel.talkingPoints.map((p:string,i:number)=>(
-              <div key={i} style={{display:"flex",gap:6,alignItems:"flex-start",marginBottom:6}}>
-                <span style={{color:T.blue,fontWeight:700,fontSize:10,marginTop:1,flexShrink:0}}>{i+1}.</span>
-                <span style={{fontSize:11,color:T.t1,lineHeight:1.5}}>{p}</span>
+          {(resResult.talkingPoints||[]).length>0&&<div>
+            <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",color:T.t4,letterSpacing:"1px",marginBottom:6}}>Talking Points</div>
+            {(resResult.talkingPoints||[]).map((tp:string,i:number)=>(
+              <div key={i} style={{fontSize:11,color:T.t2,lineHeight:1.5,display:"flex",gap:6,alignItems:"flex-start",marginBottom:4}}>
+                <span style={{color:T.blue,flexShrink:0}}>{i+1}.</span><span>{tp}</span>
               </div>
             ))}
           </div>}
-
-          {grpResIntel.searchedAt&&<div style={{fontSize:9,color:T.t4,marginTop:8,textAlign:"right"}}>Researched {new Date(grpResIntel.searchedAt).toLocaleDateString()}</div>}
-        </div>}
-        {grpResState==="done"&&grpResIntel?.parseError&&<div style={{fontSize:11,color:T.t2,lineHeight:1.6,whiteSpace:"pre-wrap"}}>{grpResIntel.rawText}</div>}
+        </>}
       </div>}
 
       {/* NEXT BEST MOVES */}
