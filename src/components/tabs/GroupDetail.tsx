@@ -306,6 +306,85 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
   },[groupBuying, groupStopped, group, qk]);
 
 
+
+  // ── Next Best Moves ───────────────────────────────────────────────────
+  const nextBestMoves = useMemo(()=>{
+    const moves: {rank:number; action:string; why:string; color:string}[] = [];
+    const numLocs = (group.children||[]).length || 1;
+
+    // Highest-gap child → focus first
+    const topChild = sortedChildren.length > 0 ? sortedChildren[0] : null;
+    if (topChild) {
+      const cGap = (topChild.pyQ?.[qk]||0) - (topChild.cyQ?.[qk]||0);
+      if (cGap > 500) {
+        const shortName = topChild.name ? topChild.name.split(" ").slice(0,3).join(" ") : "top location";
+        moves.push({
+          rank: 1,
+          action: `Prioritize ${shortName} first`,
+          why: `Biggest gap in group — ${$$(cGap)} vs PY`,
+          color: T.red,
+        });
+      }
+    }
+
+    // Win-back: top stopped product + how many locs
+    const topStop = groupStopped.filter((p:any)=>p.py>=500)[0];
+    if (topStop) {
+      const lc = topStop.locsDown?.length || 0;
+      const pShort = topStop.name.split(" ").slice(0,3).join(" ");
+      moves.push({
+        rank: moves.length + 1,
+        action: `Win back ${pShort}`,
+        why: `${lc > 0 ? lc + " loc" + (lc!==1?"s":"") + " stopped buying" : "dropped to $0"} · was ${$$(topStop.py)}`,
+        color: T.red,
+      });
+    }
+
+    // Partial penetration: expand into non-buying locs
+    if (numLocs > 1) {
+      const partial = groupBuying
+        .filter((p:any)=>p.locsCY.length>0 && p.locsCY.length < numLocs * 0.6 && p.cy>300)
+        .sort((a:any,b:any)=>b.cy-a.cy)[0];
+      if (partial) {
+        const pShort = partial.name.split(" ").slice(0,3).join(" ");
+        const missing = numLocs - partial.locsCY.length;
+        moves.push({
+          rank: moves.length + 1,
+          action: `Expand ${pShort} to ${missing} more loc${missing!==1?"s":""}`,
+          why: `Only ${partial.locsCY.length} of ${numLocs} locations buying`,
+          color: T.purple,
+        });
+      }
+    }
+
+    // Momentum: reinforce what's growing
+    const topGrowing = groupBuying.filter((p:any)=>p.py>200&&p.cy/p.py>1.15).sort((a:any,b:any)=>(b.cy/b.py)-(a.cy/a.py))[0];
+    if (topGrowing) {
+      const pct = Math.round(topGrowing.cy/topGrowing.py*100-100);
+      const pShort = topGrowing.name.split(" ").slice(0,3).join(" ");
+      moves.push({
+        rank: moves.length + 1,
+        action: `Reinforce ${pShort} momentum`,
+        why: `+${pct}% vs PY — keep it going`,
+        color: T.green,
+      });
+    }
+
+    // At-risk recovery: defend a fast-declining active product
+    const topAtRisk = groupBuying.filter((p:any)=>p.py>500&&p.cy/p.py<0.6&&p.cy>0).sort((a:any,b:any)=>(b.py-b.cy)-(a.py-a.cy))[0];
+    if (topAtRisk) {
+      const pShort = topAtRisk.name.split(" ").slice(0,3).join(" ");
+      moves.push({
+        rank: moves.length + 1,
+        action: `Defend ${pShort} — declining fast`,
+        why: `${Math.round(topAtRisk.cy/topAtRisk.py*100)}% of PY · gap ${$$(topAtRisk.py-topAtRisk.cy)}`,
+        color: T.amber,
+      });
+    }
+
+    return moves.slice(0,4);
+  },[sortedChildren, groupStopped, groupBuying, group, qk]);
+
   // ── Path 2: Product drill → which child accounts are up/down on this product ──
   if (selProduct) {
     const allProds = [...groupBuying, ...groupStopped];
@@ -522,6 +601,26 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
           <Stat l="PY" v={$$(py)} c={T.t2}/><Stat l="CY" v={$$(cy)} c={T.blue}/><Stat l="Gap" v={gap<=0?`+${$$(Math.abs(gap))}`:$$(gap)} c={gap<=0?T.green:T.red}/><Stat l="Ret" v={ret+"%"} c={healthColor}/>
         </div>
       </div>
+
+
+      {/* NEXT BEST MOVES */}
+      {nextBestMoves.length>0&&<div className="anim" style={{animationDelay:"12ms",background:T.s1,border:`1px solid rgba(79,142,247,.15)`,borderRadius:16,padding:16,marginBottom:16}}>
+        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue,marginBottom:12}}>Next Best Move</div>
+        <div style={{display:"flex",flexDirection:"column",gap:7}}>
+          {nextBestMoves.map((m,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:10,background:T.s2,borderRadius:10,padding:"10px 12px",border:`1px solid ${m.color}18`}}>
+              <div style={{width:20,height:20,borderRadius:"50%",background:`${m.color}18`,border:`1px solid ${m.color}40`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                <span style={{fontSize:9,fontWeight:700,color:m.color}}>{i+1}</span>
+              </div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:11,fontWeight:700,color:T.t1,lineHeight:1.3}}>{m.action}</div>
+                <div style={{fontSize:10,color:T.t3,marginTop:2,lineHeight:1.3}}>{m.why}</div>
+              </div>
+              <div style={{width:3,height:32,borderRadius:2,background:m.color,flexShrink:0,opacity:.7}}/>
+            </div>
+          ))}
+        </div>
+      </div>}
 
       {/* DISTRIBUTOR SPLIT */}
       {distBreakdown.rows.length>0&&<div className="anim" style={{animationDelay:"15ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
