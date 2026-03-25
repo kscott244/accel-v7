@@ -618,19 +618,31 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
     }).filter((c:any) => c.prodPY > 0 || c.prodCY > 0)
       .sort((a:any,b:any) => (b.prodPY-b.prodCY)-(a.prodPY-a.prodCY));
 
-    // Monthly aggregation across all group children
+    // Monthly aggregation -- real invoice months from salesStore, or quarterly estimate
     const MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     const childIds = new Set((group.children||[]).map((c:any) => c.id));
     const allGroupProdRecs = salesStore?.records
       ? (Object.values(salesStore.records) as any[]).filter((r:any) => childIds.has(r.childId) && r.l3 === selProduct)
       : [];
-    const hasMonthData = allGroupProdRecs.length > 0;
-    const monthBuckets: Record<number,{py:number,cy:number}> = {};
-    for (let m=1; m<=12; m++) monthBuckets[m]={py:0,cy:0};
-    allGroupProdRecs.forEach((r:any) => {
-      const m = r.month||1;
-      if (m>=1&&m<=12) { monthBuckets[m].py += r.py||0; monthBuckets[m].cy += r.cy||0; }
-    });
+    const hasRealMonthData = allGroupProdRecs.length > 0;
+    const salesStoreLoading = !salesStore || Object.keys(salesStore.records||{}).length === 0;
+    const Q_TO_MONTHS: Record<number,number[]> = {1:[1,2,3],2:[4,5,6],3:[7,8,9],4:[10,11,12]};
+    const staticBuckets: Record<number,{py:number,cy:number}> = {};
+    for (let m=1; m<=12; m++) staticBuckets[m]={py:0,cy:0};
+    if (!hasRealMonthData && prod) {
+      ([1,2,3,4] as number[]).forEach((q:number) => {
+        staticBuckets[Q_TO_MONTHS[q][0]].py += ((prod as any)[`py${q}`]||0)/3;
+        staticBuckets[Q_TO_MONTHS[q][1]].py += ((prod as any)[`py${q}`]||0)/3;
+        staticBuckets[Q_TO_MONTHS[q][2]].py += ((prod as any)[`py${q}`]||0)/3;
+        staticBuckets[Q_TO_MONTHS[q][0]].cy += ((prod as any)[`cy${q}`]||0)/3;
+        staticBuckets[Q_TO_MONTHS[q][1]].cy += ((prod as any)[`cy${q}`]||0)/3;
+        staticBuckets[Q_TO_MONTHS[q][2]].cy += ((prod as any)[`cy${q}`]||0)/3;
+      });
+    }
+    const monthBuckets: Record<number,{py:number,cy:number}> = hasRealMonthData
+      ? (() => { const b: Record<number,{py:number,cy:number}>={};for(let m=1;m<=12;m++)b[m]={py:0,cy:0};allGroupProdRecs.forEach((r:any)=>{const m=r.month||1;if(m>=1&&m<=12){b[m].py+=r.py||0;b[m].cy+=r.cy||0;}});return b;})()
+      : staticBuckets;
+    const hasMonthData = hasRealMonthData || (!!prod && ([1,2,3,4] as number[]).some((q:number)=>((prod as any)[`py${q}`]||0)+((prod as any)[`cy${q}`]||0)>0));
     const maxMonthVal = Math.max(...Object.values(monthBuckets).flatMap(v=>[v.py,v.cy]),1);
     const MAX_BAR_H = 64;
 
@@ -688,7 +700,7 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
         {/* By Month view */}
         {prodView==="month"&&<div className="anim" style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:14,padding:14,marginBottom:8}}>
           {!hasMonthData
-            ? <div style={{fontSize:11,color:T.t4,textAlign:"center",padding:"16px 0"}}>No monthly history — upload a CSV to populate</div>
+            ? <div style={{fontSize:11,color:T.t4,textAlign:"center",padding:"16px 0"}}>{salesStoreLoading ? "Loading..." : "No data for this product."}</div>
             : <>
                 <div style={{display:"flex",gap:2,alignItems:"flex-end",height:MAX_BAR_H+24}}>
                   {[1,2,3,4,5,6,7,8,9,10,11,12].map(m=>{
@@ -705,7 +717,8 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
                     </div>;
                   })}
                 </div>
-                <div style={{display:"flex",gap:10,marginTop:8,justifyContent:"flex-end"}}>
+                <div style={{display:"flex",gap:10,marginTop:8,justifyContent:"flex-end",alignItems:"center"}}>
+                    {!hasRealMonthData&&<span style={{fontSize:8,color:T.t4,fontStyle:"italic",marginRight:"auto"}}>Est. by quarter</span>}
                   <span style={{fontSize:9,color:T.t4,display:"flex",alignItems:"center",gap:3}}>
                     <span style={{display:"inline-block",width:8,height:8,background:"rgba(120,120,160,.35)",borderRadius:1}}/>PY
                   </span>
