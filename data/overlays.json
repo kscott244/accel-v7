@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-25T16:05:03.157Z",
+  "lastUpdated": "2026-03-25T16:05:06.363Z",
   "groups": {
     "Master-CM1873360": {
       "id": "Master-CM1873360",
@@ -253,6 +253,34 @@
       "score": 92,
       "createdAt": "2026-03-25T16:05:02.610Z",
       "updatedAt": "2026-03-25T16:05:02.610Z"
+    },
+    "Master-CM084372": {
+      "id": "Master-CM084372",
+      "name": "AMERICAN MOBILE DENTAL PC",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM084372",
+        "Master-CM120343"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 98,
+      "createdAt": "2026-03-25T16:05:03.459Z",
+      "updatedAt": "2026-03-25T16:05:03.459Z"
+    },
+    "Master-CM265093": {
+      "id": "Master-CM265093",
+      "name": "CARING DENTAL GROUP",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM265093",
+        "Master-CM867844"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 98,
+      "createdAt": "2026-03-25T16:05:05.932Z",
+      "updatedAt": "2026-03-25T16:05:05.932Z"
     }
   },
   "groupDetaches": [],
