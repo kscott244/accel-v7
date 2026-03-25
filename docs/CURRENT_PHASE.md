@@ -1,52 +1,51 @@
 # CURRENT PHASE — accel-v7
 
-## Active: Phase A7 — Overlay Schema Hardening ✅ Complete
+## Active: Phase A10 — Merge Group Workflow from GroupDetail ✅ Complete
 
 ### Goal
-Harden the overlays schema so `dealerManualReps` is always present and never undefined.
+Add a safe, simple Merge Group workflow directly from GroupDetail so the same organization appearing across multiple parent groups can be consolidated without leaving the context of the group screen.
 
 ### Baseline
-Commits `0fcb8605` + `b76e0916` — Phase A6 (DealersTab durable rep persistence)
+A9 complete: `adjs` cross-device via overlays/GitHub (commits `f2475b9` + `0a4c11d`)
 
-### What Was Changed
+### What Was Built
+The full Merge Group workflow was already implemented in `GroupDetail.tsx` as part of Phase 23. A10 confirmed the implementation meets all requirements:
 
-**src/lib/data.ts**
+**Workflow:**
+1. Open any parent/group → GroupDetail
+2. Tap **⊕ Merge** button (top-right of group header card)
+3. Search step: type a group or office name → results show group name, loc count, PY, CY, dealer context, and top 2 child office names for identification
+4. Confirm step: clear preview showing destination group, source group being absorbed, combined loc count + PY/CY/gap, and a ⚠ warning for large merges (>30 locations)
+5. Tap **Absorb Group** → saves to `overlays.groups[group.id].childIds` → page reloads to show merged result
 
-1. Added `dealerManualReps: {}` to `EMPTY_OVERLAYS` — the single source-of-truth default shape for all overlays. This ensures the key is always present when overlays are initialized, re-initialized from a cache miss, or loaded from an older `overlays.json` that predates this field.
+**Safety guards:**
+- Self-merge excluded (`g.id === group.id`)
+- Already-absorbed groups excluded (`alreadyMergedIds` set built from all `overlays.groups[*].childIds`)
+- Large group warning fires at >30 combined locations
+- Only writes to the manual overlay layer — raw child/dealer-parent records untouched
+- `applyOverlays()` Step 4 expands `childIds` to actual children at runtime (non-destructive)
 
-### Route Audit (no changes needed)
+### Phase A9 Summary (completed prior session)
+`adjs` (pending order adjustments) migrated from localStorage-only to overlays-backed with 800ms debounced GitHub save. Cross-device sync: seeded from `overlay_cache_v2 → ov.adjs` on init, restored from fresh GitHub overlays on background load. Added `adjs: []` to `EMPTY_OVERLAYS` schema.
 
-- `/api/load-overlay/route.ts` — passes through the full JSON blob from GitHub without key filtering. ✅ Safe.
-- `/api/save-overlay/route.ts` — spreads `{ ...overlays, lastUpdated }` with no whitelist or key sanitization. ✅ Safe. `dealerManualReps` is preserved automatically on every save.
+Files: `src/components/AccelerateApp.tsx` (f2475b9), `src/lib/data.ts` (0a4c11d)
 
-### Old overlay safety
-Old `overlays.json` files without `dealerManualReps` still load safely — `EMPTY_OVERLAYS` provides the default `{}` at initialization, and `applyOverlays()` reads it with `OV.dealerManualReps || {}` pattern via the spread default.
-
-### Phase A6 Summary (completed prior session)
-- `DealersTab.tsx` — added `overlays` + `saveOverlays` props; `manualReps` initializer reads `overlays.dealerManualReps` first, falls back to localStorage for migration; `saveManualReps` calls `saveOverlays` for durable persistence.
-- `AccelerateApp.tsx` — passes `overlays` and `saveOverlays` to `DealersTab`.
-
-### Deploy
-- Commit: (see below)
-- Verified live: ✅
-
-### Files Modified
-
-| File | Change |
-|------|--------|
-| src/lib/data.ts | Added `dealerManualReps: {}` to EMPTY_OVERLAYS |
-| docs/CURRENT_PHASE.md | Updated to Phase A7 |
+### Phase A8 Summary (completed prior session)
+Full cross-device audit of all 14 state categories. Found `adjs` as the only violation — localStorage-only. All other state (overlays, CRM, salesStore, etc.) already cross-device.
 
 ---
 
-## Previously Completed: Phase 23 — GroupDetail Upgrade ✅
-## Previously Completed: Phase 22 — Search Model Step 4 ✅
-## Previously Completed: Phase 21 — Search Model Step 3 ✅
-## Previously Completed: Phase 20 — Search Model Steps 1-2 ✅
-## Previously Completed: Phase 19 — Search Behavior Audit ✅
-## Previously Completed: Phases 1–18 ✅
+## Previously Completed
+- A7 — Overlay Schema Hardening (dealerManualReps) ✅
+- A6 — DealersTab durable rep persistence ✅
+- Phase 23 — GroupDetail Upgrade (merge workflow, group contacts, group notes, FSC roster) ✅
+- Phase 22 — Search Model Step 4 ✅
+- Phase 21 — Search Model Step 3 ✅
+- Phase 20 — Search Model Steps 1-2 ✅
+- Phase 19 — Search Behavior Audit ✅
+- Phases 1–18 ✅
 
 ---
 
 ## Last Updated
-March 24, 2026
+March 25, 2026
