@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-25T06:49:50.465Z",
+  "lastUpdated": "2026-03-25T06:51:13.311Z",
   "groups": {
     "Master-CM1873360": {
       "id": "Master-CM1873360",
@@ -19,7 +19,15 @@
     }
   },
   "groupDetaches": [],
-  "groupMoves": {},
+  "groupMoves": {
+    "Master-CM300371": {
+      "childId": "Master-CM300371",
+      "childName": "ASPEN DENTAL",
+      "targetGroupId": "Master-CM106952",
+      "targetGroupName": "ASPEN",
+      "savedAt": "2026-03-25T06:51:12.573Z"
+    }
+  },
   "nameOverrides": {},
   "contacts": {},
   "fscReps": {},
