@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-25T16:04:36.604Z",
+  "lastUpdated": "2026-03-25T16:04:37.549Z",
   "groups": {
     "Master-CM1873360": {
       "id": "Master-CM1873360",
@@ -57,6 +57,20 @@
       "score": 98,
       "createdAt": "2026-03-25T16:04:36.072Z",
       "updatedAt": "2026-03-25T16:04:36.072Z"
+    },
+    "Master-CM174643": {
+      "id": "Master-CM174643",
+      "name": "BRIAN CHARLES FOOTE DMD",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM174643",
+        "Master-CM1750847"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 92,
+      "createdAt": "2026-03-25T16:04:37.043Z",
+      "updatedAt": "2026-03-25T16:04:37.043Z"
     }
   },
   "groupDetaches": [],
