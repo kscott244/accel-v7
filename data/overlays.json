@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-25T16:05:01.044Z",
+  "lastUpdated": "2026-03-25T16:05:03.157Z",
   "groups": {
     "Master-CM1873360": {
       "id": "Master-CM1873360",
@@ -239,6 +239,20 @@
       "score": 92,
       "createdAt": "2026-03-25T16:05:00.562Z",
       "updatedAt": "2026-03-25T16:05:00.563Z"
+    },
+    "Master-CM948766": {
+      "id": "Master-CM948766",
+      "name": "JONATHAN R TIGER",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM948766",
+        "Master-CM189754"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 92,
+      "createdAt": "2026-03-25T16:05:02.610Z",
+      "updatedAt": "2026-03-25T16:05:02.610Z"
     }
   },
   "groupDetaches": [],
