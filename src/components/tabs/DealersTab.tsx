@@ -32,7 +32,7 @@ function isNoRep(s:string|undefined):boolean {
 
 const PRI_ORDER:Record<string,number> = {NOW:0,SOON:1,"ON TRACK":2,PROTECT:3,PIPELINE:4};
 
-function DealersTab({scored,groups,goAcct,goGroup,activeQ:activeQProp}:{scored:any[],groups:any[],goAcct:(a:any)=>void,goGroup:(g:any)=>void,activeQ?:string}) {
+function DealersTab({scored,groups,goAcct,goGroup,activeQ:activeQProp,overlays,saveOverlays}:{scored:any[],groups:any[],goAcct:(a:any)=>void,goGroup:(g:any)=>void,activeQ?:string,overlays?:any,saveOverlays?:(o:any)=>Promise<boolean>}) {
   const activeQ = activeQProp || "1";
   const [mainTab, setMainTab] = useState<"dealers"|"team">("dealers");
   const [rosterDist, setRosterDist] = useState<string>("Schein");
@@ -49,11 +49,19 @@ function DealersTab({scored,groups,goAcct,goGroup,activeQ:activeQProp}:{scored:a
     try { return localStorage.getItem("cocall_open") === "true"; } catch { return false; }
   });
   const [manualReps,setManualReps] = useState<Record<string,any[]>>(()=>{
+    // Prefer durable overlay storage; fall back to localStorage for migration
+    if(overlays?.dealerManualReps && Object.keys(overlays.dealerManualReps).length > 0) {
+      return overlays.dealerManualReps;
+    }
     try { return JSON.parse(localStorage.getItem("dealer_manual_reps")||"{}"); } catch { return {}; }
   });
 
   const saveManualReps = (updated:Record<string,any[]>) => {
     setManualReps(updated);
+    // Persist durably via overlays (survives cache clears); localStorage is cache/fallback only
+    if(saveOverlays && overlays) {
+      saveOverlays({ ...overlays, dealerManualReps: updated });
+    }
     try { localStorage.setItem("dealer_manual_reps", JSON.stringify(updated)); } catch {}
   };
 
