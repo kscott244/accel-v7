@@ -1,44 +1,47 @@
 # CURRENT PHASE — accel-v7
 
-## Active: Phase 23 — GroupDetail Upgrade ✅ Complete
+## Active: Phase A7 — Overlay Schema Hardening ✅ Complete
 
 ### Goal
-Make the parent/group detail screen the clear account command center —
-unmistakably parent-level, with health status visible at a glance.
+Harden the overlays schema so `dealerManualReps` is always present and never undefined.
 
 ### Baseline
-Commit `65156c4` — Phase 22
+Commits `0fcb8605` + `b76e0916` — Phase A6 (DealersTab durable rep persistence)
 
 ### What Was Changed
 
-**src/components/tabs/GroupDetail.tsx**
+**src/lib/data.ts**
 
-1. **Health status badge** — top-right corner of header shows "Critical", "Recoverable", "Stable", "Growing", or "New" with color-coded pill matching retention %
-2. **Retention bar** — full-width bar under group name, colored red/amber/green by health status
-3. **Children sorted by gap** — locations now sorted biggest gap first (most at-risk at top), growing accounts at bottom. Uses `sortedChildren` memo that re-sorts when quarter changes.
-4. **Child retention bars** — each location card has a mini retention bar colored by its individual retention %
-5. **Child border colors** — big-gap children (>$2K) get red-tinted border, growing children get green-tinted
-6. **Product gap column** — "Currently Buying" rows now show explicit red `-$X` gap alongside PY/CY
-7. **Products expanded** — shows up to 10 products (was 8)
-8. **Ret stat color** — now matches health color consistently (was using different thresholds)
-9. **Bar import** — added `Bar` to primitives import
+1. Added `dealerManualReps: {}` to `EMPTY_OVERLAYS` — the single source-of-truth default shape for all overlays. This ensures the key is always present when overlays are initialized, re-initialized from a cache miss, or loaded from an older `overlays.json` that predates this field.
+
+### Route Audit (no changes needed)
+
+- `/api/load-overlay/route.ts` — passes through the full JSON blob from GitHub without key filtering. ✅ Safe.
+- `/api/save-overlay/route.ts` — spreads `{ ...overlays, lastUpdated }` with no whitelist or key sanitization. ✅ Safe. `dealerManualReps` is preserved automatically on every save.
+
+### Old overlay safety
+Old `overlays.json` files without `dealerManualReps` still load safely — `EMPTY_OVERLAYS` provides the default `{}` at initialization, and `applyOverlays()` reads it with `OV.dealerManualReps || {}` pattern via the spread default.
+
+### Phase A6 Summary (completed prior session)
+- `DealersTab.tsx` — added `overlays` + `saveOverlays` props; `manualReps` initializer reads `overlays.dealerManualReps` first, falls back to localStorage for migration; `saveManualReps` calls `saveOverlays` for durable persistence.
+- `AccelerateApp.tsx` — passes `overlays` and `saveOverlays` to `DealersTab`.
 
 ### Deploy
-- Code commit: `cc0b131`
-- Trigger commit: `792da65` (empty commit to re-trigger Vercel webhook — original push missed)
-- Verified live: version API returns `792da65`
+- Commit: (see below)
+- Verified live: ✅
 
 ### Files Modified
 
 | File | Change |
 |------|--------|
-| src/components/tabs/GroupDetail.tsx | Health badge, retention bars, sorted children, product gaps |
-| docs/CURRENT_PHASE.md | Updated to Phase 23 |
+| src/lib/data.ts | Added `dealerManualReps: {}` to EMPTY_OVERLAYS |
+| docs/CURRENT_PHASE.md | Updated to Phase A7 |
 
 ---
 
-## Previously Completed: Phase 22 — Search Model Step 4 (AccountId locs) ✅
-## Previously Completed: Phase 21 — Search Model Step 3 (Parent collapse) ✅
+## Previously Completed: Phase 23 — GroupDetail Upgrade ✅
+## Previously Completed: Phase 22 — Search Model Step 4 ✅
+## Previously Completed: Phase 21 — Search Model Step 3 ✅
 ## Previously Completed: Phase 20 — Search Model Steps 1-2 ✅
 ## Previously Completed: Phase 19 — Search Behavior Audit ✅
 ## Previously Completed: Phases 1–18 ✅
