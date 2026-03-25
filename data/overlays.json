@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-25T04:54:09.314Z",
+  "lastUpdated": "2026-03-25T05:02:47.192Z",
   "groups": {},
   "groupDetaches": [],
   "groupMoves": {},
@@ -49,6 +49,17 @@
         "email": "info@conroyortho.com",
         "notes": "From AI research",
         "savedAt": "2026-03-25T04:00:22.759Z"
+      }
+    ],
+    "Master-CM1873360": [
+      {
+        "id": 1774414966519,
+        "name": "Dr. Scott Asnis",
+        "role": "CEO & Founder, Dental365",
+        "phone": "",
+        "email": "info@godental365.com",
+        "notes": "From AI research",
+        "savedAt": "2026-03-25T05:02:46.519Z"
       }
     ]
   }
