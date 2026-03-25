@@ -248,7 +248,14 @@ function AppInner() {
   const [tab, setTab] = useState("today");
   const [view, setView] = useState(null);
   const [showMore, setShowMore] = useState(false);
-  const [adjs, setAdjs] = useState([]);
+  const [adjs, setAdjs] = useState<any[]>(() => {
+    try { return JSON.parse(localStorage.getItem("accel_adjs_v1") || "[]"); } catch { return []; }
+  });
+  // Persist adjs across sessions — these are real pending orders, not just what-ifs
+  useEffect(() => {
+    try { localStorage.setItem("accel_adjs_v1", JSON.stringify(adjs)); } catch {}
+  }, [adjs]);
+
   const [estPct, setEstPct] = useState(90);
   const [gFilt, setGFilt] = useState("Multi-Location");
   const [gSearch, setGSearch] = useState("");
@@ -927,6 +934,7 @@ function AppInner() {
     </div>
   );
 }
+
 
 
 
