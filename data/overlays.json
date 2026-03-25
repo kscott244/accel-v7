@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-25T16:05:06.363Z",
+  "lastUpdated": "2026-03-25T16:05:08.524Z",
   "groups": {
     "Master-CM1873360": {
       "id": "Master-CM1873360",
@@ -281,6 +281,20 @@
       "score": 98,
       "createdAt": "2026-03-25T16:05:05.932Z",
       "updatedAt": "2026-03-25T16:05:05.932Z"
+    },
+    "Master-CM1811525": {
+      "id": "Master-CM1811525",
+      "name": "PUTNAM DENTAL ARTS",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM1811525",
+        "Master-CM629977"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 98,
+      "createdAt": "2026-03-25T16:05:08.046Z",
+      "updatedAt": "2026-03-25T16:05:08.046Z"
     }
   },
   "groupDetaches": [],
