@@ -1,55 +1,46 @@
 # CURRENT PHASE — accel-v7
 
-## Active: Phase 22 — Search Model Step 4 ✅ Complete
+## Active: Phase 23 — GroupDetail Upgrade ✅ Complete
 
 ### Goal
-Add loc count to the AccountId primitive so multi-location group membership
-is visible everywhere an account's identity is displayed.
+Make the parent/group detail screen the clear account command center —
+unmistakably parent-level, with health status visible at a glance.
 
 ### Baseline
-Commit `9c2124e` — Phase 21
+Commit `65156c4` — Phase 22
 
 ### What Was Changed
 
-**src/components/primitives.tsx**
-- AccountId now accepts optional `locs` prop
-- When `locs > 1` and parent line is shown, renders: `↳ {gName} · {locs} locs`
-- Single-location accounts (locs=1 or undefined) show no suffix — no visual change
+**src/components/tabs/GroupDetail.tsx**
 
-**src/components/tabs/TodayTab.tsx**
-- Added `groupLocsMap` memo: `gId → locs` lookup built from `groups` prop
-- Updated 3 AccountId calls with `locs={groupLocsMap[a.gId]}`:
-  - Child search results
-  - Overdrive/today focus cards
-  - Trip planner modal stops
+1. **Health status badge** — top-right corner of header shows "Critical", "Recoverable", "Stable", "Growing", or "New" with color-coded pill matching retention %
+2. **Retention bar** — full-width bar under group name, colored red/amber/green by health status
+3. **Children sorted by gap** — locations now sorted biggest gap first (most at-risk at top), growing accounts at bottom. Uses `sortedChildren` memo that re-sorts when quarter changes.
+4. **Child retention bars** — each location card has a mini retention bar colored by its individual retention %
+5. **Child border colors** — big-gap children (>$2K) get red-tinted border, growing children get green-tinted
+6. **Product gap column** — "Currently Buying" rows now show explicit red `-$X` gap alongside PY/CY
+7. **Products expanded** — shows up to 10 products (was 8)
+8. **Ret stat color** — now matches health color consistently (was using different thresholds)
+9. **Bar import** — added `Bar` to primitives import
 
-**src/components/tabs/DealersTab.tsx**
-- Updated 2 AccountId calls with locs:
-  - Dealer detail location list: `locs={groupLocsMap[a.gId]}`
-  - Co-call planner cards: `locs={isMultiLoc?gLocs:undefined}`
-
-**src/components/tabs/AcctDetail.tsx**
-- Updated header AccountId: `locs={parentGroup?.locs}`
+### Deploy
+- Code commit: `cc0b131`
+- Trigger commit: `792da65` (empty commit to re-trigger Vercel webhook — original push missed)
+- Verified live: version API returns `792da65`
 
 ### Files Modified
 
 | File | Change |
 |------|--------|
-| src/components/primitives.tsx | AccountId accepts + renders `locs` prop |
-| src/components/tabs/TodayTab.tsx | groupLocsMap memo + 3 AccountId updates |
-| src/components/tabs/DealersTab.tsx | 2 AccountId updates |
-| src/components/tabs/AcctDetail.tsx | 1 AccountId update |
-| docs/CURRENT_PHASE.md | Updated to Phase 22 |
-
-### Deploy
-- Commit: `c64ffa5`
-- Verified live: version API returns matching SHA
+| src/components/tabs/GroupDetail.tsx | Health badge, retention bars, sorted children, product gaps |
+| docs/CURRENT_PHASE.md | Updated to Phase 23 |
 
 ---
 
-## Previously Completed: Phase 21 — Search Model Step 3 ✅ Complete
-## Previously Completed: Phase 20 — Search Model Steps 1-2 ✅ Complete
-## Previously Completed: Phase 19 — Search Behavior Audit ✅ Complete
+## Previously Completed: Phase 22 — Search Model Step 4 (AccountId locs) ✅
+## Previously Completed: Phase 21 — Search Model Step 3 (Parent collapse) ✅
+## Previously Completed: Phase 20 — Search Model Steps 1-2 ✅
+## Previously Completed: Phase 19 — Search Behavior Audit ✅
 ## Previously Completed: Phases 1–18 ✅
 
 ---
