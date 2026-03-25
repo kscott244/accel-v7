@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-25T03:59:10.440Z",
+  "lastUpdated": "2026-03-25T03:59:11.835Z",
   "groups": {},
   "groupDetaches": [],
   "groupMoves": {},
@@ -31,6 +31,15 @@
         "email": "",
         "notes": "From AI research",
         "savedAt": "2026-03-25T03:59:10.020Z"
+      },
+      {
+        "id": 1774411151436,
+        "name": "Dr. Anthony J. Onofreo, DMD",
+        "role": "President/Owner - Middlesex Dental Associates (Middletown)",
+        "phone": "860-344-9096",
+        "email": "",
+        "notes": "From AI research",
+        "savedAt": "2026-03-25T03:59:11.435Z"
       }
     ]
   }
