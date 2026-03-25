@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-25T16:04:52.085Z",
+  "lastUpdated": "2026-03-25T16:04:54.729Z",
   "groups": {
     "Master-CM1873360": {
       "id": "Master-CM1873360",
@@ -169,6 +169,20 @@
       "score": 92,
       "createdAt": "2026-03-25T16:04:51.598Z",
       "updatedAt": "2026-03-25T16:04:51.598Z"
+    },
+    "Master-CM1995967": {
+      "id": "Master-CM1995967",
+      "name": "CLINTON FAMILY DENTISTRY",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM1995967",
+        "Master-CM1897642"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 98,
+      "createdAt": "2026-03-25T16:04:53.938Z",
+      "updatedAt": "2026-03-25T16:04:53.938Z"
     }
   },
   "groupDetaches": [],
