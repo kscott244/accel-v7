@@ -25,6 +25,14 @@ try {
   };
 } catch(e) {}
 
+const SCOPE_LABEL: Record<number,string> = {
+  1: "Owner / Lead Dr",
+  2: "Office-level",
+  3: "Group / Regional",
+  4: "Coordinator",
+  5: "Front Office",
+};
+
 function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesStore=null}) {
   const [q,setQ]=useState("1");
   const qk=q;
@@ -391,14 +399,6 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
   const [grpResState, setGrpResState] = useState<"idle"|"loading"|"done"|"error">("idle");
   const [grpResIntel, setGrpResIntel] = useState<any>(null);
   const [grpResSaveToast, setGrpResSaveToast] = useState<string|null>(null);
-
-  const SCOPE_LABEL: Record<number,string> = {
-    1: "Owner / Lead Dr",
-    2: "Office-level",
-    3: "Group / Regional",
-    4: "Coordinator",
-    5: "Front Office",
-  };
 
   const runGroupResearch = async () => {
     setGrpResState("loading");
