@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-25T06:53:11.775Z",
+  "lastUpdated": "2026-03-25T06:55:50.515Z",
   "groups": {
     "Master-CM1873360": {
       "id": "Master-CM1873360",
@@ -125,6 +125,17 @@
         "email": "",
         "notes": "From AI research",
         "savedAt": "2026-03-25T05:02:49.824Z"
+      }
+    ],
+    "Master-CM216446": [
+      {
+        "id": 1774421749892,
+        "name": "William Herr, DDS",
+        "role": "Founder/Owner, Bonita Practice Solutions",
+        "phone": "(774) 331-0260",
+        "email": "",
+        "notes": "From AI research",
+        "savedAt": "2026-03-25T06:55:49.892Z"
       }
     ]
   }
