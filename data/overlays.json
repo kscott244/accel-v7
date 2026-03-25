@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-25T03:57:14.266Z",
+  "lastUpdated": "2026-03-25T03:59:04.963Z",
   "groups": {},
   "groupDetaches": [],
   "groupMoves": {},
@@ -11,5 +11,18 @@
   "research": {},
   "dealerOverrides": {},
   "dealerManualReps": {},
-  "adjs": []
+  "adjs": [],
+  "groupContacts": {
+    "Master-CM1918118": [
+      {
+        "id": 1774411144339,
+        "name": "Website",
+        "role": "Online",
+        "phone": "",
+        "email": "",
+        "notes": "Website: https://www.kozbraces.com",
+        "savedAt": "2026-03-25T03:59:04.339Z"
+      }
+    ]
+  }
 }
