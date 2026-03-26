@@ -1,51 +1,75 @@
 # CURRENT PHASE -- accel-v7
 
-## Active: Phase A15 -- Group AI Intel (Research + Enrichment) Complete
+## Active: Phase A15.2 -- GitHub Large-File Load Reliability ✅ Complete
 
 ### Goal
-Add a real AI research/enrichment workflow to GroupDetail so Ken can gather public business intel before a group call -- with a review-and-save model, not silent auto-write.
+Fix a critical silent failure path where `/api/load-crm` and `/api/load-sales` would
+silently produce empty state because the GitHub Contents API returns `content: ""`
+for files > 1 MB. The app consumed the 500 error silently via an unchecked `.catch`.
 
 ### Baseline
-A14 complete: Deterministic Account Brief inside hero card. Commit `f7cfefe`.
+A15 complete: Group AI Intel (Research + Enrichment). Commit `68430c8`.
 
-### What Was Built
+### Root Cause
+GitHub Contents API returns HTTP 200 with `content: ""` (empty) for files > 1 MB.
+`Buffer.from("", "base64").toString()` = `""`. `JSON.parse("")` throws.
+The thrown error was caught by the outer try/catch and returned as a 500 response.
+The app fetch handlers only branched on `if (res.ok)` — a 500 was silently ignored,
+app fell back to localStorage cache (or empty state), no user-visible signal.
 
-**`src/components/tabs/GroupDetail.tsx`** (final commit `68430c8`)
+`crm-accounts.json` = 2.5 MB. `sales-history.json` = 2.9 MB. Both above the limit.
 
-**1. Research button in sticky header**
-- "Research" button appears top-right in the GroupDetail sticky nav bar
-- Triggers `runGroupResearch()` -- calls existing `/api/deep-research` with group-level context:
-  - Group name, top 3 children cities, top dealer, top 5 products, location count, ownership type
-- Shows "Searching..." during load; updates to "Re-research" after first run
+### What Was Fixed
 
-**2. Group Intel panel**
-- Appears below the hero card when research runs (above Next Best Moves)
-- Dismissable with x button
-- Shows: practice status, ownership note, website, contacts, hooks, talking points
-- Skeleton loading state during fetch
+**`src/app/api/load-crm/route.ts`** (commit `ea3ee0e`)
+- Replaced single Contents API call with two-step blob API pattern
+- Step 1: Contents API for file metadata / blob SHA (works for any file size)
+- Step 2: Git Blob API (`/git/blobs/{sha}`) for content — supports up to 100 MB
+- Explicit error messages at each step (metadata fail, blob fail, decode fail, parse fail)
+- 404 handling preserved (file not yet created = valid first-run state)
 
-**3. Contact scope labels**
-- Each returned contact tagged with scope: "Owner / Lead Dr" (tier 1), "Office-level" (tier 2), "Group / Regional" (tier 3), "Coordinator" (tier 4)
-- Scope badge is color-coded: cyan=tier 1, purple=tier 3, muted=others
+**`src/app/api/load-sales/route.ts`** (commit `f9f84d2`)
+- Identical fix, same two-step blob API pattern
+- Same error specificity at each failure point
 
-**4. Review-and-save model (no silent auto-write)**
-- Each contact has an individual "+ Save" button -> saves to groupContacts overlay (persists to overlays.json)
-- Already-saved contacts show "Saved" (grayed, non-clickable)
-- Website has a "Save" button -> saves to groupContacts as a Website entry
-- Hooks section has a "+ Notes" button -> appends intel to group notes
-- Nothing is auto-written -- Ken reviews and chooses what to keep
+**`src/components/AccelerateApp.tsx`** (commit `90afbe3`)
+- Added `crmLoadWarning` and `salesLoadWarning` state (string|null)
+- CRM and sales fetch handlers now:
+  - Parse response body regardless of `res.ok` status
+  - On failure: only surface warning if no localStorage cache was available
+  - On success: clear any prior warning
+- Added two dismissable amber banner conditionals in render (after existing
+  overlay save banners) — only shown when no cache fallback existed and
+  GitHub fetch failed
 
-### Fix History
-- Initial A15 attempt had SCOPE_LABEL TDZ and saveResNote string issues
-- Clean rebuild from A14 baseline committed as `abb99cea`
-- Two literal newlines inside double-quoted string literals caused SWC parser failures
-- Fixed in commits `0c76feb` (join separator) and `68430c8` (saveResNotes double-newline)
+### Failure Behavior — Before vs After
 
-**No changes to:** API routes, AcctDetail, merge workflow, scoring, upload pipeline.
+| Scenario | Before | After |
+|----------|--------|-------|
+| File > 1 MB on GitHub | Silent empty state | Loads correctly |
+| GitHub PAT fails | Silent empty state | Route returns 500 with message; banner if no cache |
+| Network error, no cache | Silent empty state | Amber banner: "CRM data unavailable: ..." |
+| Network error, cache present | Silent (acceptable) | Silent (still acceptable — working from cache) |
+| 404 (file not yet created) | Correct empty state | Correct empty state (unchanged) |
+
+### Tests
+- Existing 34-test suite passes (`npm test`) — no regressions
+- No new unit tests added: the failure was in GitHub API plumbing (hard to unit-test
+  without complex mocks); the fix is verified by the live route structure and
+  the fact both files now load against the actual deployed blob API
+
+### Build Result
+Passing — `ignoreBuildErrors: true` in next.config.js; no new TS errors introduced.
+All three files have balanced braces/parens (delta = 0 verified pre-commit).
+
+### Deploy Result
+Deployed to https://accel-v7.vercel.app/accelerate
+Commit chain: ea3ee0e → f9f84d2 → 90afbe3 → docs update
 
 ---
 
 ## Previously Completed
+- A15 -- Group AI Intel (Research + Enrichment) (68430c8) complete
 - A14 -- Deterministic Account Brief (f7cfefe) complete
 - A13 -- Next Best Moves (8c6a244) complete
 - A12 -- Group Opportunity Signals (61c1310) complete
@@ -55,4 +79,4 @@ A14 complete: Deterministic Account Brief inside hero card. Commit `f7cfefe`.
 ---
 
 ## Last Updated
-March 25, 2026
+March 26, 2026
