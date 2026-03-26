@@ -367,3 +367,81 @@ export function salesStoreSummary(store: SalesStore) {
     lastUpdated: store.lastUpdated,
   };
 }
+
+// ─── FREQUENCY INDEX ─────────────────────────────────────────────
+// Computes per-account order frequency from the accumulated sales history.
+// Used by scoreAccount() to detect when an account is unusually overdue
+// relative to its own historical ordering cadence — not just absolute days.
+//
+// Why this matters:
+//   A Diamond practice that normally orders every 21 days at day 45 is a
+//   very different situation from one that normally orders every 90 days
+//   at day 45. The current recency score can't distinguish these. Frequency
+//   data provides that context.
+//
+// freqScore = daysSince / avgIntervalDays
+//   > 2.0  → more than 2x overdue by pattern  (strong signal)
+//   > 1.5  → 1.5x overdue                     (moderate signal)
+//   > 1.25 → slightly overdue                 (weak signal)
+//   <= 1.0 → within normal cadence            (no bonus)
+
+export interface FrequencyData {
+  avgIntervalDays: number;  // average days between consecutive order months
+  orderCount:      number;  // distinct months with CY > 0 seen in store
+  freqScore:       number;  // daysSince / avgIntervalDays — computed at build time
+}
+
+export function computeFrequencyMap(
+  store:       SalesStore,
+  lastDaysMap: Record<string, number>  // childId → current days since last order
+): Record<string, FrequencyData> {
+  const result: Record<string, FrequencyData> = {};
+  if (!store || Object.keys(store.records).length === 0) return result;
+
+  // Group distinct order-months (cy != 0) per childId.
+  // Multiple records can share the same childId + month (different products)
+  // so we deduplicate into a Set of "YYYY-MM" strings.
+  const orderMonthsByChild: Record<string, Set<string>> = {};
+  for (const rec of Object.values(store.records)) {
+    if (rec.cy !== 0) {
+      if (!orderMonthsByChild[rec.childId]) orderMonthsByChild[rec.childId] = new Set();
+      orderMonthsByChild[rec.childId].add(`${rec.year}-${String(rec.month).padStart(2, "0")}`);
+    }
+  }
+
+  for (const [childId, monthSet] of Object.entries(orderMonthsByChild)) {
+    if (monthSet.size < 2) continue;  // need at least 2 data points
+
+    // Sort months chronologically and compute gaps in days
+    const months = Array.from(monthSet).sort();
+    let totalDays = 0;
+    let gapCount  = 0;
+
+    for (let i = 1; i < months.length; i++) {
+      const [prevY, prevM] = months[i - 1].split("-").map(Number);
+      const [currY, currM] = months[i].split("-").map(Number);
+      // Approximate month-to-month gap — each month ~30.44 days
+      const daysDiff = (currY - prevY) * 365 + (currM - prevM) * 30.44;
+      // Ignore gaps > 13 months (data holes from missing exports) and < 1 day
+      if (daysDiff > 1 && daysDiff < 400) {
+        totalDays += daysDiff;
+        gapCount++;
+      }
+    }
+
+    if (gapCount === 0) continue;
+    const avgIntervalDays = Math.round(totalDays / gapCount);
+    if (avgIntervalDays < 10) continue;  // implausibly high frequency — likely data artifact
+
+    const daysSince = lastDaysMap[childId] ?? 999;
+    const freqScore = avgIntervalDays > 0 ? daysSince / avgIntervalDays : 0;
+
+    result[childId] = {
+      avgIntervalDays,
+      orderCount: monthSet.size,
+      freqScore,
+    };
+  }
+
+  return result;
+}
