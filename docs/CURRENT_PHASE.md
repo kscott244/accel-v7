@@ -1,66 +1,71 @@
 # CURRENT PHASE -- accel-v7
 
-## Active: Phase A15.3 -- Safe Group Merge Correctness COMPLETE
+## Active: Phase A16 -- RFM Frequency Scoring COMPLETE
+
+### Goal
+Add order frequency as a third scoring dimension alongside gap (Monetary) and recency.
+A Diamond practice that normally orders every 21 days and is now at day 45 should
+score higher than one that orders every 90 days at day 45 — the current engine
+couldn't distinguish them.
 
 ### Baseline
-A15.2 complete: GitHub large-file load reliability. Commit `ed29b63`.
+A15.3 complete: Safe group merge correctness. Commit `95b9ffd`.
 
-### Root Causes Fixed
+### What Was Built
 
-**Bug 1 -- Step 4d expanded wrapper nodes instead of leaves**
-In `applyOverlays`, when expanding a merged source group's children, raw child nodes were
-pushed without recursing through wrapper layers. Preloaded data nests 2-3 levels deep;
-wrappers (nodes with `c.children` and no `products`) landed in merged groups as fake
-locations, breaking scoring, totals, and location counts.
+**`src/lib/sales.ts`** (commit `052bf82`)
+- Added `FrequencyData` interface: `{ avgIntervalDays, orderCount, freqScore }`
+- Added `computeFrequencyMap(store, lastDaysMap)`:
+  - Groups distinct CY order-months per childId from the SalesStore
+  - Needs >= 2 data points to compute interval; ignores gaps > 13 months (data holes)
+  - Computes `avgIntervalDays` as weighted average of month-to-month gaps
+  - Computes `freqScore = daysSince / avgIntervalDays` at build time
+  - Guards: avgInterval < 10d treated as artifact; orderCount < 2 skipped
 
-**Bug 2 -- executeMerge stored group IDs in childIds**
-`executeMerge` stored `target.id` (a group-level ID) in overlay `childIds`. Step 4d tried
-to expand it via `mergedSourceGroups` -- but if the target had its own overlay entry, it
-was consumed by that iteration first, leaving nothing to expand. Result: silent empty
-children or incorrect fallback leaves.
+**`src/lib/format.ts`** (commit `8ac29a2`)
+- `scoreAccount()` now accepts optional third param `freqData`
+- Frequency overdue block (0–15 pts, additive with existing recency score):
+  - `freqScore > 2.0` → +15 pts "Overdue: Xd cycle"
+  - `freqScore > 1.5` → +10 pts "Overdue: Xd cycle"
+  - `freqScore > 1.25` → +5 pts  "Late: Xd cycle"
+- Guards: requires `avgIntervalDays >= 14` and `orderCount >= 3` for reliable baseline
+- Fully backward-compatible — undefined freqData skips the block entirely
 
-**Bug 3 -- class2 never updated after merge grew the group**
-A group saved as "Private Practice" kept that classification even after absorbing 2+ more
-locations. Hero card, research context, and type filters all showed the wrong ownership.
+**`src/components/AccelerateApp.tsx`** (commit `eea35a0`)
+- Added `computeFrequencyMap` to sales import
+- New `freqMap` useMemo (depends on `salesStore` + `allChildren`):
+  - Builds `lastDaysMap` from allChildren (skips stub accounts with last=999)
+  - Returns `Record<string, FrequencyData>` — O(records) computation
+- `scored` useMemo: passes `freqMap[a.id]` to `scoreAccount` as third arg
+- `scored` dep array: added `freqMap`
 
-**Data Issue -- Middletown Dental duplicate overlay entries**
-Two overlay entries both named "MIDDLETOWN DENTAL ASSOCIATES":
-- `Master-CM1921839` (manual-merge): childIds=[CM1921839, CM047997]
-  CM047997 is EDGE DENTAL MANAGEMENT -- a 7-location DSO. Wrongly absorbed entirely.
-- `Master-CM047997` (auto-merge): childIds=[CM1451924, CM1921839]
-  Correctly pairs the two Middletown Dental locations.
+**`src/__tests__/scoring.test.ts`** (commit `df97ea1`)
+- 8 new tests covering: 15pt / 10pt / 5pt / 0pt thresholds, orderCount guard,
+  avgInterval guard, additivity with recency, undefined freqData safety
 
-### What Was Fixed
+### Scoring Impact
 
-**`src/components/AccelerateApp.tsx`** (commit `96836c3`)
-- Step 4d: `flattenToLeaves()` helper recursively unwraps wrapper nodes to true leaf offices
-- Step 4d: per-merge `addedLeafIds` dedup set prevents same leaf from appearing twice
-- Group create: `derivedClass2` upgrades "Private Practice" to "DSO" when locs >= 3
+Before A16: two accounts at day 45, both getting 8pts (">30d since order").
 
-**`src/components/tabs/GroupDetail.tsx`** (commit `b26fc1f`)
-- `executeMerge`: resolves target to leaf IDs before saving to overlay childIds
-  1. Checks `OVERLAYS_REF.groups[target.id].childIds` (already leaf-level)
-  2. Falls back to `target.children.map(c => c.id)`
-  3. Only falls back to `[target.id]` when target has no children at all
+After A16:
+- Monthly buyer (21d avg) at day 45: freqScore = 2.14 → +15 pts frequency bonus
+- Quarterly buyer (90d avg) at day 45: freqScore = 0.5 → +0 pts (within cadence)
 
-**`data/overlays.json`** (commit `f7c990e`)
-- Deleted `Master-CM1921839` bad manual-merge (absorbed EDGE DENTAL wrongly)
-- Kept `Master-CM047997` correct 2-location Middletown pairing
+Real priority difference: 15 pts separating two accounts that looked identical before.
 
-### Tests
-Existing 34-test suite passes. No regressions.
-
-### Build
-Passing -- brace/paren delta = 0 on all edited files, verified pre-commit.
+### Graceful Degradation
+- If salesStore is empty (no history uploaded yet): freqMap = {} → no frequency bonus
+  for any account. Existing scoring behavior unchanged.
+- If account has < 3 data points: no bonus. Won't penalize new accounts unfairly.
+- Works immediately with the 40,600 records already in sales-history.json.
 
 ---
 
 ## Previously Completed
+- A15.3 -- Safe Group Merge Correctness (95b9ffd) complete
 - A15.2 -- GitHub Large-File Load Reliability (ed29b63) complete
 - A15 -- Group AI Intel (68430c8) complete
-- A14 -- Deterministic Account Brief (f7cfefe) complete
-- A13 -- Next Best Moves (8c6a244) complete
-- A10-A12, Phases 1-23 complete
+- A14-A1, Phases 1-23 complete
 
 ---
 
