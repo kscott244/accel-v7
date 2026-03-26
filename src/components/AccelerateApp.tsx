@@ -230,7 +230,7 @@ import { Back, Chev, Pill, Stat, Bar, AccountId, fixGroupName, cleanParentName, 
 import { parseCSV, parseCSVLine, processCSVData, setDealers } from "@/lib/csv";
 import { diffDatasets, checkOverlayIntegrity } from "@/lib/dataDiff";
 import { mergeCrmCandidates, applyCrmToGroups, EMPTY_CRM_STORE } from "@/lib/crm";
-import { buildSalesRecords, mergeSalesRecords, deriveSalesRollups, EMPTY_SALES_STORE, toCompactSalesStore, hydrateSalesStore } from "@/lib/sales";
+import { buildSalesRecords, mergeSalesRecords, deriveSalesRollups, EMPTY_SALES_STORE, toCompactSalesStore, hydrateSalesStore, computeFrequencyMap } from "@/lib/sales";
 import { buildSnapshot, computeDelta, saveSnapshot, loadSnapshot } from "@/lib/weeklyDelta";
 
 import { SKU } from "@/data/sku-data";
@@ -867,6 +867,15 @@ function AppInner() {
   const q1Att = q1CY / activeTarget;
 
   // Score all accounts — use combined sibling totals for gap/priority when addr siblings exist
+  // A16: pre-compute frequency index from sales history before scoring.
+  // Maps childId → { avgIntervalDays, orderCount, freqScore } — tells the
+  // scoring engine how overdue each account is relative to its own pattern.
+  const freqMap = useMemo(() => {
+    const lastDays: Record<string, number> = {};
+    allChildren.forEach((a: any) => { if (a.last !== undefined && a.last < 999) lastDays[a.id] = a.last; });
+    return computeFrequencyMap(salesStore, lastDays);
+  }, [salesStore, allChildren]);
+
   const scored = useMemo(() => {
     // First pass: build a quick id→cyQ1 map so siblings can look up adjusted CY
     const adjCYMap: Record<string,number> = {};
@@ -903,7 +912,7 @@ function AppInner() {
 
       return {
         ...adjusted, addr,
-        ...scoreAccount(scoreBase, activeQ || "1"),
+        ...scoreAccount(scoreBase, activeQ || "1", freqMap[a.id]),
         // Store combined for display
         combinedPY, combinedCY,
         combinedGap: combinedPY - combinedCY,
@@ -914,7 +923,7 @@ function AppInner() {
         indivCY: adjCY,
       };
     }).sort((a,b) => b.score - a.score);
-  }, [allChildren, adjs, activeQ]);
+  }, [allChildren, adjs, activeQ, freqMap]);
 
   if (loading) return <div style={{background:T.bg,color:T.t1,minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'DM Sans',sans-serif"}}><div style={{textAlign:"center"}}><div style={{fontSize:20,marginBottom:8,color:T.blue}}><IconBolt c={T.blue}/></div><div style={{color:T.t3}}>Loading Accelerate...</div></div></div>;
 
