@@ -353,6 +353,9 @@ function AppInner() {
   const [weeklyDelta, setWeeklyDelta] = useState<any>(null);
   const [overlaySaveStatus, setOverlaySaveStatus] = useState<"idle"|"saving"|"saved"|"error">("idle");
   const [overlaySaveError, setOverlaySaveError] = useState<string|null>(null);
+  // A15.2: explicit warnings when GitHub load fails AND no local cache is available
+  const [crmLoadWarning, setCrmLoadWarning] = useState<string|null>(null);
+  const [salesLoadWarning, setSalesLoadWarning] = useState<string|null>(null);
 
   // Keep OVERLAYS_REF in sync — both local and shared DataModule ref
   const setOverlays = (next: any) => {
@@ -536,15 +539,21 @@ function AppInner() {
           setCrmStore(parsed);
         }
       } catch {}
+      // A15.2: track whether we have a cache before the async fetch resolves
+      const hadCrmCache = !!localStorage.getItem("crm_accounts_v1");
       fetch("/api/load-crm").then(async (res) => {
-        if (res.ok) {
-          const { crm: freshCrm } = await res.json();
-          if (freshCrm?.accounts) {
-            setCrmStore(freshCrm);
-            try { localStorage.setItem("crm_accounts_v1", JSON.stringify(freshCrm)); } catch {}
-          }
+        const data = await res.json();
+        if (res.ok && data.crm?.accounts) {
+          setCrmStore(data.crm);
+          try { localStorage.setItem("crm_accounts_v1", JSON.stringify(data.crm)); } catch {}
+          setCrmLoadWarning(null);
+        } else if (!res.ok) {
+          // Only surface the error if there was nothing in cache to fall back on
+          if (!hadCrmCache) setCrmLoadWarning(data.error || "CRM data failed to load from GitHub");
         }
-      }).catch(() => { /* CRM fetch failed — using cache */ });
+      }).catch((err: any) => {
+        if (!hadCrmCache) setCrmLoadWarning(`CRM fetch failed: ${err.message}`);
+      });
 
       // ── Load Sales History ──
       // Load from localStorage cache; re-derive rollups on boot.
@@ -556,17 +565,22 @@ function AppInner() {
           setSalesStore(bootSalesStore);
         }
       } catch {}
+      // A15.2: track whether we have a cache before the async fetch resolves
+      const hadSalesCache = !!localStorage.getItem("sales_history_v1");
       // Fetch fresh from GitHub in background (same pattern as CRM)
       fetch("/api/load-sales").then(async (res) => {
-        if (res.ok) {
-          const { sales: freshSales } = await res.json();
-          if (freshSales?.records) {
-            const hydrated = hydrateSalesStore(freshSales);
-            setSalesStore(hydrated);
-            try { localStorage.setItem("sales_history_v1", JSON.stringify(toCompactSalesStore(hydrated))); } catch {}
-          }
+        const data = await res.json();
+        if (res.ok && data.sales?.records) {
+          const hydrated = hydrateSalesStore(data.sales);
+          setSalesStore(hydrated);
+          try { localStorage.setItem("sales_history_v1", JSON.stringify(toCompactSalesStore(hydrated))); } catch {}
+          setSalesLoadWarning(null);
+        } else if (!res.ok) {
+          if (!hadSalesCache) setSalesLoadWarning(data.error || "Sales history failed to load from GitHub");
         }
-      }).catch(() => { /* sales fetch failed — using cache */ });
+      }).catch((err: any) => {
+        if (!hadSalesCache) setSalesLoadWarning(`Sales fetch failed: ${err.message}`);
+      });
 
       // ── Load Base Data ──
       try {
@@ -938,6 +952,9 @@ function AppInner() {
       {overlaySaveStatus==="saving"&&<div className="anim" style={{margin:"0 16px 8px",padding:"6px 12px",borderRadius:8,background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.15)",fontSize:11,color:T.blue}}>💾 Saving...</div>}
       {overlaySaveStatus==="saved"&&<div className="anim" style={{margin:"0 16px 8px",padding:"6px 12px",borderRadius:8,background:"rgba(52,211,153,.08)",border:"1px solid rgba(52,211,153,.15)",fontSize:11,color:T.green}}>✓ Saved</div>}
       {overlaySaveStatus==="error"&&<div className="anim" style={{margin:"0 16px 8px",padding:"6px 12px",borderRadius:8,background:"rgba(248,113,113,.08)",border:"1px solid rgba(248,113,113,.15)",fontSize:11,color:T.red}}>⚠ Save failed: {overlaySaveError} — your change is cached locally but not backed up yet.</div>}
+      {/* A15.2: CRM / sales load failure banners — only shown when no local cache fallback existed */}
+      {crmLoadWarning&&<div className="anim" style={{margin:"0 16px 8px",padding:"6px 12px",borderRadius:8,background:"rgba(251,191,36,.07)",border:"1px solid rgba(251,191,36,.2)",fontSize:11,color:T.amber,display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}><span>⚠ CRM data unavailable: {crmLoadWarning}</span><button onClick={()=>setCrmLoadWarning(null)} style={{background:"none",border:"none",color:T.t3,cursor:"pointer",fontSize:14,lineHeight:1,padding:"0 2px",fontFamily:"inherit"}}>×</button></div>}
+      {salesLoadWarning&&<div className="anim" style={{margin:"0 16px 8px",padding:"6px 12px",borderRadius:8,background:"rgba(251,191,36,.07)",border:"1px solid rgba(251,191,36,.2)",fontSize:11,color:T.amber,display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}><span>⚠ Sales history unavailable: {salesLoadWarning}</span><button onClick={()=>setSalesLoadWarning(null)} style={{background:"none",border:"none",color:T.t3,cursor:"pointer",fontSize:14,lineHeight:1,padding:"0 2px",fontFamily:"inherit"}}>×</button></div>}
       {updateAvailable&&<button className="anim" onClick={()=>window.location.reload()} style={{display:"block",width:"calc(100% - 32px)",margin:"0 16px 8px",padding:"10px 14px",borderRadius:10,background:"rgba(79,142,247,.12)",border:"1px solid rgba(79,142,247,.3)",fontSize:12,fontWeight:700,color:T.blue,cursor:"pointer",fontFamily:"inherit",textAlign:"left"}}>⬆ Update available — tap to reload</button>}
 
       {/* TAB CONTENT */}
