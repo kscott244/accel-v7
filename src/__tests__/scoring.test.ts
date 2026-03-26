@@ -106,3 +106,59 @@ describe("scoreAccount", () => {
     expect(r.reasons.some(x => x.label === "Diamond tier")).toBe(true);
   });
 });
+// ── frequency scoring (A16) ──────────────────────────────────────
+describe("scoreAccount — frequency dimension", () => {
+  const base = { pyQ: { "1": 8000 }, cyQ: { "1": 0 }, last: 45, tier: "Diamond", products: [] };
+
+  it("adds 15pts when freqScore > 2.0 (more than 2x overdue by pattern)", () => {
+    // Account normally orders every 21 days (monthly buyer), now at day 45 → freqScore = 45/21 ≈ 2.14
+    const r = scoreAccount(base, "1", { avgIntervalDays: 21, freqScore: 2.14, orderCount: 6 });
+    expect(r.reasons.some(x => x.pts === 15 && x.label.includes("Overdue"))).toBe(true);
+  });
+
+  it("adds 10pts when freqScore > 1.5 (1.5x overdue by pattern)", () => {
+    // Account normally orders every 30 days, now at day 48 → freqScore = 48/30 = 1.6
+    const r = scoreAccount(base, "1", { avgIntervalDays: 30, freqScore: 1.6, orderCount: 5 });
+    expect(r.reasons.some(x => x.pts === 10 && x.label.includes("Overdue"))).toBe(true);
+  });
+
+  it("adds 5pts when freqScore > 1.25 (slightly overdue by pattern)", () => {
+    // Account normally orders every 60 days, now at day 78 → freqScore = 78/60 = 1.3
+    const r = scoreAccount(base, "1", { avgIntervalDays: 60, freqScore: 1.3, orderCount: 4 });
+    expect(r.reasons.some(x => x.pts === 5 && x.label.includes("Late"))).toBe(true);
+  });
+
+  it("adds no frequency pts when freqScore <= 1.25 (within normal cadence)", () => {
+    // Account normally orders every 90 days, now at day 45 → freqScore = 0.5 (early)
+    const before = scoreAccount(base, "1");
+    const after  = scoreAccount(base, "1", { avgIntervalDays: 90, freqScore: 0.5, orderCount: 4 });
+    expect(after.score).toBe(before.score);
+  });
+
+  it("ignores freqData with < 3 orderCount (insufficient baseline)", () => {
+    const before = scoreAccount(base, "1");
+    const after  = scoreAccount(base, "1", { avgIntervalDays: 21, freqScore: 3.0, orderCount: 2 });
+    expect(after.score).toBe(before.score);
+  });
+
+  it("ignores freqData with avgIntervalDays < 14 (implausible pattern)", () => {
+    const before = scoreAccount(base, "1");
+    const after  = scoreAccount(base, "1", { avgIntervalDays: 5, freqScore: 9.0, orderCount: 10 });
+    expect(after.score).toBe(before.score);
+  });
+
+  it("is additive with recency score — both fire independently", () => {
+    // Account at day 130 (gone dark) + 2.5x overdue by pattern — both should contribute
+    const acct = { ...base, last: 130 };
+    const r = scoreAccount(acct, "1", { avgIntervalDays: 50, freqScore: 2.5, orderCount: 5 });
+    const hasGoneDark = r.reasons.some(x => x.label.includes("Gone dark"));
+    const hasOverdue  = r.reasons.some(x => x.label.includes("Overdue"));
+    expect(hasGoneDark).toBe(true);
+    expect(hasOverdue).toBe(true);
+  });
+
+  it("does not crash when freqData is undefined", () => {
+    expect(() => scoreAccount(base, "1", undefined)).not.toThrow();
+  });
+});
+
