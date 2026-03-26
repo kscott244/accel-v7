@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-26T06:37:13.409Z",
+  "lastUpdated": "2026-03-26T06:42:30.594Z",
   "groups": {
     "Master-CM1873360": {
       "id": "Master-CM1873360",
@@ -309,6 +309,19 @@
       "score": 92,
       "createdAt": "2026-03-25T16:05:11.126Z",
       "updatedAt": "2026-03-25T16:05:11.126Z"
+    },
+    "Master-CM147182": {
+      "id": "Master-CM147182",
+      "name": "BLUE BACK DENTAL LLC.",
+      "tier": "Standard",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM147182",
+        "Master-CM1778785"
+      ],
+      "source": "manual-merge",
+      "createdAt": "2026-03-26T06:42:29.834Z",
+      "updatedAt": "2026-03-26T06:42:29.834Z"
     }
   },
   "groupDetaches": [],
