@@ -840,19 +840,40 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
   const executeMerge = (target:any) => {
     if (!target || mergeSaving) return;
     setMergeSaving(true);
-    // Collect childIds: current group's existing children + target group's ID (applyOverlays expands group IDs)
+    // A15.3: store leaf IDs directly rather than group IDs.
+    // Storing a group ID causes applyOverlays Step 4d to re-expand a group that may
+    // have already been consumed by an earlier overlay iteration, producing empty
+    // children or duplicated leaves when the same leaf appears in multiple groups.
+    //
+    // Resolution order:
+    // 1. Current group: start from existing overlay childIds if present, else rendered children.
+    // 2. Target: expand to leaf IDs via its overlay childIds, rendered children, or target.id.
     const existingEntry = OVERLAYS_REF.groups?.[group.id];
     const currentChildIds: string[] = existingEntry?.childIds
       ? [...existingEntry.childIds]
       : (group.children||[]).map((c:any) => c.id);
-    // Add target group ID — applyOverlays Step 4d will expand it to all its children
-    if (!currentChildIds.includes(target.id)) currentChildIds.push(target.id);
+
+    // Resolve target to leaf-level IDs — never store a bare group ID in childIds
+    const targetOverlay = OVERLAYS_REF.groups?.[target.id];
+    const targetLeafIds: string[] =
+      targetOverlay?.childIds?.length
+        ? targetOverlay.childIds
+        : (target.children||[]).length > 0
+          ? (target.children||[]).map((c:any) => c.id)
+          : [target.id];
+
+    // Merge: add target leaf IDs not already present
+    const merged = [...currentChildIds];
+    targetLeafIds.forEach((id:string) => {
+      if (!merged.includes(id)) merged.push(id);
+    });
+
     const groupEntry = {
       id: group.id,
       name: fixGroupName(group),
       tier: group.tier || "Standard",
       class2: group.class2 || "Private Practice",
-      childIds: currentChildIds,
+      childIds: merged,
       source: "manual-merge",
       createdAt: existingEntry?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
