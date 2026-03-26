@@ -1,15 +1,38 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-26T06:53:26.552Z",
+  "lastUpdated": "2026-03-26T18:00:00.000Z",
   "groups": {
     "Master-CM1873360": {
       "id": "Master-CM1873360",
       "name": "DENTAL 365",
-      "tier": "Standard",
+      "tier": "Diamond",
       "class2": "DSO",
       "childIds": [
-        "Master-CM1873360",
-        "Master-CM680778",
+        "Master-CM067467",
+        "Master-CM252662",
+        "Master-CM17678661",
+        "Master-CM086511",
+        "Master-CM052414",
+        "Master-CM100063",
+        "Master-CM1995159",
+        "Master-CM1987807",
+        "Master-CM2017130",
+        "Master-CM1811828",
+        "Master-CM875408",
+        "Master-CM1312923",
+        "Master-CM126817",
+        "Master-CM1987591",
+        "Master-CM1837342",
+        "Master-CM1535703",
+        "Master-CM089173",
+        "Master-CM175960",
+        "Master-CM147039",
+        "Master-CM1812756",
+        "Master-CM1761447",
+        "Master-CM109446",
+        "Master-CM196357",
+        "Master-CM188502",
+        "Master-CM906343",
         "Master-CM1991085",
         "Master-CM1835757"
       ],
@@ -43,20 +66,6 @@
       "score": 98,
       "createdAt": "2026-03-25T16:04:34.720Z",
       "updatedAt": "2026-03-25T16:04:34.720Z"
-    },
-    "Master-CM175757": {
-      "id": "Master-CM175757",
-      "name": "ABRA DENTAL",
-      "class2": "Private Practice",
-      "childIds": [
-        "Master-CM491938",
-        "Master-CM17672868"
-      ],
-      "tier": "Standard",
-      "source": "auto-merge",
-      "score": 98,
-      "createdAt": "2026-03-25T16:04:36.072Z",
-      "updatedAt": "2026-03-25T16:04:36.072Z"
     },
     "Master-CM174643": {
       "id": "Master-CM174643",
