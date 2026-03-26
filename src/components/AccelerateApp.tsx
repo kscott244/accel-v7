@@ -139,20 +139,38 @@ function applyOverlays(grps: any[]): any[] {
     });
 
     // Step 4d: Build the children array from the leaf map.
-    // If a childId is a group ID (not a leaf), expand all of that group's children.
+    // A15.3: recursively flatten wrapper nodes so only true leaf offices are included.
+    // "wrapper node" = a child that has its own c.children (no products of its own).
+    const flattenToLeaves = (node: any): any[] => {
+      if (!node) return [];
+      if (node.children && node.children.length > 0 && !(node.products?.length)) {
+        // Wrapper: recurse into its children
+        return node.children.flatMap((gc: any) => flattenToLeaves(gc));
+      }
+      return [node];
+    };
+
+    // Track which leaf IDs have already been added to prevent duplicates
+    // when the same leaf appears in multiple source groups being merged.
+    const addedLeafIds = new Set<string>();
+    const pushLeaf = (leaf: any) => {
+      if (!leaf?.id || addedLeafIds.has(leaf.id)) return;
+      addedLeafIds.add(leaf.id);
+      children.push({ ...leaf, gId: create.id, gName: create.name });
+    };
+
     (create.childIds||[]).forEach((cid:string) => {
       const leaf = leafByChildId[cid];
       if (leaf) {
-        children.push({ ...leaf, id: cid, gId: create.id, gName: create.name });
+        // Direct leaf match — use it
+        flattenToLeaves({ ...leaf, id: cid }).forEach(pushLeaf);
       } else {
-        // childId may be a group — expand its children (group-to-group merge)
+        // childId is a group ID — expand ALL of that group's children, flattening wrappers
         const srcGroup = mergedSourceGroups.find(g => g.id === cid);
         if (srcGroup?.children?.length) {
-          srcGroup.children.forEach((c:any) => {
-            children.push({ ...c, gId: create.id, gName: create.name });
-          });
+          srcGroup.children.flatMap((c:any) => flattenToLeaves(c)).forEach(pushLeaf);
         }
-        // Truly unfound childIds added below as stubs
+        // Truly unfound childIds handled below as stubs
       }
     });
 
@@ -171,9 +189,16 @@ function applyOverlays(grps: any[]): any[] {
     });
 
     if (children.length > 0) {
+      // A15.3: derive class2 from actual merged location count, not stale saved value.
+      // A group that was "Private Practice" (1-2 locs) may now be a DSO (3+ locs).
+      // Only upgrade; never downgrade (a saved DSO flag stays DSO regardless of locs).
+      const savedClass2 = create.class2 || "Private Practice";
+      const isDsoByLocs = children.length >= 3;
+      const isDsoByFlag = savedClass2 === "DSO" || savedClass2 === "EMERGING DSO" || savedClass2 === "Emerging DSO";
+      const derivedClass2 = (isDsoByLocs || isDsoByFlag) ? (savedClass2 !== "Private Practice" && savedClass2 !== "STANDARD" ? savedClass2 : "DSO") : savedClass2;
       result.unshift({
         id: create.id, name: create.name,
-        tier: create.tier||"Standard", class2: create.class2||"Private Practice",
+        tier: create.tier||"Standard", class2: derivedClass2,
         dsoName: create.dsoName||create.name, locs: children.length,
         pyQ: totalPY, cyQ: totalCY, children,
       });
