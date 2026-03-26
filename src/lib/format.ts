@@ -14,7 +14,15 @@ export const $f = (n: any): string => "$" + Math.round(n || 0).toLocaleString();
 export const pc = (n: any): string => Math.round((n || 0) * 100) + "%";
 
 // ─── SCORING ENGINE ──────────────────────────────────────────────
-export function scoreAccount(a: any, q: any) {
+// freqData: optional frequency context from computeFrequencyMap().
+// When present, adds 0–15 pts if account is overdue relative to its
+// own historical ordering cadence — distinguishes a monthly buyer
+// at day-45 from a quarterly buyer at day-45.
+export function scoreAccount(
+  a: any,
+  q: any,
+  freqData?: { avgIntervalDays: number; freqScore: number; orderCount: number }
+) {
   let s = 0;
   const r: Array<{ label: string; pts: number }> = [];
   const py = a.pyQ?.[q] || 0;
@@ -46,6 +54,19 @@ export function scoreAccount(a: any, q: any) {
 
   const dead = (a.products || []).filter((p: any) => (p[`py${q}`] || 0) > 200 && (p[`cy${q}`] || 0) === 0);
   if (dead.length) { s += dead.length * 3; r.push({ label: `${dead.length} products at $0`, pts: dead.length * 3 }); }
+
+  // Frequency overdue bonus (0–15 pts) — A16
+  // Only fires when we have a reliable frequency baseline (3+ data points,
+  // avg interval >= 14 days) AND the account is overdue by its own cadence.
+  // Additive on top of existing recency score — they measure different things:
+  // recency = absolute time; frequency = relative to this account's pattern.
+  if (freqData && freqData.avgIntervalDays >= 14 && freqData.orderCount >= 3) {
+    const fs = freqData.freqScore;
+    const cycle = `${freqData.avgIntervalDays}d cycle`;
+    if      (fs > 2.0)  { s += 15; r.push({ label: `Overdue: ${cycle}`, pts: 15 }); }
+    else if (fs > 1.5)  { s += 10; r.push({ label: `Overdue: ${cycle}`, pts: 10 }); }
+    else if (fs > 1.25) { s +=  5; r.push({ label: `Late: ${cycle}`,    pts:  5 }); }
+  }
 
   return { score: s, reasons: r, gap, ret, d, py, cy };
 }
