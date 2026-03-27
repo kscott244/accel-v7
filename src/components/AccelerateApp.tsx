@@ -24,6 +24,50 @@ class ErrorBoundary extends Component<{children:any},{err:any,info:any}> {
   }
 }
 
+// ─── TAB ERROR BOUNDARY ───────────────────────────────────────────
+// Wraps only the tab content area so a runtime error in one tab
+// does not unmount the header or nav bar.
+//
+// Usage: <TabErrorBoundary key={tab+(view?.type||"")} onReset={fn}>
+//   {tab content}
+// </TabErrorBoundary>
+//
+// key includes current tab + view type so the boundary automatically
+// resets when Ken taps a different tab — no stale error state.
+class TabErrorBoundary extends Component<
+  {children:any; onReset:()=>void},
+  {err:any; info:any}
+> {
+  constructor(p:any){super(p);this.state={err:null,info:null};}
+  static getDerivedStateFromError(e:any){return{err:e};}
+  componentDidCatch(e:any,i:any){this.setState({err:e,info:i});}
+  render(){
+    if(this.state.err){
+      return (
+        <div style={{padding:"20px 16px 80px",minHeight:"60vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+          <div style={{background:"rgba(248,113,113,.08)",border:"1px solid rgba(248,113,113,.22)",borderRadius:14,padding:"20px 18px",maxWidth:420,width:"100%",textAlign:"center"}}>
+            <div style={{fontSize:28,marginBottom:10}}>⚡</div>
+            <div style={{fontSize:15,fontWeight:700,color:"#f0f0f5",marginBottom:6}}>This tab hit an error</div>
+            <div style={{fontSize:12,color:"#a0a0b8",marginBottom:14,lineHeight:1.5}}>
+              The rest of the app is still running. Tap below to return to Today, or try a different tab.
+            </div>
+            <div style={{fontSize:10,color:"#f87171",background:"rgba(248,113,113,.07)",border:"1px solid rgba(248,113,113,.15)",borderRadius:8,padding:"8px 10px",marginBottom:14,textAlign:"left",wordBreak:"break-all",fontFamily:"monospace",maxHeight:80,overflow:"hidden"}}>
+              {String(this.state.err).slice(0,200)}
+            </div>
+            <button
+              onClick={()=>{this.setState({err:null,info:null});this.props.onReset();}}
+              style={{padding:"10px 24px",background:"#4f8ef7",color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:700}}
+            >
+              Return to Today
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 // Static data — single source of truth in src/lib/data.ts
 import { BADGER, PARENT_NAMES, DEALERS, PARENT_DEALERS, WEEK_ROUTES, OVERLAYS_REF as _OVERLAYS_REF_INIT, EMPTY_OVERLAYS } from "@/lib/data";
 import * as DataModule from "@/lib/data";
@@ -995,6 +1039,7 @@ function AppInner() {
       {/* goSmart: always route child taps through the parent group when group has >1 loc.
           Private practices (locs=1) and multi-dealer same-address offices go straight to AcctDetail
           since the AcctDetail IS their combined summary. */}
+      <TabErrorBoundary key={tab+(view?.type||"")} onReset={()=>{setTab("today");setView(null);}}>
       {(() => {
         const goSmartFn = (a: any, fromGroup?: any) => {
           const parentGroup = (groups||[]).find((g:any) => g.id === (a.gId||a.id));
@@ -1022,6 +1067,7 @@ function AppInner() {
           {view?.type==="acct" && <AcctDetail acct={view.data} goBack={()=>view?.from?setView({type:"group",data:view.from}):setView(null)} adjs={adjs} setAdjs={setAdjs} groups={groups||[]} goGroup={goGroupFn} overlays={overlays} saveOverlays={saveOverlays} reapplyGroupOverrides={reapplyGroupOverrides} goAcct={(s:any)=>setView({type:"acct",data:{...s,gId:view.data.gId,gName:view.data.gName},from:view?.from})} salesStore={salesStore}/>}
         </>;
       })()}
+      </TabErrorBoundary>
 
       {/* MORE MENU OVERLAY */}
       {showMore && <div style={{position:"fixed",inset:0,zIndex:90,background:"rgba(0,0,0,.6)",backdropFilter:"blur(4px)"}} onClick={()=>setShowMore(false)}>
