@@ -464,11 +464,12 @@ function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:a
         };
         const applyAll = () => {
           if(pending.length===0){showToast("All already applied");return;}
+          if(!confirm(`Apply ${pending.length} auto-merges at once? Each will be validated by the integrity guard. Approve one at a time if unsure.`)) return;
           const newGroups={...(OVERLAYS_REF.groups||{})};
           pending.forEach((p:any)=>{newGroups[p.id]={id:p.id,name:p.name,class2:p.class2||"Private Practice",childIds:p.childIds,tier:"Standard",source:"auto-merge",score:p.score,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};});
           const next={...OVERLAYS_REF,groups:newGroups};
           setSaving(true);
-          saveOverlays(next).then((ok:boolean)=>{setSaving(false);if(ok)showToast(`✅ Applied ${pending.length} auto-merges`);else showToast("❌ Apply failed",false);});
+          saveOverlays(next).then((ok:boolean)=>{setSaving(false);if(ok)showToast(`✅ Applied ${pending.length} auto-merges`);else showToast("❌ Apply failed — check integrity violations",false);});
         };
         const doneCount=(CPID_MERGES as any[]).length-pending.length;
         return <div>
