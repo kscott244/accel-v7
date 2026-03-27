@@ -890,14 +890,30 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
 
     // Direction: absorb current INTO target when target is bigger (more native children)
     // or target is a CSV-native group (no overlay entry) with multiple locations.
+    // Also absorb if target has an existing overlay entry (user already curated it).
     const targetIsLarger = targetLeafIds.length > currentLeafIds.length;
     const targetIsCsvNative = !targetOverlay && (target.children||[]).length > 1;
-    const absorbIntoTarget = targetIsLarger || targetIsCsvNative;
+    const targetHasOverlay = !!targetOverlay;
+    const absorbIntoTarget = targetIsLarger || targetIsCsvNative || targetHasOverlay;
 
-    // Build merged child list under the winning parent
+    // Build merged child list under the winning parent.
+    // A16.3 KEY FIX: when absorbing current INTO target, we include the source
+    // group's own ID in childIds (not just its leaf children). This is critical
+    // for top-level single-loc groups (e.g. Middletown) whose id === their only
+    // child's id. Step 4b in applyOverlays removes top-level groups whose id is
+    // in childIdSet — so the source group disappears from the card list.
+    // Step 4d then re-expands it via mergedSourceGroups, recovering its financial data.
+    // Including only leaf IDs (not the group ID itself) left the source group
+    // alive as a top-level orphan card because its own id was never in childIdSet.
     const baseIds = absorbIntoTarget ? targetLeafIds : currentLeafIds;
+    // For the source side: always include the source group's own id so Step 4b
+    // can remove it from top-level result. Its children will be expanded by Step 4d.
+    const sourceGroupId = absorbIntoTarget ? group.id : target.id;
     const addIds  = absorbIntoTarget ? currentLeafIds : targetLeafIds;
     const merged  = [...baseIds];
+    // Add source group id first (Step 4b removal key)
+    if (!merged.includes(sourceGroupId)) merged.push(sourceGroupId);
+    // Add any leaf ids not already present (handles overlay-based source groups)
     addIds.forEach((id:string) => { if (!merged.includes(id)) merged.push(id); });
 
     const winnerGroup  = absorbIntoTarget ? target : group;
