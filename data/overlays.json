@@ -50,9 +50,21 @@
     }
   },
   "fscReps": {},
-  "groupContacts": {},
+  "groupContacts": {
+    "Master-CM94845": [
+      {
+        "id": 1774652073352,
+        "name": "Dr. Michael Capalbo",
+        "role": "Owner/DMD – Capalbo Dental Group (Wakefield & Wickford)",
+        "phone": "(401) 789-6118",
+        "email": "wakefield@capalbodentalgroup.com",
+        "notes": "From AI research",
+        "savedAt": "2026-03-27T22:54:33.352Z"
+      }
+    ]
+  },
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-27T22:53:14.633Z"
+  "lastUpdated": "2026-03-27T22:54:34.156Z"
 }
