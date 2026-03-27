@@ -82,7 +82,7 @@ export default function EstTab({pct,setPct,q1CY,groups,goAcct}) {
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
             <div style={{flex:1,minWidth:0}}>
               <AccountId name={a.name} gName={a.gName} size="md"/>
-              <div style={{fontSize:10,color:T.t3,marginTop:1}}>{a.city}, {a.st}
+              <div style={{fontSize:10,color:T.t3,marginTop:1}}>{[a.addr,[a.city,a.st,a.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")}
                 {a.gName&&a.gName!==a.name&&<span style={{color:T.t4}}> · {a.gName}</span>}
               </div>
             </div>

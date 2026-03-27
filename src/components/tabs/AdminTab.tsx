@@ -233,7 +233,7 @@ function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:a
                   style={{display:"flex",width:"100%",textAlign:"left",padding:"10px 12px",background:i%2===0?"transparent":"rgba(255,255,255,.02)",border:"none",borderBottom:i<results.length-1?`1px solid ${T.b1}`:"none",cursor:"pointer",fontFamily:"inherit",alignItems:"center",gap:10}}>
                   <div style={{flex:1,minWidth:0}}>
                     <AccountId name={a.name} gName={a.gName} size="md"/>
-                    <div style={{fontSize:10,color:T.t3}}>{a.city}{a.st?`, ${a.st}`:""}</div>
+                    <div style={{fontSize:10,color:T.t3}}>{[a.addr,[a.city,a.st,a.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")}</div>
                     <div style={{fontSize:9,color:T.t4,marginTop:1}}>{a.dealer||"All Other"} · PY {$$(py)} / CY {$$(cy)}</div>
                   </div>
                   <div style={{flexShrink:0,background:"rgba(79,142,247,.1)",border:"1px solid rgba(79,142,247,.2)",borderRadius:8,padding:"4px 10px",fontSize:10,fontWeight:700,color:T.blue}}>+ Add</div>

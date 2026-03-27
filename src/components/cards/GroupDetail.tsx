@@ -94,7 +94,7 @@ function ChildOfficeCard({ child }: { child: ChildOffice }) {
           <div className="truncate text-[12px] font-semibold text-t1">{child.name}</div>
           <div className="text-[10px] text-t3">
             {child.mainDoctor && <span>{child.mainDoctor} · </span>}
-            {child.city}, {child.state}
+            {[child.addr,[child.city,child.state].filter(Boolean).join(" ")].filter(Boolean).join(", ")}
           </div>
         </div>
         <SignalBadge signal={child.q1_signal} />

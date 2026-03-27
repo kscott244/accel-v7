@@ -36,7 +36,7 @@ export function RouteStopCard({ stop, index, visited, onToggleVisit, onDirection
             </div>
             <div className="mt-[2px] text-[10px] text-t3">
               {stop.doctor && <span>{stop.doctor} · </span>}
-              {stop.city}, {stop.state}
+              {[stop.address,[stop.city,stop.state].filter(Boolean).join(" ")].filter(Boolean).join(", ")}
             </div>
           </div>
         </div>

@@ -161,7 +161,7 @@ export default function DashTab({groups, q1CY, q1Att, q1Gap, scored, goAcct, act
               <div style={{flex:1,minWidth:0,display:"flex",alignItems:"center",gap:5}}>
                 <span className="m" style={{fontSize:9,color:T.t4}}>#{i+1}</span>
                 <span style={{fontSize:11,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}><AccountId name={a.name} size="sm"/></span>
-                <span style={{fontSize:9,color:T.t3}}>{a.city}, {a.st}</span>
+                <span style={{fontSize:9,color:T.t3}}>{[a.addr,[a.city,a.st,a.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")}</span>
               </div>
               <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0,marginLeft:8}}>
                 <span className="m" style={{fontSize:11,fontWeight:700,color:T.red}}>-{$$(a.gap)}</span>

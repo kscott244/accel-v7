@@ -467,7 +467,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
             <div style={{flex:1,minWidth:0}}>
               <AccountId name={a.name} gName={a.gName} size="md" locs={groupLocsMap[a.gId]}/>
               <div style={{fontSize:10,color:T.t3,marginTop:2}}>
-                {a.addr ? a.addr + ', ' : ''}{a.city}, {a.st}
+                {[a.addr,[a.city,a.st,a.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")}
                 {isAccelTier(a.gTier||a.tier)&&<span style={{color:T.amber}}> · {normalizeTier(a.gTier||a.tier)}</span>}
               </div>
             </div>
@@ -642,7 +642,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
                 </div>
                 <AccountId name={a.name} gName={a.gName} size="md" color={done?T.t3:undefined} locs={groupLocsMap[a.gId]}/>
                 {!done&&<div style={{fontSize:10,color:T.t3,marginTop:2}}>
-                  {a.city}, {a.st}{a.miles&&a.miles<100?<span style={{color:T.t4}}> · {Math.round(a.miles)}mi</span>:""}
+                  {[a.addr,[a.city,a.st,a.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")}{a.miles&&a.miles<100?<span style={{color:T.t4}}> · {Math.round(a.miles)}mi</span>:""}
                 </div>}
                 {!done&&a.signals?.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:3,marginTop:4}}>
                   {a.signals.slice(0,3).map((s:string,si:number)=>(
@@ -757,7 +757,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:11,fontWeight:600,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
                 {a.gName&&a.gName!==a.name&&<div style={{fontSize:9,color:T.cyan,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.gName}</div>}
-                <div style={{fontSize:9,color:T.t3,marginTop:1}}>{a.city}, {a.st}{isAccelTier(a.gTier||a.tier)?<span style={{color:T.amber}}> · {normalizeTier(a.gTier||a.tier)}</span>:""}</div>
+                <div style={{fontSize:9,color:T.t3,marginTop:1}}>{[a.addr,[a.city,a.st,a.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")}{isAccelTier(a.gTier||a.tier)?<span style={{color:T.amber}}> · {normalizeTier(a.gTier||a.tier)}</span>:""}</div>
               </div>
               <div style={{flexShrink:0,marginLeft:10,textAlign:"right"}}>
                 <div className="m" style={{fontSize:11,fontWeight:700,color:T.green}}>{$$(pCy)}</div>
@@ -818,7 +818,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
                       {done&&<span style={{fontSize:9,fontWeight:700,color:done.outcome==="lost"?T.red:T.green}}>{done.outcome==="lost"?"✗ Lost":`✓ ${done.outcome}`}</span>}
                     </div>
                     <AccountId name={a.name} gName={a.gName} size="md" locs={groupLocsMap[a.gId]}/>
-                    <div style={{fontSize:10,color:T.t3,marginTop:1}}>{a.city}, {a.st} · {Math.round(a.miles||0)}mi from home</div>
+                    <div style={{fontSize:10,color:T.t3,marginTop:1}}>{[a.addr,[a.city,a.st,a.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")} · {Math.round(a.miles||0)}mi from home</div>
                     <div style={{fontSize:10,color:T.t3,marginTop:1}}>Ask <span style={{color:T.amber,fontWeight:600}}>{$f(a.ask)}</span> · {Math.round((a.prob||0)*100)}% likely</div>
                     {done?.note&&<div style={{fontSize:9,color:T.t4,marginTop:3,fontStyle:"italic"}}>"{done.note}"</div>}
                   </div>
