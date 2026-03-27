@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { T } from "@/lib/tokens";
 import { $$ } from "@/lib/format";
+// A15.6: CPID files are SUGGESTION INPUTS only — static snapshots of candidate merge pairs.
+// They are never written to and never constitute source of truth.
+// Source of truth: overlays.groups (applied) + overlays.skippedCpidIds (dismissed)
 import CPID_MERGES from "@/data/cpid-pending-merges.json";
 import CPID_REVIEW from "@/data/cpid-review-queue.json";
 
@@ -40,8 +43,22 @@ function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:a
   // Dupes view
   const [dupesView, setDupesView] = useState<"auto"|"review"|"live">("auto");
   const [reviewPage, setReviewPage] = useState(0);
+  // A15.6: skippedMergeIds is now sourced from overlays.skippedCpidIds (GitHub-persisted)
+  // merged with localStorage (migration fallback for any device-local skips).
+  // Skips now survive device changes and localStorage clears — same durability as approvals.
   const [skippedMergeIds, setSkippedMergeIds] = useState<Record<string,boolean>>(() => {
-    try { return JSON.parse(localStorage.getItem("cpid_skipped")||"{}"); } catch { return {}; }
+    // Start from overlay-persisted skips (cross-device, authoritative)
+    const fromOverlay: Record<string,boolean> = {};
+    try {
+      const ov = OVERLAYS_REF;
+      (ov?.skippedCpidIds || []).forEach((id:string) => { fromOverlay[id] = true; });
+    } catch {}
+    // Merge in any localStorage skips (migration: picks up skips made before A15.6)
+    try {
+      const local = JSON.parse(localStorage.getItem("cpid_skipped")||"{}");
+      return { ...local, ...fromOverlay };
+    } catch {}
+    return fromOverlay;
   });
 
   // Contact form
@@ -433,6 +450,9 @@ function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:a
         const skipPair = (id:string) => {
           setSkippedMergeIds(prev=>{
             const next={...prev,[id]:true};
+            // A15.6: persist skips to overlays (GitHub) so they survive device changes
+            const newSkipIds = Object.keys(next).filter(k=>next[k]);
+            saveOverlays({...OVERLAYS_REF, skippedCpidIds: newSkipIds});
             try{localStorage.setItem("cpid_skipped",JSON.stringify(next));}catch{}
             return next;
           });
@@ -502,6 +522,9 @@ function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:a
         const skipReview = (id:string) => {
           setSkippedMergeIds(prev=>{
             const next={...prev,[id]:true};
+            // A15.6: persist skips to overlays (GitHub) so they survive device changes
+            const newSkipIds = Object.keys(next).filter(k=>next[k]);
+            saveOverlays({...OVERLAYS_REF, skippedCpidIds: newSkipIds});
             try{localStorage.setItem("cpid_skipped",JSON.stringify(next));}catch{}
             return next;
           });
