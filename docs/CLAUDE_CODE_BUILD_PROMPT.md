@@ -145,3 +145,36 @@ The `docs/data_discoveries.json` file contains 137 anchor-orphan matches. These 
 - Test on mobile viewport — everything must be touch-friendly.
 - The overlay is CLEAN right now (commit a87cc7dbe3). Don't break it.
 - Build hash badge in More menu should still work for deploy verification.
+
+---
+
+## TASK 7 — Smart Child Consolidation for Small Practices
+
+### The Problem
+A single private practice at one address might have 4 different CM numbers because they buy through 4 different dealers. On the Today tab, this shows as 4 separate account cards cluttering the view. Ken wants to see ONE card with combined revenue.
+
+### The Rule
+- **Groups with 1-2 unique addresses**: Consolidate children at the same normalized address into ONE child. Combined PY/CY across all dealer CMs. Store the individual CM numbers + dealer names as metadata inside the consolidated child so the Dealers tab can still break it down.
+- **Groups with 3+ unique addresses (DSOs/multi-location)**: Keep children separate even at the same address. Each CM is a tracked revenue stream within the org. The address display (Task 2) makes it clear which ones share an office.
+
+### Implementation
+In `processCSVData()` or `extractLeaves()`, after building the group:
+1. Count unique normalized addresses in the group
+2. If 1-2 unique addresses: merge children sharing the same address
+   - Combined child gets the name of the child with highest PY revenue
+   - PY/CY = sum of all children at that address
+   - `dealerBreakdown: [{ cm: "Master-CM123", dealer: "Schein", py: X, cy: Y }, ...]` stored as metadata
+   - Products = union of all children's products
+3. If 3+ unique addresses: leave children as-is
+
+### Where the dealer breakdown shows
+- Account detail view (AcctDetail.tsx): show "Purchased through: Schein ($3K), Patterson ($2K), Benco ($1K)"
+- Dealers tab: show the per-dealer split as always
+- Today tab / Groups tab: show ONLY the consolidated number
+
+### Example
+Dr. Smith at 123 Main St buys through Schein ($3K PY), Patterson ($2K PY), Benco ($1K PY), Darby ($500 PY):
+- Today tab shows: "DR SMITH — $6,500 PY" (one card)
+- Account detail shows: "$6,500 PY total — via Schein $3K, Patterson $2K, Benco $1K, Darby $500"
+- Dealers tab shows: "Schein: Dr Smith $3K" / "Patterson: Dr Smith $2K" etc.
+
