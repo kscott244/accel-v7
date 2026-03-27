@@ -21,6 +21,10 @@ export const EMPTY_OVERLAYS: any = {
   schemaVersion: 2, lastUpdated: new Date().toISOString(),
   groups: {}, groupDetaches: [], groupMoves: {}, nameOverrides: {},
   contacts: {}, fscReps: {}, activityLogs: {}, research: {}, dealerOverrides: {}, dealerManualReps: {}, adjs: [],
+  // A15.6: skipped merge suggestion IDs — persisted to GitHub so skips survive
+  // device changes and localStorage clears. Suggestion inputs (CPID files) are
+  // never treated as source of truth — only overlays.groups + skippedCpidIds are.
+  skippedCpidIds: [],
 };
 export let OVERLAYS_REF: any = EMPTY_OVERLAYS;
 
