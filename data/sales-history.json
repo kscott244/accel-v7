@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-27T05:15:19.418Z",
+  "lastUpdated": "2026-03-27T13:23:29.212Z",
   "batches": [
     {
       "id": "batch_1774374654922_44800",
@@ -29,6 +29,13 @@
       "uploadedAt": "2026-03-27T05:15:18.137Z",
       "rowCount": 44800,
       "newRecords": 0
+    },
+    {
+      "id": "batch_1774617808415_45108",
+      "filename": "2026-Q1-3-27-25By Account.csv",
+      "uploadedAt": "2026-03-27T13:23:28.446Z",
+      "rowCount": 45108,
+      "newRecords": 261
     }
   ],
   "records": {
@@ -121831,6 +121838,789 @@
     },
     "Master-CM457516|2025|12|CAVIWIPES XL|-6743|0": {
       "q": 4
+    },
+    "Master-CM099989|2026|3|OPTIBOND SOLO PLUS|0|15370": {
+      "q": 1
+    },
+    "Master-CM1447299|2026|3|CAVIWIPES XL|0|8464": {
+      "q": 1
+    },
+    "Master-CM702997|2026|3|TEMPBOND|0|9447": {
+      "q": 1
+    },
+    "Master-CM171763|2026|3|TEMPBOND|0|9447": {
+      "q": 1
+    },
+    "Master-CM171763|2026|3|MAXCEM ELITE|0|20786": {
+      "q": 1
+    },
+    "Master-CM225168|2026|3|CAVIWIPES XL|0|6348": {
+      "q": 1
+    },
+    "Master-CM225277|2026|3|TEMPBOND CLEAR|0|13344": {
+      "q": 1
+    },
+    "Master-CM225277|2026|3|TEMPBOND|0|9886": {
+      "q": 1
+    },
+    "Master-CM108158|2026|3|PREMISE FLOWABLE|0|14251": {
+      "q": 1
+    },
+    "Master-CM108158|2026|3|OPTIBOND UNIVERSAL|0|23512": {
+      "q": 1
+    },
+    "Master-CM108158|2026|3|CAVICIDE1|0|5278": {
+      "q": 1
+    },
+    "Master-CM119004|2026|3|OPTIBOND SOLO PLUS|0|15370": {
+      "q": 1
+    },
+    "Master-CM119004|2026|3|EMPOWER|0|9798": {
+      "q": 1
+    },
+    "Master-CM119004|2026|3|CAVIWIPES|0|4420": {
+      "q": 1
+    },
+    "Master-CM202094|2026|3|CAVIWIPES 2.0|0|6062": {
+      "q": 1
+    },
+    "Master-CM151455|2026|3|CAVICIDE|0|11178": {
+      "q": 1
+    },
+    "Master-CM151455|2026|3|CAVIWIPES1|0|17460": {
+      "q": 1
+    },
+    "Master-CM094475|2026|3|EMPOWER|0|3266": {
+      "q": 1
+    },
+    "Master-CM094475|2026|3|CAVICIDE|0|1844": {
+      "q": 1
+    },
+    "Master-CM094475|2026|3|CAVIWIPES|0|11492": {
+      "q": 1
+    },
+    "Master-CM486648|2026|3|PREMISE FLOWABLE|0|14251": {
+      "q": 1
+    },
+    "Master-CM680656|2026|3|TEMPBOND|0|9886": {
+      "q": 1
+    },
+    "Master-CM114594|2026|3|TEMPBOND CLEAR|0|13344": {
+      "q": 1
+    },
+    "Master-CM114594|2026|3|TEMPBOND|0|9886": {
+      "q": 1
+    },
+    "Master-CM114594|2026|3|CAVIWIPES1|0|5856": {
+      "q": 1
+    },
+    "Master-CM17721298|2026|3|EMPOWER|0|6532": {
+      "q": 1
+    },
+    "Master-CM17748863|2026|3|OPTIBOND SOLO PLUS|0|15370": {
+      "q": 1
+    },
+    "Master-CM17748863|2026|3|TEMPBOND NE|0|9447": {
+      "q": 1
+    },
+    "Master-CM17748863|2026|3|TEMPBOND CLEAR|0|6672": {
+      "q": 1
+    },
+    "Master-CM17748863|2026|3|CAVIWIPES 2.0|0|1732": {
+      "q": 1
+    },
+    "Master-CM17730415|2026|3|CAVIWIPES 2.0|0|10392": {
+      "q": 1
+    },
+    "Master-CM1077063|2026|3|CAVIWIPES 2.0|0|8296": {
+      "q": 1
+    },
+    "Master-CM202264|2026|3|HERCULITE XRV|0|24030": {
+      "q": 1
+    },
+    "Master-CM202264|2026|3|CAVIWIPES1|0|4880": {
+      "q": 1
+    },
+    "Master-CM17682497|2026|3|OPTIBOND SOLO PLUS|0|27832": {
+      "q": 1
+    },
+    "Master-CM17682497|2026|3|TEMPBOND CLEAR|0|6672": {
+      "q": 1
+    },
+    "Master-CM17682497|2026|3|EMPOWER|0|3266": {
+      "q": 1
+    },
+    "Master-CM17682497|2026|3|CAVICIDE|0|922": {
+      "q": 1
+    },
+    "Master-CM1987539|2026|3|PREMISE FLOWABLE|0|14251": {
+      "q": 1
+    },
+    "Master-CM1987539|2026|3|HARMONIZE|0|5392": {
+      "q": 1
+    },
+    "Master-CM1987539|2026|3|HARMONIZE|0|10509": {
+      "q": 1
+    },
+    "Master-CM1987539|2026|3|CAVIWIPES|0|7072": {
+      "q": 1
+    },
+    "Master-CM1166474|2026|3|CAVICIDE|0|11178": {
+      "q": 1
+    },
+    "Master-CM1394602|2026|3|CAVIWIPES 2.0|0|6222": {
+      "q": 1
+    },
+    "Master-CM171174|2026|3|CAVIWIPES|0|7072": {
+      "q": 1
+    },
+    "Master-CM1816265|2026|3|CAVIWIPES|0|10574": {
+      "q": 1
+    },
+    "Master-CM186677|2026|3|TEMPBOND NE|0|9447": {
+      "q": 1
+    },
+    "Master-CM857383|2026|3|CAVIWIPES 2.0|0|10392": {
+      "q": 1
+    },
+    "Master-CM857383|2026|3|CAVICIDE|0|2403": {
+      "q": 1
+    },
+    "Master-CM1233160|2026|3|CAVIWIPES 2.0|0|1732": {
+      "q": 1
+    },
+    "Master-CM529437|2026|3|CAVIWIPES 2.0|0|8660": {
+      "q": 1
+    },
+    "Master-CM529437|2026|3|CAVICIDE|0|2403": {
+      "q": 1
+    },
+    "Master-CM529437|2026|3|CAVIWIPES|0|4420": {
+      "q": 1
+    },
+    "Master-CM529437|2026|3|CAVIWIPES 2.0|0|5185": {
+      "q": 1
+    },
+    "Master-CM193402|2026|3|CAVICIDE|0|2403": {
+      "q": 1
+    },
+    "Master-CM193402|2026|3|CAVIWIPES|0|10608": {
+      "q": 1
+    },
+    "Master-CM160986|2026|3|TEMPBOND|0|18894": {
+      "q": 1
+    },
+    "Master-CM9820969|2026|3|CAVIWIPES 2.0|0|10392": {
+      "q": 1
+    },
+    "Master-CM9835082|2026|3|HARMONIZE|0|105090": {
+      "q": 1
+    },
+    "Master-CM9835082|2026|3|HARMONIZE|0|10509": {
+      "q": 1
+    },
+    "Master-CM9835082|2026|3|CAVIWIPES|0|21216": {
+      "q": 1
+    },
+    "Master-CM080549|2026|3|MAXCEM ELITE CHROMA|0|55668": {
+      "q": 1
+    },
+    "Master-CM634031|2026|3|TEMPBOND CLEAR|0|20016": {
+      "q": 1
+    },
+    "Master-CM634031|2026|3|MAXCEM ELITE|0|27048": {
+      "q": 1
+    },
+    "Master-CM634031|2026|3|CAVICIDE|0|1844": {
+      "q": 1
+    },
+    "Master-CM081913|2026|3|HERCULITE ULTRA FLOW|0|15104": {
+      "q": 1
+    },
+    "Master-CM081913|2026|3|HARMONIZE|0|5392": {
+      "q": 1
+    },
+    "Master-CM081913|2026|3|HARMONIZE|0|10509": {
+      "q": 1
+    },
+    "Master-CM081913|2026|3|CAVIWIPES|0|8840": {
+      "q": 1
+    },
+    "Master-CM897105|2026|3|CAVIWIPES|0|8840": {
+      "q": 1
+    },
+    "Master-CM051399|2026|3|CAVICIDE|0|7209": {
+      "q": 1
+    },
+    "Master-CM293612|2026|3|OPTIBOND FL|0|14106": {
+      "q": 1
+    },
+    "Master-CM141355|2026|3|CAVIWIPES 2.0|0|24888": {
+      "q": 1
+    },
+    "Master-CM287558|2026|3|CAVIWIPES|0|10608": {
+      "q": 1
+    },
+    "Master-CM067033|2026|3|CAVIWIPES|0|5304": {
+      "q": 1
+    },
+    "Master-CM147334|2026|3|CAVIWIPES 2.0|0|6222": {
+      "q": 1
+    },
+    "Master-CM066450|2026|3|CAVIWIPES|0|8840": {
+      "q": 1
+    },
+    "Master-CM148085|2026|3|CAVIWIPES|0|1768": {
+      "q": 1
+    },
+    "Master-CM60437|2026|3|MAXCEM ELITE|0|13524": {
+      "q": 1
+    },
+    "Master-CM60437|2026|3|OPTIBOND eXTRa|0|9405": {
+      "q": 1
+    },
+    "Master-CM60437|2026|3|CAVIWIPES1|0|6984": {
+      "q": 1
+    },
+    "Master-CM595270|2026|3|CAVIWIPES|0|21216": {
+      "q": 1
+    },
+    "Master-CM133782|2026|3|MAXCEM ELITE|0|13524": {
+      "q": 1
+    },
+    "Master-CM1056724|2026|3|CAVIWIPES HP|0|1808": {
+      "q": 1
+    },
+    "Master-CM915054|2026|3|MAXCEM ELITE|0|20738": {
+      "q": 1
+    },
+    "Master-CM086256|2026|3|CAVIWIPES HP|0|10850": {
+      "q": 1
+    },
+    "Master-CM858758|2026|3|OPTIBOND SOLO PLUS|0|3802": {
+      "q": 1
+    },
+    "Master-CM858758|2026|3|FLOW-IT ALC|0|4346": {
+      "q": 1
+    },
+    "Master-CM153496|2026|3|CAVIWIPES|0|5281": {
+      "q": 1
+    },
+    "Master-CM275943|2026|3|OPTIBOND UNIVERSAL|0|11533": {
+      "q": 1
+    },
+    "Master-CM17677832|2026|3|EMPOWER|0|9798": {
+      "q": 1
+    },
+    "Master-CM17677832|2026|3|CAVIWIPES XL|0|63480": {
+      "q": 1
+    },
+    "Master-CM049504|2026|3|BOND-1|0|60396": {
+      "q": 1
+    },
+    "DRK-02D1990FCC56E4571299DEC28DE2ADA3-702082EEDBD103B82C85B3670AD5D791|2026|3|OPTIBOND UNIVERSAL|0|22934": {
+      "q": 1
+    },
+    "HEN-983C97CB49920949362A2CAA45319B70-74A3236AA4BF6C831014C9414938DC69|2026|3|CAVIWIPES XL|0|5290": {
+      "q": 1
+    },
+    "Master-CM774998|2026|3|EMPOWER|0|6532": {
+      "q": 1
+    },
+    "Master-CM063238|2026|3|TEMPBOND|0|5491": {
+      "q": 1
+    },
+    "Master-CM063238|2026|3|CAVIWIPES|0|7072": {
+      "q": 1
+    },
+    "Master-CM1072565|2026|3|CAVIWIPES|0|8840": {
+      "q": 1
+    },
+    "Master-CM1994205|2026|3|CAVIWIPES XL|0|31740": {
+      "q": 1
+    },
+    "Master-CM104250|2026|3|MAXCEM ELITE|0|27048": {
+      "q": 1
+    },
+    "Master-CM198367|2026|3|CAVIWIPES 2.0|0|12444": {
+      "q": 1
+    },
+    "Master-CM530388|2026|3|CAVIWIPES 2.0|0|10343": {
+      "q": 1
+    },
+    "Master-CM303214|2026|3|OPTIBOND SOLO PLUS|0|7604": {
+      "q": 1
+    },
+    "Master-CM1993487|2026|3|CAVIWIPES|0|1768": {
+      "q": 1
+    },
+    "Master-CM102617|2026|3|OPTIBOND SOLO PLUS|0|15208": {
+      "q": 1
+    },
+    "Master-CM102617|2026|3|OPTIBOND SOLO PLUS|0|3802": {
+      "q": 1
+    },
+    "Master-CM1422576|2026|3|CAVIWIPES|0|5304": {
+      "q": 1
+    },
+    "Master-CM297385|2026|3|CAVICIDE1|0|-8249": {
+      "q": 1
+    },
+    "Master-CM184636|2026|3|CAVIWIPES 2.0|0|24888": {
+      "q": 1
+    },
+    "Master-CM906343|2026|3|CAVIWIPES|0|2644": {
+      "q": 1
+    },
+    "Master-CM1250304|2026|3|POINT 4|0|12481": {
+      "q": 1
+    },
+    "Master-CM1250304|2026|3|CAVIWIPES XL|0|12696": {
+      "q": 1
+    },
+    "Master-CM105780|2026|3|CAVIWIPES|0|21149": {
+      "q": 1
+    },
+    "Master-CM203826|2026|3|CAVIWIPES|0|12376": {
+      "q": 1
+    },
+    "Master-CM068686|2026|3|EMPOWER FOAM|0|1534": {
+      "q": 1
+    },
+    "Master-CM068686|2026|3|CAVIWIPES|0|8840": {
+      "q": 1
+    },
+    "Master-CM071062|2026|3|MAXCEM ELITE CHROMA|0|13871": {
+      "q": 1
+    },
+    "Master-CM059502|2026|3|CAVIWIPES XL|0|25392": {
+      "q": 1
+    },
+    "Master-CM062162|2026|3|CAVICIDE|0|19224": {
+      "q": 1
+    },
+    "Master-CM247326|2026|3|TEMPBOND CLEAR|0|13344": {
+      "q": 1
+    },
+    "Master-CM247326|2026|3|HARMONIZE|0|31527": {
+      "q": 1
+    },
+    "Master-CM247326|2026|3|CAVICIDE|0|4806": {
+      "q": 1
+    },
+    "Master-CM200529|2026|3|HERCULITE ULTRA|0|22458": {
+      "q": 1
+    },
+    "Master-CM089332|2026|3|CAVIWIPES 2.0|0|20784": {
+      "q": 1
+    },
+    "Master-CM089332|2026|3|CAVICIDE|0|7187": {
+      "q": 1
+    },
+    "Master-CM089332|2026|3|CAVICIDE|0|1838": {
+      "q": 1
+    },
+    "Master-CM089332|2026|3|CAVIWIPES 2.0|0|20724": {
+      "q": 1
+    },
+    "Master-CM195997|2026|3|CAVICIDE|0|2758": {
+      "q": 1
+    },
+    "Master-CM099661|2026|3|CAVIWIPES XL|0|5290": {
+      "q": 1
+    },
+    "Master-CM063082|2026|3|TEMPBOND CLEAR|0|6672": {
+      "q": 1
+    },
+    "Master-CM093551|2026|3|OPTIBOND SOLO PLUS|0|27832": {
+      "q": 1
+    },
+    "Master-CM093317|2026|3|OPTIBOND UNIVERSAL|0|34599": {
+      "q": 1
+    },
+    "Master-CM049137|2026|3|HERCULITE ULTRA|0|11208": {
+      "q": 1
+    },
+    "Master-CM049137|2026|3|HERCULITE ULTRA|0|11118": {
+      "q": 1
+    },
+    "Master-CM049137|2026|3|HERCULITE ULTRA|0|11181": {
+      "q": 1
+    },
+    "Master-CM258077|2026|3|CAVIWIPES|0|5304": {
+      "q": 1
+    },
+    "Master-CM130847|2026|3|ACCESSORIES|0|24450": {
+      "q": 1
+    },
+    "Master-CM125380|2026|3|TEMPBOND NE|0|5491": {
+      "q": 1
+    },
+    "Master-CM193684|2026|3|CAVIWIPES1|0|976": {
+      "q": 1
+    },
+    "Master-CM076929|2026|3|NEXUS RMGI|0|25425": {
+      "q": 1
+    },
+    "Master-CM076929|2026|3|CAVIWIPES XL|0|8436": {
+      "q": 1
+    },
+    "Master-CM1004878|2026|3|CAVIWIPES1|0|9760": {
+      "q": 1
+    },
+    "Master-CM073756|2026|3|CAVICIDE|0|2403": {
+      "q": 1
+    },
+    "Master-CM062813|2026|3|TEMPBOND CLEAR|0|13344": {
+      "q": 1
+    },
+    "Master-CM062813|2026|3|SONICFILL 3|0|10872": {
+      "q": 1
+    },
+    "Master-CM1929459|2026|3|CAVIWIPES|0|10608": {
+      "q": 1
+    },
+    "Master-CM256401|2026|3|CAVICIDE|0|4806": {
+      "q": 1
+    },
+    "Master-CM256401|2026|3|CAVIWIPES|0|3536": {
+      "q": 1
+    },
+    "Master-CM1969858|2026|3|SIMPLISHADE|0|24129": {
+      "q": 1
+    },
+    "Master-CM101181|2026|3|CAVIWIPES XL|0|31740": {
+      "q": 1
+    },
+    "Master-CM130288|2026|3|CAVICIDE|0|11178": {
+      "q": 1
+    },
+    "Master-CM130288|2026|3|CAVIWIPES HP|0|2718": {
+      "q": 1
+    },
+    "Master-CM1587680|2026|3|HERCULITE ULTRA|0|11229": {
+      "q": 1
+    },
+    "Master-CM1587680|2026|3|CAVICIDE|0|2403": {
+      "q": 1
+    },
+    "Master-CM069334|2026|3|CAVIWIPES HP|0|1812": {
+      "q": 1
+    },
+    "Master-CM907620|2026|3|CAVICIDE|0|22356": {
+      "q": 1
+    },
+    "Master-CM088986|2026|3|CAVIWIPES|0|5281": {
+      "q": 1
+    },
+    "Master-CM114506|2026|3|CAVIWIPES 2.0|0|12444": {
+      "q": 1
+    },
+    "Master-CM1400348|2026|3|CAVIWIPES 2.0|0|4129": {
+      "q": 1
+    },
+    "Master-CM128821|2026|3|CAVIWIPES 2.0|0|5171": {
+      "q": 1
+    },
+    "Master-CM111591|2026|3|CAVIWIPES XL|0|12696": {
+      "q": 1
+    },
+    "Master-CM227120|2026|3|CAVIWIPES|0|10608": {
+      "q": 1
+    },
+    "Master-CM630753|2026|3|CAVIWIPES HP|0|906": {
+      "q": 1
+    },
+    "Master-CM630753|2026|3|CAVIWIPES HP|0|3252": {
+      "q": 1
+    },
+    "Master-CM067720|2026|3|CAVIWIPES XL|0|12696": {
+      "q": 1
+    },
+    "Master-CM587490|2026|3|CAVIWIPES XL|0|21160": {
+      "q": 1
+    },
+    "Master-CM1822793|2026|3|CAVIWIPES|0|10608": {
+      "q": 1
+    },
+    "Master-CM058914|2026|3|SONICFILL 3|0|10872": {
+      "q": 1
+    },
+    "Master-CM193876|2026|3|SONICFILL 3|0|10872": {
+      "q": 1
+    },
+    "Master-CM135360|2026|3|CAVICIDE|0|11178": {
+      "q": 1
+    },
+    "Master-CM1495113|2026|3|CAVIWIPES 2.0|0|49776": {
+      "q": 1
+    },
+    "Master-CM1966497|2026|3|OPTIBOND SOLO PLUS|0|30740": {
+      "q": 1
+    },
+    "Master-CM098976|2026|3|CAVIWIPES1|0|3904": {
+      "q": 1
+    },
+    "Master-CM109955|2026|3|CAVIWIPES|0|13260": {
+      "q": 1
+    },
+    "Master-CM278107|2026|3|CAVIWIPES XL|0|12696": {
+      "q": 1
+    },
+    "Master-CM9843465|2026|3|CAVICIDE|0|2403": {
+      "q": 1
+    },
+    "Master-CM567163|2026|3|CAVICIDE|0|22292": {
+      "q": 1
+    },
+    "Master-CM9844361|2026|3|MAXCEM ELITE|0|20786": {
+      "q": 1
+    },
+    "Master-CM252502|2026|3|CAVICIDE|0|9612": {
+      "q": 1
+    },
+    "Master-CM092665|2026|3|CAVIWIPES XL|0|12696": {
+      "q": 1
+    },
+    "Master-CM134787|2026|3|TEMPBOND|0|9447": {
+      "q": 1
+    },
+    "Master-CM134787|2026|3|TEMPBOND CLEAR|0|13344": {
+      "q": 1
+    },
+    "Master-CM134787|2026|3|TEMPBOND CLEAR|0|6672": {
+      "q": 1
+    },
+    "Master-CM089738|2026|3|CAVICIDE|0|2403": {
+      "q": 1
+    },
+    "Master-CM605426|2026|3|CAVIWIPES|0|8840": {
+      "q": 1
+    },
+    "Master-CM065570|2026|3|CAVICIDE|0|1838": {
+      "q": 1
+    },
+    "Master-CM2011671|2026|3|CAVIWIPES XL|0|4232": {
+      "q": 1
+    },
+    "Master-CM868618|2026|3|CAVIWIPES 2.0|0|8619": {
+      "q": 1
+    },
+    "Master-CM286123|2026|3|CAVICIDE1|0|1012": {
+      "q": 1
+    },
+    "Master-CM068757|2026|3|CAVIWIPES XL|0|10580": {
+      "q": 1
+    },
+    "Master-CM264695|2026|3|CAVIWIPES1|0|3904": {
+      "q": 1
+    },
+    "Master-CM262651|2026|3|CAVIWIPES|0|8840": {
+      "q": 1
+    },
+    "Master-CM699534|2026|3|CAVICIDE|0|922": {
+      "q": 1
+    },
+    "Master-CM122308|2026|3|CAVICIDE|0|4806": {
+      "q": 1
+    },
+    "Master-CM122308|2026|3|CAVICIDE|0|2766": {
+      "q": 1
+    },
+    "Master-CM122308|2026|3|CAVIWIPES|0|4420": {
+      "q": 1
+    },
+    "Master-CM195192|2026|3|CAVIWIPES 2.0|0|5171": {
+      "q": 1
+    },
+    "Master-CM78374|2026|3|OPTIBOND eXTRa|0|17285": {
+      "q": 1
+    },
+    "Master-CM254303|2026|3|CAVICIDE|0|22356": {
+      "q": 1
+    },
+    "Master-CM858712|2026|3|ACCESSORIES|0|3965": {
+      "q": 1
+    },
+    "Master-CM256310|2026|3|CAVIWIPES|0|4420": {
+      "q": 1
+    },
+    "Master-CM987525|2026|3|CAVIWIPES|0|21216": {
+      "q": 1
+    },
+    "Master-CM837357|2026|3|CAVIWIPES|0|8840": {
+      "q": 1
+    },
+    "Master-CM176172|2026|3|CAVIWIPES XL|0|6348": {
+      "q": 1
+    },
+    "Master-CM275112|2026|3|CAVIWIPES|0|14083": {
+      "q": 1
+    },
+    "Master-CM063963|2026|3|CAVIWIPES 2.0|0|3448": {
+      "q": 1
+    },
+    "Master-CM214584|2026|3|EMPOWER|0|6532": {
+      "q": 1
+    },
+    "Master-CM147453|2026|3|TEMPBOND CLEAR|0|13344": {
+      "q": 1
+    },
+    "Master-CM163175|2026|3|CAVIWIPES|0|5304": {
+      "q": 1
+    },
+    "Master-CM161270|2026|3|CAVIWIPES1|0|5856": {
+      "q": 1
+    },
+    "Master-CM1958620|2026|3|CAVIWIPES HP|0|-3624": {
+      "q": 1
+    },
+    "Master-CM116919|2026|3|CAVIWIPES|0|7050": {
+      "q": 1
+    },
+    "Master-CM257265|2026|3|TEMPBOND NE|0|9430": {
+      "q": 1
+    },
+    "Master-CM144359|2026|3|CAVIWIPES XL|0|4232": {
+      "q": 1
+    },
+    "Master-CM188417|2026|3|CAVICIDE|0|11178": {
+      "q": 1
+    },
+    "Master-CM188417|2026|3|CAVIWIPES|0|10608": {
+      "q": 1
+    },
+    "Master-CM252515|2026|3|CAVICIDE|0|4806": {
+      "q": 1
+    },
+    "Master-CM9816167|2026|3|CAVIWIPES1|0|11712": {
+      "q": 1
+    },
+    "Master-CM592452|2026|3|CAVIWIPES|0|1762": {
+      "q": 1
+    },
+    "Master-CM272273|2026|3|BREEZE RMGI|0|3750": {
+      "q": 1
+    },
+    "Master-CM308256|2026|3|CAVIWIPES|0|7042": {
+      "q": 1
+    },
+    "Master-CM945064|2026|3|CAVIWIPES|0|2652": {
+      "q": 1
+    },
+    "Master-CM1531975|2026|3|CAVIWIPES HP|0|9060": {
+      "q": 1
+    },
+    "Master-CM110241|2026|3|CAVIWIPES1|0|7808": {
+      "q": 1
+    },
+    "Master-CM061174|2026|3|CAVIWIPES1|0|3904": {
+      "q": 1
+    },
+    "Master-CM058442|2026|3|CAVICIDE|0|-11178": {
+      "q": 1
+    },
+    "Master-CM083565|2026|3|TEMPBOND|0|5491": {
+      "q": 1
+    },
+    "Master-CM921710|2026|3|CAVIWIPES1|0|5856": {
+      "q": 1
+    },
+    "Master-CM218449|2026|3|CAVICIDE|0|2403": {
+      "q": 1
+    },
+    "Master-CM234638|2026|3|CAVIWIPES|0|5304": {
+      "q": 1
+    },
+    "Master-CM870036|2026|3|TEMPBOND NE|0|9447": {
+      "q": 1
+    },
+    "Master-CM870036|2026|3|TEMPBOND CLEAR|0|6672": {
+      "q": 1
+    },
+    "Master-CM048930|2026|3|TEMPBOND NE|0|9447": {
+      "q": 1
+    },
+    "Master-CM9814196|2026|3|CAVIWIPES|0|7072": {
+      "q": 1
+    },
+    "Master-CM082764|2026|3|CAVIWIPES|0|7072": {
+      "q": 1
+    },
+    "Master-CM273846|2026|3|CAVIWIPES 2.0|0|6928": {
+      "q": 1
+    },
+    "Master-CM1232192|2026|3|TEMPBOND|0|18894": {
+      "q": 1
+    },
+    "Master-CM931642|2026|3|CAVIWIPES|0|3536": {
+      "q": 1
+    },
+    "Master-CM660520|2026|3|CAVIWIPES|0|5304": {
+      "q": 1
+    },
+    "Master-CM079804|2026|3|CAVIWIPES|0|3536": {
+      "q": 1
+    },
+    "Master-CM245022|2026|3|CAVIWIPES|0|1768": {
+      "q": 1
+    },
+    "Master-CM985772|2026|3|TEMPBOND|0|5100": {
+      "q": 1
+    },
+    "Master-CM255175|2026|3|CAVIWIPES|0|5304": {
+      "q": 1
+    },
+    "Master-CM215447|2026|3|CAVIWIPES HP|0|10872": {
+      "q": 1
+    },
+    "Master-CM067212|2026|3|CAVICIDE|0|11178": {
+      "q": 1
+    },
+    "Master-CM067210|2026|3|CAVIWIPES|0|8840": {
+      "q": 1
+    },
+    "Master-CM116954|2026|3|CAVICIDE|0|3677": {
+      "q": 1
+    },
+    "Master-CM116954|2026|3|CAVIWIPES|0|5287": {
+      "q": 1
+    },
+    "Master-CM138579|2026|3|CAVICIDE|0|3688": {
+      "q": 1
+    },
+    "Master-CM1606431|2026|3|CAVICIDE|0|2396": {
+      "q": 1
+    },
+    "Master-CM269300|2026|3|GEL ETCHANT|0|5109": {
+      "q": 1
+    },
+    "Master-CM17778130|2026|3|CAVIWIPES|0|5287": {
+      "q": 1
+    },
+    "Master-CM17786126|2026|3|CAVICIDE|0|2758": {
+      "q": 1
+    },
+    "Master-CM154641|2026|3|OPTIBOND SOLO PLUS|0|15370": {
+      "q": 1
+    },
+    "Master-CM17787511|2026|3|CAVIWIPES HP|0|5436": {
+      "q": 1
+    },
+    "Master-CM675765|2026|3|BREEZE RMGI|0|3750": {
+      "q": 1
+    },
+    "Master-CM17778236|2026|3|TEMPBOND|0|5491": {
+      "q": 1
+    },
+    "Master-CM17778236|2026|3|CAVIWIPES 2.0|0|2598": {
+      "q": 1
+    },
+    "Master-CM17779346|2026|3|CAVIWIPES|0|8840": {
+      "q": 1
+    },
+    "Master-CM1256103|2026|3|CAVIWIPES|0|13260": {
+      "q": 1
     }
   }
 }
