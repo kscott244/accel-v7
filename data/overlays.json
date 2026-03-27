@@ -163,6 +163,20 @@
       "score": 98,
       "createdAt": "2026-03-27T18:45:53.002Z",
       "updatedAt": "2026-03-27T18:45:53.002Z"
+    },
+    "Master-CM287919": {
+      "id": "Master-CM287919",
+      "name": "BARNUM DENTAL",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM287919",
+        "Master-CM1966508"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 98,
+      "createdAt": "2026-03-27T18:45:54.088Z",
+      "updatedAt": "2026-03-27T18:45:54.088Z"
     }
   },
   "groupMoves": {},
@@ -198,5 +212,5 @@
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-27T18:45:52.456Z"
+  "lastUpdated": "2026-03-27T18:45:53.521Z"
 }
