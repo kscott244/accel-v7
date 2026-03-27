@@ -331,6 +331,34 @@
       "score": 92,
       "createdAt": "2026-03-27T18:46:11.252Z",
       "updatedAt": "2026-03-27T18:46:11.252Z"
+    },
+    "Master-CM1908187": {
+      "id": "Master-CM1908187",
+      "name": "GOLD STAR FAMILY DENTISTRY",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM1908187",
+        "Master-CM17671886"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 92,
+      "createdAt": "2026-03-27T18:46:11.690Z",
+      "updatedAt": "2026-03-27T18:46:11.690Z"
+    },
+    "Master-CM225946": {
+      "id": "Master-CM225946",
+      "name": "KATE KIGURADZE",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM225946",
+        "Master-CM915216"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 92,
+      "createdAt": "2026-03-27T18:46:12.455Z",
+      "updatedAt": "2026-03-27T18:46:12.455Z"
     }
   },
   "groupMoves": {},
@@ -366,5 +394,5 @@
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-27T18:46:10.971Z"
+  "lastUpdated": "2026-03-27T18:46:12.253Z"
 }
