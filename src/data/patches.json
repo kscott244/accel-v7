@@ -1,88 +1,13 @@
 {
-  "_comment": "DEPRECATED \u2014 All data migrated to data/overlays.json (March 2026). This file is archived. Do not write to it. The save-patch API route has been removed.",
-  "_version": "1.0",
-  "_lastUpdated": "2026-03-22",
-  "group_creates": [
-    {
-      "id": "Master-RDP-001",
-      "name": "RESOLUTE DENTAL PARTNERS",
-      "tier": "Standard",
-      "class2": "Emerging DSO",
-      "dsoName": "Resolute Dental Partners",
-      "website": "https://resolutedentalpartners.com",
-      "note": "Dr. Toback CEO. Steve D Patterson account. ~$14K FY PY. Graniteville growing fast after lunch and learn.",
-      "childIds": [
-        "Master-CM17699391",
-        "Master-CM116929",
-        "Master-CM220635",
-        "Master-CM9814196",
-        "Master-CM1994205",
-        "Master-CM231113"
-      ]
-    }
-  ],
-  "group_detaches": [
-    {
-      "childId": "Master-CM300371",
-      "fromGroupId": "Master-CM048310",
-      "newGroupId": "Master-CM300371-standalone",
-      "newGroupName": "ASPEN DENTAL",
-      "reason": "Bad MDM parent assignment \u2014 Aspen Torrington incorrectly parented under Columbia Dental"
-    }
-  ],
-  "name_overrides": [
-    {
-      "id": "Master-CM116929",
-      "name": "WELLS STREET DENTISTRY",
-      "reason": "TRIS CARTA is wrong \u2014 Wells Street Dentistry, Westerly RI"
-    },
-    {
-      "id": "Master-CM17699391",
-      "name": "FLANDERS DENTAL STUDIO",
-      "reason": "CENTER FOR DENTAL EXCELLENCE is old name \u2014 now Flanders Dental Studio (Resolute)"
-    }
-  ],
-  "contact_overrides": [
-    {
-      "id": "Master-CM231113",
-      "contactName": "Brittany Burroughs",
-      "email": "bburroughs@coastalctdental.com",
-      "address": "112 Cross Rd, Waterford, CT 06385",
-      "note": "PM at Coastal Connecticut Dentistry \u2014 part of Resolute Dental Partners"
-    },
-    {
-      "id": "Master-CM116929",
-      "contactName": "Christine Lague",
-      "email": "clague@westerlydentists.com",
-      "address": "11 Wells Street, Westerly, RI",
-      "note": "PM at Wells Street Dentistry \u2014 part of Resolute Dental Partners"
-    },
-    {
-      "id": "Master-CM413476",
-      "contactName": "Dr. Sheikh M. Ilyas",
-      "email": "info@newenglanddentalllc.com",
-      "phone": "(203) 790-0111",
-      "contacts": [
-        {
-          "name": "Dr. Sheikh M. Ilyas",
-          "role": "Owner/DDS",
-          "email": "info@newenglanddentalllc.com",
-          "phone": "(203) 790-0111",
-          "tier": 1
-        },
-        {
-          "name": "Dr. Hamed Vaziri",
-          "role": "Associate Dentist",
-          "email": null,
-          "phone": "(203) 790-0111",
-          "tier": 2
-        }
-      ],
-      "website": "https://newenglanddentalllc.com",
-      "note": "Auto-saved from Deep Research 3/22/2026"
-    }
-  ],
-  "dealer_overrides": [],
-  "_deprecated": true,
-  "_migratedTo": "data/overlays.json"
+  "_status": "RETIRED",
+  "_comment": "All data migrated to data/overlays.json on 2026-03-27 (Phase A15.4). This file is no longer read by the app. Do not add data here.",
+  "_migratedAt": "2026-03-27",
+  "_migratedTo": "data/overlays.json",
+  "_what_was_migrated": {
+    "group_creates": "Resolute Dental Partners \u2192 overlays.groups[Master-RDP-001]",
+    "name_overrides": "CM116929, CM17699391 \u2192 overlays.nameOverrides",
+    "contact_overrides": "CM231113, CM116929, CM413476 \u2192 overlays.contacts",
+    "group_detaches": "CM300371 Aspen already handled via overlays.groupMoves \u2014 not re-migrated",
+    "dealer_overrides": "empty \u2014 nothing to migrate"
+  }
 }
