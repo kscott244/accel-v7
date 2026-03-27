@@ -37,6 +37,20 @@
       "score": 98,
       "createdAt": "2026-03-27T18:45:39.770Z",
       "updatedAt": "2026-03-27T18:45:39.770Z"
+    },
+    "Master-CM174643": {
+      "id": "Master-CM174643",
+      "name": "BRIAN CHARLES FOOTE DMD",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM174643",
+        "Master-CM1750847"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 92,
+      "createdAt": "2026-03-27T18:45:42.536Z",
+      "updatedAt": "2026-03-27T18:45:42.536Z"
     }
   },
   "groupMoves": {},
@@ -72,5 +86,5 @@
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-27T18:45:39.392Z"
+  "lastUpdated": "2026-03-27T18:45:42.039Z"
 }
