@@ -20,3 +20,4 @@ const nextConfig = {
   ],
 };
 module.exports = nextConfig;
+// A15.7 build trigger — 2026-03-27T01:39:33Z
