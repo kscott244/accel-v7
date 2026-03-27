@@ -233,6 +233,20 @@
       "score": 92,
       "createdAt": "2026-03-27T18:45:58.066Z",
       "updatedAt": "2026-03-27T18:45:58.066Z"
+    },
+    "Master-CM084372": {
+      "id": "Master-CM084372",
+      "name": "AMERICAN MOBILE DENTAL PC",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM084372",
+        "Master-CM120343"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 98,
+      "createdAt": "2026-03-27T18:45:58.946Z",
+      "updatedAt": "2026-03-27T18:45:58.946Z"
     }
   },
   "groupMoves": {},
@@ -268,5 +282,5 @@
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-27T18:45:57.510Z"
+  "lastUpdated": "2026-03-27T18:45:58.375Z"
 }
