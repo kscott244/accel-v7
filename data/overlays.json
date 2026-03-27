@@ -135,6 +135,20 @@
       "score": 92,
       "createdAt": "2026-03-27T18:45:50.741Z",
       "updatedAt": "2026-03-27T18:45:50.741Z"
+    },
+    "Master-CM086385": {
+      "id": "Master-CM086385",
+      "name": "AAROHI DENTAL",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM086385",
+        "Master-CM986961"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 92,
+      "createdAt": "2026-03-27T18:45:51.868Z",
+      "updatedAt": "2026-03-27T18:45:51.868Z"
     }
   },
   "groupMoves": {},
@@ -170,5 +184,5 @@
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-27T18:45:50.191Z"
+  "lastUpdated": "2026-03-27T18:45:51.352Z"
 }
