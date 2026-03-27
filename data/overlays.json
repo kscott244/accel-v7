@@ -27,11 +27,36 @@
   },
   "groupMoves": {},
   "nameOverrides": {},
-  "contacts": {},
+  "contacts": {
+    "Master-CM705315": {
+      "contactName": "Dr. Helene S. Strazza",
+      "phone": "(203) 323-5439",
+      "email": null,
+      "website": "https://www.allaboutkidsteeth.com",
+      "contacts": [
+        {
+          "name": "Dr. Helene S. Strazza",
+          "role": "Founder/Chief Dentist",
+          "email": null,
+          "phone": "(203) 323-5439",
+          "tier": 1
+        },
+        {
+          "name": "Dr. Megha Shah",
+          "role": "Managing Practice Director",
+          "email": null,
+          "phone": "(203) 323-5439",
+          "tier": 2
+        }
+      ],
+      "savedAt": "2026-03-27T16:54:30.637Z",
+      "practiceName": "DR. HELENE STRAZZA"
+    }
+  },
   "fscReps": {},
   "groupContacts": {},
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-27T16:54:33.406Z"
+  "lastUpdated": "2026-03-27T16:54:34.318Z"
 }
