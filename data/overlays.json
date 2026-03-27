@@ -60,11 +60,20 @@
         "email": "wakefield@capalbodentalgroup.com",
         "notes": "From AI research",
         "savedAt": "2026-03-27T22:54:33.352Z"
+      },
+      {
+        "id": 1774652074767,
+        "name": "Dr. Roy Shakun",
+        "role": "Owner/DMD – West Hartford Family Dental",
+        "phone": "(860) 233-0552",
+        "email": "",
+        "notes": "From AI research",
+        "savedAt": "2026-03-27T22:54:34.766Z"
       }
     ]
   },
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-27T22:54:34.156Z"
+  "lastUpdated": "2026-03-27T22:54:35.109Z"
 }
