@@ -5,6 +5,7 @@ import { T, Q1_TARGET, FY_TARGET, DAYS_LEFT, QUARTER_TARGETS, daysLeftInQuarter,
 import { normalizeTier, isAccelTier } from "@/lib/tier";
 import { $$, $f, pc } from "@/lib/format";
 import { Bar, Chev, AccountId, GroupBadge, fixGroupName } from "@/components/primitives";
+import NewAddsSection from "@/components/tabs/NewAddsSection";
 import { BADGER } from "@/lib/data";
 import { scorePriority, BUCKET_STYLE } from "@/lib/priority";
 
@@ -17,6 +18,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
   const [odNoteText, setOdNoteText] = useState("");
   const [tripAnchor, setTripAnchor] = useState<any>(null);
   const [deltaOpenState, setDeltaOpenState] = useState(true);
+  const [showNewAdds, setShowNewAdds] = useState(false);
 
   const saveDone = (id: string, outcome: string, amt: number, note?: string) => {
     const updated = {...odDone, [id]: {outcome, amt, ...(note ? {note} : {})}};
@@ -489,6 +491,19 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
 
     /* ── COMMAND CENTER ── */
     <div style={{padding:"0 16px"}}>
+
+      {/* ── NEW ADDS BANNER ── */}
+      <button onClick={()=>setShowNewAdds(!showNewAdds)} className="anim" style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",background:showNewAdds?"rgba(248,113,113,.06)":T.s1,border:`1px solid ${showNewAdds?"rgba(248,113,113,.2)":T.b1}`,borderRadius:12,padding:"10px 14px",marginBottom:12,cursor:"pointer",fontFamily:"inherit"}}>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <span style={{fontSize:16}}>🆕</span>
+          <div>
+            <div style={{fontSize:12,fontWeight:700,color:T.t1}}>New Adds · Q1 2026</div>
+            <div style={{fontSize:10,color:T.t3}}>67 accounts with new product purchases · <span style={{color:T.red,fontWeight:600}}>66 need follow-up</span></div>
+          </div>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{transform:showNewAdds?"rotate(90deg)":"none",transition:"transform .2s"}}><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+      {showNewAdds && <div style={{marginBottom:16}}><NewAddsSection groups={groups} goAcct={goAcct} goGroup={goGroup}/></div>}
 
       {/* ── WEEKLY DELTA ── */}
       {weeklyDelta && (weeklyDelta.reactivated.length > 0 || weeklyDelta.wentDark.length > 0 || weeklyDelta.bigMovers.length > 0) && (()=>{
