@@ -5,7 +5,7 @@ import { T } from "@/lib/tokens";
 import { $$, $f, pc } from "@/lib/format";
 import { getTierLabel } from "@/lib/tier";
 import { BADGER, OVERLAYS_REF } from "@/lib/data";
-import { Back, Chev, Pill, Stat, Bar, AccountId, fixGroupName } from "@/components/primitives";
+import { Back, Chev, Pill, Stat, Bar, AccountId, GroupBadge, fixGroupName } from "@/components/primitives";
 
 let SCHEIN_REPS: {fsc:any[], es:any[]} = {fsc:[], es:[]};
 try {

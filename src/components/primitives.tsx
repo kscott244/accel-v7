@@ -32,6 +32,21 @@ export const Stat = ({l,v,c}:{l:string,v:any,c:string}) => <div style={{backgrou
 export const Bar  = ({pct,color}:{pct:number,color?:string}) => <div style={{width:"100%",height:6,borderRadius:3,background:T.s3,overflow:"hidden"}}><div className="bar-g" style={{height:"100%",borderRadius:3,width:`${Math.min(Math.max(pct,0),100)}%`,background:color||`linear-gradient(90deg,${T.blue},${T.cyan})`}}/></div>;
 
 // ─── SHARED ACCOUNT IDENTITY ─────────────────────────────────────
+// Building icon SVG (14px, for group badges)
+const BuildingIcon = ({c}:{c:string}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" style={{flexShrink:0}}><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>;
+
+// Group affiliation badge — shows when parent group has 3+ children.
+// Tapping navigates to the parent group via goGroup(parentId).
+export const GroupBadge = ({gName,gId,locs,goGroup}:{gName?:string,gId?:string,locs?:number,goGroup?:(id:string)=>void}) => {
+  if (!gName || !locs || locs < 3) return null;
+  const label = cleanParentName(gName);
+  if (!label || BAD_GROUP_NAMES.has(label)) return null;
+  return <button onClick={e=>{e.stopPropagation();if(goGroup&&gId)goGroup(gId);}} style={{display:"inline-flex",alignItems:"center",gap:4,background:"rgba(167,139,250,.08)",border:"1px solid rgba(167,139,250,.18)",borderRadius:6,padding:"2px 7px",cursor:goGroup?"pointer":"default",fontFamily:"inherit"}}>
+    <BuildingIcon c={T.purple}/>
+    <span style={{fontSize:10,color:T.t4,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:140}}>{label} · {locs} locs</span>
+  </button>;
+};
+
 export const AccountId = ({name,gName,size="md",color,locs}:{name:string,gName?:string,size?:"sm"|"md"|"lg",color?:string,locs?:number}) => {
   const showParent = gName && gName !== name && gName.toLowerCase() !== name.toLowerCase();
   const fs = size==="sm"?11:size==="lg"?15:12;

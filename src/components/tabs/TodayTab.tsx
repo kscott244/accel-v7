@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { T, Q1_TARGET, FY_TARGET, DAYS_LEFT, QUARTER_TARGETS, daysLeftInQuarter, HOME_LAT, HOME_LNG } from "@/lib/tokens";
 import { normalizeTier, isAccelTier } from "@/lib/tier";
 import { $$, $f, pc } from "@/lib/format";
-import { Bar, Chev, AccountId, fixGroupName } from "@/components/primitives";
+import { Bar, Chev, AccountId, GroupBadge, fixGroupName } from "@/components/primitives";
 import { BADGER } from "@/lib/data";
 import { scorePriority, BUCKET_STYLE } from "@/lib/priority";
 
@@ -481,6 +481,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
             <div><span style={{fontSize:9,textTransform:"uppercase",color:T.t3}}>PY </span><span className="m" style={{fontSize:12,fontWeight:700,color:T.t2}}>{$$(py)}</span></div>
             <div><span style={{fontSize:9,textTransform:"uppercase",color:T.t3}}>CY </span><span className="m" style={{fontSize:12,fontWeight:700,color:T.blue}}>{$$(cy)}</span></div>
             {a.score>0&&<span className="m" style={{fontSize:9,fontWeight:700,color:a.score>=50?T.red:T.amber,background:a.score>=50?"rgba(248,113,113,.08)":"rgba(251,191,36,.08)",borderRadius:4,padding:"2px 6px"}}>{a.score}pt</span>}
+            <div style={{marginLeft:"auto"}}><GroupBadge gName={a.gName} gId={a.gId} locs={groupLocsMap[a.gId]} goGroup={(id)=>goGroup((groups||[]).find(g=>g.id===id))}/></div>
           </div>
         </button>;
       })}
