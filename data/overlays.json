@@ -359,6 +359,20 @@
       "score": 92,
       "createdAt": "2026-03-27T18:46:12.455Z",
       "updatedAt": "2026-03-27T18:46:12.455Z"
+    },
+    "Master-CM213843": {
+      "id": "Master-CM213843",
+      "name": "PERIDONTAL ASSOCIATES",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM213843",
+        "Master-CM1371514"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 92,
+      "createdAt": "2026-03-27T18:46:15.274Z",
+      "updatedAt": "2026-03-27T18:46:15.274Z"
     }
   },
   "groupMoves": {},
@@ -394,5 +408,5 @@
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-27T18:46:12.253Z"
+  "lastUpdated": "2026-03-27T18:46:14.736Z"
 }
