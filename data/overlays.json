@@ -205,6 +205,34 @@
       "score": 98,
       "createdAt": "2026-03-27T18:45:56.098Z",
       "updatedAt": "2026-03-27T18:45:56.098Z"
+    },
+    "Master-CM1238996": {
+      "id": "Master-CM1238996",
+      "name": "STONY POINT DENTAL PC",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM1238996",
+        "Master-CM247393"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 92,
+      "createdAt": "2026-03-27T18:45:56.871Z",
+      "updatedAt": "2026-03-27T18:45:56.871Z"
+    },
+    "Master-CM948766": {
+      "id": "Master-CM948766",
+      "name": "JONATHAN R TIGER",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM948766",
+        "Master-CM189754"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 92,
+      "createdAt": "2026-03-27T18:45:58.066Z",
+      "updatedAt": "2026-03-27T18:45:58.066Z"
     }
   },
   "groupMoves": {},
@@ -240,5 +268,5 @@
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-27T18:45:55.536Z"
+  "lastUpdated": "2026-03-27T18:45:57.510Z"
 }
