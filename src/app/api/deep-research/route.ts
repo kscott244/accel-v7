@@ -137,7 +137,34 @@ Return ONLY valid JSON, no markdown, no preamble.`;
 
     const data = await response.json();
     if (!response.ok) {
-      return NextResponse.json({ error: `Anthropic ${response.status}: ${data?.error?.message}` }, { status: 502 });
+      const errMsg: string = data?.error?.message || "";
+      const errType: string = data?.error?.type || "";
+      const httpStatus: number = response.status;
+      // Detect quota / billing / usage-limit failures explicitly
+      const isQuotaError =
+        httpStatus === 429 ||
+        errType === "rate_limit_error" ||
+        errType === "overloaded_error" ||
+        errMsg.toLowerCase().includes("usage limit") ||
+        errMsg.toLowerCase().includes("credit balance") ||
+        errMsg.toLowerCase().includes("billing") ||
+        errMsg.toLowerCase().includes("quota") ||
+        errMsg.toLowerCase().includes("usage_limit_reached");
+      if (isQuotaError) {
+        return NextResponse.json({
+          error: "provider_quota",
+          errorCode: "PROVIDER_QUOTA",
+          userMessage: "Research is temporarily unavailable — the AI provider key has hit its usage limit. Add credits at console.anthropic.com, then retry.",
+          httpStatus,
+        }, { status: 503 });
+      }
+      // All other provider errors — structured, no raw message leak
+      return NextResponse.json({
+        error: "provider_error",
+        errorCode: "PROVIDER_ERROR",
+        userMessage: "Research is temporarily unavailable. The AI provider returned an error.",
+        httpStatus,
+      }, { status: 502 });
     }
 
     const textBlocks = (data?.content || []).filter((b: any) => b.type === "text");
@@ -175,30 +202,7 @@ Return ONLY valid JSON, no markdown, no preamble.`;
         intel.talkingPoints = intel.callPrep;
       }
 
-      // Auto-save to patches.json if we have an account ID and found contacts
-      const GITHUB_PAT = process.env.GITHUB_PAT;
-      if (GITHUB_PAT && acctId && intel.contacts?.length) {
-        try {
-          // Fire and forget — don't block the response
-          const baseUrl = req.nextUrl.origin;
-          fetch(`${baseUrl}/api/save-patch`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              action: "contact_override",
-              payload: {
-                id: acctId,
-                contactName: intel.contacts[0]?.name || intel.contactName || null,
-                email: intel.contacts[0]?.email || intel.email || null,
-                phone: intel.contacts[0]?.phone || intel.phone || null,
-                contacts: intel.contacts,
-                website: intel.website || null,
-                note: `Auto-saved from Deep Research ${new Date().toLocaleDateString()}`,
-              }
-            })
-          }).catch(() => {}); // silent fail — don't break research if save fails
-        } catch {}
-      }
+      // (save-patch removed — route was deprecated in Phase 2)
 
     } catch {
       intel = { rawText, parseError: true };
