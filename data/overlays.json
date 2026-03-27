@@ -3,64 +3,11 @@
   "groups": {},
   "groupMoves": {},
   "nameOverrides": {},
-  "contacts": {
-    "Master-CM413476": {
-      "contactName": "Dr. Sheikh M. Ilyas",
-      "email": "info@newenglanddentalllc.com",
-      "phone": "(203) 790-0111",
-      "website": "https://newenglanddentalllc.com",
-      "contacts": [
-        {
-          "name": "Dr. Sheikh M. Ilyas",
-          "role": "Owner/DDS",
-          "email": "info@newenglanddentalllc.com",
-          "phone": "(203) 790-0111",
-          "tier": 1
-        },
-        {
-          "name": "Dr. Hamed Vaziri",
-          "role": "Associate Dentist",
-          "email": null,
-          "phone": "(203) 790-0111",
-          "tier": 2
-        }
-      ],
-      "researchedAt": "2026-03-22T00:00:00.000Z",
-      "researchNote": "Recovered from patches.json \u2014 Deep Research 3/22/2026"
-    },
-    "Master-CM231113": {
-      "contactName": "Brittany Burroughs",
-      "email": "bburroughs@coastalctdental.com",
-      "contacts": [
-        {
-          "name": "Brittany Burroughs",
-          "role": "Practice Manager",
-          "email": "bburroughs@coastalctdental.com",
-          "phone": "",
-          "tier": 2
-        }
-      ],
-      "researchNote": "Recovered \u2014 PM at Coastal Connecticut Dentistry (Resolute)"
-    },
-    "Master-CM116929": {
-      "contactName": "Christine Lague",
-      "email": "clague@westerlydentists.com",
-      "contacts": [
-        {
-          "name": "Christine Lague",
-          "role": "Practice Manager",
-          "email": "clague@westerlydentists.com",
-          "phone": "",
-          "tier": 2
-        }
-      ],
-      "researchNote": "Recovered \u2014 PM at Wells Street Dentistry (Resolute)"
-    }
-  },
+  "contacts": {},
   "fscReps": {},
   "groupContacts": {},
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-27T00:00:00.000Z"
+  "lastUpdated": "2026-03-27T05:15:09.437Z"
 }
