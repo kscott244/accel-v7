@@ -421,7 +421,7 @@ function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:a
 
       {/* Sub-nav */}
       <div style={{display:"flex",gap:3,marginBottom:14,background:T.s1,borderRadius:10,padding:3}}>
-        {([["auto",`Auto (${(CPID_MERGES as any[]).filter(p=>!Object.keys(OVERLAYS_REF.groups||{}).includes(p.id)&&!skippedMergeIds[p.id]).length})`],["review",`Review (${(CPID_REVIEW as any[]).length})`],["live","Live Scan"]] as [string,string][]).map(([k,label])=>(
+        {([["auto",`Auto (${(CPID_MERGES as any[]).filter(p=>!Object.keys(OVERLAYS_REF.groups||{}).includes(p.id)&&!skippedMergeIds[p.id]).length})`],["review",`Review (${(CPID_REVIEW as any[]).filter((p:any)=>!Object.keys(OVERLAYS_REF.groups||{}).includes(p.groupA.id)&&!skippedMergeIds[p.groupA.id]).length})`],["live","Live Scan"]] as [string,string][]).map(([k,label])=>(
           <button key={k} onClick={()=>{setDupesView(k as any);setReviewPage(0);}} style={{flex:1,padding:"6px 4px",borderRadius:8,border:"none",background:dupesView===k?"rgba(79,142,247,.2)":"transparent",color:dupesView===k?T.blue:T.t3,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>{label}</button>
         ))}
       </div>
