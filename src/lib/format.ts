@@ -32,6 +32,12 @@ export function scoreAccount(
   const d = a.last || 999;
   const qLabel = `Q${q}`;
 
+  // Minimum revenue floor — accounts under $1000 PY are not worth prioritizing
+  // when there is a $150K gap to close. Cap their score so they sink to the bottom.
+  if (py < 1000) {
+    return { score: Math.min(s, 4), reasons: [{ label: "Low value (<$1K PY)", pts: 0 }], gap, ret, d, py, cy };
+  }
+
   if (gap > 8000) { s += 30; r.push({ label: `Large gap: ${$$(gap)}`, pts: 30 }); }
   else if (gap > 4000) { s += 20; r.push({ label: `Gap: ${$$(gap)}`, pts: 20 }); }
   else if (gap > 2000) { s += 10; r.push({ label: `Gap: ${$$(gap)}`, pts: 10 }); }
