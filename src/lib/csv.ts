@@ -108,6 +108,11 @@ const HEADER_ALIASES: Record<string, string> = {
   "addr":                 "Addr",
   "address":              "Addr",
   "street":               "Addr",
+  "zip":                  "Zip",
+  "zip code":             "Zip",
+  "zipcode":              "Zip",
+  "postal code":          "Zip",
+  "postalcode":           "Zip",
 };
 
 // Build a lookup from raw header → canonical name.
@@ -362,6 +367,7 @@ export function processCSVData(
         city:     row["City"]            || "",
         st:       row["State"]           || "",
         addr:     row["Addr"]            || "",
+        zip:      row["Zip"]             || "",
         tier:     normalizeTier(row["Acct Type"]),
         top100:   isTop100(row["Acct Type"]),
         class2:   row["Sds Cust Class2"] || "",
@@ -423,6 +429,7 @@ export function processCSVData(
         city:     ci.city,
         st:       ci.st,
         addr:     ci.addr   || "",
+        zip:      ci.zip    || "",
         tier:     ci.tier   || "Standard",
         top100:   ci.top100 || false,
         class2:   ci.class2 || "",
