@@ -23,6 +23,20 @@
       "source": "manual-merge",
       "createdAt": "2026-03-27T05:36:10Z",
       "updatedAt": "2026-03-27T05:36:10Z"
+    },
+    "Master-CM175757": {
+      "id": "Master-CM175757",
+      "name": "ABRA DENTAL",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM491938",
+        "Master-CM17672868"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 98,
+      "createdAt": "2026-03-27T18:45:39.770Z",
+      "updatedAt": "2026-03-27T18:45:39.770Z"
     }
   },
   "groupMoves": {},
@@ -58,5 +72,5 @@
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-27T18:40:13.386Z"
+  "lastUpdated": "2026-03-27T18:45:39.392Z"
 }
