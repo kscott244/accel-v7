@@ -78,11 +78,20 @@
         "email": "",
         "notes": "From AI research",
         "savedAt": "2026-03-27T22:54:36.108Z"
+      },
+      {
+        "id": 1774652077658,
+        "name": "Dr. Marcus Capalbo",
+        "role": "Associate Owner/DMD – Capalbo Dental Group",
+        "phone": "(401) 295-1992",
+        "email": "",
+        "notes": "From AI research",
+        "savedAt": "2026-03-27T22:54:37.655Z"
       }
     ]
   },
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-27T22:54:36.407Z"
+  "lastUpdated": "2026-03-27T22:54:37.932Z"
 }
