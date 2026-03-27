@@ -69,11 +69,20 @@
         "email": "",
         "notes": "From AI research",
         "savedAt": "2026-03-27T22:54:34.766Z"
+      },
+      {
+        "id": 1774652076110,
+        "name": "Dr. Matthew Capalbo",
+        "role": "Associate Owner/DMD – Capalbo Dental Group",
+        "phone": "(401) 789-6118",
+        "email": "",
+        "notes": "From AI research",
+        "savedAt": "2026-03-27T22:54:36.108Z"
       }
     ]
   },
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-27T22:54:35.109Z"
+  "lastUpdated": "2026-03-27T22:54:36.407Z"
 }
