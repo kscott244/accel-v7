@@ -25,8 +25,14 @@ try {
   };
 } catch(e) {}
 
-const SCOPE_LABELS = ["Owner / Lead Dr","Office-level","Group / Regional","Coordinator"];
-const SCOPE_COLORS_KEYS = ["cyan","t3","purple","t4"];
+const SCOPE_LABELS = ["Decision Maker","Practice Manager","Regional / DSO","Coordinator"];
+const SCOPE_COLORS_KEYS = ["cyan","blue","purple","t4"];
+const STATUS_PILL: Record<string,{label:string,color:string}> = {
+  open:    {label:"Open",    color:"#34d399"},
+  closed:  {label:"Closed",  color:"#f87171"},
+  changed: {label:"Changed", color:"#fbbf24"},
+  unknown: {label:"Unknown", color:"#7878a0"},
+};
 
 function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesStore=null}) {
   const [q,setQ]=useState("1");
@@ -459,7 +465,9 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
       }
       const intelResult = {
         status: intel.statusNote || intel.status || "Practice found.",
+        statusPill: (intel.status as string) || "unknown",
         ownership: intel.ownershipNote || "",
+        competitive: intel.competitive || "",
         website: intel.website || "",
         contacts: (intel.contacts||[]).map((c:any) => ({
           name: c.name,
@@ -591,10 +599,11 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
 
   const saveResNotes = () => {
     if (!resResult) return;
-    const hooks = (resResult.hooks||[]).join("; ");
-    const pts = (resResult.talkingPoints||[]).join("; ");
-    const intel = "[AI Intel] " + hooks + (pts ? " | " + pts : "");
-    const newNote = groupNote ? groupNote + "\n\n" + intel : intel;
+    const pts = (resResult.talkingPoints||[]).map((p:string,i:number) => `${i+1}. ${p}`).join("\n");
+    const hooks = (resResult.hooks||[]).map((h:string) => `· ${h}`).join("\n");
+    const comp = resResult.competitive ? `\nCompetitive: ${resResult.competitive}` : "";
+    const lines = ["[AI Call Prep]", pts, hooks ? "\nAlso:\n"+hooks : "", comp].filter(Boolean).join("\n");
+    const newNote = groupNote ? groupNote + "\n\n" + lines : lines;
     saveNote(newNote);
   };
 
@@ -951,20 +960,33 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
       </div>
 
 
-      {/* GROUP AI INTEL (A15) */}
+      {/* GROUP AI INTEL (A16.1) */}
       {(resLoading || (resResult && !resDismissed)) && <div className="anim" style={{background:T.s1,border:"1px solid rgba(34,211,238,.2)",borderRadius:16,padding:16,marginBottom:16}}>
+        {/* Header row */}
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan}}>Group Intel</div>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan}}>Group Intel</div>
+            {resResult&&resResult.statusPill&&!resLoading&&(()=>{const sp=STATUS_PILL[resResult.statusPill]||STATUS_PILL.unknown;return<span style={{fontSize:9,fontWeight:700,color:sp.color,background:sp.color+"20",borderRadius:4,padding:"2px 7px"}}>{sp.label}</span>;})()}
+          </div>
           {!resLoading&&<button onClick={()=>setResDismissed(true)} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:16,lineHeight:1,padding:"0 4px",fontFamily:"inherit"}}>x</button>}
         </div>
+        {/* Loading skeleton */}
         {resLoading && <div style={{display:"flex",flexDirection:"column",gap:8}}>
           {[80,60,90].map((w,i)=>(
             <div key={i} style={{height:12,borderRadius:6,background:T.s3,width:w+"%",opacity:.6}}/>
           ))}
         </div>}
         {resResult && !resLoading && <>
-          {resResult.status&&<div style={{fontSize:12,color:T.t2,lineHeight:1.5,marginBottom:10}}>{resResult.status}</div>}
-          {resResult.ownership&&<div style={{fontSize:11,color:T.t3,marginBottom:10,fontStyle:"italic"}}>{resResult.ownership}</div>}
+          {/* Status note */}
+          {resResult.status&&<div style={{fontSize:12,color:T.t2,lineHeight:1.5,marginBottom:8}}>{resResult.status}</div>}
+          {/* Ownership note */}
+          {resResult.ownership&&<div style={{fontSize:11,color:T.t3,marginBottom:8,fontStyle:"italic"}}>{resResult.ownership}</div>}
+          {/* Competitive intel — high-value signal */}
+          {resResult.competitive&&<div style={{padding:"7px 10px",background:"rgba(251,191,36,.06)",border:"1px solid rgba(251,191,36,.15)",borderRadius:8,marginBottom:10}}>
+            <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",color:T.amber,letterSpacing:"1px",marginBottom:3}}>Competitive Signal</div>
+            <div style={{fontSize:11,color:T.t2,lineHeight:1.5}}>{resResult.competitive}</div>
+          </div>}
+          {/* Website */}
           {resResult.website&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,padding:"8px 10px",background:T.s2,borderRadius:8}}>
             <span style={{fontSize:11,color:T.blue,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{resResult.website}</span>
             <button onClick={saveResWebsite} disabled={resWebsiteSaved}
@@ -972,21 +994,25 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
               {resWebsiteSaved ? "Saved" : "Save"}
             </button>
           </div>}
+          {/* Contacts — with inline call/email actions */}
           {(resResult.contacts||[]).length>0&&<div style={{marginBottom:10}}>
             <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",color:T.t4,letterSpacing:"1px",marginBottom:6}}>Contacts Found</div>
             {(resResult.contacts||[]).map((c:any,i:number)=>{
               const sl = SCOPE_LABELS[(c.scope||1)-1] || SCOPE_LABELS[0];
               const sc = T[SCOPE_COLORS_KEYS[(c.scope||1)-1]] || T.t4;
               const isSaved = savedResContacts.has(i);
-              return <div key={i} style={{padding:"8px 10px",background:T.s2,borderRadius:8,marginBottom:6}}>
+              const isTopContact = (c.scope||1) === 1;
+              return <div key={i} style={{padding:"9px 10px",background:isTopContact?"rgba(34,211,238,.04)":T.s2,borderRadius:8,marginBottom:6,border:isTopContact?"1px solid rgba(34,211,238,.15)":"1px solid transparent"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:12,fontWeight:700,color:T.t1}}>{c.name||"Unknown"}</div>
-                    {c.role&&<div style={{fontSize:10,color:T.t3,marginTop:1}}>{c.role}</div>}
-                    <span style={{fontSize:9,fontWeight:700,color:sc,background:sc+"18",borderRadius:4,padding:"1px 5px",display:"inline-block",marginTop:3}}>{sl}</span>
-                    <div style={{display:"flex",gap:8,marginTop:4,flexWrap:"wrap"}}>
-                      {c.phone&&<span style={{fontSize:10,color:T.cyan}}>{c.phone}</span>}
-                      {c.email&&<span style={{fontSize:10,color:T.blue}}>{c.email}</span>}
+                    <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:1}}>
+                      <div style={{fontSize:12,fontWeight:700,color:T.t1}}>{c.name||"Unknown"}</div>
+                      <span style={{fontSize:9,fontWeight:700,color:sc,background:sc+"18",borderRadius:4,padding:"1px 5px",flexShrink:0}}>{sl}</span>
+                    </div>
+                    {c.role&&<div style={{fontSize:10,color:T.t3,marginBottom:3}}>{c.role}</div>}
+                    <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+                      {c.phone&&<a href={`tel:${c.phone.replace(/\D/g,"")}`} style={{fontSize:10,color:T.cyan,textDecoration:"none",display:"flex",alignItems:"center",gap:3}}>📞 {c.phone}</a>}
+                      {c.email&&<a href={`mailto:${c.email}`} style={{fontSize:10,color:T.blue,textDecoration:"none",display:"flex",alignItems:"center",gap:3}}>✉ {c.email}</a>}
                     </div>
                   </div>
                   <button onClick={()=>saveResContact(c,i)} disabled={isSaved}
@@ -997,29 +1023,33 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
               </div>;
             })}
           </div>}
-          {(resResult.hooks||[]).length>0&&<div style={{marginBottom:10}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-              <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",color:T.t4,letterSpacing:"1px"}}>Hooks</div>
-              <button onClick={saveResNotes} style={{background:"rgba(251,191,36,.08)",border:"1px solid rgba(251,191,36,.2)",borderRadius:5,padding:"1px 7px",fontSize:9,fontWeight:700,color:T.amber,cursor:"pointer",fontFamily:"inherit"}}>+ Notes</button>
+          {/* Call Prep — merged hooks + talking points into single prioritized list */}
+          {((resResult.talkingPoints||[]).length>0||(resResult.hooks||[]).length>0)&&<div style={{marginBottom:4}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+              <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",color:T.t4,letterSpacing:"1px"}}>Call Prep</div>
+              <button onClick={saveResNotes} style={{background:"rgba(251,191,36,.08)",border:"1px solid rgba(251,191,36,.2)",borderRadius:5,padding:"1px 7px",fontSize:9,fontWeight:700,color:T.amber,cursor:"pointer",fontFamily:"inherit"}}>+ Add to Notes</button>
             </div>
-            {(resResult.hooks||[]).map((h:string,i:number)=>(
-              <div key={i} style={{fontSize:11,color:T.t2,lineHeight:1.5,display:"flex",gap:6,alignItems:"flex-start",marginBottom:4}}>
-                <span style={{color:T.t4,flexShrink:0}}>-</span><span>{h}</span>
-              </div>
-            ))}
-          </div>}
-          {(resResult.talkingPoints||[]).length>0&&<div>
-            <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",color:T.t4,letterSpacing:"1px",marginBottom:6}}>Talking Points</div>
+            {/* Talking points first — these are the highest-value callPrep items */}
             {(resResult.talkingPoints||[]).map((tp:string,i:number)=>(
-              <div key={i} style={{fontSize:11,color:T.t2,lineHeight:1.5,display:"flex",gap:6,alignItems:"flex-start",marginBottom:4}}>
-                <span style={{color:T.blue,flexShrink:0}}>{i+1}.</span><span>{tp}</span>
+              <div key={"tp-"+i} style={{fontSize:11,color:T.t1,lineHeight:1.5,display:"flex",gap:8,alignItems:"flex-start",marginBottom:6,padding:"7px 10px",background:T.s2,borderRadius:8}}>
+                <span style={{color:T.cyan,flexShrink:0,fontWeight:700,fontSize:10,marginTop:1}}>{i+1}</span>
+                <span>{tp}</span>
               </div>
             ))}
+            {/* Hooks after — softer signals */}
+            {(resResult.hooks||[]).length>0&&<>
+              {(resResult.talkingPoints||[]).length>0&&<div style={{fontSize:9,color:T.t4,textTransform:"uppercase",letterSpacing:"1px",marginTop:8,marginBottom:4}}>Also worth mentioning</div>}
+              {(resResult.hooks||[]).map((h:string,i:number)=>(
+                <div key={"h-"+i} style={{fontSize:11,color:T.t3,lineHeight:1.5,display:"flex",gap:6,alignItems:"flex-start",marginBottom:4}}>
+                  <span style={{color:T.t4,flexShrink:0}}>·</span><span>{h}</span>
+                </div>
+              ))}
+            </>}
           </div>}
         </>}
       </div>}
 
-      {/* SUGGESTED MERGES FROM RESEARCH */}
+            {/* SUGGESTED MERGES FROM RESEARCH */}
       {(mergeMatchLoading || suggestedMerges.filter(m=>!dismissedSuggestions.has(m.id)).length > 0) && <div className="anim" style={{background:T.s1,border:`1px solid rgba(167,139,250,.25)`,borderRadius:16,padding:16,marginBottom:16}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
           <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.purple}}>🔗 Suggested Merges</div>
@@ -1574,6 +1604,7 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
 
 
 export default GroupDetail;
+
 
 
 
