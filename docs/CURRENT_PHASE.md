@@ -1,5 +1,25 @@
 # CURRENT PHASE -- accel-v7
 
+## Active: Phase A16.2 -- Build Fix: save-overlay regex corruption COMPLETE
+
+### What Was Done
+The build had been broken since commit `a50e7e4` (tiered model / auto-save research).
+Root cause: `save-overlay/route.ts` line 68 had a literal newline inside a regex literal:
+  `Buffer.from(fileData.content.replace(/↵/g, ""), "base64")`
+SWC (Next.js Rust compiler) rejects literal newlines in regex — it reads the `/` as
+an unterminated regexp. The `\n` escape had been corrupted to a real newline.
+
+**Fix**: Single-line patch restoring `replace(/\n/g, "")` on line 68.
+Brace/paren delta = 0. Committed `083d3f4f77`, HTTP 200, `OVERLAY_WIPE_PREVENTED`
+confirmed in live bundle.
+
+**Note**: Commits `a50e7e4`, `a5a2d76` (tiered model, auto-save research) are in
+master but were never live. Their features (Haiku/Sonnet model selection by score,
+max_uses:2 guard, auto-save research to overlays) need verification in the next phase.
+
+---
+
+
 ## Active: Phase A16.1 -- AI Intel Stabilization / Operator Value Upgrade COMPLETE
 
 ### Baseline
