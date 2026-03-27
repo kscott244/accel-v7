@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 
     const practiceLabel = gName && gName !== name ? `${name} (part of ${gName})` : name;
     const location = [address, city, state].filter(Boolean).join(", ");
-    
+
     // Determine account type for contact hierarchy guidance
     const isDSO = ownership === "dso" || ownership === "emerging_dso";
     const accountType = isDSO ? "DSO/group practice" : "private practice";
@@ -47,8 +47,9 @@ export async function POST(req: NextRequest) {
     const systemPrompt = `You are a dental industry intelligence analyst helping a Kerr dental sales rep prepare for a sales call.
 Your job is to research a dental practice and return structured, actionable intelligence.
 Be concise and direct. Sales reps read this on a phone screen between calls.
-Focus on things that help them sell and build relationships.
-Always search the web before answering. If you cannot find specific information, say so briefly rather than guessing.`;
+Focus on things that help them sell and build relationships — real signals, not generic advice.
+Always search the web before answering. If you cannot find specific information, say so briefly rather than guessing.
+Prioritize recency: a practice that recently expanded, changed ownership, or added services is a hot opportunity.`;
 
     const userPrompt = `Research this dental practice for a sales call:
 
@@ -65,24 +66,24 @@ IMPORTANT: The group name may be a distributor label, not the real practice name
 
 Search the web and find:
 
-1. PRACTICE STATUS — Still open? Recent changes — sold, acquired, moved, rebranded, expanded?
+1. PRACTICE STATUS — Still open? Any recent changes: sold, acquired, moved, rebranded, expanded, new locations?
 
-2. CONTACTS — Find the most important contacts for a dental sales rep. Focus on:
-   - For PRIVATE PRACTICES: The owner/doctor (name + email if findable), office manager or practice manager
-   - For DSOs/GROUP PRACTICES: Regional manager or director, practice manager, and the lead doctor if findable
-   - Skip hygienists, assistants, and front desk unless they're named as a key contact
-   - Maximum 4 contacts. Only include contacts you actually found, not guesses.
+2. CONTACTS — Find the most important contacts for a dental sales rep. Priority order:
+   - For PRIVATE PRACTICES: Owner/doctor first (name + title + email if findable), then office manager or practice manager
+   - For DSOs/GROUP PRACTICES: Regional director or ops manager first, then the lead/owner doctor if findable
+   - Skip hygienists, assistants, and front desk unless they are named as a key decision-maker
+   - Maximum 4 contacts. Only include contacts you actually found — no guesses.
 
-3. DSO / OWNERSHIP — Independent or group? Recent acquisition signs?
+3. DSO / OWNERSHIP — Independent, group, or DSO? Any acquisition signs? Who owns this practice?
 
-4. RELATIONSHIP HOOKS — New services, awards, CE courses, community involvement, recent reviews?
+4. COMPETITIVE INTEL — Does this practice mention other dental supply brands (Dentsply, 3M, Ivoclar, DENTSPLY Sirona, Envista, Ultradent, Hu-Friedy)? Any clues about who else is calling on them? Anything suggesting loyalty to a competitor or openness to switching? Mention specific brands if found.
 
-5. TALKING POINTS — 2-3 specific non-generic things Ken Scott (the rep) could mention when he walks in.
+5. CALL PREP — Give 3-4 highly specific, non-generic things Ken Scott (the Kerr rep) could say or ask when walking in. These should be things a rep could actually use in the first 60 seconds of a visit — not generic sales advice. Think: recent news the doc would care about, specific equipment or procedures they seem to use, a recognition or event worth mentioning, an expansion or new service that opens a Kerr product conversation. Each point should be a complete sentence Ken could reference.
 
 Return ONLY valid JSON with these exact keys:
 {
   "status": "open|closed|unknown|changed",
-  "statusNote": "one sentence",
+  "statusNote": "one sentence — include any recent change if status is changed",
   "website": "url or null",
   "phone": "number or null",
   "email": "primary email or null",
@@ -98,8 +99,9 @@ Return ONLY valid JSON with these exact keys:
   ],
   "ownership": "independent|dso|emerging_dso|unknown",
   "ownershipNote": "one sentence",
+  "competitive": "one sentence on competitive signals with specific brand names, or null if nothing found",
+  "callPrep": ["specific prep point 1", "specific prep point 2", "specific prep point 3"],
   "hooks": ["hook1", "hook2"],
-  "competitive": "one sentence or null",
   "talkingPoints": ["point1", "point2", "point3"],
   "locations": [
     {"name": "Practice Name", "address": "123 Main St", "city": "City", "state": "ST", "zip": "00000"}
@@ -107,7 +109,11 @@ Return ONLY valid JSON with these exact keys:
   "searchedAt": "${new Date().toISOString()}"
 }
 
-For the "locations" array: List ALL physical locations you find for this practice/group — include name, address, city, state, zip for each. If only one location exists, still include it. This is critical for multi-location groups. If you cannot find an address, include the name and city at minimum.
+For the "callPrep" array: these are the MOST important things. Each should be a complete sentence Ken could actually use or reference. Prioritize recency and specificity. Generic points like "ask about their supply needs" are useless — skip them entirely.
+
+For the "hooks" array: interesting signals about the practice — awards, community involvement, growth signs, recent reviews, CE courses the doctor is taking. These are lighter conversation starters.
+
+For the "locations" array: List ALL physical locations you find for this practice/group — include name, address, city, state, zip for each. If only one location exists, still include it. Critical for multi-location groups.
 
 For the contacts array: tier 1=owner/primary doctor, tier 2=associate doctor/practice manager, tier 3=regional/ops manager, tier 4=coordinator/front office lead. Only include contacts you actually found with real names.
 Return ONLY valid JSON, no markdown, no preamble.`;
@@ -163,6 +169,12 @@ Return ONLY valid JSON, no markdown, no preamble.`;
           .slice(0, 4); // max 4 contacts
       }
 
+      // Merge callPrep into talkingPoints — callPrep is the newer, higher-quality field.
+      // Keep talkingPoints as fallback so old cached results still render correctly.
+      if (intel.callPrep?.length) {
+        intel.talkingPoints = intel.callPrep;
+      }
+
       // Auto-save to patches.json if we have an account ID and found contacts
       const GITHUB_PAT = process.env.GITHUB_PAT;
       if (GITHUB_PAT && acctId && intel.contacts?.length) {
@@ -197,4 +209,3 @@ Return ONLY valid JSON, no markdown, no preamble.`;
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }
-
