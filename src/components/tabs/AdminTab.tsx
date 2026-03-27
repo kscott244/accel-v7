@@ -11,6 +11,7 @@ import CPID_REVIEW from "@/data/cpid-review-queue.json";
 
 import { BADGER, OVERLAYS_REF } from "@/lib/data";
 import { AccountId } from "@/components/primitives";
+import { validateGroupChildIds } from "@/lib/overlayIntegrity";
 
 function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:any[], scored:any[], overlays:any, saveOverlays:any, salesStore?:any}) {
   const [section, setSection] = useState<string>("groups"); // groups | detach | names | contacts
@@ -261,6 +262,15 @@ function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:a
           if(!newGroupName.trim()||childIds.length===0){showToast("❌ Need a name and at least one account",false);return;}
           const id = editingGroup?.id || `Master-CUSTOM-${Date.now()}`;
           const cls = groupType==="private"?"Private Practice":newGroupClass;
+          // ── Integrity check before save ──
+          const violations = validateGroupChildIds(childIds, id, newGroupName.trim(), groups, OVERLAYS_REF);
+          const blockers = violations.filter(v => v.severity === "block");
+          if (blockers.length > 0) {
+            showToast("❌ Blocked: " + blockers[0].detail, false);
+            return;
+          }
+          const warns = violations.filter(v => v.severity === "warn");
+          if (warns.length > 0 && !confirm("Warning: " + warns.map(w => w.detail).join("\n") + "\n\nProceed anyway?")) return;
           if (saveOverlays) {
             const grp = {id,name:newGroupName.trim(),class2:cls,childIds,tier:"Standard",groupType,createdAt:editingGroup?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
             const next = { ...OVERLAYS_REF, groups: { ...(OVERLAYS_REF.groups||{}), [id]: grp } };

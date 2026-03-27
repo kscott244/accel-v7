@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { validateOverlayIntegrity } from "@/lib/overlayIntegrity";
+import { PRELOADED } from "@/data/preloaded-data";
 
 const GITHUB_PAT = process.env.GITHUB_PAT!;
 const REPO = "kscott244/accel-v7";
@@ -97,6 +99,39 @@ export async function POST(req: NextRequest) {
       // decode error. (This path should be very rare.)
     }
     // ── END WRITE GUARD ──────────────────────────────────────────────
+
+    // ── INTEGRITY GUARD ───────────────────────────────────────────────
+    // Prevents saving overlays that contain structural corruption:
+    //   - A parent CM of a 3+ child base group listed as a childId (org absorption)
+    //   - Same childId claimed by multiple overlay groups
+    //   - Detached accounts re-merged into a group
+    try {
+      const baseGroups = PRELOADED?.groups || [];
+      if (baseGroups.length > 0) {
+        const report = validateOverlayIntegrity(baseGroups, overlays);
+        if (report.blocked) {
+          const blockViolations = report.violations.filter(v => v.severity === "block");
+          return NextResponse.json(
+            {
+              error: "INTEGRITY_GUARD: overlay contains structural violations that would corrupt data. " +
+                blockViolations.map(v => v.detail).join(" | "),
+              code: "OVERLAY_INTEGRITY_BLOCKED",
+              violations: blockViolations,
+            },
+            { status: 422 }
+          );
+        }
+        // Warnings are logged but don't block the save
+        const warnings = report.violations.filter(v => v.severity === "warn");
+        if (warnings.length > 0) {
+          console.warn("[overlay-integrity] Warnings:", warnings.map(w => w.detail));
+        }
+      }
+    } catch {
+      // If integrity check fails (e.g. PRELOADED not available), allow the write
+      // rather than blocking legitimate saves.
+    }
+    // ── END INTEGRITY GUARD ───────────────────────────────────────────
 
     // 2. Stamp the update time
     const updated = {
