@@ -52,7 +52,7 @@ function MultiDealerView({acct}) {
             <div style={{flex:1,minWidth:0}}>
               <span style={{fontSize:11,fontWeight:600,color:a.isSelf?T.blue:T.t1}}>{a.name}</span>
               {a.isSelf&&<span style={{fontSize:8,color:T.blue,marginLeft:5}}>← this account</span>}
-              <div style={{fontSize:9,color:T.t4}}>{a.dealer}</div>
+              <div style={{fontSize:9,color:T.t4}}>{[a.addr||a.address,[a.city,a.st,a.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")}{a.dealer?` · ${a.dealer}`:""}</div>
             </div>
             <div style={{textAlign:"right",flexShrink:0,marginLeft:8}}>
               <div style={{fontSize:10,fontWeight:600,fontFamily:"'DM Mono',monospace",color:T.blue}}>{$$(cy)}</div>

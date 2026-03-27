@@ -59,7 +59,7 @@ export function OfficeDetail({ office, onClose }: OfficeDetailProps) {
         </div>
         <div className="mb-4 text-[12px] text-t3">
           {office.mainDoctor && <span>{office.mainDoctor} · </span>}
-          {office.city}, {office.state}
+          {[office.addr,[office.city,office.state,office.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")}
           {office.phone && <span> · {fmtPhone(office.phone)}</span>}
         </div>
 

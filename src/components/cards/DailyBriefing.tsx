@@ -135,7 +135,7 @@ export function DailyBriefing({ onOpenSearch, onSelectOffice }: BriefingProps) {
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-[12px] font-semibold text-t1">{stop.name}</div>
                     <div className="text-[10px] text-t3">
-                      {stop.city}, {stop.state}
+                      {[stop.addr,[stop.city,stop.state,stop.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")}
                       {stop.doctor && ` · ${stop.doctor}`}
                     </div>
                   </div>
@@ -226,7 +226,7 @@ export function DailyBriefing({ onOpenSearch, onSelectOffice }: BriefingProps) {
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[12px] font-semibold text-t1">{o.name}</div>
                   <div className="text-[10px] text-t3">
-                    {o.mainDoctor && `${o.mainDoctor} · `}{o.city}, {o.state}
+                    {o.mainDoctor && `${o.mainDoctor} · `}{[o.addr,[o.city,o.state,o.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")}
                   </div>
                 </div>
                 <div className="shrink-0 text-right">

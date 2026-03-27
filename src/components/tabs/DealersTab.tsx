@@ -363,7 +363,7 @@ function DealersTab({scored,groups,goAcct,goGroup,activeQ:activeQProp,overlays,s
               </div>
               <Chev/>
             </div>
-            <div style={{fontSize:10,color:T.t3,marginBottom:7}}>{a.city}, {a.st}</div>
+            <div style={{fontSize:10,color:T.t3,marginBottom:7}}>{[a.addr,[a.city,a.st,a.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")}</div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:5}}>
               <div style={{background:T.s2,borderRadius:6,padding:"4px 6px"}}>
                 <div style={{fontSize:9,color:T.t3,marginBottom:1}}>PY</div>
@@ -718,7 +718,7 @@ function DealersTab({scored,groups,goAcct,goGroup,activeQ:activeQProp,overlays,s
                 {/* Row 2: Location details + PY/CY */}
                 <div style={{paddingLeft:27,marginBottom:isMultiLoc?6:0}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                    <div style={{fontSize:10,color:T.t3}}>{a.city}{a.st?`, ${a.st}`:""}</div>
+                    <div style={{fontSize:10,color:T.t3}}>{[a.addr,[a.city,a.st,a.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")}</div>
                     <div style={{fontSize:10,color:T.t3,fontFamily:"'JetBrains Mono',monospace"}}>PY {$$(py)} → CY {$$(cy)}</div>
                   </div>
                   {a.deadProducts?.length>0&&<div style={{fontSize:9,color:T.amber,marginTop:3}}>Lost: {a.deadProducts.slice(0,3).map((p:any)=>p.n).join(", ")}</div>}

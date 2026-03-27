@@ -806,7 +806,7 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
                 borderRadius:12,padding:"11px 13px",marginBottom:7,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <div style={{flex:1,minWidth:0}}>
                 <AccountId name={c.name} size="md"/>
-                <div style={{fontSize:10,color:T.t3}}>{c.city}, {c.st}{c.dealer?<span style={{color:T.cyan}}> · {c.dealer}</span>:""}</div>
+                <div style={{fontSize:10,color:T.t3}}>{[c.addr,[c.city,c.st,c.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")}{c.dealer?<span style={{color:T.cyan}}> · {c.dealer}</span>:""}</div>
                 {isStopped&&<div style={{fontSize:9,color:T.red,marginTop:2,fontWeight:600}}>STOPPED · was {$$(c.prodPY)}</div>}
                 {isNew&&<div style={{fontSize:9,color:T.green,marginTop:2,fontWeight:600}}>NEW BUYER</div>}
               </div>
@@ -1509,7 +1509,7 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
             <div style={{fontSize:12,fontWeight:600,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.name}</div><Chev/>
           </div>
-          <div style={{fontSize:10,color:T.t3,marginBottom:6}}>{c.city}, {c.st}{c.dealer&&c.dealer!=="All Other"?<span style={{color:T.cyan}}> · {c.dealer}</span>:""}{c.last!=null?` · Last ${c.last}d ago`:""}</div>
+          <div style={{fontSize:10,color:T.t3,marginBottom:6}}>{[c.addr,[c.city,c.st,c.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")}{c.dealer&&c.dealer!=="All Other"?<span style={{color:T.cyan}}> · {c.dealer}</span>:""}{c.last!=null?` · Last ${c.last}d ago`:""}</div>
           <Bar pct={cRet} color={`linear-gradient(90deg,${cRetColor},${cRetColor}99)`}/>
           <div style={{display:"flex",gap:12,marginTop:6}}>
             <Pill l="PY" v={$$(cPy)} c={T.t2}/><Pill l="CY" v={$$(cCy)} c={T.blue}/><Pill l="Gap" v={cGap<=0?`+${$$(Math.abs(cGap))}`:$$(cGap)} c={cGap<=0?T.green:T.red}/><div style={{marginLeft:"auto"}}><Pill l="Ret" v={cRet+"%"} c={cRetColor}/></div>
