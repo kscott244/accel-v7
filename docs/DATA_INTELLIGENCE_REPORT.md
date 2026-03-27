@@ -770,3 +770,31 @@ MEDIUM TERM:
 11. Multi-rep support (separate overlays per rep)
 12. Scoring improvements for Today tab
 13. Better account workspace (notes, activity, contacts)
+
+
+================================================================================
+SECTION 10: NEW ADDS DATA
+================================================================================
+67 accounts with new product purchases in Q1 2026
+63 RED KPI (need follow-up), 4 GREEN KPI (on track)
+57 have email addresses — prime for outreach
+Top products: CaviWipes (28), CaviWipes 2.0 (13), CaviWipes XL (11)
+Restorative new adds: Harmonize (4), SimpliShade (4), MaxCem Elite (4)
+
+KEY CROSS-REFERENCES:
+- Rory Perimenis at 324 Elm St Monroe shares address with DCA + NADG
+- Simply Dental 'Pediatric Dentistry' at 1 Lake St New Britain = Specialty 1 Partners address
+- Dental Whale at 1075 Central Park Ave Scarsdale = NADG address
+
+APP FEATURE: New Adds tab showing account, products, dates, email, phone, color KPI, group affiliation
+
+
+================================================================================
+SECTION 11: TERRITORY ZIP CODES
+================================================================================
+3-digit prefixes: 025-029 (MA/RI), 060-069 (CT), 105-109 (NY Westchester/Hudson Valley)
+All 5,543 preloaded accounts are in-territory (100%)
+All 137 anchor-orphan discoveries are in-territory
+43/44 Plum offices in-territory (Central Dental Associates Norwood MA is out)
+Gold/Silver: 28/69 in-territory, all 28 already in preloaded
+41 Gold/Silver accounts are greater Boston/central MA — outside territory
