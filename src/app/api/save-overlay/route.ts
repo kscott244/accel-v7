@@ -4,6 +4,25 @@ const GITHUB_PAT = process.env.GITHUB_PAT!;
 const REPO = "kscott244/accel-v7";
 const FILE_PATH = "data/overlays.json";
 
+// ─── MEANINGFUL ITEM COUNT ────────────────────────────────────────
+// Counts the number of meaningful user-authored items in an overlay object.
+// Used by the write guard to detect a dangerously empty incoming payload.
+// Sections counted: groups, groupMoves, nameOverrides, contacts, fscReps,
+// groupContacts, groupDetaches, skippedCpidIds.
+function meaningfulItemCount(ov: any): number {
+  if (!ov || typeof ov !== "object") return 0;
+  let n = 0;
+  n += Object.keys(ov.groups        || {}).length;
+  n += Object.keys(ov.groupMoves    || {}).length;
+  n += Object.keys(ov.nameOverrides || {}).length;
+  n += Object.keys(ov.contacts      || {}).length;
+  n += Object.keys(ov.fscReps       || {}).length;
+  n += Object.keys(ov.groupContacts || {}).length;
+  n += (ov.groupDetaches    || []).length;
+  n += (ov.skippedCpidIds   || []).length;
+  return n;
+}
+
 export async function POST(req: NextRequest) {
   try {
     if (!GITHUB_PAT) {
@@ -15,7 +34,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing overlays payload" }, { status: 400 });
     }
 
-    // 1. Get current SHA (required for GitHub PUT)
+    // 1. Get current file — SHA required for GitHub PUT, content required for write guard
     const getRes = await fetch(
       `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`,
       { headers: { Authorization: `token ${GITHUB_PAT}`, "User-Agent": "accel-v7" } }
@@ -27,6 +46,52 @@ export async function POST(req: NextRequest) {
 
     const fileData = await getRes.json();
     const fileSha = fileData.sha;
+
+    // ── A15.7 WRITE GUARD ────────────────────────────────────────────
+    // Refuse to commit a payload that looks empty/near-empty if the current
+    // GitHub document has meaningful user-authored data.
+    //
+    // Protects against the wipe scenario: fresh session with empty localStorage
+    // saves EMPTY_OVERLAYS back to GitHub before the background load resolves,
+    // silently destroying all merge groups, contacts, and skip history.
+    //
+    // Guard triggers when:
+    //   - incoming has 0 groups AND fewer than 3 total meaningful items
+    //   - AND current GitHub document has 3+ meaningful items
+    //
+    // The incoming threshold of 3 (not 0) catches the case where a payload has
+    // skippedCpidIds or adjs but no groups — still suspiciously thin.
+    // The current threshold of 3 avoids blocking genuinely fresh installs where
+    // the GitHub file itself is empty/new.
+    try {
+      const currentContent = JSON.parse(
+        Buffer.from(fileData.content.replace(/
+/g, ""), "base64").toString()
+      );
+      const currentCount  = meaningfulItemCount(currentContent);
+      const incomingCount = meaningfulItemCount(overlays);
+      const incomingGroups = Object.keys(overlays.groups || {}).length;
+
+      if (incomingGroups === 0 && incomingCount < 3 && currentCount >= 3) {
+        return NextResponse.json(
+          {
+            error: "WRITE_GUARD: incoming overlay has 0 groups but current GitHub overlay has " +
+              currentCount + " items. Refusing to overwrite. " +
+              "This usually means the app saved before overlay data finished loading. " +
+              "Reload the app to re-sync — your data on GitHub is intact.",
+            code: "OVERLAY_WIPE_PREVENTED",
+            currentCount,
+            incomingCount,
+          },
+          { status: 409 }
+        );
+      }
+    } catch {
+      // If we can't decode the current file to check, allow the write —
+      // better to risk an overwrite than to block legitimate saves due to a
+      // decode error. (This path should be very rare.)
+    }
+    // ── END WRITE GUARD ──────────────────────────────────────────────
 
     // 2. Stamp the update time
     const updated = {
