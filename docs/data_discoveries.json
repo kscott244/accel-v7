@@ -2909,5 +2909,1117 @@
     "email_domain",
     "external_truth_files",
     "class2_dso_single_location"
+  ],
+  "new_adds": [
+    {
+      "mdm": "BNK-02F4CECD26D01DB34C5AF22AD1C131F4-9152DC760B99EF5BFAABEEE381802E8A",
+      "name": "BLUE SKY DENTAL",
+      "products": [
+        "CAVIWIPES 2.0"
+      ],
+      "addr": "530 Hopmeadow St",
+      "city": "Simsbury",
+      "state": "CT",
+      "zip": "6070",
+      "email": "",
+      "phone": "7862942769",
+      "color": "RED",
+      "first_date": "12-Feb-26",
+      "last_date": "20-Mar-26"
+    },
+    {
+      "mdm": "BNK-012A94CA457F59B55892F72AE2EDACE8-5F2051D185A1829C9E4C7991E6D339E8",
+      "name": "DFAS-COLUMBUS CENTER",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "W8zw Ri Arng Med Det Bldg 235",
+      "city": "East Greenwich",
+      "state": "RI",
+      "zip": "2818",
+      "email": "",
+      "phone": "2156171654",
+      "color": "RED",
+      "first_date": "14-Jan-26",
+      "last_date": "14-Jan-26"
+    },
+    {
+      "mdm": "HEN-983C97CB49920949362A2CAA45319B70-74A3236AA4BF6C831014C9414938DC69",
+      "name": "Westport",
+      "products": [
+        "CAVIWIPES XL"
+      ],
+      "addr": "1375 Post Rd E Marc David Schlenoff",
+      "city": "Westport",
+      "state": "CT",
+      "zip": "6880",
+      "email": "",
+      "phone": "",
+      "color": "RED",
+      "first_date": "24-Mar-26",
+      "last_date": "24-Mar-26"
+    },
+    {
+      "mdm": "Master-CM046557",
+      "name": "VINCENT DAGOSTINO",
+      "products": [
+        "CAVIWIPES",
+        "CAVIWIPES XL"
+      ],
+      "addr": "2457 E Main St",
+      "city": "Waterbury",
+      "state": "CT",
+      "zip": "6705",
+      "email": "vdagostino@sbcglobal.net",
+      "phone": "2037552744",
+      "color": "RED",
+      "first_date": "3-Mar-26",
+      "last_date": "16-Mar-26"
+    },
+    {
+      "mdm": "Master-CM047480",
+      "name": "HEALTHFIRST FAMILY CARE CENTER INC",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "387 Quarry St",
+      "city": "Fall River",
+      "state": "MA",
+      "zip": "2723",
+      "email": "dr.amador@icloud.com",
+      "phone": "5086798111",
+      "color": "RED",
+      "first_date": "7-Feb-22",
+      "last_date": "16-Mar-26"
+    },
+    {
+      "mdm": "Master-CM047696",
+      "name": "RORY PERIMENIS",
+      "products": [
+        "CAVIWIPES 2.0"
+      ],
+      "addr": "324 Elm St",
+      "city": "Monroe",
+      "state": "CT",
+      "zip": "6468",
+      "email": "",
+      "phone": "2034598990",
+      "color": "RED",
+      "first_date": "13-Jan-26",
+      "last_date": "13-Jan-26"
+    },
+    {
+      "mdm": "Master-CM048325",
+      "name": "DOUGLAS HOPE",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "381 Hopmeadow St",
+      "city": "Weatogue",
+      "state": "CT",
+      "zip": "6089",
+      "email": "",
+      "phone": "8606514915",
+      "color": "RED",
+      "first_date": "21-Jan-22",
+      "last_date": "20-Mar-26"
+    },
+    {
+      "mdm": "Master-CM048575",
+      "name": "DAVID EDELSON",
+      "products": [
+        "OPTIBOND eXTRa"
+      ],
+      "addr": "92 East St",
+      "city": "Plainville",
+      "state": "CT",
+      "zip": "6062",
+      "email": "dmd92east@gmail.com",
+      "phone": "8607471004",
+      "color": "RED",
+      "first_date": "3-Oct-23",
+      "last_date": "20-Mar-26"
+    },
+    {
+      "mdm": "Master-CM048850",
+      "name": "STEPHEN WOLPO D.D.S.",
+      "products": [
+        "MAXCEM ELITE"
+      ],
+      "addr": "60 Strawberry Hill Ave",
+      "city": "Stamford",
+      "state": "CT",
+      "zip": "6902",
+      "email": "steve@smilesensations.com",
+      "phone": "2033239277",
+      "color": "RED",
+      "first_date": "5-Apr-22",
+      "last_date": "13-Jan-26"
+    },
+    {
+      "mdm": "Master-CM049128",
+      "name": "DENTAL SOLUTIONS",
+      "products": [
+        "CAVIWIPES",
+        "HARMONIZE"
+      ],
+      "addr": "131 New London Tpke",
+      "city": "Glastonbury",
+      "state": "CT",
+      "zip": "6033",
+      "email": "dentalsolutions131@gmail.com",
+      "phone": "8606330486",
+      "color": "RED",
+      "first_date": "22-Feb-22",
+      "last_date": "2-Mar-26"
+    },
+    {
+      "mdm": "Master-CM049971",
+      "name": "OSCAR GONZALEZ",
+      "products": [
+        "CAVIWIPES XL"
+      ],
+      "addr": "1340 Boulevard",
+      "city": "West Hartford",
+      "state": "CT",
+      "zip": "6119",
+      "email": "drgonzalez@ogsmiles.com",
+      "phone": "8605212500",
+      "color": "RED",
+      "first_date": "20-Jan-25",
+      "last_date": "3-Mar-26"
+    },
+    {
+      "mdm": "Master-CM050415",
+      "name": "PAUL E APPELBAUM DMD",
+      "products": [
+        "OPTIBOND UNIVERSAL",
+        "CAVIWIPES XL"
+      ],
+      "addr": "1445 Wampanoag Trl",
+      "city": "Riverside",
+      "state": "RI",
+      "zip": "2915",
+      "email": "applebaumdental@gmail.com",
+      "phone": "4014332400",
+      "color": "RED",
+      "first_date": "1-Aug-22",
+      "last_date": "19-Mar-26"
+    },
+    {
+      "mdm": "Master-CM051399",
+      "name": "DR JACK L GISH AND ASSOCIATES PC",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "836 Farmington Ave",
+      "city": "West Hartford",
+      "state": "CT",
+      "zip": "6119",
+      "email": "",
+      "phone": "8602318077",
+      "color": "RED",
+      "first_date": "11-Jan-22",
+      "last_date": "20-Mar-26"
+    },
+    {
+      "mdm": "Master-CM051426",
+      "name": "NEWPORT AVE SMILES",
+      "products": [
+        "CAVIWIPES XL"
+      ],
+      "addr": "500 Newport Ave",
+      "city": "Pawtucket",
+      "state": "RI",
+      "zip": "2861",
+      "email": "mari120784@yahoo.com",
+      "phone": "4017265600",
+      "color": "RED",
+      "first_date": "12-Mar-24",
+      "last_date": "11-Feb-26"
+    },
+    {
+      "mdm": "Master-CM051593",
+      "name": "HENRY LEVIN DMD",
+      "products": [
+        "MAXCEM ELITE"
+      ],
+      "addr": "276 Smith St",
+      "city": "Providence",
+      "state": "RI",
+      "zip": "2908",
+      "email": "info@levindental.com",
+      "phone": "4013311116",
+      "color": "RED",
+      "first_date": "15-Jan-26",
+      "last_date": "4-Mar-26"
+    },
+    {
+      "mdm": "Master-CM052414",
+      "name": "ERIC M GEORGE DMD LTD",
+      "products": [
+        "CAVIWIPES 2.0"
+      ],
+      "addr": "121 Sandy Bottom Rd",
+      "city": "Coventry",
+      "state": "RI",
+      "zip": "2816",
+      "email": "",
+      "phone": "4018223352",
+      "color": "RED",
+      "first_date": "28-Oct-24",
+      "last_date": "6-Mar-26"
+    },
+    {
+      "mdm": "Master-CM053755",
+      "name": "LISA DAFT",
+      "products": [
+        "CAVIWIPES HP"
+      ],
+      "addr": "520 Taunton Ave",
+      "city": "Seekonk",
+      "state": "MA",
+      "zip": "2771",
+      "email": "cvanderpool@gmail.com",
+      "phone": "5083363066",
+      "color": "RED",
+      "first_date": "7-Jan-26",
+      "last_date": "7-Jan-26"
+    },
+    {
+      "mdm": "Master-CM054373",
+      "name": "CENTER FOR DENTAL HEALTH",
+      "products": [
+        "CAVIWIPES XL"
+      ],
+      "addr": "37 North Ave",
+      "city": "Norwalk",
+      "state": "CT",
+      "zip": "6851",
+      "email": "norwalkdental37@gmail.com",
+      "phone": "2038462085",
+      "color": "RED",
+      "first_date": "27-Jan-22",
+      "last_date": "18-Mar-26"
+    },
+    {
+      "mdm": "Master-CM055825",
+      "name": "NEIL HOSS",
+      "products": [
+        "OPTIBOND eXTRa"
+      ],
+      "addr": "115 Hartford Tpke",
+      "city": "Tolland",
+      "state": "CT",
+      "zip": "6084",
+      "email": "drhossdmd@gmail.com",
+      "phone": "(860) 351-1495",
+      "color": "RED",
+      "first_date": "21-Feb-22",
+      "last_date": "30-Jan-26"
+    },
+    {
+      "mdm": "Master-CM055988",
+      "name": "DANBURY DENTAL GROUP",
+      "products": [
+        "SONICFILL 3"
+      ],
+      "addr": "57 North St",
+      "city": "Danbury",
+      "state": "CT",
+      "zip": "6810",
+      "email": "dnbry.dental.assoc@snet.net",
+      "phone": "2037923316",
+      "color": "RED",
+      "first_date": "8-Nov-23",
+      "last_date": "5-Mar-26"
+    },
+    {
+      "mdm": "Master-CM057171",
+      "name": "PETER JAY RATHMAN DMD",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "125 Strawberry Hill Ave",
+      "city": "Stamford",
+      "state": "CT",
+      "zip": "6902",
+      "email": "jchdmd@gmail.com",
+      "phone": "2033271470",
+      "color": "RED",
+      "first_date": "3-Jan-22",
+      "last_date": "17-Feb-26"
+    },
+    {
+      "mdm": "Master-CM058433",
+      "name": "ELLINGTON DENTAL ASSOCIATES",
+      "products": [
+        "CAVIWIPES 2.0"
+      ],
+      "addr": "175 West Rd",
+      "city": "Ellington",
+      "state": "CT",
+      "zip": "6029",
+      "email": "lgraff222@gmail.com",
+      "phone": "8608722452",
+      "color": "RED",
+      "first_date": "21-Feb-22",
+      "last_date": "20-Jan-26"
+    },
+    {
+      "mdm": "Master-CM059175",
+      "name": "RESTELLERDMD PC",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "69 Main St",
+      "city": "East Haven",
+      "state": "CT",
+      "zip": "6512",
+      "email": "rsteller9@msn.com",
+      "phone": "2034678100",
+      "color": "RED",
+      "first_date": "14-Feb-23",
+      "last_date": "16-Mar-26"
+    },
+    {
+      "mdm": "Master-CM059198",
+      "name": "DEBRA KAUFMAN DAREN DDS",
+      "products": [
+        "CAVIWIPES",
+        "MAXCEM ELITE CHROMA"
+      ],
+      "addr": "131 Boston Post Rd",
+      "city": "East Lyme",
+      "state": "CT",
+      "zip": "6333",
+      "email": "children.dental@snet.net",
+      "phone": "8607390348",
+      "color": "RED",
+      "first_date": "19-Feb-26",
+      "last_date": "19-Feb-26"
+    },
+    {
+      "mdm": "Master-CM059502",
+      "name": "SETH KEILES",
+      "products": [
+        "SIMPLISHADE"
+      ],
+      "addr": "3505 Hill Blvd",
+      "city": "Yorktown Heights",
+      "state": "NY",
+      "zip": "10598",
+      "email": "sk@nwdentist.com",
+      "phone": "9142453103",
+      "color": "RED",
+      "first_date": "9-Feb-26",
+      "last_date": "9-Feb-26"
+    },
+    {
+      "mdm": "Master-CM060396",
+      "name": "FRANK A DEQUATTRO DMD PC",
+      "products": [
+        "CAVIWIPES 2.0"
+      ],
+      "addr": "24 Salt Pond Rd",
+      "city": "Wakefield",
+      "state": "RI",
+      "zip": "2879",
+      "email": "tara@drdequattrodmd.com",
+      "phone": "4017839890",
+      "color": "RED",
+      "first_date": "5-Feb-26",
+      "last_date": "18-Mar-26"
+    },
+    {
+      "mdm": "Master-CM061359",
+      "name": "STEPHEN BELLORINI",
+      "products": [
+        "CAVIWIPES1",
+        "SIMPLISHADE"
+      ],
+      "addr": "11 Bay State Ct",
+      "city": "Brewster",
+      "state": "MA",
+      "zip": "2631",
+      "email": "sjbdmd84@yahoo.com",
+      "phone": "5088963343",
+      "color": "RED",
+      "first_date": "15-Mar-22",
+      "last_date": "16-Mar-26"
+    },
+    {
+      "mdm": "Master-CM063000",
+      "name": "CRANSTON ORTHODONTICS",
+      "products": [
+        "CAVIWIPES 2.0"
+      ],
+      "addr": "59 Phenix Ave",
+      "city": "Cranston",
+      "state": "RI",
+      "zip": "2920",
+      "email": "frontdesk@cranstonorthodontics.com",
+      "phone": "4014644999",
+      "color": "RED",
+      "first_date": "25-Jan-23",
+      "last_date": "19-Feb-26"
+    },
+    {
+      "mdm": "Master-CM063055",
+      "name": "MANCHESTER FAMILY DENTAL",
+      "products": [
+        "CAVIWIPES XL"
+      ],
+      "addr": "945 Main St",
+      "city": "Manchester",
+      "state": "CT",
+      "zip": "6040",
+      "email": "updoctor@gmail.com",
+      "phone": "8606435350",
+      "color": "RED",
+      "first_date": "19-Dec-23",
+      "last_date": "4-Mar-26"
+    },
+    {
+      "mdm": "Master-CM063082",
+      "name": "DR JOHN HARTLEY",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "207 Upper Main St",
+      "city": "Edgartown",
+      "state": "MA",
+      "zip": "2539",
+      "email": "ap@advanceddentalmanagement.com",
+      "phone": "5089399000",
+      "color": "RED",
+      "first_date": "10-Feb-22",
+      "last_date": "2-Mar-26"
+    },
+    {
+      "mdm": "Master-CM063238",
+      "name": "DENTAL DREAMS",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "1054 Kings Hwy",
+      "city": "New Bedford",
+      "state": "MA",
+      "zip": "2745",
+      "email": "purvesh211@gmail.com",
+      "phone": "5089950340",
+      "color": "RED",
+      "first_date": "21-Apr-22",
+      "last_date": "23-Mar-26"
+    },
+    {
+      "mdm": "Master-CM063421",
+      "name": "LEVY DENTAL GROUP",
+      "products": [
+        "CAVIWIPES XL"
+      ],
+      "addr": "921 State St",
+      "city": "New Haven",
+      "state": "CT",
+      "zip": "6511",
+      "email": "jepucci@snet.net",
+      "phone": "2038652245",
+      "color": "RED",
+      "first_date": "24-May-23",
+      "last_date": "19-Mar-26"
+    },
+    {
+      "mdm": "Master-CM064394",
+      "name": "CROMWELL DENTAL",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "30 Country Squire Dr",
+      "city": "Cromwell",
+      "state": "CT",
+      "zip": "6416",
+      "email": "rbreault@cromwelldental.com",
+      "phone": "8606356445",
+      "color": "RED",
+      "first_date": "19-Jul-24",
+      "last_date": "18-Mar-26"
+    },
+    {
+      "mdm": "Master-CM064944",
+      "name": "GREAT EXPRESSIONS",
+      "products": [
+        "CAVIWIPES 2.0"
+      ],
+      "addr": "381 S Little Tor Rd",
+      "city": "New City",
+      "state": "NY",
+      "zip": "10956",
+      "email": "drpjkim@yahoo.com",
+      "phone": "8456345208",
+      "color": "RED",
+      "first_date": "2-Apr-24",
+      "last_date": "4-Mar-26"
+    },
+    {
+      "mdm": "Master-CM065179",
+      "name": "HUDSON RIVER HEALTHCARE",
+      "products": [
+        "CAVIWIPES HP"
+      ],
+      "addr": "1037 Main St",
+      "city": "Peekskill",
+      "state": "NY",
+      "zip": "10566",
+      "email": "chames@hrhcare.org",
+      "phone": "9147348800",
+      "color": "RED",
+      "first_date": "7-Nov-25",
+      "last_date": "5-Mar-26"
+    },
+    {
+      "mdm": "Master-CM065570",
+      "name": "JEFFREY G LATIMER, DDS",
+      "products": [
+        "EMPOWER"
+      ],
+      "addr": "414 South St",
+      "city": "Hyannis",
+      "state": "MA",
+      "zip": "2601",
+      "email": "sethlati@gmail.com",
+      "phone": "5087755518",
+      "color": "RED",
+      "first_date": "2-Mar-26",
+      "last_date": "2-Mar-26"
+    },
+    {
+      "mdm": "Master-CM066126",
+      "name": "ELLINGTON DENTAL ASSOCIATES",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "175 West Rd",
+      "city": "Ellington",
+      "state": "CT",
+      "zip": "6029",
+      "email": "katrina@ellingtondental.com",
+      "phone": "8608701121",
+      "color": "RED",
+      "first_date": "21-Sep-22",
+      "last_date": "20-Mar-26"
+    },
+    {
+      "mdm": "Master-CM066213",
+      "name": "GEORGE STEPHEN PAPAGEORGE DDS",
+      "products": [
+        "CAVIWIPES 2.0",
+        "MAXCEM ELITE",
+        "SIMPLISHADE"
+      ],
+      "addr": "70 Villa Pkwy",
+      "city": "Highland Falls",
+      "state": "NY",
+      "zip": "10928",
+      "email": "drpapageorge@verizon.net",
+      "phone": "8454463500",
+      "color": "RED",
+      "first_date": "4-Nov-22",
+      "last_date": "2-Mar-26"
+    },
+    {
+      "mdm": "Master-CM066450",
+      "name": "AVON DENTAL LAB",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "20 W Avon Rd",
+      "city": "Avon",
+      "state": "CT",
+      "zip": "6001",
+      "email": "avondental@snet.net",
+      "phone": "8606730451",
+      "color": "RED",
+      "first_date": "12-Jan-22",
+      "last_date": "25-Mar-26"
+    },
+    {
+      "mdm": "Master-CM067033",
+      "name": "DREW ORTHODONTICS",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "9 Dale St",
+      "city": "West Hartford",
+      "state": "CT",
+      "zip": "6107",
+      "email": "",
+      "phone": "8602368376",
+      "color": "RED",
+      "first_date": "11-Jan-22",
+      "last_date": "24-Mar-26"
+    },
+    {
+      "mdm": "Master-CM067467",
+      "name": "BRUSH AND FLOSS DENTAL CENTER",
+      "products": [
+        "CAVIWIPES 2.0"
+      ],
+      "addr": "4949 Main St",
+      "city": "Stratford",
+      "state": "CT",
+      "zip": "6614",
+      "email": "klbr48@gmail.com",
+      "phone": "2033789500",
+      "color": "RED",
+      "first_date": "5-Dec-24",
+      "last_date": "2-Mar-26"
+    },
+    {
+      "mdm": "Master-CM068686",
+      "name": "PEDIATRIC DENTISTRY",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "1 Lake St",
+      "city": "New Britain",
+      "state": "CT",
+      "zip": "6052",
+      "email": "info@just4kidzdentistry.com",
+      "phone": "8602242419",
+      "color": "RED",
+      "first_date": "1-Apr-22",
+      "last_date": "24-Mar-26"
+    },
+    {
+      "mdm": "Master-CM071176",
+      "name": "DENTAL CONCEPTS INC",
+      "products": [
+        "CAVIWIPES 2.0"
+      ],
+      "addr": "75 Dolson Ave",
+      "city": "Middletown",
+      "state": "NY",
+      "zip": "10940",
+      "email": "dolsonavenuedental@gmail.com",
+      "phone": "8455121246",
+      "color": "RED",
+      "first_date": "5-Jul-24",
+      "last_date": "11-Mar-26"
+    },
+    {
+      "mdm": "Master-CM071678",
+      "name": "ADVANCED DENTAL",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "39 Webster Square Rd",
+      "city": "Berlin",
+      "state": "CT",
+      "zip": "6037",
+      "email": "mmaroon@advanceddental.com",
+      "phone": "8608283933",
+      "color": "RED",
+      "first_date": "18-Apr-22",
+      "last_date": "13-Mar-26"
+    },
+    {
+      "mdm": "Master-CM073178",
+      "name": "GENTLE DENTISTRY",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "2 Albert St",
+      "city": "Middletown",
+      "state": "NY",
+      "zip": "10940",
+      "email": "info@nygentledentistry.com",
+      "phone": "8453425411",
+      "color": "RED",
+      "first_date": "4-Jan-22",
+      "last_date": "20-Mar-26"
+    },
+    {
+      "mdm": "Master-CM073756",
+      "name": "PREMIER DENTAL-E.V",
+      "products": [
+        "HERCULITE ULTRA FLOW"
+      ],
+      "addr": "516 Route 303",
+      "city": "Orangeburg",
+      "state": "NY",
+      "zip": "10962",
+      "email": "",
+      "phone": "8453592221",
+      "color": "RED",
+      "first_date": "4-Mar-26",
+      "last_date": "4-Mar-26"
+    },
+    {
+      "mdm": "Master-CM074843",
+      "name": "HUNTINGTON",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "534 Shelton Ave",
+      "city": "Shelton",
+      "state": "CT",
+      "zip": "6484",
+      "email": "mcalvao@sbcglobal.net",
+      "phone": "2039296338",
+      "color": "RED",
+      "first_date": "6-Jan-22",
+      "last_date": "25-Mar-26"
+    },
+    {
+      "mdm": "Master-CM077455",
+      "name": "CHESTER DENTAL ASSOCIATES",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "10 Moffatt Ln",
+      "city": "Chester",
+      "state": "NY",
+      "zip": "10918",
+      "email": "chestersmiles@frontiernet.net",
+      "phone": "8454692833",
+      "color": "RED",
+      "first_date": "2-Nov-22",
+      "last_date": "21-Jan-26"
+    },
+    {
+      "mdm": "Master-CM077728",
+      "name": "CONNECTICUT ENDODONTIC ASSOCIATES PC",
+      "products": [
+        "CAVIWIPES XL"
+      ],
+      "addr": "360 Tolland Tpke",
+      "city": "Manchester",
+      "state": "CT",
+      "zip": "6042",
+      "email": "",
+      "phone": "8606464811",
+      "color": "RED",
+      "first_date": "7-Jan-22",
+      "last_date": "3-Mar-26"
+    },
+    {
+      "mdm": "Master-CM079804",
+      "name": "CT PERIODONTAL & IMPLANT ASSOCIATES",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "1185 Silas Deane Hwy",
+      "city": "Wethersfield",
+      "state": "CT",
+      "zip": "6109",
+      "email": "barrygelber@gmail.com",
+      "phone": "8605632331",
+      "color": "RED",
+      "first_date": "29-Aug-22",
+      "last_date": "23-Mar-26"
+    },
+    {
+      "mdm": "Master-CM080235",
+      "name": "EXQUISITE SMILES",
+      "products": [
+        "CAVIWIPES 2.0"
+      ],
+      "addr": "3 Howarth Ave",
+      "city": "Attleboro",
+      "state": "MA",
+      "zip": "2703",
+      "email": "jphelandmd@comcast.net",
+      "phone": "5087615320",
+      "color": "RED",
+      "first_date": "16-Jun-22",
+      "last_date": "10-Mar-26"
+    },
+    {
+      "mdm": "Master-CM080734",
+      "name": "DENTAL ASSOCIATES",
+      "products": [
+        "CAVIWIPES XL",
+        "NX3",
+        "EMPOWER"
+      ],
+      "addr": "1 Aspetuck Ave",
+      "city": "New Milford",
+      "state": "CT",
+      "zip": "6776",
+      "email": "cepeckdds@gmail.com",
+      "phone": "8603554137",
+      "color": "RED",
+      "first_date": "10-Jan-22",
+      "last_date": "23-Mar-26"
+    },
+    {
+      "mdm": "Master-CM081003",
+      "name": "HAISSAM RAMADAN DMD",
+      "products": [
+        "HARMONIZE",
+        "HERCULITE ULTRA FLOW"
+      ],
+      "addr": "54 Main St",
+      "city": "Danbury",
+      "state": "CT",
+      "zip": "6810",
+      "email": "info@newenglanddentalllc.com",
+      "phone": "2037308440",
+      "color": "RED",
+      "first_date": "11-Jan-22",
+      "last_date": "13-Feb-26"
+    },
+    {
+      "mdm": "Master-CM081913",
+      "name": "RESERVOIR COMMONS DENTAL ASSOC",
+      "products": [
+        "CAVIWIPES",
+        "HARMONIZE",
+        "HERCULITE ULTRA FLOW"
+      ],
+      "addr": "203 Storrs Rd",
+      "city": "Mansfield Center",
+      "state": "CT",
+      "zip": "6250",
+      "email": "dr.rosen4@gmail.com",
+      "phone": "8604239717",
+      "color": "RED",
+      "first_date": "3-Feb-22",
+      "last_date": "23-Mar-26"
+    },
+    {
+      "mdm": "Master-CM086124",
+      "name": "PUTNAM FAMILY DENTAL",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "233 Pomfret St",
+      "city": "Putnam",
+      "state": "CT",
+      "zip": "6260",
+      "email": "aldengen@yahoo.com",
+      "phone": "8609285334",
+      "color": "RED",
+      "first_date": "20-Jan-22",
+      "last_date": "16-Mar-26"
+    },
+    {
+      "mdm": "Master-CM086260",
+      "name": "LEONARD TADDEI DDS",
+      "products": [
+        "MAXCEM ELITE"
+      ],
+      "addr": "770 Aquidneck Ave",
+      "city": "Middletown",
+      "state": "RI",
+      "zip": "2842",
+      "email": "lctdmd@aol.com",
+      "phone": "4018472094",
+      "color": "RED",
+      "first_date": "7-Jan-22",
+      "last_date": "17-Mar-26"
+    },
+    {
+      "mdm": "Master-CM087939",
+      "name": "DRS WERNICK & DYM PC",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "170 Main St",
+      "city": "East Hartford",
+      "state": "CT",
+      "zip": "6118",
+      "email": "hdym@msn.com",
+      "phone": "8605683366",
+      "color": "RED",
+      "first_date": "1-Mar-24",
+      "last_date": "18-Mar-26"
+    },
+    {
+      "mdm": "Master-CM088859",
+      "name": "JEFFREY COHEN MARK KRAMER MD",
+      "products": [
+        "MAXCEM ELITE CHROMA"
+      ],
+      "addr": "1075 Central Park Ave",
+      "city": "Scarsdale",
+      "state": "NY",
+      "zip": "10583",
+      "email": "drdan@child-dds.com",
+      "phone": "9147225100",
+      "color": "GREEN",
+      "first_date": "22-Jan-26",
+      "last_date": "25-Feb-26"
+    },
+    {
+      "mdm": "Master-CM090249",
+      "name": "ZELMANOW & ZELMANOW",
+      "products": [
+        "SIMPLISHADE"
+      ],
+      "addr": "319 Flanders Rd",
+      "city": "East Lyme",
+      "state": "CT",
+      "zip": "6333",
+      "email": "office@zelmanowdental.com",
+      "phone": "8607396915",
+      "color": "RED",
+      "first_date": "15-Apr-24",
+      "last_date": "16-Feb-26"
+    },
+    {
+      "mdm": "Master-CM091034",
+      "name": "DENTAL AND IMPLANT CENTER",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "75 Berlin Rd",
+      "city": "Cromwell",
+      "state": "CT",
+      "zip": "6416",
+      "email": "conanpatty@yahoo.com",
+      "phone": "8606351515",
+      "color": "RED",
+      "first_date": "8-Nov-22",
+      "last_date": "24-Mar-26"
+    },
+    {
+      "mdm": "Master-CM091643",
+      "name": "CARL COTOIA",
+      "products": [
+        "CAVIWIPES 2.0"
+      ],
+      "addr": "183 Waterman St",
+      "city": "Providence",
+      "state": "RI",
+      "zip": "2906",
+      "email": "dorie930@yahoo.com",
+      "phone": "4018318998",
+      "color": "RED",
+      "first_date": "21-Mar-22",
+      "last_date": "20-Mar-26"
+    },
+    {
+      "mdm": "Master-CM092049",
+      "name": "JESSICA M BONIFATE",
+      "products": [
+        "CAVICIDE HP"
+      ],
+      "addr": "1 Pondfield Rd",
+      "city": "Bronxville",
+      "state": "NY",
+      "zip": "10708",
+      "email": "jbonifate37@aol.com",
+      "phone": "9143378430",
+      "color": "RED",
+      "first_date": "7-Jan-26",
+      "last_date": "7-Jan-26"
+    },
+    {
+      "mdm": "Master-CM094475",
+      "name": "ASPEN DENTAL - SEEKONK",
+      "products": [
+        "CAVIWIPES",
+        "EMPOWER"
+      ],
+      "addr": "20 Commerce Way",
+      "city": "Seekonk",
+      "state": "MA",
+      "zip": "2771",
+      "email": "drcpatel@aspendental.com",
+      "phone": "5083366700",
+      "color": "RED",
+      "first_date": "13-Jan-22",
+      "last_date": "24-Mar-26"
+    },
+    {
+      "mdm": "Master-CM096098",
+      "name": "MICHAEL S. MCKAY, DMD",
+      "products": [
+        "CAVIWIPES HP"
+      ],
+      "addr": "1536 Norwich New London Tpke",
+      "city": "Uncasville",
+      "state": "CT",
+      "zip": "6382",
+      "email": "familydentistry1536@yahoo.com",
+      "phone": "8608483262",
+      "color": "RED",
+      "first_date": "10-Feb-26",
+      "last_date": "10-Feb-26"
+    },
+    {
+      "mdm": "Master-CM096271",
+      "name": "CANAL SIDE FAMILY DENTAL",
+      "products": [
+        "CAVIWIPES",
+        "MAXCEM ELITE CHROMA"
+      ],
+      "addr": "258 Main St",
+      "city": "Buzzards Bay",
+      "state": "MA",
+      "zip": "2532",
+      "email": "stephpurner@hotmail.com",
+      "phone": "5087592721",
+      "color": "RED",
+      "first_date": "15-Mar-22",
+      "last_date": "2-Mar-26"
+    },
+    {
+      "mdm": "Master-CM096784",
+      "name": "DANBURY HOSPITAL",
+      "products": [
+        "CAVIWIPES",
+        "CAVIWIPES XL",
+        "HARMONIZE"
+      ],
+      "addr": "70 Main St",
+      "city": "Danbury",
+      "state": "CT",
+      "zip": "6810",
+      "email": "kelli.stock@wchn.org",
+      "phone": "2037915050",
+      "color": "RED",
+      "first_date": "20-Mar-26",
+      "last_date": "20-Mar-26"
+    },
+    {
+      "mdm": "Master-CM097202",
+      "name": "JOHN FATSE",
+      "products": [
+        "CAVIWIPES 2.0"
+      ],
+      "addr": "324 Elm St",
+      "city": "Monroe",
+      "state": "CT",
+      "zip": "6468",
+      "email": "amanda@drfatse.net",
+      "phone": "2032685051",
+      "color": "RED",
+      "first_date": "2-Jan-24",
+      "last_date": "5-Mar-26"
+    }
+  ],
+  "territory_zips": [
+    "025",
+    "026",
+    "027",
+    "028",
+    "029",
+    "060",
+    "061",
+    "062",
+    "063",
+    "064",
+    "065",
+    "066",
+    "067",
+    "068",
+    "069",
+    "105",
+    "106",
+    "107",
+    "108",
+    "109"
   ]
 }
