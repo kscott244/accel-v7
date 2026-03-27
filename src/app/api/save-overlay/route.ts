@@ -65,8 +65,7 @@ export async function POST(req: NextRequest) {
     // the GitHub file itself is empty/new.
     try {
       const currentContent = JSON.parse(
-        Buffer.from(fileData.content.replace(/
-/g, ""), "base64").toString()
+        Buffer.from(fileData.content.replace(/\n/g, ""), "base64").toString()
       );
       const currentCount  = meaningfulItemCount(currentContent);
       const incomingCount = meaningfulItemCount(overlays);
