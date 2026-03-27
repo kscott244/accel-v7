@@ -31,7 +31,7 @@ function getContactTier(role: string): number {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, childNames, city, state, address, addresses, dealer, products, doctor, gName, acctId, ownership } = body;
+    const { name, childNames, city, state, address, addresses, dealer, products, doctor, gName, acctId, ownership, tier, score } = body;
 
     if (!name) return NextResponse.json({ error: "No account name" }, { status: 400 });
     const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -127,10 +127,15 @@ Return ONLY valid JSON, no markdown, no preamble.`;
         "anthropic-beta": "web-search-2025-03-05",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        // Use Sonnet only for high-value accounts (Diamond/Platinum or score>=40)
+        // Everything else uses Haiku — ~20x cheaper, sufficient for basic practice lookup
+        model: (tier === "Diamond" || tier === "Platinum" || (score && score >= 40))
+          ? "claude-sonnet-4-6"
+          : "claude-haiku-4-5-20251001",
         max_tokens: 2000,
         system: systemPrompt,
-        tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 5 }],
+        // max_uses: 2 keeps cost low — enough for practice + contact lookup
+        tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 2 }],
         messages: [{ role: "user", content: userPrompt }],
       }),
     });
@@ -202,7 +207,39 @@ Return ONLY valid JSON, no markdown, no preamble.`;
         intel.talkingPoints = intel.callPrep;
       }
 
-      // (save-patch removed — route was deprecated in Phase 2)
+      // Auto-save research results to overlays.json contacts so they persist
+      const GITHUB_PAT = process.env.GITHUB_PAT;
+      if (GITHUB_PAT && acctId && (intel.contacts?.length || intel.website)) {
+        try {
+          const baseUrl = req.nextUrl.origin;
+          // Load current overlays, merge in new contact data, save back
+          const loadRes = await fetch(`${baseUrl}/api/load-overlay`);
+          if (loadRes.ok) {
+            const currentOverlays = await loadRes.json();
+            const existingContact = currentOverlays.contacts?.[acctId] || {};
+            const mergedContact = {
+              ...existingContact,
+              contactName: intel.contacts?.[0]?.name || existingContact.contactName || null,
+              email: intel.contacts?.[0]?.email || existingContact.email || null,
+              phone: intel.contacts?.[0]?.phone || existingContact.phone || null,
+              website: intel.website || existingContact.website || null,
+              contacts: intel.contacts?.length ? intel.contacts : (existingContact.contacts || []),
+              researchedAt: new Date().toISOString(),
+              researchNote: `Auto-saved ${new Date().toLocaleDateString()}`,
+            };
+            const updatedOverlays = {
+              ...currentOverlays,
+              contacts: { ...(currentOverlays.contacts || {}), [acctId]: mergedContact },
+              lastUpdated: new Date().toISOString(),
+            };
+            fetch(`${baseUrl}/api/save-overlay`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(updatedOverlays),
+            }).catch(() => {}); // fire and forget — don't block research response
+          }
+        } catch {} // silent fail — never block the research result
+      }
 
     } catch {
       intel = { rawText, parseError: true };
