@@ -177,6 +177,20 @@
       "score": 98,
       "createdAt": "2026-03-27T18:45:54.088Z",
       "updatedAt": "2026-03-27T18:45:54.088Z"
+    },
+    "Master-CM065241": {
+      "id": "Master-CM065241",
+      "name": "CHILD AND ADULT ORTHODONTICS",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM065241",
+        "Master-CM1921152"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 98,
+      "createdAt": "2026-03-27T18:45:55.178Z",
+      "updatedAt": "2026-03-27T18:45:55.178Z"
     }
   },
   "groupMoves": {},
@@ -212,5 +226,5 @@
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-27T18:45:53.521Z"
+  "lastUpdated": "2026-03-27T18:45:54.658Z"
 }
