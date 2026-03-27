@@ -373,6 +373,20 @@
       "score": 92,
       "createdAt": "2026-03-27T18:46:15.274Z",
       "updatedAt": "2026-03-27T18:46:15.274Z"
+    },
+    "Master-CM17785145": {
+      "id": "Master-CM17785145",
+      "name": "GRD-NEW ROCHELLE DENTAL ARTS",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM17785145",
+        "Master-CM17776628"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 98,
+      "createdAt": "2026-03-27T18:46:16.684Z",
+      "updatedAt": "2026-03-27T18:46:16.684Z"
     }
   },
   "groupMoves": {},
@@ -408,5 +422,5 @@
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-27T18:46:14.736Z"
+  "lastUpdated": "2026-03-27T18:46:16.390Z"
 }
