@@ -1,90 +1,69 @@
 # CURRENT PHASE -- accel-v7
 
-## Active: Phase A16.2 -- Build Fix: save-overlay regex corruption COMPLETE
-
-### What Was Done
-The build had been broken since commit `a50e7e4` (tiered model / auto-save research).
-Root cause: `save-overlay/route.ts` line 68 had a literal newline inside a regex literal:
-  `Buffer.from(fileData.content.replace(/↵/g, ""), "base64")`
-SWC (Next.js Rust compiler) rejects literal newlines in regex — it reads the `/` as
-an unterminated regexp. The `\n` escape had been corrupted to a real newline.
-
-**Fix**: Single-line patch restoring `replace(/\n/g, "")` on line 68.
-Brace/paren delta = 0. Committed `083d3f4f77`, HTTP 200, `OVERLAY_WIPE_PREVENTED`
-confirmed in live bundle.
-
-**Note**: Commits `a50e7e4`, `a5a2d76` (tiered model, auto-save research) are in
-master but were never live. Their features (Haiku/Sonnet model selection by score,
-max_uses:2 guard, auto-save research to overlays) need verification in the next phase.
-
----
-
-
-## Active: Phase A16.1 -- AI Intel Stabilization / Operator Value Upgrade COMPLETE
+## Active: Phase A16.3 -- Merge Direction and Source Card Elimination COMPLETE
 
 ### Baseline
-A15.7 complete: Overlay write guard (ba5e307 / 6a853ca).
+A16.2 complete: build fix (save-overlay regex) + initial direction logic (7e36d046).
 
 ### What Was Done
 
-**Problem**: AI Intel output in GroupDetail was hard to use for call prep:
-- Hooks and Talking Points were separate sections with no clear priority ordering
-- Contact role labels ("Office-level", "Owner / Lead Dr") were vague
-- No competitive intel surface even though the API could return it
-- No inline call/email actions on research contacts — had to save first
-- No visual status indicator (open/closed/changed)
-- saveResNotes produced a flat unformatted string
+**Bug**: Merging a single-location account (e.g. Middletown Dental) INTO an existing
+multi-location group (e.g. Edge Dental) left the source as a standalone orphan card
+showing $0/$0. The source was never absorbed. Two root causes found:
 
-**Files Changed**
+**Root cause 1 — wrong mechanism used (groupMoves)**:
+Earlier in-session fix wrote a `groupMoves` entry to move Middletown into Edge Dental.
+But `applyGroupOverrides` only searches `g.children` — it never looks at top-level groups.
+Middletown (Master-CM1921839) is a top-level group, not a child of any group. Silent no-op.
 
-**`src/components/tabs/GroupDetail.tsx`** (commit `238ed1b`)
-- `STATUS_PILL` constant: Open/Closed/Changed/Unknown colored pill next to "Group Intel" header
-- `SCOPE_LABELS` fixed: "Decision Maker" / "Practice Manager" / "Regional / DSO" / "Coordinator"
-  (was: "Owner / Lead Dr" / "Office-level" / "Group / Regional" / "Coordinator")
-- `SCOPE_COLORS_KEYS` updated: tier-2 now uses `blue` instead of `t3` for better visibility
-- **Competitive Signal block**: amber-highlighted panel appears when API returns `competitive` field
-- **Decision Maker contact highlight**: tier-1 contacts get cyan border + tinted bg — stands out immediately
-- **Inline Call/Email actions**: 📞 phone and ✉ email are tappable links on research contacts — no save required
-- **"Call Prep" section**: merged Hooks + Talking Points into one prioritized view
-  - Numbered talking points shown first (these are `callPrep` — high-signal, specific)
-  - Hooks shown below as "Also worth mentioning" (lighter signals)
-- **`saveResNotes`** improved: saves numbered call prep + hooks + competitive intel as a clean formatted block
+**Root cause 2 — executeMerge wrote leaf IDs only, not the source group's own ID**:
+When absorbing into target, `executeMerge` was writing the source's leaf child IDs
+into the target's `childIds`. For a self-referencing single-loc group (where group.id
+=== child.id), this meant the source group's own top-level ID was never in childIdSet.
+Step 4b in `applyOverlays` only removes top-level groups whose `id` is in `childIdSet`
+— so the source survived as an orphan. Its financials were lost because the leaf object
+that was added had no pyQ data (wrong copy of the node).
 
-**`src/app/api/deep-research/route.ts`** (commit `5a6edad4`)
-- System prompt: added recency emphasis — "a practice that recently expanded… is a hot opportunity"
-- New `callPrep` JSON field: 3-4 highly specific, non-generic call-prep sentences for the first 60 seconds
-- `competitive` field instruction strengthened: asks for specific brand names (Dentsply, 3M, Ivoclar, Envista, etc.)
-- `callPrep` merged server-side into `talkingPoints` for backward compat with any cached results
-- Generic talking points explicitly called out as useless in the prompt — model told to skip them
+**Fixes**:
 
-### What Was Preserved
-- Review-and-save model intact: no silent auto-write, no autonomous actions
-- Save contact / save website / add notes behavior unchanged
-- Ghost locations logic unchanged
-- Suggested merges / group matching unchanged
-- All overlay persistence behavior unchanged
+**`src/components/tabs/GroupDetail.tsx`** (commit `0b348f4fc7`):
+- `executeMerge`: when absorbing source INTO target, always include `sourceGroupId`
+  (the source group's own top-level ID) in childIds, in addition to leaf IDs.
+- This ensures Step 4b removes the source from the top-level result array.
+- Step 4d then re-expands it via `mergedSourceGroups`, recovering full financial data.
+- Added `targetHasOverlay` as a third absorption trigger condition.
+
+**`data/overlays.json`** (commit `60c95ff27f`):
+- Wrote correct `groups[Master-CM047997]` (Edge Dental) with 12 childIds including
+  `Master-CM1921839` (Middletown) — the format that actually works through applyOverlays.
+- Cleared the broken `groupMoves` entry.
+
+### Merge Direction Rule (now canonical)
+Absorb current INTO target when ANY of:
+- target has more children (targetIsLarger)
+- target is a CSV-native multi-loc group with no overlay entry (targetIsCsvNative)
+- target already has an overlay entry (targetHasOverlay)
+
+### Child Integrity
+- Source group's own ID is always in childIds (Step 4b removal key)
+- Leaf IDs also included (handles overlay-keyed source groups)
+- Dedup preserved via `if (!merged.includes(id))` checks
+- Financial data recovered via Step 4d mergedSourceGroups expansion path
 
 ### Build
-Passing — brace/paren delta = 0 on GroupDetail.tsx verified pre-commit.
-deep-research/route.ts is TypeScript with `ignoreBuildErrors: true` — no build issues.
+Passing — brace/paren delta = 0 on GroupDetail.tsx. Both commits READY on Vercel.
 
 ### Deploy
-Live at https://accel-v7.vercel.app/accelerate — HTTP 200, `Competitive Signal` string
-confirmed in deployed bundle.
+- `0b348f4fc7` (GroupDetail fix) — READY
+- `60c95ff27f` (overlay data fix) — READY (latest production)
+- HTTP 200 confirmed
 
 ---
 
 ## Previously Completed
-- A15.7 -- Overlay Write Guard (ba5e307 / 6a853ca) complete
-- A15.6 -- CPID Queue / Suggestion System Cleanup (8765324) complete
-- A15.5 -- App Error Boundary / Crash Containment (a02d401) complete
-- A15.4 -- Merge Source-of-Truth Cleanup (79d6d2d) complete
-- A16 -- RFM Frequency Scoring (236d471) complete
-- A15.3 -- Safe Group Merge Correctness (95b9ffd) complete
-- A15.2 -- GitHub Large-File Load Reliability (ed29b63) complete
-- A15-A1, Phases 1-23 complete
-
----
+- A16.2 -- Build Fix: save-overlay broken regex + initial merge direction (083d3f4f77)
+- A16.1 -- AI Intel Stabilization (238ed1b / 5a6edad / 6501f78)
+- A15.7 -- Overlay Write Guard (ba5e307 / 6a853ca)
 
 ## Last Updated
-March 26, 2026
+March 27, 2026
