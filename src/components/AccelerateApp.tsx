@@ -71,6 +71,7 @@ class TabErrorBoundary extends Component<
 // Static data — single source of truth in src/lib/data.ts
 import { BADGER, PARENT_NAMES, DEALERS, PARENT_DEALERS, WEEK_ROUTES, OVERLAYS_REF as _OVERLAYS_REF_INIT, EMPTY_OVERLAYS } from "@/lib/data";
 import * as DataModule from "@/lib/data";
+import { applyGroupCreates } from "@/lib/mergeGroups";
 
 // OVERLAYS: runtime-loaded from data/overlays.json via API — NOT a static import
 // Default empty shape used until loadOverlays() resolves on app mount
@@ -131,126 +132,9 @@ function applyOverlays(grps: any[]): any[] {
     }
   });
 
-  // 4. GROUP CREATES — build custom groups from childIds
-  // The preloaded data nests children 2-3 levels deep:
-  //   top-level group → child wrapper (no products) → grandchild leaf (has products/city/dealer)
-  // We must build the leafByChildId map FIRST from the full result tree,
-  // then remove the pre-baked group, then pull children from the map directly.
-  
-  // Step 4a: Build a deep leafByChildId map from ALL groups BEFORE removing anything.
-  // Recurse up to 2 levels to find the richest (most products) version of each child.
-  const leafByChildId: Record<string,any> = {};
-  const updateLeaf = (id: string, candidate: any) => {
-    const existing = leafByChildId[id];
-    if (!existing || (candidate.products||[]).length > (existing.products||[]).length
-        || (!existing.city && candidate.city)) {
-      leafByChildId[id] = candidate;
-    }
-  };
-  result.forEach(g => {
-    (g.children||[]).forEach((c:any) => {
-      if (c.children && c.children.length > 0) {
-        // This child is a wrapper — its real data is in its children
-        c.children.forEach((leaf:any) => updateLeaf(c.id, leaf));
-      } else {
-        updateLeaf(c.id, c);
-      }
-    });
-  });
-
-  Object.values(OV.groups||{}).forEach((create:any) => {
-    const childIdSet = new Set(create.childIds || []);
-    const children: any[] = [];
-    let totalPY: Record<string,number> = {};
-    let totalCY: Record<string,number> = {};
-
-    // Step 4b: Capture any source groups being merged (childIds that are group IDs),
-    // then remove both the pre-existing baked group AND those source groups from result.
-    const mergedSourceGroups = result.filter(g => childIdSet.has(g.id));
-    result = result.filter(g => g.id !== create.id && !childIdSet.has(g.id));
-
-    // Step 4c: Remove these childIds from wherever they currently live in result
-    // (they may be children of the removed group or standalone groups)
-    result = result.map(g => {
-      const kept: any[] = [];
-      (g.children||[]).forEach((c:any) => {
-        if (childIdSet.has(c.id)) return; // remove from old parent
-        // Also remove wrapper children whose grandchildren match
-        if (c.children && c.children.some((gc:any) => childIdSet.has(gc.id))) return;
-        kept.push(c);
-      });
-      return { ...g, children: kept, locs: kept.length };
-    });
-
-    // Step 4d: Build the children array from the leaf map.
-    // A15.3: recursively flatten wrapper nodes so only true leaf offices are included.
-    // "wrapper node" = a child that has its own c.children (no products of its own).
-    const flattenToLeaves = (node: any): any[] => {
-      if (!node) return [];
-      if (node.children && node.children.length > 0 && !(node.products?.length)) {
-        // Wrapper: recurse into its children
-        return node.children.flatMap((gc: any) => flattenToLeaves(gc));
-      }
-      return [node];
-    };
-
-    // Track which leaf IDs have already been added to prevent duplicates
-    // when the same leaf appears in multiple source groups being merged.
-    const addedLeafIds = new Set<string>();
-    const pushLeaf = (leaf: any) => {
-      if (!leaf?.id || addedLeafIds.has(leaf.id)) return;
-      addedLeafIds.add(leaf.id);
-      children.push({ ...leaf, gId: create.id, gName: create.name });
-    };
-
-    (create.childIds||[]).forEach((cid:string) => {
-      const leaf = leafByChildId[cid];
-      if (leaf) {
-        // Direct leaf match — use it
-        flattenToLeaves({ ...leaf, id: cid }).forEach(pushLeaf);
-      } else {
-        // childId is a group ID — expand ALL of that group's children, flattening wrappers
-        const srcGroup = mergedSourceGroups.find(g => g.id === cid);
-        if (srcGroup?.children?.length) {
-          srcGroup.children.flatMap((c:any) => flattenToLeaves(c)).forEach(pushLeaf);
-        }
-        // Truly unfound childIds handled below as stubs
-      }
-    });
-
-    // Roll up financials
-    children.forEach((c:any) => {
-      Object.entries(c.pyQ||{}).forEach(([q,v]:any) => { totalPY[q] = (totalPY[q]||0) + v; });
-      Object.entries(c.cyQ||{}).forEach(([q,v]:any) => { totalCY[q] = (totalCY[q]||0) + v; });
-    });
-
-    // Add any childIds not found anywhere in base data (true stubs — neither leaf nor group)
-    (create.childIds||[]).forEach((cid:string) => {
-      if (!children.find(c => c.id === cid) && !mergedSourceGroups.find(g => g.id === cid)) {
-        children.push({ id: cid, name: nameMap[cid]||cid, gId: create.id, gName: create.name,
-          pyQ: {}, cyQ: {}, products: [], tier: "Standard", class2: "Private Practice" });
-      }
-    });
-
-    if (children.length > 0) {
-      // A15.3: derive class2 from actual merged location count, not stale saved value.
-      // A group that was "Private Practice" (1-2 locs) may now be a DSO (3+ locs).
-      // Only upgrade; never downgrade (a saved DSO flag stays DSO regardless of locs).
-      const savedClass2 = create.class2 || "Private Practice";
-      const isDsoByLocs = children.length >= 3;
-      const isDsoByFlag = savedClass2 === "DSO" || savedClass2 === "EMERGING DSO" || savedClass2 === "Emerging DSO";
-      const derivedClass2 = (isDsoByLocs || isDsoByFlag) ? (savedClass2 !== "Private Practice" && savedClass2 !== "STANDARD" ? savedClass2 : "DSO") : savedClass2;
-      result.unshift({
-        id: create.id, name: create.name,
-        tier: create.tier||"Standard", class2: derivedClass2,
-        dsoName: create.dsoName||create.name, locs: children.length,
-        pyQ: totalPY, cyQ: totalCY, children,
-      });
-    }
-  });
-
-  // Remove groups emptied by custom group child moves — they become ghost shells
-  result = result.filter(g => (g.children||[]).length > 0);
+  // 4. GROUP CREATES — delegated to pure fn in src/lib/mergeGroups.ts (A16.4)
+  // Extracted for unit testability. applyGroupCreates() is side-effect-free.
+  result = applyGroupCreates(result, OV.groups || {}, nameMap);
 
   return result;
 }
