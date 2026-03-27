@@ -93,6 +93,20 @@
       "score": 92,
       "createdAt": "2026-03-27T18:45:46.525Z",
       "updatedAt": "2026-03-27T18:45:46.525Z"
+    },
+    "Master-CM916101": {
+      "id": "Master-CM916101",
+      "name": "TOMAS TORRES",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM916101",
+        "Master-CM169843"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 92,
+      "createdAt": "2026-03-27T18:45:47.857Z",
+      "updatedAt": "2026-03-27T18:45:47.857Z"
     }
   },
   "groupMoves": {},
@@ -128,5 +142,5 @@
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-27T18:45:45.990Z"
+  "lastUpdated": "2026-03-27T18:45:47.395Z"
 }
