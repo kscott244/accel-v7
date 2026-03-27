@@ -71,14 +71,20 @@ export async function POST(req: NextRequest) {
       const incomingCount = meaningfulItemCount(overlays);
       const incomingGroups = Object.keys(overlays.groups || {}).length;
 
-      if (incomingGroups === 0 && incomingCount < 3 && currentCount >= 3) {
+      const currentGroups = Object.keys(currentContent.groups || {}).length;
+      // Block if: incoming drops all groups but current has groups (group wipe)
+      // OR incoming has 0 groups + thin payload but current has meaningful data
+      const groupWipe = incomingGroups === 0 && currentGroups > 0;
+      const thinWipe  = incomingGroups === 0 && incomingCount < 3 && currentCount >= 3;
+      if (groupWipe || thinWipe) {
         return NextResponse.json(
           {
             error: "WRITE_GUARD: incoming overlay has 0 groups but current GitHub overlay has " +
-              currentCount + " items. Refusing to overwrite. " +
+              currentGroups + " groups and " + currentCount + " items. Refusing to overwrite. " +
               "This usually means the app saved before overlay data finished loading. " +
               "Reload the app to re-sync — your data on GitHub is intact.",
             code: "OVERLAY_WIPE_PREVENTED",
+            currentGroups,
             currentCount,
             incomingCount,
           },
