@@ -2,7 +2,10 @@
   "schemaVersion": 2,
   "groups": {},
   "groupMoves": {
-    "Master-CM1921839": "Master-CM047997"
+    "Master-CM1921839": {
+      "childId": "Master-CM1921839",
+      "targetGroupId": "Master-CM047997"
+    }
   },
   "nameOverrides": {},
   "contacts": {},
@@ -11,5 +14,5 @@
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-27T05:22:17.378Z"
+  "lastUpdated": "2026-03-27T05:24:19Z"
 }
