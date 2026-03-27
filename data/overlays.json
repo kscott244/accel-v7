@@ -247,6 +247,20 @@
       "score": 98,
       "createdAt": "2026-03-27T18:45:58.946Z",
       "updatedAt": "2026-03-27T18:45:58.946Z"
+    },
+    "Master-CM265093": {
+      "id": "Master-CM265093",
+      "name": "CARING DENTAL GROUP",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM265093",
+        "Master-CM867844"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 98,
+      "createdAt": "2026-03-27T18:46:07.748Z",
+      "updatedAt": "2026-03-27T18:46:07.748Z"
     }
   },
   "groupMoves": {},
@@ -282,5 +296,5 @@
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-27T18:45:58.375Z"
+  "lastUpdated": "2026-03-27T18:46:07.190Z"
 }
