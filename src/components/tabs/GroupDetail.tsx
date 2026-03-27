@@ -863,44 +863,57 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
     if (!target || mergeSaving) return;
     setMergeSaving(true);
     // A15.3: store leaf IDs directly rather than group IDs.
-    // Storing a group ID causes applyOverlays Step 4d to re-expand a group that may
-    // have already been consumed by an earlier overlay iteration, producing empty
-    // children or duplicated leaves when the same leaf appears in multiple groups.
     //
-    // Resolution order:
-    // 1. Current group: start from existing overlay childIds if present, else rendered children.
-    // 2. Target: expand to leaf IDs via its overlay childIds, rendered children, or target.id.
+    // A16.2 fix: merge direction awareness.
+    // Previously this always wrote into groups[group.id] (the current group),
+    // which meant merging a single account INTO an existing multi-loc group
+    // would create a bogus wrapper on the small account instead of adding it
+    // to the big group. Now we detect direction:
+    //   - If target is a larger/CSV-native group → write into target (absorb current into target)
+    //   - If current is larger or both are overlays → write into current (original behavior)
     const existingEntry = OVERLAYS_REF.groups?.[group.id];
-    const currentChildIds: string[] = existingEntry?.childIds
-      ? [...existingEntry.childIds]
-      : (group.children||[]).map((c:any) => c.id);
-
-    // Resolve target to leaf-level IDs — never store a bare group ID in childIds
     const targetOverlay = OVERLAYS_REF.groups?.[target.id];
-    const targetLeafIds: string[] =
-      targetOverlay?.childIds?.length
-        ? targetOverlay.childIds
-        : (target.children||[]).length > 0
-          ? (target.children||[]).map((c:any) => c.id)
-          : [target.id];
 
-    // Merge: add target leaf IDs not already present
-    const merged = [...currentChildIds];
-    targetLeafIds.forEach((id:string) => {
-      if (!merged.includes(id)) merged.push(id);
-    });
+    // Leaf IDs for current group
+    const currentLeafIds: string[] = existingEntry?.childIds?.length
+      ? [...existingEntry.childIds]
+      : (group.children||[]).length > 0
+        ? (group.children||[]).map((c:any) => c.id)
+        : [group.id];
+
+    // Leaf IDs for target group
+    const targetLeafIds: string[] = targetOverlay?.childIds?.length
+      ? [...targetOverlay.childIds]
+      : (target.children||[]).length > 0
+        ? (target.children||[]).map((c:any) => c.id)
+        : [target.id];
+
+    // Direction: absorb current INTO target when target is bigger (more native children)
+    // or target is a CSV-native group (no overlay entry) with multiple locations.
+    const targetIsLarger = targetLeafIds.length > currentLeafIds.length;
+    const targetIsCsvNative = !targetOverlay && (target.children||[]).length > 1;
+    const absorbIntoTarget = targetIsLarger || targetIsCsvNative;
+
+    // Build merged child list under the winning parent
+    const baseIds = absorbIntoTarget ? targetLeafIds : currentLeafIds;
+    const addIds  = absorbIntoTarget ? currentLeafIds : targetLeafIds;
+    const merged  = [...baseIds];
+    addIds.forEach((id:string) => { if (!merged.includes(id)) merged.push(id); });
+
+    const winnerGroup  = absorbIntoTarget ? target : group;
+    const winnerEntry  = absorbIntoTarget ? targetOverlay : existingEntry;
 
     const groupEntry = {
-      id: group.id,
-      name: fixGroupName(group),
-      tier: group.tier || "Standard",
-      class2: group.class2 || "Private Practice",
+      id: winnerGroup.id,
+      name: fixGroupName(winnerGroup),
+      tier: winnerGroup.tier || "Standard",
+      class2: winnerGroup.class2 || "Private Practice",
       childIds: merged,
       source: "manual-merge",
-      createdAt: existingEntry?.createdAt || new Date().toISOString(),
+      createdAt: winnerEntry?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    const next = { ...OVERLAYS_REF, groups: { ...(OVERLAYS_REF.groups||{}), [group.id]: groupEntry } };
+    const next = { ...OVERLAYS_REF, groups: { ...(OVERLAYS_REF.groups||{}), [winnerGroup.id]: groupEntry } };
     saveOverlays(next).then((ok:boolean) => {
       setMergeSaving(false);
       if (ok) {
