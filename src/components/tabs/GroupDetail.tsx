@@ -459,8 +459,19 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
       });
       const data = await res.json();
       const intel = data.intel || {};
-      if (data.error && !intel.statusNote && !intel.status && !(intel.contacts?.length)) {
-        setResResult({ status: data.error || "No intel found. The practice may not have a web presence.", ownership: "", website: "", contacts: [], hooks: [], talkingPoints: [] });
+      if (data.error || data.errorCode) {
+        const isQuota = data.errorCode === "PROVIDER_QUOTA";
+        const isProviderErr = data.errorCode === "PROVIDER_ERROR";
+        const userMsg = data.userMessage
+          || (isQuota ? "Research is temporarily unavailable — the AI provider key has hit its usage limit." : null)
+          || (isProviderErr ? "Research is temporarily unavailable. The AI provider returned an error." : null)
+          || "No intel found. The practice may not have a web presence.";
+        setResResult({
+          status: userMsg,
+          isProviderError: !!(isQuota || isProviderErr),
+          isQuotaError: !!isQuota,
+          ownership: "", website: "", contacts: [], hooks: [], talkingPoints: [],
+        });
         setResLoading(false); return;
       }
       const intelResult = {
@@ -977,8 +988,17 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
           ))}
         </div>}
         {resResult && !resLoading && <>
-          {/* Status note */}
-          {resResult.status&&<div style={{fontSize:12,color:T.t2,lineHeight:1.5,marginBottom:8}}>{resResult.status}</div>}
+          {/* Status note — styled differently for provider errors vs normal status */}
+          {resResult.status&&(resResult.isProviderError
+            ? <div style={{padding:"9px 12px",background:"rgba(248,113,113,.07)",border:"1px solid rgba(248,113,113,.2)",borderRadius:8,marginBottom:8}}>
+                <div style={{fontSize:10,fontWeight:700,color:"#f87171",textTransform:"uppercase",letterSpacing:"1px",marginBottom:3}}>
+                  {resResult.isQuotaError ? "Usage Limit Reached" : "Research Unavailable"}
+                </div>
+                <div style={{fontSize:11,color:T.t2,lineHeight:1.5}}>{resResult.status}</div>
+                {resResult.isQuotaError&&<div style={{fontSize:10,color:T.t4,marginTop:4}}>Check console.anthropic.com to add credits.</div>}
+              </div>
+            : <div style={{fontSize:12,color:T.t2,lineHeight:1.5,marginBottom:8}}>{resResult.status}</div>
+          )}
           {/* Ownership note */}
           {resResult.ownership&&<div style={{fontSize:11,color:T.t3,marginBottom:8,fontStyle:"italic"}}>{resResult.ownership}</div>}
           {/* Competitive intel — high-value signal */}
