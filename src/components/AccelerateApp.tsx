@@ -451,6 +451,13 @@ function AppInner() {
         body: JSON.stringify({ overlays: next }),
       });
       const data = await res.json();
+      // A15.7: WRITE_GUARD returns 409 when an empty payload would overwrite real data.
+      // Surface this clearly so Ken knows his GitHub data is intact and the app needs a reload.
+      if (res.status === 409 && data.code === "OVERLAY_WIPE_PREVENTED") {
+        setOverlaySaveStatus("error");
+        setOverlaySaveError("Save blocked — app loaded before data was ready. Your data on GitHub is safe. Please reload.");
+        return false;
+      }
       if (!res.ok || !data.success) {
         throw new Error(data.error || "Save failed");
       }
