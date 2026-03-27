@@ -1,20 +1,13 @@
 {
   "schemaVersion": 2,
-  "groups": {
-    "Master-TEST": {
-      "id": "Master-TEST",
-      "name": "Test Group",
-      "childIds": [
-        "Master-CM123"
-      ]
-    }
-  },
+  "groups": {},
   "groupMoves": {},
   "nameOverrides": {},
   "contacts": {},
   "fscReps": {},
+  "groupContacts": {},
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-27T01:35:33.961Z"
+  "lastUpdated": "2026-03-27T01:37:08.578Z"
 }
