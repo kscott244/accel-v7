@@ -289,6 +289,20 @@
       "score": 92,
       "createdAt": "2026-03-27T18:46:09.522Z",
       "updatedAt": "2026-03-27T18:46:09.522Z"
+    },
+    "Master-CM17711543": {
+      "id": "Master-CM17711543",
+      "name": "DR ERIC J. LEVINE",
+      "class2": "Private Practice",
+      "childIds": [
+        "Master-CM17711543",
+        "Master-CM365301"
+      ],
+      "tier": "Standard",
+      "source": "auto-merge",
+      "score": 92,
+      "createdAt": "2026-03-27T18:46:10.066Z",
+      "updatedAt": "2026-03-27T18:46:10.066Z"
     }
   },
   "groupMoves": {},
@@ -324,5 +338,5 @@
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-27T18:46:09.008Z"
+  "lastUpdated": "2026-03-27T18:46:09.549Z"
 }
