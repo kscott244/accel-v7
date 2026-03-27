@@ -75,7 +75,7 @@ function MultiDealerView({acct}) {
   </div>;
 }
 
-function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup,overlays,saveOverlays,reapplyGroupOverrides=null,goAcct=null,salesStore=null}) {
+function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup,overlays,saveOverlays,patchOverlay=null,reapplyGroupOverrides=null,goAcct=null,salesStore=null}) {
   const [q,setQ]=useState("1");
   const [showForm,setShowForm]=useState(false);
   const [toast,setToast]=useState(null);
@@ -371,8 +371,10 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
         if (hasContact) {
           try { localStorage.setItem(storageKey, JSON.stringify(contacts)); } catch {}
           setSavedContacts(contacts);
-          // Persist to overlays durably
-          if (saveOverlays) {
+          // Persist to overlays durably — use atomic patch to avoid SHA conflicts
+          if (patchOverlay) {
+            patchOverlay([{ op: "set", path: `contacts.${acct.id}`, value: contacts }]);
+          } else if (saveOverlays) {
             const next = { ...OVERLAYS_REF, contacts: { ...(OVERLAYS_REF.contacts||{}), [acct.id]: contacts } };
             saveOverlays(next);
           }
