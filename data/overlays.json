@@ -1,37 +1,16 @@
 {
   "schemaVersion": 2,
-  "groups": {
-    "Master-CM047997": {
-      "id": "Master-CM047997",
-      "name": "EDGE DENTAL MANAGEMENT",
-      "tier": "Diamond",
-      "class2": "DSO",
-      "childIds": [
-        "Master-CM214709",
-        "Master-CM066213",
-        "Master-CM896029",
-        "Master-CM293359",
-        "Master-CM1603373",
-        "Master-CM1451924",
-        "Master-CM1903543",
-        "Master-CM310182",
-        "Master-CM114147",
-        "Master-CM890793",
-        "Master-CM17705336",
-        "Master-CM1921839"
-      ],
-      "source": "manual-merge",
-      "createdAt": "2026-03-27T05:36:10Z",
-      "updatedAt": "2026-03-27T05:36:10Z"
-    }
-  },
+  "lastUpdated": "2026-03-27T12:50:03.937Z",
+  "groups": {},
+  "groupDetaches": [],
   "groupMoves": {},
   "nameOverrides": {},
   "contacts": {},
   "fscReps": {},
-  "groupContacts": {},
-  "groupDetaches": [],
-  "skippedCpidIds": [],
+  "activityLogs": {},
+  "research": {},
+  "dealerOverrides": {},
+  "dealerManualReps": {},
   "adjs": [],
-  "lastUpdated": "2026-03-27T12:49:02.242Z"
+  "skippedCpidIds": []
 }
