@@ -203,8 +203,8 @@ function AppInner() {
   const [tab, setTab] = useState("today");
   const [tasks, setTasks] = useState<any[]>(() => {
     try {
-      const cached = localStorage.getItem("overlay_cache_v2");
-      if (cached) { const ov = JSON.parse(cached); if (Array.isArray(ov?.tasks)) return ov.tasks; }
+      const cached = localStorage.getItem("accel_tasks_v1");
+      if (cached) return JSON.parse(cached);
     } catch {}
     return [];
   });
@@ -242,14 +242,6 @@ function AppInner() {
   const [view, setView] = useState(null);
   const [showMore, setShowMore] = useState(false);
   const [adjs, setAdjs] = useState<any[]>(() => {
-    // Seed from overlay cache first (cross-device durable), fallback to legacy localStorage key
-    try {
-      const cached = localStorage.getItem("overlay_cache_v2");
-      if (cached) {
-        const ov = JSON.parse(cached);
-        if (Array.isArray(ov?.adjs)) return ov.adjs;
-      }
-    } catch {}
     try { return JSON.parse(localStorage.getItem("accel_adjs_v1") || "[]"); } catch { return []; }
   });
   // Persist adjs to overlays (cross-device durable) + localStorage cache (fast path)
@@ -259,18 +251,17 @@ function AppInner() {
     try { localStorage.setItem("accel_adjs_v1", JSON.stringify(adjs)); } catch {}
     if (adjsSaveTimerRef.current) clearTimeout(adjsSaveTimerRef.current);
     adjsSaveTimerRef.current = setTimeout(() => {
-      setOverlaysState((prev: any) => {
-        const next = { ...prev, adjs, lastUpdated: new Date().toISOString() };
-        OVERLAYS_REF = next;
-        DataModule.OVERLAYS_REF = next;
-        try { localStorage.setItem("overlay_cache_v2", JSON.stringify(next)); } catch {}
-        fetch("/api/save-overlay", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ overlays: next }),
-        }).catch(() => {});
-        return next;
-      });
+      // Use atomic patch to save adjs — no full overlay replacement
+      fetch("/api/save-overlay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ops: [{ op: "replaceSection", section: "adjs", value: adjs }] }),
+      }).then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          if (data.overlays) setOverlays(data.overlays);
+        }
+      }).catch(() => {});
     }, 800);
   }, [adjs]);
 
@@ -320,12 +311,44 @@ function AppInner() {
   // ── CENTRAL PERSISTENCE SERVICE ───────────────────────────────
   // All overlay saves go through here. Updates state immediately, writes to GitHub durably.
   // Shows real error if durable save fails — never silent.
+
+  // NEW: Atomic patch-based overlay saves. Client sends ops, API reads current from GitHub,
+  // applies ops, validates, writes back. No stale data stomping.
+  const patchOverlay = async (ops: any[]): Promise<boolean> => {
+    setOverlaySaveStatus("saving");
+    setOverlaySaveError(null);
+    try {
+      const res = await fetch("/api/save-overlay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ops }),
+      });
+      const data = await res.json();
+      if (res.status === 422 && data.code === "OVERLAY_INTEGRITY_BLOCKED") {
+        setOverlaySaveStatus("error");
+        setOverlaySaveError("Blocked: " + (data.violations?.[0]?.detail || data.error));
+        return false;
+      }
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Save failed");
+      }
+      // Update local state with canonical overlay returned from API
+      if (data.overlays) setOverlays(data.overlays);
+      setOverlaySaveStatus("saved");
+      setTimeout(() => setOverlaySaveStatus("idle"), 3000);
+      return true;
+    } catch (err: any) {
+      setOverlaySaveStatus("error");
+      setOverlaySaveError(err.message || "Failed to save — check connection");
+      return false;
+    }
+  };
+
+  // LEGACY: Full-overlay save (deprecated — use patchOverlay for new code)
   const saveOverlays = async (next: any): Promise<boolean> => {
     // 1. Update in-memory immediately
     setOverlays(next);
-    // 2. Cache to localStorage
-    try { localStorage.setItem("overlay_cache_v2", JSON.stringify(next)); } catch {}
-    // 3. Write to GitHub durably
+    // 2. Write to GitHub durably (no localStorage cache — always load fresh)
     setOverlaySaveStatus("saving");
     setOverlaySaveError(null);
     try {
@@ -335,16 +358,21 @@ function AppInner() {
         body: JSON.stringify({ overlays: next }),
       });
       const data = await res.json();
-      // A15.7: WRITE_GUARD returns 409 when an empty payload would overwrite real data.
-      // Surface this clearly so Ken knows his GitHub data is intact and the app needs a reload.
       if (res.status === 409 && data.code === "OVERLAY_WIPE_PREVENTED") {
         setOverlaySaveStatus("error");
         setOverlaySaveError("Save blocked — app loaded before data was ready. Your data on GitHub is safe. Please reload.");
         return false;
       }
+      if (res.status === 422 && data.code === "OVERLAY_INTEGRITY_BLOCKED") {
+        setOverlaySaveStatus("error");
+        setOverlaySaveError("Blocked: " + (data.violations?.[0]?.detail || data.error));
+        return false;
+      }
       if (!res.ok || !data.success) {
         throw new Error(data.error || "Save failed");
       }
+      // Update local state with canonical overlay returned from API
+      if (data.overlays) setOverlays(data.overlays);
       setOverlaySaveStatus("saved");
       setTimeout(() => setOverlaySaveStatus("idle"), 3000);
       return true;
@@ -454,38 +482,24 @@ function AppInner() {
   useEffect(() => {
     const boot = async () => {
       // ── Load Overlays ──
+      // ALWAYS load fresh from GitHub. No localStorage cache — it was the root cause
+      // of stale data stomping fixes applied directly on GitHub.
       let loadedOverlays = EMPTY_OVERLAYS;
       try {
-        // Try localStorage cache first (fast)
-        const cached = localStorage.getItem("overlay_cache_v2");
-        if (cached) {
-          loadedOverlays = JSON.parse(cached);
-        }
-        // Always fetch fresh from GitHub in background to stay current
-        // Only adopt GitHub data if it is NEWER than the local cache — prevents a failed
-        // save from being silently rolled back on next page load (the root cause of overlay
-        // data disappearing after a CSV upload when the prior save had an error).
-        fetch("/api/load-overlay").then(async (res) => {
-          if (res.ok) {
-            const { overlays: fresh } = await res.json();
-            if (fresh) {
-              const cachedTime = loadedOverlays?.lastUpdated ? new Date(loadedOverlays.lastUpdated).getTime() : 0;
-              const freshTime  = fresh.lastUpdated         ? new Date(fresh.lastUpdated).getTime()          : 0;
-              if (freshTime >= cachedTime) {
-                setOverlays(fresh);
-                try { localStorage.setItem("overlay_cache_v2", JSON.stringify(fresh)); } catch {}
-                // Restore adjs from GitHub overlays (cross-device sync)
-                if (Array.isArray(fresh.adjs)) {
-                  setAdjs(fresh.adjs);
-                  try { localStorage.setItem("accel_adjs_v1", JSON.stringify(fresh.adjs)); } catch {}
-                }
-                // Reapply overlays onto current groups with fresh data
-                setGroups(prev => prev ? applyGroupOverrides(applyOverlays(prev.map((g:any) => ({...g})))) : prev);
-              }
-              // else: local cache is newer (unsaved changes present) — keep local data
+        // Clear stale localStorage cache on boot (one-time migration)
+        try { localStorage.removeItem("overlay_cache_v2"); } catch {}
+        const res = await fetch("/api/load-overlay");
+        if (res.ok) {
+          const { overlays: fresh } = await res.json();
+          if (fresh) {
+            loadedOverlays = fresh;
+            // Restore adjs from GitHub overlays (cross-device sync)
+            if (Array.isArray(fresh.adjs)) {
+              setAdjs(fresh.adjs);
+              try { localStorage.setItem("accel_adjs_v1", JSON.stringify(fresh.adjs)); } catch {}
             }
           }
-        }).catch(() => { /* Overlay fetch failed — using cached data */ });
+        }
       } catch {}
       setOverlays(loadedOverlays);
 
@@ -950,12 +964,12 @@ function AppInner() {
           {!view && tab==="map" && <MapTab/>}
           {!view && tab==="calc" && <DashTab groups={groups||[]} q1CY={q1CY} q1Att={q1Att} q1Gap={q1Gap} scored={scored} goAcct={goSmartFn} activeQ={activeQ||"1"}/>}
           {!view && tab==="est" && <EstTab pct={estPct} setPct={setEstPct} q1CY={q1CY} groups={groups||[]} goAcct={goSmartFn}/>}
-          {!view && tab==="dealers" && <DealersTab scored={scored} groups={groups||[]} goAcct={goSmartFn} goGroup={goGroupFn} activeQ={activeQ||"1"} overlays={overlays} saveOverlays={saveOverlays}/>}
+          {!view && tab==="dealers" && <DealersTab scored={scored} groups={groups||[]} goAcct={goSmartFn} goGroup={goGroupFn} activeQ={activeQ||"1"} overlays={overlays} saveOverlays={saveOverlays} patchOverlay={patchOverlay}/>}
           {!view && tab==="outreach" && <OutreachTab scored={scored}/>}
           {!view && tab==="tasks" && <TasksTab tasks={tasks} onAddTask={(data)=>addTask(data)} onCompleteTask={completeTask} onDeleteTask={deleteTask}/>}
-          {!view && tab==="admin" && <AdminTab groups={groups||[]} scored={scored} overlays={overlays} saveOverlays={saveOverlays} salesStore={salesStore}/>}
-          {view?.type==="group" && <GroupDetail group={view.data} groups={groups||[]} goMain={()=>setView(null)} overlays={overlays} saveOverlays={saveOverlays} goAcct={(a:any)=>setView({type:"acct",data:{...a,gName:fixGroupName(view.data),gId:view.data.id,gTier:view.data.tier},from:view.data})} salesStore={salesStore}/>}
-          {view?.type==="acct" && <AcctDetail acct={view.data} goBack={()=>view?.from?setView({type:"group",data:view.from}):setView(null)} adjs={adjs} setAdjs={setAdjs} groups={groups||[]} goGroup={goGroupFn} overlays={overlays} saveOverlays={saveOverlays} reapplyGroupOverrides={reapplyGroupOverrides} goAcct={(s:any)=>setView({type:"acct",data:{...s,gId:view.data.gId,gName:view.data.gName},from:view?.from})} salesStore={salesStore}/>}
+          {!view && tab==="admin" && <AdminTab groups={groups||[]} scored={scored} overlays={overlays} saveOverlays={saveOverlays} patchOverlay={patchOverlay} salesStore={salesStore}/>}
+          {view?.type==="group" && <GroupDetail group={view.data} groups={groups||[]} goMain={()=>setView(null)} overlays={overlays} saveOverlays={saveOverlays} patchOverlay={patchOverlay} goAcct={(a:any)=>setView({type:"acct",data:{...a,gName:fixGroupName(view.data),gId:view.data.id,gTier:view.data.tier},from:view.data})} salesStore={salesStore}/>}
+          {view?.type==="acct" && <AcctDetail acct={view.data} goBack={()=>view?.from?setView({type:"group",data:view.from}):setView(null)} adjs={adjs} setAdjs={setAdjs} groups={groups||[]} goGroup={goGroupFn} overlays={overlays} saveOverlays={saveOverlays} patchOverlay={patchOverlay} reapplyGroupOverrides={reapplyGroupOverrides} goAcct={(s:any)=>setView({type:"acct",data:{...s,gId:view.data.gId,gName:view.data.gName},from:view?.from})} salesStore={salesStore}/>}
         </>;
       })()}
       </TabErrorBoundary>

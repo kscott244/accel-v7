@@ -1,26 +1,64 @@
 import { NextRequest, NextResponse } from "next/server";
+import { applyOps, validateOverlayIntegrity } from "@/lib/overlayOps";
+import type { OverlayOp } from "@/lib/overlayOps";
 
 const GITHUB_PAT = process.env.GITHUB_PAT!;
 const REPO = "kscott244/accel-v7";
 const FILE_PATH = "data/overlays.json";
 
-// ─── MEANINGFUL ITEM COUNT ────────────────────────────────────────
-// Counts the number of meaningful user-authored items in an overlay object.
-// Used by the write guard to detect a dangerously empty incoming payload.
-// Sections counted: groups, groupMoves, nameOverrides, contacts, fscReps,
-// groupContacts, groupDetaches, skippedCpidIds.
-function meaningfulItemCount(ov: any): number {
-  if (!ov || typeof ov !== "object") return 0;
-  let n = 0;
-  n += Object.keys(ov.groups        || {}).length;
-  n += Object.keys(ov.groupMoves    || {}).length;
-  n += Object.keys(ov.nameOverrides || {}).length;
-  n += Object.keys(ov.contacts      || {}).length;
-  n += Object.keys(ov.fscReps       || {}).length;
-  n += Object.keys(ov.groupContacts || {}).length;
-  n += (ov.groupDetaches    || []).length;
-  n += (ov.skippedCpidIds   || []).length;
-  return n;
+// Load base groups for integrity validation (server-side only)
+let _baseGroups: any[] | null = null;
+function getBaseGroups(): any[] {
+  if (!_baseGroups) {
+    try {
+      const { PRELOADED } = require("@/data/preloaded-data");
+      _baseGroups = PRELOADED?.groups || [];
+    } catch {
+      _baseGroups = [];
+    }
+  }
+  return _baseGroups;
+}
+
+// ─── FETCH CURRENT OVERLAY FROM GITHUB ──────────────────────────────────────
+async function fetchCurrentOverlay(): Promise<{ overlay: any; sha: string } | null> {
+  const res = await fetch(
+    `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`,
+    { headers: { Authorization: `token ${GITHUB_PAT}`, "User-Agent": "accel-v7" } }
+  );
+  if (!res.ok) return null;
+  const fileData = await res.json();
+  const content = JSON.parse(
+    Buffer.from(fileData.content.replace(/\n/g, ""), "base64").toString()
+  );
+  return { overlay: content, sha: fileData.sha };
+}
+
+// ─── COMMIT TO GITHUB ───────────────────────────────────────────────────────
+async function commitOverlay(overlay: any, sha: string): Promise<{ success: boolean; commit?: string; error?: string }> {
+  const newContent = Buffer.from(JSON.stringify(overlay, null, 2)).toString("base64");
+  const res = await fetch(
+    `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `token ${GITHUB_PAT}`,
+        "Content-Type": "application/json",
+        "User-Agent": "accel-v7",
+      },
+      body: JSON.stringify({
+        message: `overlay: save — ${new Date().toISOString().slice(0, 10)}`,
+        content: newContent,
+        sha,
+      }),
+    }
+  );
+  if (!res.ok) {
+    const errData = await res.json();
+    return { success: false, error: errData.message || "GitHub commit failed" };
+  }
+  const putData = await res.json();
+  return { success: true, commit: putData.commit?.sha?.slice(0, 10) };
 }
 
 export async function POST(req: NextRequest) {
@@ -29,112 +67,108 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No GitHub PAT configured" }, { status: 500 });
     }
 
-    const { overlays } = await req.json();
+    const body = await req.json();
+
+    // ── PATCH MODE (new): client sends ops array ──────────────────────
+    if (body.ops && Array.isArray(body.ops)) {
+      const ops: OverlayOp[] = body.ops;
+      if (ops.length === 0) {
+        return NextResponse.json({ error: "Empty ops array" }, { status: 400 });
+      }
+
+      // 1. Read current overlay from GitHub (always fresh)
+      const current = await fetchCurrentOverlay();
+      if (!current) {
+        return NextResponse.json({ error: "Failed to fetch current overlay from GitHub" }, { status: 500 });
+      }
+
+      // 2. Apply operations to current overlay
+      const updated = { ...current.overlay };
+      applyOps(updated, ops);
+      updated.lastUpdated = new Date().toISOString();
+
+      // 3. Integrity guard
+      const baseGroups = getBaseGroups();
+      if (baseGroups.length > 0) {
+        const report = validateOverlayIntegrity(baseGroups, updated);
+        if (report.blocked) {
+          const blockViolations = report.violations.filter(v => v.severity === "block");
+          return NextResponse.json(
+            {
+              error: "INTEGRITY_GUARD: " + blockViolations.map(v => v.detail).join(" | "),
+              code: "OVERLAY_INTEGRITY_BLOCKED",
+              violations: blockViolations,
+            },
+            { status: 422 }
+          );
+        }
+      }
+
+      // 4. Commit to GitHub
+      const result = await commitOverlay(updated, current.sha);
+      if (!result.success) {
+        return NextResponse.json({ error: result.error }, { status: 500 });
+      }
+
+      return NextResponse.json({
+        success: true,
+        commit: result.commit,
+        overlays: updated,
+      });
+    }
+
+    // ── LEGACY MODE: client sends full overlay (backward compat) ─────
+    // This path is DEPRECATED. All new code should use ops.
+    const { overlays } = body;
     if (!overlays) {
-      return NextResponse.json({ error: "Missing overlays payload" }, { status: 400 });
+      return NextResponse.json({ error: "Missing overlays payload or ops array" }, { status: 400 });
     }
 
-    // 1. Get current file — SHA required for GitHub PUT, content required for write guard
-    const getRes = await fetch(
-      `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`,
-      { headers: { Authorization: `token ${GITHUB_PAT}`, "User-Agent": "accel-v7" } }
-    );
-
-    if (!getRes.ok) {
-      return NextResponse.json({ error: "Failed to fetch current overlays SHA" }, { status: 500 });
+    const current = await fetchCurrentOverlay();
+    if (!current) {
+      return NextResponse.json({ error: "Failed to fetch current overlay from GitHub" }, { status: 500 });
     }
 
-    const fileData = await getRes.json();
-    const fileSha = fileData.sha;
-
-    // ── A15.7 WRITE GUARD ────────────────────────────────────────────
-    // Refuse to commit a payload that looks empty/near-empty if the current
-    // GitHub document has meaningful user-authored data.
-    //
-    // Protects against the wipe scenario: fresh session with empty localStorage
-    // saves EMPTY_OVERLAYS back to GitHub before the background load resolves,
-    // silently destroying all merge groups, contacts, and skip history.
-    //
-    // Guard triggers when:
-    //   - incoming has 0 groups AND fewer than 3 total meaningful items
-    //   - AND current GitHub document has 3+ meaningful items
-    //
-    // The incoming threshold of 3 (not 0) catches the case where a payload has
-    // skippedCpidIds or adjs but no groups — still suspiciously thin.
-    // The current threshold of 3 avoids blocking genuinely fresh installs where
-    // the GitHub file itself is empty/new.
-    try {
-      const currentContent = JSON.parse(
-        Buffer.from(fileData.content.replace(/\n/g, ""), "base64").toString()
+    // Write guard: refuse wipe
+    const currentGroups = Object.keys(current.overlay.groups || {}).length;
+    const incomingGroups = Object.keys(overlays.groups || {}).length;
+    if (incomingGroups === 0 && currentGroups > 0) {
+      return NextResponse.json(
+        {
+          error: "WRITE_GUARD: incoming overlay has 0 groups but current has " +
+            currentGroups + ". Refusing to overwrite. Reload the app.",
+          code: "OVERLAY_WIPE_PREVENTED",
+        },
+        { status: 409 }
       );
-      const currentCount  = meaningfulItemCount(currentContent);
-      const incomingCount = meaningfulItemCount(overlays);
-      const incomingGroups = Object.keys(overlays.groups || {}).length;
+    }
 
-      const currentGroups = Object.keys(currentContent.groups || {}).length;
-      // Block if: incoming drops all groups but current has groups (group wipe)
-      // OR incoming has 0 groups + thin payload but current has meaningful data
-      const groupWipe = incomingGroups === 0 && currentGroups > 0;
-      const thinWipe  = incomingGroups === 0 && incomingCount < 3 && currentCount >= 3;
-      if (groupWipe || thinWipe) {
+    // Integrity guard
+    const baseGroups = getBaseGroups();
+    if (baseGroups.length > 0) {
+      const report = validateOverlayIntegrity(baseGroups, overlays);
+      if (report.blocked) {
+        const blockViolations = report.violations.filter(v => v.severity === "block");
         return NextResponse.json(
           {
-            error: "WRITE_GUARD: incoming overlay has 0 groups but current GitHub overlay has " +
-              currentGroups + " groups and " + currentCount + " items. Refusing to overwrite. " +
-              "This usually means the app saved before overlay data finished loading. " +
-              "Reload the app to re-sync — your data on GitHub is intact.",
-            code: "OVERLAY_WIPE_PREVENTED",
-            currentGroups,
-            currentCount,
-            incomingCount,
+            error: "INTEGRITY_GUARD: " + blockViolations.map(v => v.detail).join(" | "),
+            code: "OVERLAY_INTEGRITY_BLOCKED",
+            violations: blockViolations,
           },
-          { status: 409 }
+          { status: 422 }
         );
       }
-    } catch {
-      // If we can't decode the current file to check, allow the write —
-      // better to risk an overwrite than to block legitimate saves due to a
-      // decode error. (This path should be very rare.)
-    }
-    // ── END WRITE GUARD ──────────────────────────────────────────────
-
-    // 2. Stamp the update time
-    const updated = {
-      ...overlays,
-      lastUpdated: new Date().toISOString(),
-    };
-
-    // 3. Commit to GitHub
-    const newContent = Buffer.from(JSON.stringify(updated, null, 2)).toString("base64");
-    const putRes = await fetch(
-      `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`,
-      {
-        method: "PUT",
-        headers: {
-          Authorization: `token ${GITHUB_PAT}`,
-          "Content-Type": "application/json",
-          "User-Agent": "accel-v7",
-        },
-        body: JSON.stringify({
-          message: `overlay: save — ${new Date().toISOString().slice(0, 10)}`,
-          content: newContent,
-          sha: fileSha,
-        }),
-      }
-    );
-
-    if (!putRes.ok) {
-      const errData = await putRes.json();
-      return NextResponse.json(
-        { error: errData.message || "GitHub commit failed" },
-        { status: 500 }
-      );
     }
 
-    const putData = await putRes.json();
+    const updated = { ...overlays, lastUpdated: new Date().toISOString() };
+    const result = await commitOverlay(updated, current.sha);
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: 500 });
+    }
+
     return NextResponse.json({
       success: true,
-      commit: putData.commit?.sha?.slice(0, 10),
+      commit: result.commit,
       overlays: updated,
     });
   } catch (err: any) {
