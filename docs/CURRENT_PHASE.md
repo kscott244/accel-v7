@@ -1,82 +1,61 @@
 # CURRENT PHASE -- accel-v7
 
-## Active: Phase A15.7 -- Overlay Write Guard COMPLETE
+## Active: Phase A16.1 -- AI Intel Stabilization / Operator Value Upgrade COMPLETE
 
 ### Baseline
-A15.6 complete: CPID queue / suggestion system cleanup. Commit `8765324`.
+A15.7 complete: Overlay write guard (ba5e307 / 6a853ca).
 
-### Problem
-On 2026-03-27 at 00:47 UTC, overlays.json was silently overwritten with an empty
-object, destroying all 22 overlay groups, 3 groupMoves, 2 fscReps, and 3 groupContacts.
+### What Was Done
 
-Root cause (confirmed by commit history analysis):
-1. Fresh session/device with empty localStorage
-2. `loadedOverlays = EMPTY_OVERLAYS` (0 groups) before GitHub fetch resolved
-3. Some action triggered `saveOverlays(next)` during that window
-4. The API wrote the empty payload over the populated GitHub file — no check, no guard
+**Problem**: AI Intel output in GroupDetail was hard to use for call prep:
+- Hooks and Talking Points were separate sections with no clear priority ordering
+- Contact role labels ("Office-level", "Owner / Lead Dr") were vague
+- No competitive intel surface even though the API could return it
+- No inline call/email actions on research contacts — had to save first
+- No visual status indicator (open/closed/changed)
+- saveResNotes produced a flat unformatted string
 
-### What Was Fixed
+**Files Changed**
 
-**`src/app/api/save-overlay/route.ts`** (commit `ba5e307`)
+**`src/components/tabs/GroupDetail.tsx`** (commit `238ed1b`)
+- `STATUS_PILL` constant: Open/Closed/Changed/Unknown colored pill next to "Group Intel" header
+- `SCOPE_LABELS` fixed: "Decision Maker" / "Practice Manager" / "Regional / DSO" / "Coordinator"
+  (was: "Owner / Lead Dr" / "Office-level" / "Group / Regional" / "Coordinator")
+- `SCOPE_COLORS_KEYS` updated: tier-2 now uses `blue` instead of `t3` for better visibility
+- **Competitive Signal block**: amber-highlighted panel appears when API returns `competitive` field
+- **Decision Maker contact highlight**: tier-1 contacts get cyan border + tinted bg — stands out immediately
+- **Inline Call/Email actions**: 📞 phone and ✉ email are tappable links on research contacts — no save required
+- **"Call Prep" section**: merged Hooks + Talking Points into one prioritized view
+  - Numbered talking points shown first (these are `callPrep` — high-signal, specific)
+  - Hooks shown below as "Also worth mentioning" (lighter signals)
+- **`saveResNotes`** improved: saves numbered call prep + hooks + competitive intel as a clean formatted block
 
-Added `meaningfulItemCount(ov)` helper — counts groups + groupMoves + nameOverrides
-+ contacts + fscReps + groupContacts + groupDetaches + skippedCpidIds.
+**`src/app/api/deep-research/route.ts`** (commit `5a6edad4`)
+- System prompt: added recency emphasis — "a practice that recently expanded… is a hot opportunity"
+- New `callPrep` JSON field: 3-4 highly specific, non-generic call-prep sentences for the first 60 seconds
+- `competitive` field instruction strengthened: asks for specific brand names (Dentsply, 3M, Ivoclar, Envista, etc.)
+- `callPrep` merged server-side into `talkingPoints` for backward compat with any cached results
+- Generic talking points explicitly called out as useless in the prompt — model told to skip them
 
-Write guard inserted between SHA fetch (step 1) and the GitHub PUT (step 3):
-- Decodes the current GitHub overlay content (already fetched for SHA)
-- Computes `currentCount` and `incomingCount` via `meaningfulItemCount()`
-- Blocks if: `incomingGroups === 0 AND incomingCount < 3 AND currentCount >= 3`
-- Returns HTTP 409 with `code: "OVERLAY_WIPE_PREVENTED"` and clear human message
-- If decode fails, allows the write (guard fail-open — don't block legitimate saves)
-
-**`src/components/AccelerateApp.tsx`** (commit `6a853ca`)
-
-`saveOverlays` client function now handles 409 distinctly:
-- Detects `res.status === 409 && data.code === "OVERLAY_WIPE_PREVENTED"`
-- Sets save status to "error" with message:
-  "Save blocked — app loaded before data was ready. Your data on GitHub is safe. Please reload."
-- Returns false (does not report success)
-- Existing error banner in the UI surfaces this message immediately
-
-### Guard Thresholds and Rationale
-
-```
-incomingGroups === 0   → the most dangerous signal: no groups at all
-incomingCount  <  3    → also catches near-empty payloads (only skips, adjs, etc.)
-currentCount   >= 3    → only blocks if GitHub already has real data (allows fresh installs)
-```
-
-The incoming threshold is 3, not 0, to catch payloads that have a few fields but no
-groups — still thin enough to be dangerous. The current threshold of 3 prevents
-blocking genuinely new installations where GitHub is also empty.
-
-### Scenario Coverage
-
-| Scenario | Before | After |
-|----------|--------|-------|
-| Fresh device, empty localStorage, action before GitHub fetch | Wipes GitHub | Blocked (409), safe |
-| Normal save with groups | Succeeds | Succeeds (unchanged) |
-| Legitimate delete of all groups (edge case) | Succeeds | Blocked if other data present |
-| Fresh install, GitHub also empty | N/A | Allowed (currentCount < 3) |
-| Save fails, client receives 409 | Generic error shown | Specific "data safe, reload" message |
-
-Note on the legitimate all-groups-delete edge case: if Ken genuinely needs to delete
-all groups, they should do it one at a time through the Admin UI — those saves always
-have the full overlay context and will pass the guard (incomingCount will be >= 3 from
-other fields). The guard only fires when the entire overlay looks like a blank slate.
-
-### Tests
-Existing 42-test suite, no regressions. The guard is server-side API logic that
-requires live GitHub interaction to test end-to-end; correctness verified by code review
-of the threshold logic and the two commit/error paths.
+### What Was Preserved
+- Review-and-save model intact: no silent auto-write, no autonomous actions
+- Save contact / save website / add notes behavior unchanged
+- Ghost locations logic unchanged
+- Suggested merges / group matching unchanged
+- All overlay persistence behavior unchanged
 
 ### Build
-Passing — brace/paren delta = 0 on AccelerateApp.tsx, verified pre-commit.
-save-overlay route is TypeScript with `ignoreBuildErrors: true` — no build issues.
+Passing — brace/paren delta = 0 on GroupDetail.tsx verified pre-commit.
+deep-research/route.ts is TypeScript with `ignoreBuildErrors: true` — no build issues.
+
+### Deploy
+Live at https://accel-v7.vercel.app/accelerate — HTTP 200, `Competitive Signal` string
+confirmed in deployed bundle.
 
 ---
 
 ## Previously Completed
+- A15.7 -- Overlay Write Guard (ba5e307 / 6a853ca) complete
 - A15.6 -- CPID Queue / Suggestion System Cleanup (8765324) complete
 - A15.5 -- App Error Boundary / Crash Containment (a02d401) complete
 - A15.4 -- Merge Source-of-Truth Cleanup (79d6d2d) complete
@@ -88,4 +67,4 @@ save-overlay route is TypeScript with `ignoreBuildErrors: true` — no build iss
 ---
 
 ## Last Updated
-March 27, 2026
+March 26, 2026
