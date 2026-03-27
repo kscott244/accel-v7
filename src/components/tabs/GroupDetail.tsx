@@ -455,6 +455,8 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
           gName: groupName,
           acctId: group.id,
           doctor: savedDoctors[0] || "",
+          tier: group.tier || "Standard",
+          score: group.score || 0,
         }),
       });
       const data = await res.json();
