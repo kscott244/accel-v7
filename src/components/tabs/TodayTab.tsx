@@ -657,6 +657,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
                   <span className="m" style={{fontSize:9,fontWeight:700,color:T.amber,background:"rgba(251,191,36,.08)",borderRadius:4,padding:"1px 5px"}}>{$f(a.ask)} ask · {Math.round(a.prob*100)}%</span>
                 </div>
                 <AccountId name={a.name} gName={a.gName} size="md" color={done?T.t3:undefined} locs={groupLocsMap[a.gId]}/>
+                {!done&&groupLocsMap[a.gId]>=3&&<div style={{marginTop:4}}><GroupBadge gName={a.gName} gId={a.gId} locs={groupLocsMap[a.gId]} goGroup={(id)=>goGroup((groups||[]).find((g:any)=>g.id===id))}/></div>}
                 {!done&&<div style={{fontSize:10,color:T.t3,marginTop:2}}>
                   {[a.addr,[a.city,a.st,a.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")}{a.miles&&a.miles<100?<span style={{color:T.t4}}> · {Math.round(a.miles)}mi</span>:""}
                 </div>}
@@ -834,6 +835,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
                       {done&&<span style={{fontSize:9,fontWeight:700,color:done.outcome==="lost"?T.red:T.green}}>{done.outcome==="lost"?"✗ Lost":`✓ ${done.outcome}`}</span>}
                     </div>
                     <AccountId name={a.name} gName={a.gName} size="md" locs={groupLocsMap[a.gId]}/>
+                    {groupLocsMap[a.gId]>=3&&<div style={{marginTop:3}}><GroupBadge gName={a.gName} gId={a.gId} locs={groupLocsMap[a.gId]} goGroup={(id)=>goGroup((groups||[]).find((g:any)=>g.id===id))}/></div>}
                     <div style={{fontSize:10,color:T.t3,marginTop:1}}>{[a.addr,[a.city,a.st,a.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")} · {Math.round(a.miles||0)}mi from home</div>
                     <div style={{fontSize:10,color:T.t3,marginTop:1}}>Ask <span style={{color:T.amber,fontWeight:600}}>{$f(a.ask)}</span> · {Math.round((a.prob||0)*100)}% likely</div>
                     {done?.note&&<div style={{fontSize:9,color:T.t4,marginTop:3,fontStyle:"italic"}}>"{done.note}"</div>}
