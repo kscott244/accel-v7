@@ -394,12 +394,13 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
     {/* ── STICKY HEADER ── */}
     <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"10px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
       <button onClick={goBack} style={{background:"none",border:"none",color:T.blue,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:13,fontWeight:600,fontFamily:"inherit"}}><Back/> Back</button>
-      <div style={{display:"flex",gap:5}}>
-        <button onClick={()=>drState==="idle"||drState==="error"?runDeepResearch():setDrState("idle")} style={{background:drState==="done"?"rgba(34,211,238,.12)":"rgba(34,211,238,.06)",border:`1px solid ${drState==="done"?"rgba(34,211,238,.35)":"rgba(34,211,238,.18)"}`,borderRadius:8,padding:"5px 10px",fontSize:11,fontWeight:700,color:T.cyan,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:4}}>
-          {drState==="loading"?<><span style={{animation:"pulse 1s infinite"}}>●</span> Searching...</>:"🔍 Research"}
+      <div style={{display:"flex",gap:5,alignItems:"center"}}>
+        {(badger?.phone||officeFeel?.phone)&&<a href={`tel:${badger?.phone||officeFeel?.phone}`} style={{background:"rgba(52,211,153,.1)",border:"1px solid rgba(52,211,153,.25)",borderRadius:8,padding:"5px 10px",fontSize:13,textDecoration:"none",display:"inline-flex",alignItems:"center"}} title="Call">📞</a>}
+        <button onClick={()=>drState==="idle"||drState==="error"?runDeepResearch():setDrState("idle")} style={{background:drState==="done"?"rgba(34,211,238,.12)":"rgba(34,211,238,.06)",border:`1px solid ${drState==="done"?"rgba(34,211,238,.35)":"rgba(34,211,238,.18)"}`,borderRadius:8,padding:"5px 10px",fontSize:13,fontWeight:700,color:T.cyan,cursor:"pointer",fontFamily:"inherit"}} title="Research">
+          {drState==="loading"?"⏳":"🔍"}
         </button>
-        <button onClick={()=>aiState==="idle"||aiState==="error"?runAI():setAiState("idle")} style={{background:aiState==="done"?"rgba(167,139,250,.12)":"rgba(167,139,250,.08)",border:`1px solid ${aiState==="done"?"rgba(167,139,250,.3)":"rgba(167,139,250,.18)"}`,borderRadius:8,padding:"5px 10px",fontSize:11,fontWeight:700,color:T.purple,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:5}}>
-          {aiState==="loading"?<><span style={{animation:"pulse 1s infinite"}}>●</span> Thinking...</>:"✦ Briefing"}
+        <button onClick={()=>aiState==="idle"||aiState==="error"?runAI():setAiState("idle")} style={{background:aiState==="done"?"rgba(167,139,250,.12)":"rgba(167,139,250,.08)",border:`1px solid ${aiState==="done"?"rgba(167,139,250,.3)":"rgba(167,139,250,.18)"}`,borderRadius:8,padding:"5px 10px",fontSize:13,fontWeight:700,color:T.purple,cursor:"pointer",fontFamily:"inherit"}} title="AI Briefing">
+          {aiState==="loading"?"⏳":"✦"}
         </button>
       </div>
     </div>
@@ -415,9 +416,9 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
         {/* Name + health + move/reorder */}
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
           <div style={{flex:1,minWidth:0,paddingRight:8}}><AccountId name={acct.name} gName={acct.gName} size="lg" locs={parentGroup?.locs}/></div>
-          <div style={{display:"flex",gap:4,flexShrink:0}}>
-            <button onClick={()=>setShowMoveModal(true)} style={{background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.18)",borderRadius:7,padding:"4px 8px",fontSize:10,fontWeight:600,color:T.blue,cursor:"pointer",fontFamily:"inherit"}}>Move</button>
+          <div style={{display:"flex",gap:4,flexShrink:0,alignItems:"center"}}>
             <button onClick={()=>setShowReorder(true)} style={{background:"rgba(52,211,153,.08)",border:"1px solid rgba(52,211,153,.2)",borderRadius:7,padding:"4px 8px",fontSize:10,fontWeight:600,color:T.green,cursor:"pointer",fontFamily:"inherit"}}>🧾</button>
+            <button onClick={()=>setShowMoveModal(true)} style={{background:"none",border:"none",fontSize:9,color:T.t4,cursor:"pointer",fontFamily:"inherit",padding:"4px 2px"}}>Move ›</button>
           </div>
         </div>
         {/* Subtitle: city + tier + last seen */}
@@ -461,10 +462,10 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
         else if(topStopped.length>1) moves.push({icon:"🎯",color:T.red,text:`${topStopped.length} products stopped. Lead with ${topStopped[0].n} (was ${$$(topStopped[0][`py${qk}`]||0)}) — ask what changed.`});
         const nt=normalizeTier(acctTier);
         if(nt==="Silver") moves.push({icon:"⬆️",color:T.amber,text:`Gold upgrade saves doctor ~6% vs Silver MSRP. At ${$$(cyVal)} spend, that's meaningful — worth the conversation.`});
-        else if(nt==="Standard"&&pyVal>1000) moves.push({icon:"⬆️",color:T.amber,text:`Not on Accelerate. At ${$$(pyVal)} PY spend, Silver tier would lower their cost. Pitch the program.`});
+        else if(nt==="Standard"&&pyVal>1000) moves.push({icon:"⬆️",color:T.amber,text:`${$$(pyVal)} PY — not on Accelerate. Silver tier lowers their cost.`});
         if(xsell.length>0) moves.push({icon:"💡",color:T.purple,text:`Not buying ${xsell.slice(0,2).map((o:any)=>o.label).join(" or ")}. ${xsell[0].pitch}`});
-        if(moves.length<2&&ret<0.5&&gap>500) moves.push({icon:"📞",color:T.blue,text:`Retention at ${Math.round(ret*100)}% — ${$$(gap)} gap. Check in on supply chain, competitor activity, or budget cycle.`});
-        if(cyVal>pyVal) moves.push({icon:"✅",color:T.green,text:`Up ${$$(cyVal-pyVal)} vs last year. Reinforce — ask about upcoming procedures to lock in Q2.`});
+        if(moves.length<2&&ret<0.5&&gap>500) moves.push({icon:"📞",color:T.blue,text:`${Math.round(ret*100)}% retention, ${$$(gap)} gap — check in on supply chain or budget.`});
+        if(cyVal>pyVal) moves.push({icon:"✅",color:T.green,text:`Up ${$$(cyVal-pyVal)} vs last year — reinforce and lock in Q2.`});
         if(moves.length===0) return null;
         return <div className="anim" style={{animationDelay:"8ms",background:T.s1,border:`1px solid rgba(79,142,247,.2)`,borderLeft:`3px solid ${T.blue}`,borderRadius:14,padding:"12px 14px",marginBottom:10}}>
           <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue,marginBottom:10}}>Next Best Move</div>
@@ -529,7 +530,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
                 </div>
                 <div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:2}}>
                   {c.email&&<a href={`mailto:${c.email}`} style={{fontSize:10,color:T.cyan,textDecoration:"none"}}>{c.email}</a>}
-                  {c.phone&&<a href={`tel:${c.phone}`} style={{fontSize:10,color:T.green,textDecoration:"none"}}>{c.phone}</a>}
+                  {c.phone&&<a href={`tel:${c.phone}`} style={{fontSize:10,color:T.green,textDecoration:"none",background:"rgba(52,211,153,.08)",border:"1px solid rgba(52,211,153,.2)",borderRadius:5,padding:"2px 8px",display:"inline-flex",alignItems:"center",gap:3}}>📞 {c.phone}</a>}
                 </div>
               </div>
             ))}
@@ -800,7 +801,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
           setToast(credited);setShowForm(false);
           setTimeout(()=>setToast(null),4000);
         }}/>}
-        {!showForm&&myAdj.length===0&&<div style={{fontSize:11,color:T.t4,textAlign:"center",padding:"6px 0"}}>Search product by name or SKU#, enter doctor spend → auto-calculates credited revenue.</div>}
+        {!showForm&&myAdj.length===0&&<div style={{fontSize:10,color:T.t4,padding:"3px 0"}}>Search SKU or product → calculates credited revenue.</div>}
       </div>
 
       {/* ── RESEARCH RESULTS (below fold — on-demand) ── */}
@@ -1043,4 +1044,3 @@ function SaleCalculator({acctTier,tierRate,isAccel,acctType,onAdd}) {
 }
 
 export default AcctDetail;
-
