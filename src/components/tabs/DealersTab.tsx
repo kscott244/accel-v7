@@ -58,9 +58,9 @@ function DealersTab({scored,groups,goAcct,goGroup,activeQ:activeQProp,overlays,s
 
   const saveManualReps = (updated:Record<string,any[]>) => {
     setManualReps(updated);
-    // Persist durably via overlays (survives cache clears); localStorage is cache/fallback only
-    if(saveOverlays && overlays) {
-      saveOverlays({ ...overlays, dealerManualReps: updated });
+    // Persist durably via overlays — atomic op, no SHA conflicts
+    if(patchOverlay) {
+      patchOverlay([{ op: "replaceSection", section: "dealerManualReps", value: updated }]);
     }
     try { localStorage.setItem("dealer_manual_reps", JSON.stringify(updated)); } catch {}
   };
