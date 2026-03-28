@@ -1,62 +1,70 @@
 # CURRENT PHASE -- accel-v7
 
-## Status: Tasks operating layer live. Ready to build.
+## Status: Feel Factor live. Ready to build.
 
-### Phase 8: Tasks as Follow-Up Operating Layer — March 28, 2026
+### Phase 9: Office-Level Feel Factor — March 28, 2026
 
 **Commits:**
-- `1ec39c90` — App: wire addTask to AcctDetail+GroupDetail, overlay persistence, goAcct to TasksTab
-- `8bc8066b` — TasksTab: sections, TaskWidget, suggestion engine, InlineAddForm
-- `2fb80c58` — AcctDetail: TaskWidget with auto-suggestions
-- `8be91615` — GroupDetail: TaskWidget with auto-suggestions
+- `1b7c83ad` — data.ts: OFFICE_FEEL map + resolveOfficeFeel
+- `096ee918` — AcctDetail: Cold/Warm/Hot label + inline update
+- `ba58a845` — MapTab: feel label on route stop cards
 
 **Deploy:** HTTP 200 ✅
 
 **What was built:**
 
-**Suggested tasks in AcctDetail**
-A Tasks section appears near the bottom of every account. It generates up to 3 suggested tasks from existing data:
-- Stopped products: "🎯 Re-engage on [product] — was $X last year"
-- Gone dark 90+ days: "📞 Follow up — gone dark Nd"
-- Q1 gap with active spend: "📈 Close Q1 gap — $X behind"
-- Tier upsell opportunity: "⬆️ Pitch Gold/Accelerate program"
+**Office-level feel map (`data.ts`)**
+`buildOfficeFeelMap()` runs once at module load over all 1,904 Badger entries. It builds `OFFICE_FEEL: Record<string, OfficeFeel>` keyed by normalized street address (zip stripped, abbreviations standardized, punctuation removed). Result: 60 unique feel-mapped addresses covering 96 child IDs — up from 63 raw feel entries.
 
-Each suggestion has a single **+ Add** button — one tap creates the task with a 7-day due date, no modal. A **+ Custom** button opens an inline form for anything not covered by suggestions.
+Conflict resolution when two IDs share an address with different feel values: take `max`. Rationale: Ken's best interaction at that office is the signal that matters for planning the next visit.
 
-**Suggested tasks in GroupDetail**
-Same TaskWidget, using group-level data. Group tasks are linked to the group ID.
+`normOfficeAddr()` is exported so MapTab and future consumers use the same normalization.
 
-**Tasks tab sections**
-Replaced the flat sorted list with explicit sections: Overdue (red) · Today (amber) · Upcoming (blue) · Completed (dimmed). Each section only renders if it has items. Empty states per section.
+**`resolveOfficeFeel(acct, overlaysFeel)`**
+Resolution order (most authoritative first):
+1. User override from `overlays.feelFactor[officeAddr]` — explicit update wins
+2. Direct BADGER[acct.id] lookup — same as before
+3. Address-based OFFICE_FEEL lookup — catches dealer-split sibling cases
+4. Returns null — no feel data, nothing shown
 
-**Task cards: tappable account link**
-The account/group name on each task card is tappable and navigates directly to that account via `goAcct`.
+**Labels: Cold / Warm / Hot**
+- 1–2 → Cold (gray)
+- 3 → Warm (amber)
+- 4–5 → Hot (green)
 
-**Persistence upgraded**
-Tasks now write to `overlays.json` via `patchOverlay` (same atomic-patch pattern as contacts, activity logs, group moves) in addition to localStorage. localStorage remains as the fast-path cache. This makes tasks cross-device and durable across CSV re-uploads.
+Replaces the 5 amber dot strip that was hard to read at a glance.
 
-**TaskWidget reads from `overlays.tasks`**
-The widget filters `overlays.tasks` for tasks already linked to the current account or group, so existing tasks show inline before the suggestions — no duplicate suggestions for things already logged.
+**AcctDetail: Who Matters section**
+- Feel label chip (Hot/Warm/Cold with color) replaces dot strip
+- Shows `N/5` alongside the label
+- Doctor, dealer rep, phone, notes all fall back to `officeFeel` when direct Badger ID has nothing — catches the sibling-attachment case
+- Inline **Cold / Warm / Hot** buttons below notes let Ken update the feel in one tap. Saves to `overlays.feelFactor[officeAddr]` via `patchOverlay` — durable, cross-device.
 
-### Phase 8.1: Bottom Nav Reorder — March 28, 2026
+**MapTab: stop cards**
+Each route stop now shows a colored feel chip (Hot/Warm/Cold) when OFFICE_FEEL has data for that address. Uses the route account's `address` field normalized through `normOfficeAddr`.
 
-**Commit:** `c1aff678`
-**Deploy:** HTTP 200 ✅
+**What was NOT changed:**
+- Badger data file — untouched
+- Existing BADGER[] lookups in DealersTab, GroupDetail, priority.ts — untouched
+- All overlay persistence logic — untouched
+- No new API routes
 
-Bottom nav: Today · Accounts · Route · Dealers · More
-Tasks moved to More menu alongside Pricing, Forecast, Outreach, Admin.
+**Scope of feel data:**
+63 raw feel entries → 60 unique addresses → 96 child IDs covered.
+About 10% of the 984 priority accounts have feel data. That's the actual Badger data Ken entered.
 
 ---
 
 ## Previously Completed
-- Phase 7 — MapTab Route with Intent (mission lines, stop list, Account → nav)
+- Phase 8 — Tasks operating layer
+- Phase 8.1 — Bottom nav reorder (Route into nav)
+- Phase 7 — Route with Intent
 - Phase 6 — DealersTab Channel Console
 - Phase 5 — GroupsTab Territory Navigator
 - Phase 4 — AcctDetail Second Brain
 - Phase 3 — GroupDetail War Room
-- Phase 2 — Today Tab Mission Control
+- Phase 2 — Today Mission Control
 - Phase 1 — Data Boundary Hardening
-- patchOverlay Migration
 
 ## Last Updated
 March 28, 2026
