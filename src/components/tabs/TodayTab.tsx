@@ -363,8 +363,9 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
     });
 
     // Child cards — exclude children whose parent is already shown as a parent card
+    // and exclude dealer-split siblings (they appear under the primary card)
     childOnly.forEach(a => {
-      if (!parentIds.has(a.gId)) {
+      if (!parentIds.has(a.gId) && !suppressedIds.has(a.id)) {
         results.push(a);
       }
     });
@@ -390,6 +391,42 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
     (groups||[]).forEach((g:any) => { m[g.id] = g.locs || 1; });
     return m;
   }, [groups]);
+
+  // Smart child consolidation: same-address dealer-split accounts → one primary + siblings
+  // Runtime dedup only — does not write to overlays or preloaded-data
+  const { consolidatedMap, suppressedIds } = useMemo(() => {
+    const normAddr = (a:any) => {
+      const raw = (a.addr || "").toLowerCase()
+        .replace(/[.,#()]/g,"")
+        .replace(/\bstreet\b/g,"st").replace(/\bavenue\b/g,"ave")
+        .replace(/\broad\b/g,"rd").replace(/\bdrive\b/g,"dr")
+        .replace(/\bboulevard\b/g,"blvd")
+        .replace(/\s+/g," ").trim();
+      return raw && a.city ? `${raw}|${(a.city||"").toLowerCase()}` : "";
+    };
+    const byAddr: Record<string, any[]> = {};
+    scored.forEach((a:any) => {
+      if (groupLocsMap[a.gId] > 1) return; // only single-loc groups
+      const key = normAddr(a);
+      if (!key || key.length < 8) return;
+      if (!byAddr[key]) byAddr[key] = [];
+      byAddr[key].push(a);
+    });
+    const cMap: Record<string, any[]> = {}; // primaryId → sibling accounts
+    const suppressed = new Set<string>();
+    Object.values(byAddr).forEach(group => {
+      if (group.length < 2) return;
+      // Check they're in different parent groups (dealer split, not same group)
+      const gIds = new Set(group.map((a:any) => a.gId));
+      if (gIds.size < 2) return;
+      const sorted = [...group].sort((a:any,b:any) => (b.pyQ?.["1"]||0)-(a.pyQ?.["1"]||0));
+      const primary = sorted[0];
+      const siblings = sorted.slice(1);
+      cMap[primary.id] = siblings;
+      siblings.forEach((s:any) => suppressed.add(s.id));
+    });
+    return { consolidatedMap: cMap, suppressedIds: suppressed };
+  }, [scored, groupLocsMap]);
 
   return <div style={{padding:"0 0 80px"}}>
 
@@ -489,6 +526,15 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
             {a.score>0&&<span className="m" style={{fontSize:9,fontWeight:700,color:a.score>=50?T.red:T.amber,background:a.score>=50?"rgba(248,113,113,.08)":"rgba(251,191,36,.08)",borderRadius:4,padding:"2px 6px"}}>{a.score}pt</span>}
             <div style={{marginLeft:"auto"}}><GroupBadge gName={a.gName} gId={a.gId} locs={groupLocsMap[a.gId]} goGroup={(id)=>goGroup((groups||[]).find(g=>g.id===id))}/></div>
           </div>
+          {consolidatedMap[a.id]?.length>0&&<div style={{marginTop:6,paddingTop:6,borderTop:`1px solid ${T.b2}`}}>
+            <div style={{fontSize:9,color:T.t4,marginBottom:3}}>Same address · {consolidatedMap[a.id].length+1} dealers combined</div>
+            {[a,...(consolidatedMap[a.id]||[])].map((s:any)=>(
+              <div key={s.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"2px 0"}}>
+                <span style={{fontSize:9,color:s.id===a.id?T.cyan:T.t3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{s.dealer||"All Other"}</span>
+                <span style={{fontSize:9,color:T.t2,fontFamily:"monospace",flexShrink:0,marginLeft:8}}>PY {$$(s.pyQ?.["1"]||0)}</span>
+              </div>
+            ))}
+          </div>}
         </button>;
       })}
     </div> :
