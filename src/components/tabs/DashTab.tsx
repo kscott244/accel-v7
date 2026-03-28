@@ -16,19 +16,22 @@ const TIER_COLS: Record<string,string> = {Silver:"#22d3ee",Gold:"#fbbf24",Platin
 function QuickCredit() {
   const [amount, setAmount] = useState("");
 
-  // For a standard (no-SKU) order we need a representative WS/MSRP ratio
-  // Standard wholesale is ~55% of MSRP. Chargeback reduces from there.
-  // We use a fixed std wholesale rate of 55% of spend as the base.
-  // This matches how the chargeback system works at territory level.
-  const STD_WS_RATE = 0.55; // approximate blended rate
+  // WS/MSRP ratios derived from 2026 Kerr Accelerate formulary (Ken's bag avg)
+  // At Accelerate tiers, doctor pays lower MSRP but Ken earns a higher WS%
+  // so credited wholesale is HIGHER at Diamond than Standard — not lower.
+  const WS_RATES: Record<string,number> = {
+    Standard: 0.601,
+    Silver:   0.740,
+    Gold:     0.760,
+    Platinum: 0.780,
+    Diamond:  0.800,
+  };
   const spend = parseFloat(amount) || 0;
 
   const results = spend > 0 ? TIERS.map(t => {
-    const cb = TIER_RATES[t] || 0;
-    const rawWS = spend * STD_WS_RATE;
-    const credited = rawWS * (1 - cb);
-    const chargebackAmt = rawWS - credited;
-    return { tier: t, credited, chargebackAmt, cb };
+    const wsRate = WS_RATES[t] || 0.601;
+    const credited = spend * wsRate;
+    return { tier: t, credited, cb: 0 };
   }) : [];
 
   return (
@@ -55,7 +58,7 @@ function QuickCredit() {
               border:`1px solid ${TIER_COLS[r.tier]}22`}}>
               <div>
                 <span style={{fontSize:12,fontWeight:700,color:TIER_COLS[r.tier]}}>{r.tier==="Standard"?"Std":r.tier}</span>
-                {r.cb > 0 && <span style={{fontSize:9,color:T.t4,marginLeft:6}}>−{(r.cb*100).toFixed(0)}% CB</span>}
+                {r.tier !== "Standard" && <span style={{fontSize:9,color:T.t4,marginLeft:6}}>{(WS_RATES[r.tier]*100).toFixed(0)}% WS</span>}
               </div>
               <span className="m" style={{fontSize:16,fontWeight:800,color:r.tier==="Standard"?T.t2:T.green}}>{$f(r.credited)}</span>
             </div>
