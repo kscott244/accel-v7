@@ -6,7 +6,7 @@ import { normalizeTier, getTierRate, getTierLabel, isAccelTier } from "@/lib/tie
 import { $$, $f, pc, getHealthStatus } from "@/lib/format";
 import { SKU } from "@/data/sku-data";
 import { BADGER, OVERLAYS_REF } from "@/lib/data";
-import { Back, Chev, Pill, Stat, Bar, AccountId, fixGroupName } from "@/components/primitives";
+import { Back, Chev, Pill, Stat, Bar, AccountId, GroupBadge, fixGroupName } from "@/components/primitives";
 import { scorePriority } from "@/lib/priority";
 import { branchSpread } from "@/lib/stemm";
 
@@ -520,6 +520,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
           <button onClick={()=>{try { localStorage.removeItem(overrideKey); } catch {} setGroupOverride(null);}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:11,padding:"0 2px"}}>✕</button>
         </div>}
         {(()=>{const h=getHealthStatus(ret,gap,cyVal,pyVal);return <div style={{display:"inline-flex",alignItems:"center",marginTop:6,fontSize:10,fontWeight:700,color:h.color,background:h.bg,border:`1px solid ${h.border}`,borderRadius:999,padding:"3px 10px",letterSpacing:".2px"}}>{h.label}</div>;})()}
+        {parentGroup&&(parentGroup.locs||(parentGroup.children?.length)||0)>=3&&<div style={{marginTop:6}}><GroupBadge gName={fixGroupName(parentGroup)} gId={parentGroup.id} locs={parentGroup.locs||(parentGroup.children?.length)||0} goGroup={(id)=>goGroup&&goGroup((groups||[]).find((g:any)=>g.id===id))}/></div>}
         <div style={{fontSize:10,color:T.t4,marginTop:2,display:"flex",gap:8,flexWrap:"wrap"}}>
           {acct.gName&&<span>Group: {groupOverride?groupOverride.targetGroupName:acct.gName}</span>}
           {acct.dealer&&acct.dealer!=="All Other"&&<span style={{color:T.cyan}}>Dealer: {acct.dealer}{acct.dealerFlag&&<span title="Dealer assignment flagged for review — rep data conflicts with Tableau export" style={{marginLeft:4,fontSize:9,color:T.amber,fontWeight:700,cursor:"help"}}>⚠?</span>}</span>}
