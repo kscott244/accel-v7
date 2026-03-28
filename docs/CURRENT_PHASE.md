@@ -1,33 +1,52 @@
 # CURRENT PHASE -- accel-v7
 
-## Status: Clean. patchOverlay migration complete. Ready to build.
+## Status: Clean. Data boundary hardened. Ready to build.
 
-### Last Session — March 28, 2026: patchOverlay Migration
+### Phase: Data Boundary Hardening — March 28, 2026
 
-Eliminated the stale-SHA overlay conflict bug. All 4 tabs now use atomic patch ops instead of full overlay writes.
+Full audit of all data layers. Three real fixes, one doc overhaul.
 
-**What changed:**
-Every `saveOverlays(fullOverlay)` call in GroupDetail, DealersTab, AdminTab, AcctDetail replaced with `patchOverlay([{ op, path, value }])`. The server reads the current overlay fresh from GitHub, applies the op, validates integrity, and writes back — no stale data stomping.
+**What was audited:**
+Every data read/write path across AccelerateApp, AcctDetail, all 4 tab components,
+and all 15 files in src/lib/. Violations categorized by severity.
 
-**Commits (in order):**
-- `1a4c2bd0` — GroupDetail: 10 call sites migrated (saveFSC, removeFSC, saveContact, deleteContact, saveNote, saveResContact, saveResWebsite, executeMerge, AI merge button)
-- `5a012845` — DealersTab: saveManualReps → replaceSection op
-- `7fcfb0fc` — AcctDetail: groupMove, activityLog, group create migrated; DR fallback branch removed (already used patchOverlay)
-- `d8e71911` + `1c97b754` — DealersTab TypeScript prop signature cleaned up
-- `2fec0c1a` + `6761255e` — AdminTab: all 11 call sites migrated (group CRUD, contact save, skipPair, approvePair, skipReview, approveReview, approveOrphan, mergeByAddr, skipOrphan)
-- `b25877e3` + `b32f7483` — AccelerateApp: `saveOverlays` prop removed from all 4 tab render calls
+**Violations found:**
 
-**Result:**
-- `saveOverlays` prop: 0 references remaining (it still exists in AccelerateApp as a legacy fallback for any direct callers, but no tab receives it as a prop)
-- All overlay saves are now conflict-safe atomic operations
-- Live site: HTTP 200 ✅
+| # | Severity | Location | Issue |
+|---|----------|----------|-------|
+| 1 | MEDIUM | AccelerateApp applyGroupOverrides | LS "group-override:" scan still ran after patchOverlay migration — stale keys could silently override overlay data |
+| 2 | LOW | AcctDetail saveGroupMove | Still writing to localStorage after patchOverlay migration — redundant and wrong layer |
+| 3 | COSMETIC | src/data/patches.json | Retired file still in repo |
+| 4 | LOW/DOC | AccelerateApp applyOverlays | BADGER mutation was undocumented — looked like a violation, is actually intentional |
+| 5 | COSMETIC | insights.ts / utils.ts | Secondary-page lib imports @/data — isolated, main app unaffected |
 
-**What's next (recommended):**
-Move `crm-accounts.json` (2.47MB) and `sales-history.json` (2.80MB) off GitHub to Vercel KV or Supabase. These are growing blobs being committed on every save — wrong tool for the job. overlays.json is fine where it is (2.6KB, infrequently written).
+**Commits:**
+- `d2a0b317` — AccelerateApp: removed stale localStorage scan from applyGroupOverrides. groupMoves is now fully in overlays layer. Added clarifying comment on BADGER mutation.
+- `9a7ce816` — AcctDetail: removed localStorage write from saveGroupMove. LS read-on-mount kept as pre-migration fallback with explicit comment.
+- `f5b717c5` — Deleted src/data/patches.json (marked RETIRED since A15.4, nothing imports it)
+- `(arch sha)` — docs/ARCHITECTURE.md: full data layer contract written — layer definitions, boot sequence, guardrail table, acceptable deviations, file inventory
+
+**Layer precedence (enforced):**
+```
+L1 base CSV → L2 structural truth → L3 overlays → L4 derived intelligence
+L5 localStorage = cache/device prefs only, never structural source of truth
+```
+
+**Confirmed clean (do not re-audit):**
+- rollupGroupTotals / hydrateDealer — correct placement
+- overlayOps.ts / save-overlay route — correct, just hardened last session
+- crm.ts / sales.ts — correct placement
+- lib/ organization — clean, no cross-layer imports in main app pipeline
+- insights.ts/utils.ts — secondary-page only, main app doesn't import them
+
+**What's next:**
+Move crm-accounts.json (2.5MB) and sales-history.json (2.9MB) off GitHub to Vercel KV.
+These are functionally L3 but too large for GitHub file commits — growing unboundedly.
 
 ---
 
 ## Previously Completed
+- patchOverlay Migration — all 4 tabs now use atomic ops, SHA conflicts eliminated
 - March 28 Cleanup — applyManualParents wired, dead code removed, productSignals hoisted
 - A16.5 -- Full Workflow Smoke Test Harness (32/32 unit tests passing)
 - A16.4 -- Merge self-test harness, applyGroupCreates extraction
