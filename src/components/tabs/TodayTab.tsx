@@ -1,7 +1,7 @@
 "use client";
 // @ts-nocheck
 import { useState, useMemo } from "react";
-import { T, DAYS_LEFT, daysLeftInQuarter, HOME_LAT, HOME_LNG } from "@/lib/tokens";
+import { T, DAYS_LEFT, Q1_TARGET, FY_TARGET, QUARTER_TARGETS, daysLeftInQuarter, HOME_LAT, HOME_LNG } from "@/lib/tokens";
 import { normalizeTier, isAccelTier } from "@/lib/tier";
 import { $$, $f, pc } from "@/lib/format";
 import { Bar, Chev, AccountId, GroupBadge, fixGroupName } from "@/components/primitives";
@@ -11,7 +11,6 @@ const NA_TOTAL = (NEW_ADDS_RAW||[]).length;
 const NA_RED = (NEW_ADDS_RAW||[]).filter((a:any)=>a.color==="RED").length;
 const NA_GREEN = (NEW_ADDS_RAW||[]).filter((a:any)=>a.color==="GREEN").length;
 import { BADGER } from "@/lib/data";
-import { scorePriority, BUCKET_STYLE } from "@/lib/priority";
 
 // ── Bucket config ────────────────────────────────────────────────────────────
 const BUCKETS = {
@@ -181,7 +180,6 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
   // ── KPI data ─────────────────────────────────────────────────────────────
   const kpiData = useMemo(() => {
     const isFY = kpiScope === "FY";
-    const { Q1_TARGET, FY_TARGET, QUARTER_TARGETS } = require("@/lib/tokens");
     const target = isFY ? FY_TARGET : (QUARTER_TARGETS?.[kpiScope] || Q1_TARGET);
     const cy     = isFY ? (scored.reduce((s:number,a:any)=>s+Object.values(a.cyQ||{}).reduce((x:number,v:any)=>x+(v||0),0),0)) : q1CY;
     const gap    = Math.max(0, target - cy);
