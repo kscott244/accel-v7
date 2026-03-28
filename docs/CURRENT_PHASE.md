@@ -1,38 +1,43 @@
 # CURRENT PHASE — accel-v7
-> Last updated: March 27, 2026
+> Last updated: March 28, 2026
 
-## Next up: T4 — New Adds feature
-67 accounts in docs/new_adds.json. RED/GREEN KPI view. Banner in TodayTab already exists (setShowNewAdds). Need to wire real data from new_adds.json into NewAddsSection component.
+## Architecture: Settled ✓
+**Pipeline precedence (locked):**
+1. Base CSV data
+2. `src/data/manual-parents.json` — durable structural overrides (multi-practice groups, locs counts)
+3. `data/overlays.json` — user day-to-day edits (contacts, notes, moves, ad-hoc groups)
+
+**Rules:**
+- Structural group definitions (multi-location practices) → `manual-parents.json`
+- User edits (contacts, activity logs, name overrides, dealer corrections) → `overlays.json`
+- CSV uploads cannot mutate either file
+- `Master-MP-` prefixed IDs are reserved for manual-parents; `applyGroupCreates` skips them
 
 ---
 
-## Session Quick-Start
+## Next Session Quick-Start
 - Repo: `kscott244/accel-v7` | Branch: `master` | Live: `accel-v7.vercel.app/accelerate`
-- PAT in userMemories. **Always push via Git Data API** (blobs→tree→commit→force-patch ref). Contents API 409s on files >~50KB.
-- All writes go through `saveOverlays()` → `/api/save-overlay` → GitHub `data/overlays.json`
-- `@ts-nocheck` on all tab files. Inline styles only (`T` tokens). No Tailwind in main app.
+- PAT in userMemories. **Push via Git Data API** (blobs→tree→commit→force-patch ref)
+- All user writes → `saveOverlays()` → `/api/save-overlay` → `data/overlays.json`
+- New multi-practice group → `manual-parents.json` via `/api/save-manual-parents`
 
 ---
 
-## Task Status
-- [x] T1/T2 — Address display on account cards (GroupsTab + TodayTab) | `28567d32`
-- [x] T3 — GroupBadge on Overdrive + Trip Planner cards | `cee3c6d6`
-- [ ] T4 — New Adds feature (67 accounts, RED/GREEN KPI)
-- [ ] T5 — Lock down auto-group-creation
-- [x] T6 — Anchor-orphan suggestions in Admin tab | `d715fb78`
-- [x] T7 — Smart child consolidation | `47cd38dd`
+## Recently Completed
+- Downtown DDS group: 3 locations, 7 accounts, `locs:3` override in manual-parents
+- GroupsTab filters: DSO (class2=DSO + locs≥6) / Emerging DSO / Mid-Market / Private
+- Cleanup: removed Downtown DDS structural duplicate from overlays.json
+- Guard added in mergeGroups.ts: overlays cannot override Master-MP- entries
+- Parent Group card hidden on single-location accounts
+- ReorderInvoice: product gap invoice with MSRP pricing, promos, upsell suggestion
+- Manual-parents.json pipeline: baked into CSV processor, survives every upload
+- Q2 target input in Admin → Settings (localStorage, no overlay write)
+- Today Focus: clears on win/loss, backfills from queue
 
 ---
 
-## T7 — Smart Child Consolidation (COMPLETE)
-**Commit:** `47cd38dd`
-**File:** `src/components/tabs/TodayTab.tsx`
-
-**What was built:**
-- `consolidatedMap` + `suppressedIds` useMemo — groups same-address accounts from different parent groups (dealer splits) at render time. Runtime only, no writes.
-- Search results: sibling accounts suppressed from list; primary card shows dealer breakdown sub-row ("Same address · N dealers combined") with per-dealer PY figures
-- Only applies to single-loc groups (`groupLocsMap[gId] === 1`) — multi-loc DSOs unaffected
-- Address normalization: street/avenue/road/drive/blvd abbreviations, city appended as disambiguation
-
-**Build:** HTTP 200 ✓
-**Deploy:** Live ✓
+## Open Items
+- Admin → 🏥 Practices save button needs `/api/save-manual-parents` route (built, deployed)
+- ReorderInvoice: send via Gmail not yet wired
+- Back-pocket dealer promo workflow (KKE26) not yet built
+- T5 (lock down auto-group) — confirmed already done by prior A19 work

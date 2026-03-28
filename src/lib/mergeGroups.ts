@@ -21,6 +21,14 @@ export interface GroupEntry {
 /**
  * Apply overlay group-create/merge entries to a flat groups array.
  *
+ * PIPELINE PRECEDENCE (do not change):
+ *   1. Base CSV data
+ *   2. src/data/manual-parents.json  — durable structural overrides (baked in CSV processor)
+ *   3. data/overlays.json            — user day-to-day edits (contacts, moves, ad-hoc groups)
+ *
+ * Overlay groups with IDs starting "Master-MP-" are reserved for manual-parents.
+ * applyGroupCreates silently skips them so overlays can never override manual-parents.
+ *
  * @param groups      Current top-level groups (from base data + prior overlay steps)
  * @param overlayGroups  OV.groups — user-authored merge/create entries keyed by group id
  * @param nameMap     OV.nameOverrides — optional name overrides
@@ -57,6 +65,8 @@ export function applyGroupCreates(
   });
 
   Object.values(overlayGroups || {}).forEach((create: any) => {
+    // Guard: skip any overlay entry that duplicates a manual-parents structural group
+    if ((create.id || "").startsWith("Master-MP-")) return;
     const childIdSet = new Set(create.childIds || []);
     const children: any[] = [];
     let totalPY: Record<string, number> = {};
