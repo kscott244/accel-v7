@@ -1,70 +1,68 @@
 # CURRENT PHASE -- accel-v7
 
-## Status: Feel Factor live. Ready to build.
+## Status: Action-Hub Polish live. Ready to build.
 
-### Phase 9: Office-Level Feel Factor — March 28, 2026
+### Phase 10: Account / Group Detail Action-Hub Polish — March 28, 2026
 
 **Commits:**
-- `1b7c83ad` — data.ts: OFFICE_FEEL map + resolveOfficeFeel
-- `096ee918` — AcctDetail: Cold/Warm/Hot label + inline update
-- `ba58a845` — MapTab: feel label on route stop cards
+- `41324c8a` — AcctDetail: call in header, demote Move, icon Research/Briefing, tighter NBM
+- `ca074896` — GroupDetail: collapse locations >3, auto-save hint, tighten Next Move
 
 **Deploy:** HTTP 200 ✅
 
-**What was built:**
+**AcctDetail changes:**
 
-**Office-level feel map (`data.ts`)**
-`buildOfficeFeelMap()` runs once at module load over all 1,904 Badger entries. It builds `OFFICE_FEEL: Record<string, OfficeFeel>` keyed by normalized street address (zip stripped, abbreviations standardized, punctuation removed). Result: 60 unique feel-mapped addresses covering 96 child IDs — up from 63 raw feel entries.
+*Sticky header*
+- 📞 Call button appears in header when a phone number is known (from Badger or officeFeel). Most-used action, now always reachable without scrolling.
+- Research and Briefing buttons reduced to icon-only (🔍 ✦) to save horizontal space. Title attributes preserve discoverability.
 
-Conflict resolution when two IDs share an address with different feel values: take `max`. Rationale: Ken's best interaction at that office is the signal that matters for planning the next visit.
+*Hero card*
+- Move button demoted from a styled pill to a small muted text link ("Move ›"). It's an infrequent admin action and was visually competing with Reorder.
+- 🧾 Reorder stays as a small icon button.
 
-`normOfficeAddr()` is exported so MapTab and future consumers use the same normalization.
+*Next Best Move*
+- Prose trimmed on three items:
+  - "Not on Accelerate. At $X PY spend, Silver tier would lower their cost. Pitch the program." → "$X PY — not on Accelerate. Silver tier lowers their cost."
+  - "Retention at N% — $X gap. Check in on supply chain, competitor activity, or budget cycle." → "N% retention, $X gap — check in on supply chain or budget."
+  - "Up $X vs last year. Reinforce — ask about upcoming procedures to lock in Q2." → "Up $X vs last year — reinforce and lock in Q2."
 
-**`resolveOfficeFeel(acct, overlaysFeel)`**
-Resolution order (most authoritative first):
-1. User override from `overlays.feelFactor[officeAddr]` — explicit update wins
-2. Direct BADGER[acct.id] lookup — same as before
-3. Address-based OFFICE_FEEL lookup — catches dealer-split sibling cases
-4. Returns null — no feel data, nothing shown
+*Who Matters — contacts*
+- Phone numbers shown with a small 📞 pill badge instead of a plain text link. More tappable, more obviously actionable.
 
-**Labels: Cold / Warm / Hot**
-- 1–2 → Cold (gray)
-- 3 → Warm (amber)
-- 4–5 → Hot (green)
+*Log a Sale empty state*
+- Verbose explanation removed. Replaced with shorter one-liner.
 
-Replaces the 5 amber dot strip that was hard to read at a glance.
+**GroupDetail changes:**
 
-**AcctDetail: Who Matters section**
-- Feel label chip (Hot/Warm/Cold with color) replaces dot strip
-- Shows `N/5` alongside the label
-- Doctor, dealer rep, phone, notes all fall back to `officeFeel` when direct Badger ID has nothing — catches the sibling-attachment case
-- Inline **Cold / Warm / Hot** buttons below notes let Ken update the feel in one tap. Saves to `overlays.feelFactor[officeAddr]` via `patchOverlay` — durable, cross-device.
+*Locations — collapse when large*
+- Groups with ≤3 locations: all shown as before.
+- Groups with >3 locations: first 3 shown by default, with a "Show all" link in the section header and a "↓ Show all N locations" button at the bottom of the visible list.
+- State: `showAllLocs` (local, resets on navigation). No data change.
+- Threshold of 3 chosen because: the most important locations (sorted by gap descending) are the ones that drive action. Seeing the top 3 is enough to start. The full list is one tap away.
 
-**MapTab: stop cards**
-Each route stop now shows a colored feel chip (Hot/Warm/Cold) when OFFICE_FEEL has data for that address. Uses the route account's `address` field normalized through `normOfficeAddr`.
+*Notes*
+- Explicit "Save" button removed. Notes already auto-save on blur (onBlur handler was already there). Replaced with a subtle "Auto-saves when you leave" hint.
+- ✓ Saved flash indicator kept — it fires on the blur save.
+
+*Next Move label*
+- "What to do next" → "Next Move" (shorter, same meaning, better mobile fit).
 
 **What was NOT changed:**
-- Badger data file — untouched
-- Existing BADGER[] lookups in DealersTab, GroupDetail, priority.ts — untouched
-- All overlay persistence logic — untouched
-- No new API routes
-
-**Scope of feel data:**
-63 raw feel entries → 60 unique addresses → 96 child IDs covered.
-About 10% of the 984 priority accounts have feel data. That's the actual Badger data Ken entered.
+- All data logic, useMemos, overlay saves — identical
+- Move modal, reorder modal — identical
+- GroupDetail: merge, contacts, tasks, AI intel — identical
+- AcctDetail: product story, activity log, parent group, research card — identical
 
 ---
 
 ## Previously Completed
+- Phase 9 — Feel Factor (office-level, Cold/Warm/Hot)
 - Phase 8 — Tasks operating layer
-- Phase 8.1 — Bottom nav reorder (Route into nav)
 - Phase 7 — Route with Intent
 - Phase 6 — DealersTab Channel Console
 - Phase 5 — GroupsTab Territory Navigator
 - Phase 4 — AcctDetail Second Brain
 - Phase 3 — GroupDetail War Room
-- Phase 2 — Today Mission Control
-- Phase 1 — Data Boundary Hardening
 
 ## Last Updated
 March 28, 2026
