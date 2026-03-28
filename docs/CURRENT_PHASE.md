@@ -1,61 +1,60 @@
 # CURRENT PHASE -- accel-v7
 
-## Status: Mission Control live. Ready to build.
+## Status: War Room live. Ready to build.
 
-### Phase: Today Tab → Mission Control — March 28, 2026
+### Phase 3: GroupDetail → War Room — March 28, 2026
 
-Redesigned the Today tab from a passive dashboard into an action-oriented mission board.
+Redesigned GroupDetail section order and layout density. No logic changed, no data changed — purely presentation and information hierarchy.
 
-**Commits:**
-- `a1f684d6` — New TodayTab: Mission Control with 5 action buckets
-- `c9064b6a` — Fix: hoist token imports, remove require() in kpiData
+**Commit:** `b4c7bc4a`
+**Deploy:** HTTP 200 ✅
+**Lines:** 1,656 → 1,566 (−90 lines, −5%)
+
+**New section order (vs old):**
+
+| # | New | Was |
+|---|-----|-----|
+| 1 | Sticky header | same |
+| 2 | Hero: name + health + Q selector + stats + Intel Brief | Hero (with ret bar — removed) |
+| 3 | **What to do next** (Next Best Moves) | AI Group Intel |
+| 4 | **Opportunities** | Suggested Merges |
+| 5 | **Locations** (with ghost locs inline) | Next Best Moves |
+| 6 | **Products** (stopped first, then buying) | Distributor Split |
+| 7 | **Distributor Leverage** (split bars + FSC inline per row) | FSC Contacts (separate) |
+| 8 | **Contacts** (saved + research-found unified) | Group Contacts |
+| 9 | Notes | Group Notes |
+| 10 | AI Group Intel | Contact modal |
+| 11 | Suggested Merges | Opportunities |
+| 12 | Modals: contact, merge, FSC edit | Product Health |
+| — | — | Locations (was after products) |
 
 **What changed:**
+- "Next Best Moves" and "Opportunities" promoted above the fold — now the first things visible after the hero
+- Locations moved up (position 5 vs end), before products and distributor
+- Distributor Split and FSC Contacts merged into one "Distributor Leverage" section — FSC rep row appears inline under each distributor bar
+- Group Contacts and research-found contacts unified into one "Contacts" panel — research contacts show with save button, saved contacts show with call/edit
+- Ret bar removed from hero (redundant with health badge + Ret stat)
+- "Account Brief" renamed "Intel Brief" — still collapsible, same content
+- MONTHS_SHORT/QMAP constants extracted from duplicated product loop → single shared constant
+- Ghost locations moved inline with the Locations section
+- Products section: "Stopped" always shown first (win-back opportunities surface immediately)
+- AI Group Intel moved below the fold (it's secondary to the action items)
 
-The Today tab now opens directly into 5 collapsible action buckets, each answering a specific question:
-
-| Bucket | Color | Answers |
-|--------|-------|---------|
-| 🎯 Hit List | Red | Who to call or visit today (top 6, visits first) |
-| ⚡ Easy Wins | Green | High-prob reorders under $1,500 — quick closes |
-| 🚨 At Risk | Amber | Active accounts declining fast (ret < 55%, py > $800) |
-| 📋 Follow Up | Blue | Due tasks + healthy accounts not visited in 60+ days |
-| ⏭ Skip for Now | Gray | Low-value accounts (collapsed by default) |
-
-**What was preserved:**
-- Full scoring engine (`overdrive` useMemo) — identical logic, untouched
-- Win/½/Loss outcome buttons with note prompt
-- Trip planner modal (anchor + nearby stops → Google Maps)
-- Outcome note modal
-- Weekly delta (what changed) section
-- New Adds banner
-- Search with parent group collapse
-- KPI strip (Q/FY toggle, attainment, gap, $/day, pipeline, projected landing)
-
-**What was removed:**
-- `recover` section (folded into Hit List + At Risk)
-- `protect` section (folded into Follow Up)
-- `dealerActions` section (low value display — scoring data still computed)
-- Redundant section headers and passive stat labels
-
-**Design decisions:**
-- Buckets default open except "Skip for Now" (collapsed) — reduces noise on open
-- ActionCard component extracts the repeated card pattern — DRY
-- BucketHeader is a collapsible chevron row — one tap to hide/show each bucket
-- Cards are more compact: 3-row layout (badge+ask / name / address+signals)
-- At Risk uses a list view (no outcome buttons) — it's awareness, not action yet
-- Follow Up mixes tasks and accounts in one panel
-
-**File sizes post-change:**
-- TodayTab.tsx: 720 lines (was 941, −23%)
+**What was NOT changed:**
+- All useMemo computations (scoring, productSignals, nextBestMoves, briefLines, etc.)
+- All state variables
+- All save/patch functions (FSC, contacts, notes, merge)
+- Product drill-down full-screen view (selProduct)
+- executeMerge() and the merge modal
+- All patchOverlay calls
 
 ---
 
 ## Previously Completed
-- Data Boundary Hardening — layer contract documented, LS group-override scan removed
-- patchOverlay Migration — all 4 tabs use atomic ops, SHA conflicts eliminated
-- March 28 Cleanup — applyManualParents wired, dead code removed, productSignals hoisted
-- A16.5 -- Full Workflow Smoke Test Harness (32/32 unit tests passing)
+- Phase 2 — Mission Control (Today tab → 5 action buckets)
+- Phase 1 — Data Boundary Hardening
+- patchOverlay Migration — SHA conflict bug eliminated
+- March 28 Cleanup — applyManualParents, productSignals, dead code
 
 ## Last Updated
 March 28, 2026
