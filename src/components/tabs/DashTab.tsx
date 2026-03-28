@@ -16,22 +16,22 @@ const TIER_COLS: Record<string,string> = {Silver:"#22d3ee",Gold:"#fbbf24",Platin
 function QuickCredit() {
   const [amount, setAmount] = useState("");
 
-  // WS/MSRP ratios derived from 2026 Kerr Accelerate formulary (Ken's bag avg)
-  // At Accelerate tiers, doctor pays lower MSRP but Ken earns a higher WS%
-  // so credited wholesale is HIGHER at Diamond than Standard — not lower.
+  // Rates = tier WS ÷ Standard MSRP, averaged across Ken's 2026 formulary
+  // Standard pays the most per retail dollar. Diamond pays the least.
+  // This is the correct view: per $1 of retail price, what does Ken credit?
   const WS_RATES: Record<string,number> = {
     Standard: 0.601,
-    Silver:   0.740,
-    Gold:     0.760,
-    Platinum: 0.780,
-    Diamond:  0.800,
+    Silver:   0.508,
+    Gold:     0.476,
+    Platinum: 0.437,
+    Diamond:  0.403,
   };
   const spend = parseFloat(amount) || 0;
 
   const results = spend > 0 ? TIERS.map(t => {
     const wsRate = WS_RATES[t] || 0.601;
     const credited = spend * wsRate;
-    return { tier: t, credited, cb: 0 };
+    return { tier: t, credited, wsRate };
   }) : [];
 
   return (
@@ -58,12 +58,12 @@ function QuickCredit() {
               border:`1px solid ${TIER_COLS[r.tier]}22`}}>
               <div>
                 <span style={{fontSize:12,fontWeight:700,color:TIER_COLS[r.tier]}}>{r.tier==="Standard"?"Std":r.tier}</span>
-                {r.tier !== "Standard" && <span style={{fontSize:9,color:T.t4,marginLeft:6}}>{(WS_RATES[r.tier]*100).toFixed(0)}% WS</span>}
+                <span style={{fontSize:9,color:T.t4,marginLeft:6}}>{(r.wsRate*100).toFixed(0)}% of retail</span>
               </div>
-              <span className="m" style={{fontSize:16,fontWeight:800,color:r.tier==="Standard"?T.t2:T.green}}>{$f(r.credited)}</span>
+              <span className="m" style={{fontSize:16,fontWeight:800,color:r.tier==="Standard"?T.green:r.tier==="Silver"?T.cyan:r.tier==="Gold"?T.amber:r.tier==="Platinum"?T.purple:T.t3}}>{$f(r.credited)}</span>
             </div>
           ))}
-          <div style={{fontSize:9,color:T.t4,textAlign:"center",marginTop:2}}>Based on ~55% blended wholesale rate</div>
+          <div style={{fontSize:9,color:T.t4,textAlign:"center",marginTop:2}}>Based on tier WS ÷ Standard retail MSRP · 2026 formulary avg</div>
         </div>
       )}
     </div>
@@ -162,15 +162,18 @@ function SkuLookup() {
 // Chargeback reduces that: Silver 20%, Gold 24%, Platinum 30%, Diamond 36%
 // The hole = what you credited before minus what you credit after
 
-const CB_RATES: Record<string,number> = {
+// WS credit as % of Standard retail MSRP — from 2026 Kerr formulary
+// Standard earns most, Diamond earns least per retail dollar
+const WS_OF_RETAIL: Record<string,number> = {
+  Standard:0.601, Silver:0.508, Gold:0.476, Platinum:0.437, Diamond:0.403
+};
+const CB_PCT: Record<string,number> = {
   Standard:0, Silver:0.20, Gold:0.24, Platinum:0.30, Diamond:0.36
 };
-const STD_WS = 0.601; // blended Standard wholesale rate from 2026 formulary
 const TIER_OPTS = ["Standard","Silver","Gold","Platinum","Diamond"];
 
 function tierCredit(spend: number, tier: string): number {
-  const cb = CB_RATES[tier] ?? 0;
-  return spend * STD_WS * (1 - cb);
+  return spend * (WS_OF_RETAIL[tier] ?? 0.601);
 }
 
 function TierSwitch() {
@@ -241,7 +244,7 @@ function TierSwitch() {
             padding:"10px 14px",background:T.s2,borderBottom:`1px solid ${T.b1}`}}>
             <div>
               <div style={{fontSize:9,color:T.t4,textTransform:"uppercase",letterSpacing:"1px",marginBottom:2}}>Credit at {fromT==="Standard"?"Private":fromT}</div>
-              <div style={{fontSize:11,color:T.t3}}>{fromT==="Standard"?"No chargeback":`${(CB_RATES[fromT]*100).toFixed(0)}% chargeback`}</div>
+              <div style={{fontSize:11,color:T.t3}}>{fromT==="Standard"?"No chargeback":`${(CB_PCT[fromT]*100).toFixed(0)}% chargeback`}</div>
             </div>
             <span className="m" style={{fontSize:16,fontWeight:700,color:T.t2}}>{$f(before)}</span>
           </div>
@@ -250,7 +253,7 @@ function TierSwitch() {
             padding:"10px 14px",background:T.s2,borderBottom:`1px solid ${T.b1}`}}>
             <div>
               <div style={{fontSize:9,color:T.t4,textTransform:"uppercase",letterSpacing:"1px",marginBottom:2}}>Credit at {toT==="Standard"?"Private":toT}</div>
-              <div style={{fontSize:11,color:T.t3}}>{toT==="Standard"?"No chargeback":`${(CB_RATES[toT]*100).toFixed(0)}% chargeback`}</div>
+              <div style={{fontSize:11,color:T.t3}}>{toT==="Standard"?"No chargeback":`${(CB_PCT[toT]*100).toFixed(0)}% chargeback`}</div>
             </div>
             <span className="m" style={{fontSize:16,fontWeight:700,color:hole>=0?T.green:T.amber}}>{$f(after)}</span>
           </div>
