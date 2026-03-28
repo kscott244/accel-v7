@@ -93,5 +93,20 @@
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-28T07:12:42.077Z"
+  "lastUpdated": "2026-03-28T07:14:10.738Z",
+  "tasks": [
+    {
+      "id": 1774682049928,
+      "action": "🎯 2 products stopped — lead with OPTIBOND SOLO PLUS",
+      "notes": "Was $439 — ask what changed",
+      "dueDate": "2026-04-04",
+      "priority": "Normal",
+      "accountId": "Master-CM130847",
+      "accountName": "SCOTT H WOODFORD DMD",
+      "groupId": null,
+      "groupName": null,
+      "completed": false,
+      "createdAt": "2026-03-28T07:14:09.928Z"
+    }
+  ]
 }
