@@ -9,8 +9,8 @@ import { fixGroupName, Pill, Bar, Chev } from "@/components/primitives";
 import { scorePriority } from "@/lib/priority";
 
 // ── Row 1: Account type ───────────────────────────────────────────
-// DSO          = class2 "DSO" (Kerr-designated: Aspen, Dental 365, 42 North, etc.)
-// Emerging DSO  = class2 "EMERGING DSO" (Select Dental, ProHealth, etc.)
+// DSO          = class2 "DSO" AND locs >= 6 (real DSOs: Aspen, Dental 365, 42 North, etc.)
+// Emerging DSO  = class2 "EMERGING DSO" OR class2 "DSO" with < 6 locs in territory
 // Mid-Market    = class2 "STANDARD" with 2+ locs (multi-loc private practices)
 // Private       = 1 location
 const TYPE_FILTERS = ["All", "DSO", "Emerging DSO", "Mid-Market", "Private"];
@@ -210,8 +210,8 @@ export default function GroupsTab({ groups, goGroup, filt, setFilt, search, setS
       _priorityScore: p.priorityScore,
       _priorityBucket: p.priorityBucket,
       _priorityReason: p.priorityReason,
-      _isDSO:      g.class2 === "DSO",
-      _isEmerging: g.class2 === "EMERGING DSO",
+      _isDSO:      g.class2 === "DSO" && locs >= 6,
+      _isEmerging: g.class2 === "EMERGING DSO" || (g.class2 === "DSO" && locs < 6),
       _isMid:      (g.class2 !== "DSO" && g.class2 !== "EMERGING DSO") && locs > 1,
       _isPrivate: locs <= 1,
     };
