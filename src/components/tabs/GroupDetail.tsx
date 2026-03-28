@@ -250,6 +250,13 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
     return {groupBuying, groupStopped};
   },[group,qk]);
 
+  // Product signals — hoisted to avoid identical filter/sort in nextBestMoves + briefLines
+  const productSignals = useMemo(()=>({
+    topStop:    groupStopped.filter((p:any)=>p.py>=500)[0],
+    topAtRisk:  groupBuying.filter((p:any)=>p.py>500&&p.cy/p.py<0.6&&p.cy>0).sort((a:any,b:any)=>(b.py-b.cy)-(a.py-a.cy))[0],
+    topGrowing: groupBuying.filter((p:any)=>p.py>200&&p.cy/p.py>1.15).sort((a:any,b:any)=>(b.cy/b.py)-(a.cy/a.py))[0],
+  }),[groupBuying,groupStopped]);
+
   const hasProducts = groupBuying.length>0 || groupStopped.length>0;
 
   // ── Opportunity signals ──────────────────────────────────────────────
@@ -347,7 +354,7 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
     }
 
     // Win-back: top stopped product + how many locs
-    const topStop = groupStopped.filter((p:any)=>p.py>=500)[0];
+    const { topStop, topAtRisk, topGrowing } = productSignals;
     if (topStop) {
       const lc = topStop.locsDown?.length || 0;
       const pShort = topStop.name.split(" ").slice(0,3).join(" ");
@@ -377,7 +384,6 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
     }
 
     // Momentum: reinforce what's growing
-    const topGrowing = groupBuying.filter((p:any)=>p.py>200&&p.cy/p.py>1.15).sort((a:any,b:any)=>(b.cy/b.py)-(a.cy/a.py))[0];
     if (topGrowing) {
       const pct = Math.round(topGrowing.cy/topGrowing.py*100-100);
       const pShort = topGrowing.name.split(" ").slice(0,3).join(" ");
@@ -390,7 +396,6 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
     }
 
     // At-risk recovery: defend a fast-declining active product
-    const topAtRisk = groupBuying.filter((p:any)=>p.py>500&&p.cy/p.py<0.6&&p.cy>0).sort((a:any,b:any)=>(b.py-b.cy)-(a.py-a.cy))[0];
     if (topAtRisk) {
       const pShort = topAtRisk.name.split(" ").slice(0,3).join(" ");
       moves.push({
@@ -402,7 +407,7 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
     }
 
     return moves.slice(0,4);
-  },[sortedChildren, groupStopped, groupBuying, group, qk]);
+  },[sortedChildren, productSignals, group, qk]);
 
 
   // ── Account Brief (deterministic, no API) ────────────────────────────
@@ -664,7 +669,7 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
     // 2. Biggest risk: top-gap child or top at-risk product
     const topChild = sortedChildren[0];
     const topChildGap = topChild ? ((topChild.pyQ?.[qk]||0) - (topChild.cyQ?.[qk]||0)) : 0;
-    const topAtRisk = groupBuying.filter((p:any)=>p.py>500&&p.cy/p.py<0.6&&p.cy>0).sort((a:any,b:any)=>(b.py-b.cy)-(a.py-a.cy))[0];
+    const { topStop, topAtRisk, topGrowing } = productSignals;
     if (topChildGap > 1000 && numLocs > 1) {
       const shortName = topChild.name?.split(" ").slice(0,3).join(" ") || "top location";
       lines.push({ text: `Biggest drag is ${shortName}, which is down ${$$(topChildGap)} vs PY.`, color: T.red });
@@ -675,7 +680,6 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
     }
 
     // 3. Biggest opportunity: win-back or expansion
-    const topStop = groupStopped.filter((p:any)=>p.py>=500)[0];
     const partial = numLocs > 1
       ? groupBuying.filter((p:any)=>p.locsCY.length>0 && p.locsCY.length < numLocs*0.6 && p.cy>300).sort((a:any,b:any)=>b.cy-a.cy)[0]
       : null;
@@ -690,7 +694,6 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
     }
 
     // 4. Momentum signal if any
-    const topGrowing = groupBuying.filter((p:any)=>p.py>200&&p.cy/p.py>1.15).sort((a:any,b:any)=>(b.cy/b.py)-(a.cy/a.py))[0];
     if (topGrowing) {
       const pShort = topGrowing.name.split(" ").slice(0,3).join(" ");
       const pct = Math.round(topGrowing.cy/topGrowing.py*100-100);
@@ -704,7 +707,7 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
     }
 
     return lines.slice(0,5);
-  },[group, cy, py, ret, qk, sortedChildren, groupStopped, groupBuying, nextBestMoves]);
+  },[group, cy, py, ret, qk, sortedChildren, productSignals, nextBestMoves]);
 
 
   // ── Merge: search results ──
