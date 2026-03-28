@@ -580,7 +580,7 @@ function AppInner() {
         const remappedGroups = applyManualParents ? applyManualParents(PRELOADED.groups) : PRELOADED.groups;
         const preloadedGroups = applyGroupOverrides(applyOverlays(rollupGroupTotals(hydrateDealer(remappedGroups))));
         setGroups(preloadedGroups);
-        setDataSource(`Pre-loaded ${PRELOADED.generated}`);
+        setDataSource(`Pre-loaded ${PRELOADED.generated} · upload CSV to refresh`);
         // Auto-detect activeQ from data if not already set
         setActiveQState(prev => {
           if (prev) return prev;
@@ -716,7 +716,7 @@ function AppInner() {
           try { localStorage.setItem("active_quarter", detected); } catch {}
           return detected;
         });
-        setDataSource(`CSV uploaded ${result.generated}`);
+        setDataSource(`Updated ${result.generated}`);
         // Save groups + metadata only — omit rawSalesRows (too large for localStorage)
         try {
           localStorage.setItem("accel_data_v2", JSON.stringify({
@@ -728,7 +728,7 @@ function AppInner() {
         try { localStorage.setItem("import_report_v1", JSON.stringify(result.report)); } catch {}
 
         // Build upload message
-        let msg = `OK ${result.groups.length} groups`;
+        let msg = `✓ Loaded ${result.groups.length} accounts`;
         if (!isFirstUpload) {
           const parts: string[] = [];
           if (diff.addedAccounts)   parts.push(`+${diff.addedAccounts} new`);
@@ -736,8 +736,13 @@ function AppInner() {
           if (diff.changedRevenue)  parts.push(`~${diff.changedRevenue} updated`);
           if (parts.length) msg += ` · ${parts.join(" · ")}`;
         }
-        if (integrity.missingIds.length > 0) {
-          msg += ` · ⚠ ${integrity.missingIds.length} overlay ref${integrity.missingIds.length > 1 ? "s" : ""} orphaned (${integrity.affectedSections.join(", ")})`;
+        // Only warn about contact/activity orphans — custom group refs are expected
+        // when overlay groups reference accounts not in current CSV slice
+        const criticalSections = (integrity.affectedSections || []).filter(
+          (s: string) => !["custom groups"].includes(s)
+        );
+        if (criticalSections.length > 0) {
+          msg += ` · ⚠ ${integrity.missingIds.length} overlay ref${integrity.missingIds.length > 1 ? "s" : ""} orphaned (${criticalSections.join(", ")})`;
         }
         setUploadMsg(msg);
         setTimeout(() => setUploadMsg(null), integrity.missingIds.length > 0 ? 10000 : 5000);
