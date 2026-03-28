@@ -975,7 +975,7 @@ function AppInner() {
           {!view && tab==="dealers" && <DealersTab scored={scored} groups={groups||[]} goAcct={goSmartFn} goGroup={goGroupFn} activeQ={activeQ||"1"} overlays={overlays} patchOverlay={patchOverlay}/>}
           {!view && tab==="outreach" && <OutreachTab scored={scored}/>}
           {!view && tab==="tasks" && <TasksTab tasks={tasks} onAddTask={(data)=>addTask(data)} onCompleteTask={completeTask} onDeleteTask={deleteTask}/>}
-          {!view && tab==="admin" && <AdminTab groups={groups||[]} scored={scored} overlays={overlays} saveOverlays={saveOverlays} patchOverlay={patchOverlay} salesStore={salesStore}/>}
+          {!view && tab==="admin" && <AdminTab groups={groups||[]} scored={scored} overlays={overlays} patchOverlay={patchOverlay} salesStore={salesStore}/>}
           {view?.type==="group" && <GroupDetail group={view.data} groups={groups||[]} goMain={()=>setView(null)} overlays={overlays} patchOverlay={patchOverlay} goAcct={(a:any)=>setView({type:"acct",data:{...a,gName:fixGroupName(view.data),gId:view.data.id,gTier:view.data.tier},from:view.data})} salesStore={salesStore}/>}
           {view?.type==="acct" && <AcctDetail acct={view.data} goBack={()=>view?.from?setView({type:"group",data:view.from}):setView(null)} adjs={adjs} setAdjs={setAdjs} groups={groups||[]} goGroup={goGroupFn} overlays={overlays} patchOverlay={patchOverlay} reapplyGroupOverrides={reapplyGroupOverrides} goAcct={(s:any)=>setView({type:"acct",data:{...s,gId:view.data.gId,gName:view.data.gName},from:view?.from})} salesStore={salesStore}/>}
         </>;
@@ -1015,7 +1015,6 @@ function AppInner() {
     </div>
   );
 }
-
 
 
 
