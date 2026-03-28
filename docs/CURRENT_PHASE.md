@@ -1,41 +1,40 @@
 # CURRENT PHASE -- accel-v7
 
-## Status: Clean. Ready to build.
+## Status: Clean. patchOverlay migration complete. Ready to build.
 
-### Last Session — March 28, 2026: Repo Cleanup
+### Last Session — March 28, 2026: patchOverlay Migration
 
-Full audit + targeted fixes. No features added — strictly correctness and performance.
+Eliminated the stale-SHA overlay conflict bug. All 4 tabs now use atomic patch ops instead of full overlay writes.
 
-**Commits:**
-- `ab099ee7` — `applyManualParents` wired as static import into preloaded boot sequence. Downtown DDS now groups correctly on first load without a CSV upload. Removed dead `goAcctFn` (was defined but never called — navigation uses `goSmartFn`).
-- `683ad71a` — Removed debug `console.log("[find-group-matches] result:", ...)` from AcctDetail production build.
-- `765d8929` — GroupDetail: hoisted `topStop` / `topAtRisk` / `topGrowing` into a shared `productSignals` useMemo. These three filter+sort expressions were running identically inside both `nextBestMoves` and `briefLines` on every render. Now computed once, referenced twice.
+**What changed:**
+Every `saveOverlays(fullOverlay)` call in GroupDetail, DealersTab, AdminTab, AcctDetail replaced with `patchOverlay([{ op, path, value }])`. The server reads the current overlay fresh from GitHub, applies the op, validates integrity, and writes back — no stale data stomping.
 
-**Confirmed clean (do not re-audit):**
-- `import * as DataModule` + named import from `@/lib/data` are both needed — namespace import is the only way to mutate the live ES module export so all tabs share `OVERLAYS_REF`
-- Bare `catch {}` blocks are intentional — network fallback pattern, not sloppiness
-- `DealersTab.tsx` `.children.` accesses are safe — groups are always hydrated before reaching that component
-- All 16 API routes exist in repo (`load-crm`, `save-sales`, `version`, etc.)
-- `A15.x` / `A16.x` phase comments are stale but harmless, not worth a commit
+**Commits (in order):**
+- `1a4c2bd0` — GroupDetail: 10 call sites migrated (saveFSC, removeFSC, saveContact, deleteContact, saveNote, saveResContact, saveResWebsite, executeMerge, AI merge button)
+- `5a012845` — DealersTab: saveManualReps → replaceSection op
+- `7fcfb0fc` — AcctDetail: groupMove, activityLog, group create migrated; DR fallback branch removed (already used patchOverlay)
+- `d8e71911` + `1c97b754` — DealersTab TypeScript prop signature cleaned up
+- `2fec0c1a` + `6761255e` — AdminTab: all 11 call sites migrated (group CRUD, contact save, skipPair, approvePair, skipReview, approveReview, approveOrphan, mergeByAddr, skipOrphan)
+- `b25877e3` + `b32f7483` — AccelerateApp: `saveOverlays` prop removed from all 4 tab render calls
 
-**Current file sizes (post-cleanup):**
-- AccelerateApp.tsx: 1,025 lines
-- GroupDetail.tsx: 1,664 lines
-- AdminTab.tsx: 1,152 lines
-- AcctDetail.tsx: 1,207 lines
-- TodayTab.tsx: 941 lines
-- DealersTab.tsx: 834 lines
-- csv.ts: 657 lines
+**Result:**
+- `saveOverlays` prop: 0 references remaining (it still exists in AccelerateApp as a legacy fallback for any direct callers, but no tab receives it as a prop)
+- All overlay saves are now conflict-safe atomic operations
+- Live site: HTTP 200 ✅
+
+**What's next (recommended):**
+Move `crm-accounts.json` (2.47MB) and `sales-history.json` (2.80MB) off GitHub to Vercel KV or Supabase. These are growing blobs being committed on every save — wrong tool for the job. overlays.json is fine where it is (2.6KB, infrequently written).
 
 ---
 
 ## Previously Completed
+- March 28 Cleanup — applyManualParents wired, dead code removed, productSignals hoisted
 - A16.5 -- Full Workflow Smoke Test Harness (32/32 unit tests passing)
-- A16.4 -- Merge self-test harness, applyGroupCreates extraction (4bcdb28dfe)
-- A16.3 -- Merge direction + source card elimination (0b348f4fc7 / 60c95ff27f)
-- A16.2 -- Build fix + initial merge direction (083d3f4f77)
-- A16.1 -- AI Intel Stabilization (238ed1b / 5a6edad / 6501f78)
-- A15.7 -- Overlay Write Guard (ba5e307 / 6a853ca)
+- A16.4 -- Merge self-test harness, applyGroupCreates extraction
+- A16.3 -- Merge direction + source card elimination
+- A16.2 -- Build fix + initial merge direction
+- A16.1 -- AI Intel Stabilization
+- A15.7 -- Overlay Write Guard
 
 ## Last Updated
 March 28, 2026
