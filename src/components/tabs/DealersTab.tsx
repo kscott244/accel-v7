@@ -32,7 +32,7 @@ function isNoRep(s:string|undefined):boolean {
 
 const PRI_ORDER:Record<string,number> = {NOW:0,SOON:1,"ON TRACK":2,PROTECT:3,PIPELINE:4};
 
-function DealersTab({scored,groups,goAcct,goGroup,activeQ:activeQProp,overlays,saveOverlays}:{scored:any[],groups:any[],goAcct:(a:any)=>void,goGroup:(g:any)=>void,activeQ?:string,overlays?:any,saveOverlays?:(o:any)=>Promise<boolean>}) {
+function DealersTab({scored,groups,goAcct,goGroup,activeQ:activeQProp,overlays,patchOverlay}:{scored:any[],groups:any[],goAcct:(a:any)=>void,goGroup:(g:any)=>void,activeQ?:string,overlays?:any,patchOverlay?:(ops:any[])=>Promise<boolean>}) {
   const activeQ = activeQProp || "1";
   const [mainTab, setMainTab] = useState<"dealers"|"team">("dealers");
   const [rosterDist, setRosterDist] = useState<string>("Schein");
