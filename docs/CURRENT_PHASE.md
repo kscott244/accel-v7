@@ -1,59 +1,101 @@
 # CURRENT PHASE -- accel-v7
 
-## Status: AI Query Copilot live. Ready to build.
+## Status: Territory Copilot Knowledge Layer live.
 
-### Phase 11: In-App AI Query Copilot — March 28, 2026
+### Phase 12: Territory Copilot Knowledge Layer — March 28, 2026
 
 **Commits:**
-- `acf3ec8a` — API route: /api/ask-copilot (intent parsing via Haiku)
-- `d14a5697` — CopilotPanel component
-- `fd802cf0` — App: Ask button in nav, CopilotPanel wired
+- `d5d45286` — src/lib/territory.ts: knowledge layer foundation
+- `b9785627` — CopilotPanel: full execution engine
+- `4927860f` — App: pass overlays to CopilotPanel
 
 **Deploy:** HTTP 200 ✅
 
-**Architecture — grounded, not generative:**
+---
 
-The system is intentionally split into two layers to prevent hallucination:
+**What was built:**
 
-1. **Intent layer (LLM)** — Haiku receives only the user's question and a structured prompt. It returns a JSON command (e.g. `{type:"rank", metric:"cy1", product:"SIMPLISHADE", limit:5}`). It never sees actual account data and never produces numbers.
+### `src/lib/territory.ts` — Knowledge Layer Foundation
 
-2. **Execution layer (client-side)** — The JSON command is executed against the real in-memory `scored` accounts array. All filtering, sorting, and aggregation uses actual loaded data. The LLM cannot fabricate results.
+**`buildTerritoryContext(scored, badger, overlays)`**
+Runs once when the panel opens. Produces a `TerritoryContext` with:
+- `accounts: EnrichedAccount[]` — all accounts enriched with Badger (doctor, phone, dealerRep, feel, notes, visitNotes, lat/lng) and overlay signals (contacts, open task count, last activity days)
+- Pre-computed indexes: `byCity`, `bySt`, `byDealer`, `byTier`, `byClass2` — O(1) geographic and attribute lookups
+- `topProducts` — territory-wide product rankings by CY spend with family classification
+- Territory aggregates: `totalPY1`, `totalCY1`, `totalGap`
 
-**Supported query types:**
+**`PRODUCT_FAMILIES`** — canonical family-to-keyword mapping for all Kerr product lines: COMPOSITE, BOND, CEMENT, INFECTION_CONTROL, TEMP_CEMENT, RMGI, DESENSITIZER, CURING_LIGHT
 
-- **RANK** — "Who's my top SimpliShade account?" → sorts accounts by CY spend on that product
-- **FILTER** — "Which accounts buy bond but not composite?" → filters by product presence/absence
-- **FOLLOW_UP** — "Who's gone dark?" → filters by last-order days, gap, retention
-- **OPPORTUNITY** — "Best MaxCem win-back?" → finds accounts with PY spend but zero CY
-- **UNKNOWN** — returns a clear "couldn't understand" message, never guesses
+**`matchProdCmd(prodName, cmdProduct, cmdFamily)`** — fuzzy product matching that handles both exact product names and family-level queries
 
-**Product synonym handling (in the LLM prompt):**
-- "bond" / "bonding agent" → OPTIBOND
-- "composite" / "comp" → [HARMONIZE, SIMPLISHADE, SONICFILL]
-- "cement" → MAXCEM
-- "curing light" → DEMI
-- Partials: "simplishade", "sonicfill", "maxcem" → uppercased and matched
+**`haversineKm(lat1, lng1, lat2, lng2)`** — distance calculation for proximity queries
 
-**Entry point:**
-- ✦ Ask button added to the bottom nav (between Dealers and More)
-- Opens a slide-up panel — no new tab, no navigation disruption
-- Results are tappable — tap any account to navigate to AcctDetail
+**`EnrichedAccount` interface** — typed schema for the enriched account object with all knowledge signals surfaced at the top level
 
-**What it cannot do (by design):**
-- Cannot answer questions about data not in the app (external prices, competitor data)
-- Cannot produce numbers it didn't derive from the actual account records
-- Cannot answer questions about specific dates or calendar events
-- Returns "No accounts match" rather than inventing results
+---
+
+### CopilotPanel — Execution Engine (previously: 5 command types with many gaps)
+
+**New branches added to `executeCommand()`:**
+
+| Feature | Before | After |
+|---------|--------|-------|
+| Geography filter (city/state) | Parsed but ignored | Applied to all command types |
+| Dealer filter | Parsed but ignored | Applied |
+| Tier filter | Parsed but ignored | Applied |
+| Account type (DSO/etc) | Parsed but ignored | Applied with class2 mapping |
+| Family-level product matching | Partial strings only | Full PRODUCT_FAMILIES mapping |
+| `prodWidth` metric | Not implemented | # active products on account |
+| `summary` type | Not implemented | Returns plain-English answer with totals |
+| `growing` category | Not implemented | cy1 > py1, sorted by delta |
+| `minDays` threshold | Hardcoded 90 | From command |
+| `overdue` reason | Not implemented | Accounts with open tasks |
+| `nearby` type | Not possible | Haversine from user location, with warm+underperforming qualifier |
+| Feel label on results | Not shown | Hot/Warm/Cold chip on each row |
+| Doctor on results | Not shown | Shown in subtitle |
+| Dealer on results | Not shown | Shown in subtitle |
+
+**Territory context in panel header**
+The panel now shows live territory aggregates: "984 accounts · $615K CY · $144K gap" — grounded anchoring before any question is asked.
+
+**Examples updated** to reflect the expanded capability (Hartford DSOs, infection control totals, fastest growing, etc.)
+
+---
+
+### What this enables (questions that now work)
+
+- "Who's buying the most composite?" — family-level rank
+- "Hartford accounts stopped buying bond" — city + family + qualifier
+- "DSOs in CT with the biggest gap" — state + accountType + metric
+- "Accounts buying OptiBond but not any composite" — family filter
+- "Schein accounts in RI that are down" — dealer + state + metric
+- "How much infection control am I doing?" — summary type
+- "Fastest growing accounts" — growing category
+- "Who hasn't ordered in 90 days in CT?" — follow_up + state + minDays
+- "Platinum accounts with a gap" — tier filter
+- "Best MaxCem win-back" — winback + exact product
+- "Accounts that only buy one product" — prodWidth metric
+
+### What still requires proximity (works if location enabled)
+- "Who's nearby?"
+- "Warm account close to me with a gap?"
+- "Best opportunity within 5 miles?"
+
+### What is still out of scope
+- Questions about specific doctor names (not indexed)
+- Questions about dates / calendar / scheduling
+- Competitor data (not in the app)
+- Questions about sales history trends by month (salesStore not wired to copilot)
 
 ---
 
 ## Previously Completed
-- Phase 10 — Action-Hub Polish (call in header, locations collapse, feel fix)
-- Phase 9 — Feel Factor (office-level, Cold/Warm/Hot)
+- Phase 11 — AI Query Copilot (initial 5-type system)
+- Phase 10 — Action-Hub Polish
+- Phase 9 — Feel Factor
 - Phase 8 — Tasks operating layer
 - Phase 7 — Route with Intent
 - Phase 6 — DealersTab Channel Console
-- Phase 5 — GroupsTab Territory Navigator
 
 ## Last Updated
 March 28, 2026
