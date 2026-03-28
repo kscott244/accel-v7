@@ -5,11 +5,11 @@ import { T } from "@/lib/tokens";
 import { $$ } from "@/lib/format";
 import { fixGroupName } from "@/components/primitives";
 import {
-  buildDsoCard, sortCards, getIntel,
-  BENCH_AVG, BENCH_TOP,
+  buildDsoCard, sortCards, shouldInclude,
+  BENCH_AVG, BENCH_TOP, WR_THRESHOLDS,
   STATUS_OPTS, STRATEGY_OPTS,
   DSO_FAMILIES,
-  type BenchMode, type SortMode, type DsoCard, type DsoIntel,
+  type BenchMode, type SortMode, type DsoCard, type DsoIntel, type IncludeReason,
 } from "@/lib/dsoWarRoom";
 
 // ── Helpers ───────────────────────────────────────────────────────
@@ -21,6 +21,9 @@ function fmt(n: number): string {
 function fmtFull(n: number): string { return $$(n); }
 
 const CONF_COL: Record<string,string> = { Observed: T.green, Partial: T.amber, Estimated: T.t4 };
+const REASON_COL: Record<string,string> = {
+  DSO: T.t4, "Multi-site": T.cyan, "Large gap": T.orange, Strategic: T.purple, Pinned: T.amber
+};
 const STATUS_COL: Record<string,string> = {
   "No Contact": T.t4, "In Progress": T.blue,
   "Meeting Set": T.amber, "Active Push": T.green,
@@ -151,6 +154,14 @@ function DsoCardView({ card, intel, benchMode, onPin, onIntel, onTask, onOpen }:
               <span style={{ fontSize: 8, fontWeight: 700, color: STATUS_COL[status] || T.t4,
                 background: `${STATUS_COL[status] || T.t4}15`, borderRadius: 4, padding: "1px 6px" }}>{status}</span>
             )}
+            {/* Inclusion reason — only show for non-DSO accounts */}
+            {(card as any).includeReason && (card as any).includeReason !== "DSO" && (card as any).includeReason !== "Pinned" && (()=>{
+              const r = (card as any).includeReason as string;
+              const col = REASON_COL[r] || T.t4;
+              return <span style={{ fontSize: 8, fontWeight: 700, color: col,
+                background: `${col}15`, borderRadius: 4, padding: "1px 6px",
+                border: `1px solid ${col}25` }}>{r}</span>;
+            })()}
           </div>
         </div>
         {/* Pin + actions */}
@@ -303,11 +314,17 @@ export default function DsoWarRoomTab({ groups, overlays, patchOverlay, goGroup,
 
   // Build cards from DSO + Emerging DSO groups
   const cards = useMemo(() => {
-    const dsoGroups = (groups || []).filter((g: any) =>
-      g.class2 === "DSO" || g.class2 === "EMERGING DSO" ||
-      (g.class2 || "").toUpperCase().includes("DSO")
-    );
-    const built = dsoGroups.map((g: any) => buildDsoCard(g, benchMode));
+    const built: DsoCard[] = [];
+    for (const g of (groups || [])) {
+      const card = buildDsoCard(g, benchMode);
+      const reason = shouldInclude(g, card, intel);
+      if (!reason) continue;
+      // Suppress tiny low-value multi-site noise:
+      // Multi-site must have at least $2K CY Q1 or $10K annual gap to show
+      if (reason === "Multi-site" && card.cy1 < 2000 && card.benchGapAnn < 10000) continue;
+      (card as any).includeReason = reason;
+      built.push(card);
+    }
     return sortCards(built, sortMode, intel);
   }, [groups, benchMode, sortMode, overlays]);
 
