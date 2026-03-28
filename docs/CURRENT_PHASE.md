@@ -1,43 +1,41 @@
-# CURRENT PHASE — accel-v7
-> Last updated: March 28, 2026
+# CURRENT PHASE -- accel-v7
 
-## Architecture: Settled ✓
-**Pipeline precedence (locked):**
-1. Base CSV data
-2. `src/data/manual-parents.json` — durable structural overrides (multi-practice groups, locs counts)
-3. `data/overlays.json` — user day-to-day edits (contacts, notes, moves, ad-hoc groups)
+## Status: Clean. Ready to build.
 
-**Rules:**
-- Structural group definitions (multi-location practices) → `manual-parents.json`
-- User edits (contacts, activity logs, name overrides, dealer corrections) → `overlays.json`
-- CSV uploads cannot mutate either file
-- `Master-MP-` prefixed IDs are reserved for manual-parents; `applyGroupCreates` skips them
+### Last Session — March 28, 2026: Repo Cleanup
 
----
+Full audit + targeted fixes. No features added — strictly correctness and performance.
 
-## Next Session Quick-Start
-- Repo: `kscott244/accel-v7` | Branch: `master` | Live: `accel-v7.vercel.app/accelerate`
-- PAT in userMemories. **Push via Git Data API** (blobs→tree→commit→force-patch ref)
-- All user writes → `saveOverlays()` → `/api/save-overlay` → `data/overlays.json`
-- New multi-practice group → `manual-parents.json` via `/api/save-manual-parents`
+**Commits:**
+- `ab099ee7` — `applyManualParents` wired as static import into preloaded boot sequence. Downtown DDS now groups correctly on first load without a CSV upload. Removed dead `goAcctFn` (was defined but never called — navigation uses `goSmartFn`).
+- `683ad71a` — Removed debug `console.log("[find-group-matches] result:", ...)` from AcctDetail production build.
+- `765d8929` — GroupDetail: hoisted `topStop` / `topAtRisk` / `topGrowing` into a shared `productSignals` useMemo. These three filter+sort expressions were running identically inside both `nextBestMoves` and `briefLines` on every render. Now computed once, referenced twice.
 
----
+**Confirmed clean (do not re-audit):**
+- `import * as DataModule` + named import from `@/lib/data` are both needed — namespace import is the only way to mutate the live ES module export so all tabs share `OVERLAYS_REF`
+- Bare `catch {}` blocks are intentional — network fallback pattern, not sloppiness
+- `DealersTab.tsx` `.children.` accesses are safe — groups are always hydrated before reaching that component
+- All 16 API routes exist in repo (`load-crm`, `save-sales`, `version`, etc.)
+- `A15.x` / `A16.x` phase comments are stale but harmless, not worth a commit
 
-## Recently Completed
-- Downtown DDS group: 3 locations, 7 accounts, `locs:3` override in manual-parents
-- GroupsTab filters: DSO (class2=DSO + locs≥6) / Emerging DSO / Mid-Market / Private
-- Cleanup: removed Downtown DDS structural duplicate from overlays.json
-- Guard added in mergeGroups.ts: overlays cannot override Master-MP- entries
-- Parent Group card hidden on single-location accounts
-- ReorderInvoice: product gap invoice with MSRP pricing, promos, upsell suggestion
-- Manual-parents.json pipeline: baked into CSV processor, survives every upload
-- Q2 target input in Admin → Settings (localStorage, no overlay write)
-- Today Focus: clears on win/loss, backfills from queue
+**Current file sizes (post-cleanup):**
+- AccelerateApp.tsx: 1,025 lines
+- GroupDetail.tsx: 1,664 lines
+- AdminTab.tsx: 1,152 lines
+- AcctDetail.tsx: 1,207 lines
+- TodayTab.tsx: 941 lines
+- DealersTab.tsx: 834 lines
+- csv.ts: 657 lines
 
 ---
 
-## Open Items
-- Admin → 🏥 Practices save button needs `/api/save-manual-parents` route (built, deployed)
-- ReorderInvoice: send via Gmail not yet wired
-- Back-pocket dealer promo workflow (KKE26) not yet built
-- T5 (lock down auto-group) — confirmed already done by prior A19 work
+## Previously Completed
+- A16.5 -- Full Workflow Smoke Test Harness (32/32 unit tests passing)
+- A16.4 -- Merge self-test harness, applyGroupCreates extraction (4bcdb28dfe)
+- A16.3 -- Merge direction + source card elimination (0b348f4fc7 / 60c95ff27f)
+- A16.2 -- Build fix + initial merge direction (083d3f4f77)
+- A16.1 -- AI Intel Stabilization (238ed1b / 5a6edad / 6501f78)
+- A15.7 -- Overlay Write Guard (ba5e307 / 6a853ca)
+
+## Last Updated
+March 28, 2026
