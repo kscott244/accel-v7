@@ -177,6 +177,7 @@ import DealersTab from "@/components/tabs/DealersTab";
 import OutreachTab from "@/components/tabs/OutreachTab";
 import AdminTab from "@/components/tabs/AdminTab";
 import TasksTab from "@/components/tabs/TasksTab";
+import CopilotPanel from "@/components/CopilotPanel";
 // ─── PHASE 5: Tab components extracted to src/components/tabs/ ────
 
 // ─── ICONS (local — nav bar only) ────────────────────────────────
@@ -239,6 +240,7 @@ function AppInner() {
   };
   const [view, setView] = useState(null);
   const [showMore, setShowMore] = useState(false);
+const [showCopilot, setShowCopilot] = useState(false);
   const [adjs, setAdjs] = useState<any[]>(() => {
     try { return JSON.parse(localStorage.getItem("accel_adjs_v1") || "[]"); } catch { return []; }
   });
@@ -985,6 +987,8 @@ function AppInner() {
         </div>
       </div>}
 
+
+{showCopilot&&<CopilotPanel scored={scored||[]} goAcct={goSmartFn} onClose={()=>setShowCopilot(false)}/>}
       {/* NAV BAR */}
       <nav style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:960,zIndex:100,borderTop:`1px solid ${T.b1}`,background:"rgba(10,10,15,.92)",backdropFilter:"blur(32px)"}}>
         <div style={{display:"flex",height:56,alignItems:"center",justifyContent:"space-around",padding:"0 4px"}}>
@@ -994,7 +998,11 @@ function AppInner() {
               <span style={{fontSize:9,fontWeight:600,letterSpacing:".5px"}}>{t.l}</span>
             </button>
           ))}
-          <button onClick={()=>setShowMore(!showMore)} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 16px",cursor:"pointer",color:showMore||["tasks","est","outreach","admin","calc"].includes(tab)?T.blue:T.t4}}>
+          <button onClick={()=>{setShowCopilot(!showCopilot);setShowMore(false);}} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 12px",cursor:"pointer",color:showCopilot?T.purple:T.t4}}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+            <span style={{fontSize:9,fontWeight:600,letterSpacing:".5px"}}>Ask</span>
+          </button>
+          <button onClick={()=>setShowMore(!showMore)} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 12px",cursor:"pointer",color:showMore||["tasks","est","outreach","admin","calc"].includes(tab)?T.blue:T.t4}}>
             <IconMore c={showMore||["tasks","est","outreach","admin","calc"].includes(tab)?T.blue:T.t4}/>
             <span style={{fontSize:9,fontWeight:600,letterSpacing:".5px"}}>More</span>
           </button>
@@ -1003,7 +1011,6 @@ function AppInner() {
     </div>
   );
 }
-
 
 
 
