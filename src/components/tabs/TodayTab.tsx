@@ -192,7 +192,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
       .filter((a: any) => (a.cyQ?.[activeQ]||0) > 0 && (a.pyQ?.[activeQ]||0) > (a.cyQ?.[activeQ]||0))
       .map((a: any) => scoreAccount(a, "uplift"));
     const darkRaw = scored
-      .filter((a: any) => (a.cyQ?.[activeQ]||0) === 0 && (a.pyQ?.[activeQ]||0) > 200 && (a.pyQ?.[activeQ]||0) <= darkMaxPY)
+      .filter((a: any) => (a.cyQ?.[activeQ]||0) === 0 && (a.pyQ?.[activeQ]||0) > 500 && (a.pyQ?.[activeQ]||0) <= darkMaxPY)
       .map((a: any) => scoreAccount(a, "dark"));
     const allCandidates = [...new Map([...upliftRaw, ...darkRaw].map((a: any) => [a.id, a])).values()];
 
@@ -292,7 +292,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
     if (!overdrive) return [];
     const focusIds = new Set(todayFocus.map((a:any) => a.id));
     return overdrive.allCandidates
-      .filter((a:any) => !focusIds.has(a.id) && !odDone[a.id])
+      .filter((a:any) => !focusIds.has(a.id) && !odDone[a.id] && (a.ask||0) >= 300)
       .map((a:any) => {
         const p = scorePriority(a, activeQ);
         return {...a, _priorityScore:p.priorityScore, _priorityBucket:p.priorityBucket,
