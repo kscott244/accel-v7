@@ -180,51 +180,87 @@ export default function DashTab({groups, q1CY, q1Att, q1Gap, scored, goAcct, act
     {/* ── QUICK SALE CALCULATOR ── */}
     <div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(251,191,36,.04))`,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
       <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.amber,marginBottom:12}}>Quick Sale Calculator</div>
-      
-      <div style={{marginBottom:10}}>
-        <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t4,marginBottom:6}}>Tier</div>
-        <div className="hide-sb" style={{display:"flex",gap:4,overflowX:"auto"}}>
-          {["Silver","Gold","Platinum","Diamond","Standard"].map(t=>(
-            <button key={t} onClick={()=>setCalcTier(t)} style={{flexShrink:0,padding:"6px 12px",borderRadius:8,fontSize:11,fontWeight:600,cursor:"pointer",border:`1px solid ${calcTier===t?"rgba(251,191,36,.25)":T.b2}`,background:calcTier===t?"rgba(251,191,36,.08)":T.s2,color:calcTier===t?T.amber:T.t3,fontFamily:"inherit"}}>{t}{ACCEL_RATES[t]?` (${ACCEL_RATES[t]*100}%)`:""}</button>
-          ))}
-        </div>
-      </div>
-      <div style={{marginBottom:12}}>
-        <label style={{fontSize:11,color:T.t1,display:"block",marginBottom:4,fontWeight:600}}>Search Product</label>
-        {calcSku?<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 12px",borderRadius:8,background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.2)"}}>
-          <div><div style={{fontSize:12,fontWeight:600,color:T.t1}}>#{calcSku[0]} — {calcSku[1]}</div><div style={{fontSize:10,color:T.t3}}>{calcSku[2]} · Std MSRP ${calcSku[4]}</div></div>
-          <button onClick={()=>{setCalcSku(null);setCalcSpend("");setCalcSearch("")}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:16}}>✕</button>
-        </div>:<div>
-          <input type="text" value={calcSearch} onChange={e=>setCalcSearch(e.target.value)} placeholder="Type SKU# or product name..." style={{width:"100%",height:40,borderRadius:8,border:`1px solid ${T.b1}`,background:T.s1,color:T.t1,fontSize:13,padding:"0 12px",outline:"none",fontFamily:"inherit"}}/>
-          {calcResults.length>0&&<div style={{marginTop:4,borderRadius:8,border:`1px solid ${T.b1}`,background:T.s1,maxHeight:200,overflowY:"auto"}}>
-            {calcResults.map(p=><button key={p[0]} onClick={()=>{setCalcSku(p);setCalcSearch("")}} style={{width:"100%",textAlign:"left",padding:"8px 12px",background:"none",border:"none",borderBottom:`1px solid ${T.b1}`,color:T.t1,cursor:"pointer",fontFamily:"inherit",fontSize:11}}>
-              <div style={{fontWeight:600}}>#{p[0]} — {p[1]}</div>
-              <div style={{fontSize:9,color:T.t4}}>{p[2]} · MSRP ${p[4]}</div>
-            </button>)}
-          </div>}
-        </div>}
-      </div>
-      {calcSku&&<div style={{marginBottom:12}}>
-        <label style={{fontSize:11,color:T.t1,display:"block",marginBottom:4,fontWeight:600}}>Order Amount</label>
-        <div style={{position:"relative"}}>
-          <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:16,color:T.t4,fontFamily:"'JetBrains Mono',monospace"}}>$</span>
-          <input type="number" value={calcSpend} onChange={e=>setCalcSpend(e.target.value)} placeholder="0" style={{width:"100%",height:42,borderRadius:8,border:`1px solid ${T.b1}`,background:T.s1,color:T.t1,fontSize:16,padding:"0 12px 0 30px",outline:"none",fontFamily:"'JetBrains Mono',monospace"}}/>
-        </div>
-      </div>}
-      {calc&&<div style={{background:"rgba(79,142,247,.06)",border:"1px solid rgba(79,142,247,.12)",borderRadius:8,padding:12}}>
-        <div style={{fontSize:10,fontWeight:700,color:T.blue,marginBottom:8}}>Calculation Breakdown</div>
-        <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:3}}><span>Doctor spent</span><span className="m" style={{color:T.t1}}>{$f(parseFloat(calcSpend))}</span></div>
-        <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:3}}><span>÷ ${calc.tierMSRP.toFixed(2)}/unit ({calcIsAccel?calcTier:"std"} MSRP)</span><span className="m" style={{color:T.t1}}>{calc.units.toFixed(1)} units</span></div>
-        <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:3}}><span>× ${calc.stdWS.toFixed(2)} std wholesale/unit</span><span className="m" style={{color:T.t1}}>{$f(calc.totalWS)}</span></div>
-        {calcIsAccel&&calc.totalCB>0&&<div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:3}}><span>{calcTier} chargeback ({calcRate*100}%)</span><span className="m" style={{color:T.red}}>-{$f(calc.totalCB)}</span></div>}
-        <div style={{borderTop:`1px solid ${T.b2}`,marginTop:6,paddingTop:6,display:"flex",justifyContent:"space-between",fontSize:14,fontWeight:700}}>
-          <span style={{color:T.t1}}>Your Credit</span>
-          <span className="m" style={{color:T.green,fontSize:18}}>{$f(calc.totalCredited)}</span>
-        </div>
-      </div>}
-    </div>
 
-        <div style={{fontSize:9,color:T.t4,textAlign:"center",marginTop:4,paddingTop:8,borderTop:`1px solid ${T.b2}`}}>Spend ÷ tier MSRP = units · units × wholesale = your credit</div>
+      {/* Tier selector — rate shown on each pill */}
+      <div style={{marginBottom:12}}>
+        <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t4,marginBottom:6}}>Tier</div>
+        <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+          {(["Silver","Gold","Platinum","Diamond","Standard"] as const).map(t=>{
+            const rateMap={"Silver":"20%","Gold":"24%","Platinum":"30%","Diamond":"36%","Standard":"0%"};
+            const active=calcTier===t;
+            return <button key={t} onClick={()=>setCalcTier(t)}
+              style={{padding:"6px 12px",borderRadius:8,cursor:"pointer",fontFamily:"inherit",
+                border:`1px solid ${active?"rgba(251,191,36,.35)":T.b2}`,
+                background:active?"rgba(251,191,36,.12)":T.s2,
+                display:"flex",flexDirection:"column",alignItems:"center",gap:1}}>
+              <span style={{fontSize:11,fontWeight:700,color:active?T.amber:T.t2}}>{t==="Standard"?"Std":t}</span>
+              <span style={{fontSize:8,color:active?"rgba(251,191,36,.8)":T.t4}}>{rateMap[t]}</span>
+            </button>;
+          })}
+        </div>
+      </div>
+
+      {/* Product search */}
+      <div style={{marginBottom:12}}>
+        <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t4,marginBottom:6}}>Product</div>
+        {calcSku
+          ? <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 12px",borderRadius:8,background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.2)"}}>
+              <div>
+                <div style={{fontSize:12,fontWeight:600,color:T.t1}}>#{calcSku[0]} — {calcSku[1]}</div>
+                <div style={{fontSize:10,color:T.t3}}>{calcSku[2]} · Std MSRP ${calcSku[4]}</div>
+              </div>
+              <button onClick={()=>{setCalcSku(null);setCalcSpend("");setCalcSearch("");}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:18,lineHeight:1}}>✕</button>
+            </div>
+          : <div>
+              <input type="text" value={calcSearch} onChange={e=>setCalcSearch(e.target.value)}
+                placeholder="SKU# or product name..."
+                style={{width:"100%",height:40,borderRadius:8,border:`1px solid ${T.b1}`,background:T.s1,color:T.t1,fontSize:13,padding:"0 12px",outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}/>
+              {calcResults.length>0&&<div style={{marginTop:4,borderRadius:8,border:`1px solid ${T.b1}`,background:T.s2,maxHeight:180,overflowY:"auto"}}>
+                {calcResults.map(p=>(
+                  <button key={p[0]} onClick={()=>{setCalcSku(p);setCalcSearch("");}}
+                    style={{width:"100%",textAlign:"left",padding:"8px 12px",background:"none",border:"none",borderBottom:`1px solid ${T.b1}`,color:T.t1,cursor:"pointer",fontFamily:"inherit",fontSize:11}}>
+                    <div style={{fontWeight:600}}>#{p[0]} — {p[1]}</div>
+                    <div style={{fontSize:9,color:T.t4}}>{p[2]} · MSRP ${p[4]}</div>
+                  </button>
+                ))}
+              </div>}
+            </div>
+        }
+      </div>
+
+      {/* Amount input — only after product selected */}
+      {calcSku&&<div style={{marginBottom:12}}>
+        <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t4,marginBottom:6}}>Order Amount</div>
+        <div style={{position:"relative"}}>
+          <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:15,color:T.t4,fontFamily:"'JetBrains Mono',monospace",pointerEvents:"none"}}>$</span>
+          <input type="number" value={calcSpend} onChange={e=>setCalcSpend(e.target.value)}
+            placeholder="0"
+            style={{width:"100%",height:44,borderRadius:8,border:`1px solid ${T.b1}`,background:T.s1,color:T.t1,fontSize:17,padding:"0 12px 0 28px",outline:"none",fontFamily:"'JetBrains Mono',monospace",boxSizing:"border-box"}}/>
+        </div>
+      </div>}
+
+      {/* Result */}
+      {calc&&<div style={{background:"rgba(79,142,247,.06)",border:"1px solid rgba(79,142,247,.15)",borderRadius:10,padding:"12px 14px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:4}}>
+          <span>Order</span><span className="m" style={{color:T.t1}}>{$f(parseFloat(calcSpend))}</span>
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:4}}>
+          <span>÷ {calcIsAccel?calcTier+" ":""}MSRP ${calc.tierMSRP.toFixed(2)}</span>
+          <span className="m" style={{color:T.t1}}>{calc.units.toFixed(2)} units</span>
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:4}}>
+          <span>× wholesale ${calc.stdWS.toFixed(2)}</span>
+          <span className="m" style={{color:T.t1}}>{$f(calc.totalWS)}</span>
+        </div>
+        {calcIsAccel&&calc.totalCB>0&&<div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.t3,marginBottom:4}}>
+          <span>− {calcTier} chargeback {calcRate*100}%</span>
+          <span className="m" style={{color:T.red}}>-{$f(calc.totalCB)}</span>
+        </div>}
+        <div style={{borderTop:`1px solid ${T.b2}`,marginTop:6,paddingTop:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <span style={{fontSize:12,fontWeight:700,color:T.t1}}>Your Credit</span>
+          <span className="m" style={{color:T.green,fontSize:20,fontWeight:800}}>{$f(calc.totalCredited)}</span>
+        </div>
+      </div>}
     </div>
   </div>;
 }
