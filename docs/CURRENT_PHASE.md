@@ -1,52 +1,51 @@
 # CURRENT PHASE -- accel-v7
 
-## Status: Second Brain live. Ready to build.
+## Status: Territory Navigator live. Ready to build.
 
-### Phase 4: AcctDetail → Field Rep Second Brain — March 28, 2026
+### Phase 5: GroupsTab → Territory Navigator — March 28, 2026
 
-Redesigned AcctDetail section order around real field use. Logic unchanged, layout restructured.
+Rebuilt Groups tab as a territory planning surface, not just a sorted list.
 
-**Commit:** `0454e8d9`
+**Commit:** `1bad807d`
 **Deploy:** HTTP 200 ✅
-**Lines:** 1,202 → 1,019 (−183 lines, −15%)
+**Lines:** 384 → 331 (−53 lines, −14%)
 
-**New section order (vs old):**
+**What changed:**
 
-| # | New | Was | Why |
-|---|-----|-----|-----|
-| 1 | Sticky header (Research + Briefing buttons) | same | — |
-| 2 | **Hero** — tighter: name + health + Q + stats | Account Header | Removed address line, tightened dealer/group into subtitle |
-| 3 | **Next Best Move** | Position 12 | First content after hero — most actionable |
-| 4 | **Who Matters** — doctor + feel + contacts + notes unified | Badger card (pos 8) + standalone contacts (pos 9) | Single "who to call" card, no split |
-| 5 | **Activity** — follow-up callout + log form + entries | Position 15 | Immediate field capture |
-| 6 | **Product Story** — stopped first, buying, white space + branch spread header | Account Intel (pos 11) | Win-backs surface first |
-| 7 | Parent Group | same | Contextual, not primary |
-| 8 | Multi-Dealer View | same | — |
-| 9 | Product Breakdown Bars (detail, tappable monthly) | same | Detail layer |
-| 10 | Log a Sale (was "Manual Sale") | same | — |
-| 11 | Research Results (Deep Research + AI Briefing) | Positions 3-4 (above hero) | On-demand, below fold |
-| 12 | Sales History | same | — |
-| 13 | Modals: Move, Group Link, ReorderInvoice | same | — |
+**Territory Snapshot (new)**
+Four tappable stat tiles above the filters: total gap, # at risk, # growing, # win-back. Each tile taps directly into that view. Answers "where do I stand" in one glance without drilling anywhere.
 
-**What was removed:**
-- "Root Depth" STEMM bar from Badger card — too abstract for field use, not actionable
-- Address line from hero (Badger card has it; redundant)
-- Separate "Standalone Contacts" card — merged into "Who Matters"
-- "Branch Spread" as a buried subsection — promoted to header pills on Product Story
+**Account cards compressed**
+Old card: name + locs badge + subtitle + address line + ret bar + PY/CY pills + WIN BACK/NEW PROD tags. Three rows plus a bar.
+New card: name + locs badge + bucket tag in row 1. PY · CY · ret% · reason phrase in row 2. Gap on the right. ~35% shorter per card — more accounts visible per screen.
+
+**Bucket tag on every card**
+RECOVER / PROTECT / GROW / WATCH tag replaces the retention bar. Same information, uses color from BUCKET_STYLE, much less space.
+
+**Two new view modes**
+- **Strategic**: high-PY accounts (≥$5K) tracking ≥70% retention. These are the accounts worth proactive scheduling — healthy but high-value.
+- **Cleanup**: accounts with <$100 in both PY and CY. Stubs, orphans, zero-activity groups that need a data review.
+
+**Renamed/simplified**
+- "All" → "Priority" (clearer intent — it's priority-sorted)
+- "Urgent" → "At Risk" (less alarm, more actionable)
+- "Emerging DSO" → "Emerging" (pill fits better on mobile)
+- Legend component removed — color meaning is now self-evident from the bucket tags
 
 **What was NOT changed:**
-- All state, useEffect, useMemo — identical
-- runAI(), runDeepResearch(), applyGroupOverride() — identical
-- SaleCalculator component — identical
-- MultiDealerView component — identical
-- Product breakdown bars with monthly expansion — identical
-- All patchOverlay calls — identical
-- Move modal, Group Link modal, ReorderInvoice — identical
+- `enriched` useMemo — identical scoring logic
+- `byType` / `list` useMemos — same structure, added Strategic+Cleanup branches
+- All existing sort orders — identical
+- `scorePriority()` call on each group — identical
+- Search — identical
+- Props interface (`groups`, `goGroup`, `filt`, `setFilt`, `search`, `setSearch`, `groupedPrivates`) — identical
+- `goGroup()` navigation — identical
 
 ---
 
 ## Previously Completed
-- Phase 3 — GroupDetail War Room (section reorder, distributor+FSC merged, contacts unified)
+- Phase 4 — AcctDetail Second Brain (Next Best Move up top, Who Matters, Activity first)
+- Phase 3 — GroupDetail War Room (section reorder, distributor+FSC merged)
 - Phase 2 — Today Tab Mission Control (5 action buckets)
 - Phase 1 — Data Boundary Hardening
 - patchOverlay Migration — SHA conflict bug eliminated
