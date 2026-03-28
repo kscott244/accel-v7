@@ -341,7 +341,6 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
             })
             .then(r => r.json())
             .then(result => {
-              console.log("[find-group-matches] result:", JSON.stringify(result));
               if (result.matches?.length > 0) {
                 const matchedIds = new Set(result.matches.map((m:any) => m.id));
                 const reasonMap: Record<string,string> = {};
