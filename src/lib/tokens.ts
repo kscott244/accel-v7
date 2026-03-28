@@ -70,3 +70,4 @@ export function quarterLabel(q: string): string {
 // Thomaston CT home base coordinates — used for distance scoring in Overdrive
 export const HOME_LAT = 41.6723;
 export const HOME_LNG = -73.0720;
+// cache bust 1774722943
