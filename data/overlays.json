@@ -55,7 +55,7 @@
       {
         "id": 1774652073352,
         "name": "Dr. Michael Capalbo",
-        "role": "Owner/DMD – Capalbo Dental Group (Wakefield & Wickford)",
+        "role": "Owner/DMD \u2013 Capalbo Dental Group (Wakefield & Wickford)",
         "phone": "(401) 789-6118",
         "email": "wakefield@capalbodentalgroup.com",
         "notes": "From AI research",
@@ -64,7 +64,7 @@
       {
         "id": 1774652074767,
         "name": "Dr. Roy Shakun",
-        "role": "Owner/DMD – West Hartford Family Dental",
+        "role": "Owner/DMD \u2013 West Hartford Family Dental",
         "phone": "(860) 233-0552",
         "email": "",
         "notes": "From AI research",
@@ -73,7 +73,7 @@
       {
         "id": 1774652076110,
         "name": "Dr. Matthew Capalbo",
-        "role": "Associate Owner/DMD – Capalbo Dental Group",
+        "role": "Associate Owner/DMD \u2013 Capalbo Dental Group",
         "phone": "(401) 789-6118",
         "email": "",
         "notes": "From AI research",
@@ -82,7 +82,7 @@
       {
         "id": 1774652077658,
         "name": "Dr. Marcus Capalbo",
-        "role": "Associate Owner/DMD – Capalbo Dental Group",
+        "role": "Associate Owner/DMD \u2013 Capalbo Dental Group",
         "phone": "(401) 295-1992",
         "email": "",
         "notes": "From AI research",
@@ -93,12 +93,12 @@
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-28T21:00:58.785Z",
+  "lastUpdated": "2026-03-28",
   "tasks": [
     {
       "id": 1774682049928,
-      "action": "🎯 2 products stopped — lead with OPTIBOND SOLO PLUS",
-      "notes": "Was $439 — ask what changed",
+      "action": "\ud83c\udfaf 2 products stopped \u2014 lead with OPTIBOND SOLO PLUS",
+      "notes": "Was $439 \u2014 ask what changed",
       "dueDate": "2026-04-04",
       "priority": "Normal",
       "accountId": "Master-CM130847",
@@ -108,5 +108,19 @@
       "completed": false,
       "createdAt": "2026-03-28T07:14:09.928Z"
     }
-  ]
+  ],
+  "dsoIntel": {
+    "Master-CM1486131": {
+      "procurementContact": "Brian Kimble \u2014 Regional Operations Leader",
+      "procurementPhone": "(404) 254-0053",
+      "competitor": "Dentsply / 3M (via Dental Whale Savings Network \u2014 now Synergy GPO)",
+      "owner": "",
+      "lastContact": "",
+      "status": "No Contact",
+      "strategy": "Regional Leadership",
+      "pinned": true,
+      "notes": "Rebranded Jan 2024 \u2014 now Wave Dental Professionals (thedepg.com), CEO Dr. Steven Wingfield, HQ Dearborn Heights MI. Cut ties with Dental Whale entirely. Brian Kimble is Regional Ops Leader \u2014 20+ yrs experience, best contact for NE territory. Corporate was promoting Dentsply/3M via their old GPO. Now under Synergy GPO \u2014 possible opening to renegotiate supply relationships.",
+      "teamOppQ": null
+    }
+  }
 }
