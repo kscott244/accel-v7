@@ -583,39 +583,91 @@ function DealersTab({scored,groups,goAcct,goGroup,activeQ:activeQProp,overlays,p
   }
 
   // ── Top-level: 4 distributor cards + All Other ──
-  return <div style={{padding:"16px 16px 0",paddingBottom:80}}>
-    {/* ── TAB TOGGLE ── */}
-    <div style={{display:"flex",gap:5,marginBottom:14}}>
-      <button onClick={()=>setMainTab("dealers")} style={{flex:1,padding:"7px 0",borderRadius:8,fontSize:11,fontWeight:700,cursor:"pointer",border:"1px solid rgba(79,142,247,.3)",background:"rgba(79,142,247,.15)",color:T.blue,fontFamily:"inherit"}}>Dealers</button>
-      <button onClick={()=>setMainTab("team")} style={{flex:1,padding:"7px 0",borderRadius:8,fontSize:11,fontWeight:700,cursor:"pointer",border:`1px solid ${T.b2}`,background:T.s2,color:T.t3,fontFamily:"inherit"}}>Roster</button>
+  // ── Top-level: Channel Influence Console ──
+  const totalGapAll = filteredScored.reduce((s:number,a:any)=>s+Math.max(0,(a.pyQ?.[activeQ]||0)-(a.cyQ?.[activeQ]||0)),0);
+
+  return <div style={{paddingBottom:80}}>
+    {/* ── STICKY HEADER ── */}
+    <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"10px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+      <span style={{fontSize:13,fontWeight:700,color:T.t2}}>Dealers</span>
+      <div style={{display:"flex",gap:4}}>
+        <button style={{padding:"4px 10px",borderRadius:6,fontSize:10,fontWeight:700,cursor:"pointer",border:"1px solid rgba(79,142,247,.3)",background:"rgba(79,142,247,.15)",color:T.blue,fontFamily:"inherit"}}>Dealers</button>
+        <button onClick={()=>setMainTab("team")} style={{padding:"4px 10px",borderRadius:6,fontSize:10,fontWeight:700,cursor:"pointer",border:`1px solid ${T.b2}`,background:T.s2,color:T.t3,fontFamily:"inherit"}}>Roster</button>
+      </div>
     </div>
-    {/* ── FSC CO-CALL PLANNER ── */}
-    <div style={{background:`linear-gradient(135deg,${T.s1},rgba(167,139,250,.06))`,border:`1px solid rgba(167,139,250,.2)`,borderRadius:16,padding:14,marginBottom:14}}>
-      <button onClick={()=>{const next=!cocallOpen;setCocallOpen(next);try{localStorage.setItem("cocall_open",String(next));}catch{}}} style={{width:"100%",display:"flex",justifyContent:"space-between",alignItems:"center",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit",padding:0}}>
-        <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <span style={{fontSize:16}}>🤝</span>
-          <div style={{textAlign:"left"}}>
-            <div style={{fontSize:13,fontWeight:700,color:T.purple}}>FSC Co-Call Planner</div>
-            <div style={{fontSize:10,color:T.t3}}>Build a hit list to share with your dealer rep</div>
+    <div style={{padding:"12px 16px 0"}}>
+
+      {/* ── DISTRIBUTOR CARDS ── */}
+      {[...DIST_ORDER,"All Other"].map(dist=>{
+        const s=distStats[dist];
+        if(!s||s.accts.length===0) return null;
+        const gap=s.py-s.cy;
+        const ret=s.py>0?s.cy/s.py:0;
+        const upCount=s.accts.filter((a:any)=>(a.cyQ?.[activeQ]||0)>=(a.pyQ?.[activeQ]||0)).length;
+        const downCount=s.accts.length-upCount;
+        const flaggedCount=s.accts.filter((a:any)=>a.dealerFlag).length;
+        const isAllOther=dist==="All Other";
+        const gapPct=totalGapAll>0&&gap>0?Math.round(gap/totalGapAll*100):0;
+        const repCount=isAllOther?0:Object.keys(
+          s.accts.reduce((m:Record<string,boolean>,a:any)=>{
+            const b=(typeof BADGER!=="undefined"?BADGER:{})[a.id];
+            const rep=b?.dealerRep;
+            if(!isNoRep(rep)){const hint=repDistHint(rep);if(!hint||hint===dist)m[rep!.trim()]=true;}
+            return m;
+          },{})
+        ).length;
+        const cardBg=isAllOther?"rgba(85,85,112,.08)":DIST_COLORS[dist];
+        const cardBorder=isAllOther?"rgba(85,85,112,.2)":DIST_BORDER[dist];
+        const cardText=isAllOther?T.t3:DIST_TEXT[dist];
+        return <button key={dist} className="anim" onClick={()=>{if(!isAllOther){setSelDist(dist);setSelRep(null);setShowAddRep(false);}}}
+          style={{width:"100%",textAlign:"left",background:cardBg,border:`1px solid ${cardBorder}`,borderRadius:14,padding:"12px 14px",marginBottom:8,cursor:isAllOther?"default":"pointer"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:15,fontWeight:800,color:cardText,marginBottom:1}}>{dist}</div>
+              <div style={{fontSize:9,color:T.t3}}>
+                {s.accts.length} accts
+                {repCount>0&&<span> · {repCount} rep{repCount!==1?"s":""}</span>}
+                {isAllOther&&<span> · no drill-down</span>}
+                {flaggedCount>0&&<span style={{color:T.amber}}> · {flaggedCount} ⚠ verify</span>}
+              </div>
+            </div>
+            <div style={{display:"flex",gap:5,alignItems:"center",flexShrink:0}}>
+              {s.nowCount>0&&<span style={{fontSize:9,fontWeight:700,color:"#f87171",background:"rgba(248,113,113,.1)",border:"1px solid rgba(248,113,113,.2)",borderRadius:5,padding:"2px 6px"}}>{s.nowCount} NOW</span>}
+              {gapPct>=20&&<span style={{fontSize:9,fontWeight:700,color:T.red,background:"rgba(248,113,113,.08)",border:"1px solid rgba(248,113,113,.18)",borderRadius:5,padding:"2px 6px"}}>{gapPct}% of gap</span>}
+              {!isAllOther&&<Chev/>}
+            </div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6,marginBottom:6}}>
+            <Stat l="CY" v={$$(s.cy)} c={T.blue}/>
+            <Stat l="PY" v={$$(s.py)} c={T.t2}/>
+            <Stat l="Gap" v={gap<=0?`+${$$(Math.abs(gap))}`:$$(gap)} c={gap<=0?T.green:T.red}/>
+            <Stat l="Ret" v={Math.round(ret*100)+"%"} c={ret>.7?T.green:ret>.4?T.amber:T.red}/>
+          </div>
+          <div style={{display:"flex",gap:6}}>
+            <span style={{fontSize:9,color:T.green,background:"rgba(52,211,153,.08)",border:"1px solid rgba(52,211,153,.15)",borderRadius:5,padding:"2px 7px"}}>↑ {upCount}</span>
+            <span style={{fontSize:9,color:T.red,background:"rgba(248,113,113,.08)",border:"1px solid rgba(248,113,113,.15)",borderRadius:5,padding:"2px 7px"}}>↓ {downCount}</span>
+          </div>
+        </button>;
+      })}
+
+      {/* ── CO-CALL PLANNER ── always visible, no collapse ── */}
+      <div style={{marginTop:4,background:`linear-gradient(135deg,${T.s1},rgba(167,139,250,.06))`,border:`1px solid rgba(167,139,250,.22)`,borderRadius:14,padding:"12px 14px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+          <div>
+            <div style={{fontSize:12,fontWeight:700,color:T.purple}}>🤝 Co-Call Planner</div>
+            <div style={{fontSize:9,color:T.t3,marginTop:1}}>Pick a dealer — ranked accounts for a joint visit</div>
           </div>
         </div>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T.t4} strokeWidth="2" style={{transform:cocallOpen?"rotate(180deg)":"none",transition:"transform .2s"}}><path d="M6 9l6 6 6-6"/></svg>
-      </button>
-
-      {cocallOpen&&<div style={{marginTop:12}}>
-        {/* Distributor picker */}
-        <div style={{display:"flex",gap:6,marginBottom:12}}>
+        <div style={{display:"flex",gap:5,marginBottom:cocallDist?12:0}}>
           {DIST_ORDER.map(d=>(
             <button key={d} onClick={()=>setCocallDist(cocallDist===d?null:d)} style={{
-              flex:1,padding:"8px 0",borderRadius:8,border:"none",fontFamily:"inherit",fontSize:11,fontWeight:700,cursor:"pointer",
+              flex:1,padding:"7px 0",borderRadius:8,fontFamily:"inherit",fontSize:11,fontWeight:700,cursor:"pointer",
               background:cocallDist===d?(DIST_COLORS[d]||T.s2):T.s2,
               color:cocallDist===d?(DIST_TEXT[d]||T.t1):T.t3,
-              borderWidth:1,borderStyle:"solid",
-              borderColor:cocallDist===d?(DIST_BORDER[d]||T.b1):T.b1,
+              border:`1px solid ${cocallDist===d?(DIST_BORDER[d]||T.b1):T.b1}`,
             }}>{d}</button>
           ))}
         </div>
-
         {cocallDist&&(()=>{
           // Build ranked co-call list for selected distributor
           const B = typeof BADGER!=='undefined'?BADGER:{};
@@ -752,83 +804,9 @@ function DealersTab({scored,groups,goAcct,goGroup,activeQ:activeQProp,overlays,p
             })()}
           </div>;
         })()}
-      </div>}
+      </div>
     </div>
-    {/* ── ACCOUNT TYPE TOGGLE — All / Private / Groups ── */}
-    <div style={{display:"flex",gap:6,marginBottom:12}}>
-      {([["all","All"],["private","Private"],["groups","Groups"]] as const).map(([val,label])=>(
-        <button key={val} onClick={()=>setAcctType(val)}
-          style={{flex:1,padding:"6px 0",borderRadius:8,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",
-            border:`1px solid ${acctType===val?"rgba(79,142,247,.4)":T.b2}`,
-            background:acctType===val?"rgba(79,142,247,.18)":T.s2,
-            color:acctType===val?T.blue:T.t3}}>
-          {label}
-        </button>
-      ))}
-    </div>
-
-    {/* Territory total summary */}
-    {(()=>{
-      const totalCY=filteredScored.reduce((s,a)=>s+(a.cyQ?.[activeQ]||0),0);
-      const totalPY=filteredScored.reduce((s,a)=>s+(a.pyQ?.[activeQ]||0),0);
-      const totalGap=totalPY-totalCY;
-      return <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:"10px 14px",marginBottom:14,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <div style={{fontSize:10,color:T.t3,fontWeight:600,textTransform:"uppercase",letterSpacing:"1px"}}>All Distributors · {filteredScored.length} accounts</div>
-        <div style={{display:"flex",gap:12}}>
-          <div style={{textAlign:"right"}}><div style={{fontSize:8,color:T.t4}}>CY</div><div style={{fontSize:11,fontWeight:700,color:T.blue,fontFamily:"'DM Mono',monospace"}}>{$$(totalCY)}</div></div>
-          <div style={{textAlign:"right"}}><div style={{fontSize:8,color:T.t4}}>Gap</div><div style={{fontSize:11,fontWeight:700,color:totalGap<=0?T.green:T.red,fontFamily:"'DM Mono',monospace"}}>{totalGap<=0?`+${$$(Math.abs(totalGap))}`:$$(totalGap)}</div></div>
-        </div>
-      </div>;
-    })()}
-    {[...DIST_ORDER,"All Other"].map(dist=>{
-      const s=distStats[dist];
-      if(!s||s.accts.length===0) return null;
-      const gap=s.py-s.cy;
-      const ret=s.py>0?s.cy/s.py:0;
-      const upCount=s.accts.filter(a=>(a.cyQ?.[activeQ]||0)>=(a.pyQ?.[activeQ]||0)).length;
-      const downCount=s.accts.length-upCount;
-      const isAllOther=dist==="All Other";
-      // repCount: only count reps whose distributor hint matches this dist
-      const repCount=isAllOther?0:Object.keys(
-        s.accts.reduce((m:Record<string,boolean>,a)=>{
-          const b=(typeof BADGER!=="undefined"?BADGER:{})[a.id];
-          const rep=b?.dealerRep;
-          if(!isNoRep(rep)){
-            const hint=repDistHint(rep);
-            if(!hint||hint===dist) m[rep!.trim()]=true;
-          }
-          return m;
-        },{})
-      ).length;
-      const cardBg=isAllOther?"rgba(85,85,112,.12)":DIST_COLORS[dist];
-      const cardBorder=isAllOther?"rgba(85,85,112,.25)":DIST_BORDER[dist];
-      const cardText=isAllOther?T.t3:DIST_TEXT[dist];
-      return <button key={dist} className="anim" onClick={()=>{if(!isAllOther){setSelDist(dist);setSelRep(null);setShowAddRep(false);}}}
-        style={{width:"100%",textAlign:"left",background:cardBg,border:`1px solid ${cardBorder}`,borderRadius:16,padding:"14px 16px",marginBottom:10,cursor:isAllOther?"default":"pointer"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
-          <div>
-            <div style={{fontSize:16,fontWeight:800,color:cardText,marginBottom:2}}>{dist}</div>
-            <div style={{fontSize:10,color:T.t3}}>{s.accts.length} accounts{repCount>0?` · ${repCount} rep${repCount!==1?"s":""} known`:""}{isAllOther?" · no rep drill-down":""}</div>
-          </div>
-          <div style={{display:"flex",gap:6,alignItems:"center"}}>
-            {s.nowCount>0&&<span style={{fontSize:9,fontWeight:700,color:"#f87171",background:"rgba(248,113,113,.1)",border:"1px solid rgba(248,113,113,.2)",borderRadius:6,padding:"2px 7px"}}>{s.nowCount} NOW</span>}
-            {!isAllOther&&<Chev/>}
-          </div>
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}>
-          <Stat l="CY" v={$$(s.cy)} c={T.blue}/>
-          <Stat l="PY" v={$$(s.py)} c={T.t2}/>
-          <Stat l="Gap" v={gap<=0?`+${$$(Math.abs(gap))}`:$$(gap)} c={gap<=0?T.green:T.red}/>
-          <Stat l="Ret" v={Math.round(ret*100)+"%"} c={ret>.7?T.green:ret>.4?T.amber:T.red}/>
-        </div>
-        <div style={{display:"flex",gap:8,marginTop:8}}>
-          <span style={{fontSize:9,color:T.green,background:"rgba(52,211,153,.08)",border:"1px solid rgba(52,211,153,.15)",borderRadius:6,padding:"2px 8px"}}>↑ {upCount} up</span>
-          <span style={{fontSize:9,color:T.red,background:"rgba(248,113,113,.08)",border:"1px solid rgba(248,113,113,.15)",borderRadius:6,padding:"2px 8px"}}>↓ {downCount} down</span>
-        </div>
-      </button>;
-    })}
   </div>;
 }
-
 
 export default DealersTab;
