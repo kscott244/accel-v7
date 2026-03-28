@@ -73,6 +73,8 @@ function IntelDrawer({ groupId, intel, onSave, onClose }: any) {
         {field("owner", "Relationship Owner")}
         {field("lastContact", "Last Contact Date", "date")}
         {pills("status", "Status", STATUS_OPTS, (o) => STATUS_COL[o] || T.blue)}
+        {pills("accelTier", "Accelerate Pricing Tier", ["Private","Silver","Gold","Platinum","Diamond"],
+          (o:string) => o==="Private"?T.t3:o==="Silver"?T.cyan:o==="Gold"?T.amber:o==="Platinum"?T.purple:T.blue)}
         {pills("strategy", "Strategy", STRATEGY_OPTS)}
 
         <div style={{ marginBottom: 10 }}>
@@ -110,8 +112,11 @@ function IntelDrawer({ groupId, intel, onSave, onClose }: any) {
 function DsoCardView({ card, intel, benchMode, onPin, onIntel, onTask, onOpen }: any) {
   const { group, locs, cy1, py1, perOffice, benchQ, benchGapQ, benchGapAnn, momentum, coverage, confidence, statement } = card;
   const name     = fixGroupName(group);
-  const tier     = group.tier || "Standard";
   const pinned   = intel?.pinned;
+  const accelTier = intel?.accelTier || "Private";
+  const ACCEL_CREDIT: Record<string,number> = { Private:0.601,Silver:0.508,Gold:0.476,Platinum:0.437,Diamond:0.403 };
+  const creditRate = ACCEL_CREDIT[accelTier] || 0.601;
+  const repCreditAnn = Math.round(benchGapAnn * (creditRate / 0.601));
   const status   = intel?.status;
   const strategy = intel?.strategy;
   const confCol  = CONF_COL[confidence] || T.t4;
@@ -129,10 +134,10 @@ function DsoCardView({ card, intel, benchMode, onPin, onIntel, onTask, onOpen }:
           <div style={{ fontSize: 13, fontWeight: 700, color: T.t1,
             overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</div>
           <div style={{ display: "flex", gap: 5, marginTop: 3, flexWrap: "wrap", alignItems: "center" }}>
-            {/* Tier */}
-            {tier !== "Standard" && (
+            {/* Accelerate Tier from intel only — Tableau tier field is not Accelerate pricing */}
+            {intel?.accelTier && intel.accelTier !== "Private" && (
               <span style={{ fontSize: 8, fontWeight: 700, color: T.amber, background: `${T.amber}18`,
-                borderRadius: 4, padding: "1px 6px", border: `1px solid ${T.amber}30` }}>{tier}</span>
+                borderRadius: 4, padding: "1px 6px", border: `1px solid ${T.amber}30` }}>{intel.accelTier}</span>
             )}
             {/* Class2 */}
             <span style={{ fontSize: 8, color: T.t4, background: T.s2, borderRadius: 4, padding: "1px 6px" }}>
@@ -191,6 +196,15 @@ function DsoCardView({ card, intel, benchMode, onPin, onIntel, onTask, onOpen }:
               <div style={{ fontSize: 13, fontWeight: 700, color: T.amber }}>{fmt(benchGapAnn)}</div>
             </div>
           </div>
+          {accelTier !== "Private" && benchGapAnn > 0 && (
+            <div style={{ borderTop: `1px solid rgba(248,113,113,.2)`, paddingTop: 6, marginTop: 4,
+              display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ fontSize: 9, color: T.t4 }}>
+                Rep credit at {accelTier} ({(creditRate*100).toFixed(0)}% vs 60%)
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: T.orange }}>{fmt(repCreditAnn)}</div>
+            </div>
+          )}
         </div>
       )}
 
