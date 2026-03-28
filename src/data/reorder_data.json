@@ -1,0 +1,565 @@
+{
+  "generated": "2026-01-01",
+  "prices": {
+    "SIMPLISHADE": {
+      "cat": "SIMPLISHADE",
+      "section": "restorative",
+      "std_ws": 80.43,
+      "std_msrp": 132.94,
+      "dia_ws": 56.44,
+      "dia_msrp": 70.55,
+      "plat_ws": 60.24,
+      "plat_msrp": 77.23,
+      "gold_ws": 64.26,
+      "gold_msrp": 84.55,
+      "silv_ws": 68.27,
+      "silv_msrp": 92.26
+    },
+    "HARMONIZE": {
+      "cat": "HARMONIZE",
+      "section": "restorative",
+      "std_ws": 87.95,
+      "std_msrp": 145.73,
+      "dia_ws": 61.71,
+      "dia_msrp": 77.13,
+      "plat_ws": 65.87,
+      "plat_msrp": 84.44,
+      "gold_ws": 70.25,
+      "gold_msrp": 92.44,
+      "silv_ws": 74.64,
+      "silv_msrp": 100.87
+    },
+    "HERCULITE ULTRA": {
+      "cat": "HERCULITE ULTRA",
+      "section": "restorative",
+      "std_ws": 112.29,
+      "std_msrp": 187.88,
+      "dia_ws": 85.43,
+      "dia_msrp": 106.79,
+      "plat_ws": 90.73,
+      "plat_msrp": 116.32,
+      "gold_ws": 96.33,
+      "gold_msrp": 126.75,
+      "silv_ws": 101.93,
+      "silv_msrp": 137.74
+    },
+    "HERCULITE ULTRA FLOW": {
+      "cat": "HERCULITE ULTRA FLOW",
+      "section": "restorative",
+      "std_ws": 75.52,
+      "std_msrp": 125.76,
+      "dia_ws": 38.71,
+      "dia_msrp": 48.39,
+      "plat_ws": 45.19,
+      "plat_msrp": 57.94,
+      "gold_ws": 52.72,
+      "gold_msrp": 69.37,
+      "silv_ws": 56.49,
+      "silv_msrp": 76.34
+    },
+    "SONICFILL 3": {
+      "cat": "SONICFILL 3",
+      "section": "restorative",
+      "std_ws": 108.72,
+      "std_msrp": 180.32,
+      "dia_ws": 76.28,
+      "dia_msrp": 95.35,
+      "plat_ws": 81.42,
+      "plat_msrp": 104.39,
+      "gold_ws": 86.85,
+      "gold_msrp": 114.27,
+      "silv_ws": 92.27,
+      "silv_msrp": 124.69
+    },
+    "POINT 4": {
+      "cat": "POINT 4",
+      "section": "restorative",
+      "std_ws": 124.81,
+      "std_msrp": 208.22,
+      "dia_ws": 82.37,
+      "dia_msrp": 102.97,
+      "plat_ws": 90.24,
+      "plat_msrp": 115.69,
+      "gold_ws": 99.19,
+      "gold_msrp": 130.51,
+      "silv_ws": 106.01,
+      "silv_msrp": 143.26
+    },
+    "FLOW-IT ALC": {
+      "cat": "FLOW-IT ALC",
+      "section": "restorative",
+      "std_ws": 87.68,
+      "std_msrp": 146.71,
+      "dia_ws": 44.98,
+      "dia_msrp": 56.22,
+      "plat_ws": 52.51,
+      "plat_msrp": 67.32,
+      "gold_ws": 61.26,
+      "gold_msrp": 80.61,
+      "silv_ws": 65.64,
+      "silv_msrp": 88.7
+    },
+    "PREMISE": {
+      "cat": "PREMISE",
+      "section": "restorative",
+      "std_ws": 114.86,
+      "std_msrp": 191.63,
+      "dia_ws": 75.81,
+      "dia_msrp": 94.76,
+      "plat_ws": 83.04,
+      "plat_msrp": 106.47,
+      "gold_ws": 91.28,
+      "gold_msrp": 120.1,
+      "silv_ws": 97.56,
+      "silv_msrp": 131.84
+    },
+    "SIMILE": {
+      "cat": "SIMILE",
+      "section": "restorative",
+      "std_ws": 65.12,
+      "std_msrp": 108.93,
+      "dia_ws": 33.41,
+      "dia_msrp": 41.76,
+      "plat_ws": 39.0,
+      "plat_msrp": 50.0,
+      "gold_ws": 45.5,
+      "gold_msrp": 59.87,
+      "silv_ws": 48.75,
+      "silv_msrp": 65.88
+    },
+    "OPTIBOND SOLO PLUS": {
+      "cat": "OPTIBOND SOLO PLUS",
+      "section": "restorative",
+      "std_ws": 278.32,
+      "std_msrp": 459.34,
+      "dia_ws": 186.47,
+      "dia_msrp": 233.09,
+      "plat_ws": 200.39,
+      "plat_msrp": 256.91,
+      "gold_ws": 222.66,
+      "gold_msrp": 292.97,
+      "silv_ws": 236.57,
+      "silv_msrp": 319.69
+    },
+    "OPTIBOND UNIVERSAL": {
+      "cat": "OPTIBOND UNIVERSAL",
+      "section": "restorative",
+      "std_ws": 136.15,
+      "std_msrp": 225.82,
+      "dia_ws": 91.22,
+      "dia_msrp": 114.03,
+      "plat_ws": 98.03,
+      "plat_msrp": 125.68,
+      "gold_ws": 108.92,
+      "gold_msrp": 143.32,
+      "silv_ws": 115.73,
+      "silv_msrp": 156.39
+    },
+    "OPTIBOND EXTRA": {
+      "cat": "OPTIBOND eXTRa",
+      "section": "restorative",
+      "std_ws": 133.45,
+      "std_msrp": 221.36,
+      "dia_ws": 89.41,
+      "dia_msrp": 111.76,
+      "plat_ws": 96.08,
+      "plat_msrp": 123.18,
+      "gold_ws": 106.76,
+      "gold_msrp": 140.47,
+      "silv_ws": 113.43,
+      "silv_msrp": 153.29
+    },
+    "OPTIBOND 360": {
+      "cat": "OPTIBOND 360",
+      "section": "restorative",
+      "std_ws": 153.7,
+      "std_msrp": 253.67,
+      "dia_ws": 102.98,
+      "dia_msrp": 128.72,
+      "plat_ws": 110.66,
+      "plat_msrp": 141.88,
+      "gold_ws": 122.96,
+      "gold_msrp": 161.79,
+      "silv_ws": 130.64,
+      "silv_msrp": 176.55
+    },
+    "MAXCEM ELITE": {
+      "cat": "MAXCEM ELITE",
+      "section": "restorative",
+      "std_ws": 135.24,
+      "std_msrp": 224.3,
+      "dia_ws": 85.2,
+      "dia_msrp": 106.5,
+      "plat_ws": 93.32,
+      "plat_msrp": 119.64,
+      "gold_ws": 101.43,
+      "gold_msrp": 133.46,
+      "silv_ws": 106.84,
+      "silv_msrp": 144.38
+    },
+    "MAXCEM ELITE CHROMA": {
+      "cat": "MAXCEM ELITE CHROMA",
+      "section": "restorative",
+      "std_ws": 139.17,
+      "std_msrp": 230.83,
+      "dia_ws": 87.68,
+      "dia_msrp": 109.6,
+      "plat_ws": 96.03,
+      "plat_msrp": 123.11,
+      "gold_ws": 104.38,
+      "gold_msrp": 137.34,
+      "silv_ws": 109.94,
+      "silv_msrp": 148.57
+    },
+    "NX3": {
+      "cat": "NX3",
+      "section": "restorative",
+      "std_ws": 59.82,
+      "std_msrp": 99.68,
+      "dia_ws": 38.88,
+      "dia_msrp": 48.6,
+      "plat_ws": 41.87,
+      "plat_msrp": 53.68,
+      "gold_ws": 44.87,
+      "gold_msrp": 59.03,
+      "silv_ws": 47.86,
+      "silv_msrp": 64.67
+    },
+    "TEMPBOND": {
+      "cat": "TEMPBOND",
+      "section": "restorative",
+      "std_ws": 52.95,
+      "std_msrp": 87.82,
+      "dia_ws": 37.05,
+      "dia_msrp": 46.31,
+      "plat_ws": 39.55,
+      "plat_msrp": 50.7,
+      "gold_ws": 42.19,
+      "gold_msrp": 55.51,
+      "silv_ws": 44.82,
+      "silv_msrp": 60.57
+    },
+    "CAVIWIPES": {
+      "cat": "CAVIWIPES",
+      "section": "totalcare",
+      "std_ws": 7.52,
+      "std_msrp": 12.53,
+      "dia_ws": 5.4,
+      "dia_msrp": 6.74,
+      "plat_ws": 5.7,
+      "plat_msrp": 7.31,
+      "gold_ws": 6.02,
+      "gold_msrp": 7.92,
+      "silv_ws": 6.35,
+      "silv_msrp": 8.58
+    },
+    "CAVIWIPES 2.0": {
+      "cat": "CAVIWIPES 2.0",
+      "section": "totalcare",
+      "std_ws": 9.52,
+      "std_msrp": 15.86,
+      "dia_ws": 7.17,
+      "dia_msrp": 8.96,
+      "plat_ws": 7.58,
+      "plat_msrp": 9.71,
+      "gold_ws": 8.01,
+      "gold_msrp": 10.54,
+      "silv_ws": 8.44,
+      "silv_msrp": 11.41
+    },
+    "CAVIWIPES XL": {
+      "cat": "CAVIWIPES XL",
+      "section": "totalcare",
+      "std_ws": 33.25,
+      "std_msrp": 55.42,
+      "dia_ws": 23.83,
+      "dia_msrp": 29.79,
+      "plat_ws": 25.2,
+      "plat_msrp": 32.3,
+      "gold_ws": 26.63,
+      "gold_msrp": 35.03,
+      "silv_ws": 28.04,
+      "silv_msrp": 37.9
+    },
+    "CAVIWIPES HP": {
+      "cat": "CAVIWIPES HP",
+      "section": "totalcare",
+      "std_ws": 9.95,
+      "std_msrp": 16.58,
+      "dia_ws": 7.46,
+      "dia_msrp": 9.33,
+      "plat_ws": 8.07,
+      "plat_msrp": 10.35,
+      "gold_ws": 8.77,
+      "gold_msrp": 11.54,
+      "silv_ws": 9.29,
+      "silv_msrp": 12.56
+    },
+    "CAVIWIPES1": {
+      "cat": "CAVIWIPES1",
+      "section": "totalcare",
+      "std_ws": 9.76,
+      "std_msrp": 16.27,
+      "dia_ws": 6.88,
+      "dia_msrp": 8.6,
+      "plat_ws": 7.26,
+      "plat_msrp": 9.31,
+      "gold_ws": 7.68,
+      "gold_msrp": 10.11,
+      "silv_ws": 8.09,
+      "silv_msrp": 10.93
+    },
+    "CAVICIDE": {
+      "cat": "CAVICIDE",
+      "section": "totalcare",
+      "std_ws": 39.96,
+      "std_msrp": 66.6,
+      "dia_ws": 29.39,
+      "dia_msrp": 36.74,
+      "plat_ws": 31.08,
+      "plat_msrp": 39.84,
+      "gold_ws": 32.84,
+      "gold_msrp": 43.21,
+      "silv_ws": 34.61,
+      "silv_msrp": 46.77
+    },
+    "CAVICIDE HP": {
+      "cat": "CAVICIDE HP",
+      "section": "totalcare",
+      "std_ws": 28.9,
+      "std_msrp": 48.17,
+      "dia_ws": 20.73,
+      "dia_msrp": 25.91,
+      "plat_ws": 21.9,
+      "plat_msrp": 28.07,
+      "gold_ws": 23.13,
+      "gold_msrp": 30.44,
+      "silv_ws": 24.41,
+      "silv_msrp": 32.98
+    },
+    "CAVICIDE1": {
+      "cat": "CAVICIDE1",
+      "section": "totalcare",
+      "std_ws": 43.89,
+      "std_msrp": 73.16,
+      "dia_ws": 31.72,
+      "dia_msrp": 39.65,
+      "plat_ws": 33.53,
+      "plat_msrp": 42.98,
+      "gold_ws": 35.43,
+      "gold_msrp": 46.62,
+      "silv_ws": 37.34,
+      "silv_msrp": 50.45
+    },
+    "EMPOWER": {
+      "cat": "EMPOWER",
+      "section": "totalcare",
+      "std_ws": 32.66,
+      "std_msrp": 54.43,
+      "dia_ws": 23.4,
+      "dia_msrp": 29.25,
+      "plat_ws": 24.73,
+      "plat_msrp": 31.71,
+      "gold_ws": 26.14,
+      "gold_msrp": 34.39,
+      "silv_ws": 27.54,
+      "silv_msrp": 37.22
+    }
+  },
+  "prodToCat": {
+    "SIMPLISHADE": "SIMPLISHADE",
+    "HARMONIZE": "HARMONIZE",
+    "HERCULITE ULTRA": "HERCULITE ULTRA",
+    "HERCULITE ULTRA FLOW": "HERCULITE ULTRA FLOW",
+    "SONICFILL 3": "SONICFILL 3",
+    "POINT 4": "POINT 4",
+    "FLOW-IT ALC": "FLOW-IT ALC",
+    "PREMISE": "PREMISE",
+    "SIMILE": "SIMILE",
+    "OPTIBOND SOLO PLUS": "OPTIBOND SOLO PLUS",
+    "OPTIBOND UNIVERSAL": "OPTIBOND UNIVERSAL",
+    "OPTIBOND UNIVERSAL 360": "OPTIBOND 360",
+    "OPTIBOND EXTRA": "OPTIBOND EXTRA",
+    "OPTIBOND eXTRa": "OPTIBOND EXTRA",
+    "MAXCEM ELITE": "MAXCEM ELITE",
+    "MAXCEM ELITE CHROMA": "MAXCEM ELITE CHROMA",
+    "NX3": "NX3",
+    "TEMPBOND": "TEMPBOND",
+    "TEMPBOND CLEAR": "TEMPBOND",
+    "TEMPBOND NE": "TEMPBOND",
+    "CAVIWIPES": "CAVIWIPES",
+    "CAVIWIPES 2.0": "CAVIWIPES 2.0",
+    "CAVIWIPES XL": "CAVIWIPES XL",
+    "CAVIWIPES HP": "CAVIWIPES HP",
+    "CAVIWIPES1": "CAVIWIPES1",
+    "CAVICIDE": "CAVICIDE",
+    "CAVICIDE HP": "CAVICIDE HP",
+    "CAVICIDE1": "CAVICIDE1",
+    "EMPOWER": "EMPOWER"
+  },
+  "nationalPromos": [
+    {
+      "id": "np_simplishade_4plus1",
+      "label": "Buy 4, Get 1 FREE",
+      "products": [
+        "SIMPLISHADE",
+        "SONICFILL 3",
+        "HARMONIZE",
+        "HERCULITE ULTRA FLOW"
+      ],
+      "buyQty": 4,
+      "freeQty": 1,
+      "code": "NPWS26",
+      "mix_match": true,
+      "section": "restorative"
+    },
+    {
+      "id": "np_maxcem_4plus1",
+      "label": "Buy 4, Get 1 FREE",
+      "products": [
+        "MAXCEM ELITE",
+        "MAXCEM ELITE CHROMA"
+      ],
+      "buyQty": 4,
+      "freeQty": 1,
+      "code": "NPWS26",
+      "mix_match": true,
+      "section": "restorative"
+    },
+    {
+      "id": "np_optibond_4plus1",
+      "label": "Buy 4, Get 1 FREE",
+      "products": [
+        "OPTIBOND 360",
+        "OPTIBOND EXTRA"
+      ],
+      "buyQty": 4,
+      "freeQty": 1,
+      "code": "NPWS26",
+      "mix_match": true,
+      "section": "restorative"
+    }
+  ],
+  "backpocketPromos": [
+    {
+      "id": "bp_restorative_2plus1",
+      "label": "2+1 on Restoratives/TotalCare",
+      "description": "Create your own promo \u2014 any combination of kits & refills. Max 2+1.",
+      "products": "ALL_RESTORATIVES_TOTALCARE",
+      "buyQty": 2,
+      "freeQty": 1,
+      "code": "KKE26",
+      "section": "both",
+      "qualify": {
+        "q1": 0.25,
+        "q2": 0.5,
+        "q3": 0.75,
+        "q4": 1.0
+      }
+    },
+    {
+      "id": "bp_caviwipes_10plus2",
+      "label": "10+2 on CaviWipes",
+      "description": "CaviWipes, CaviWipes 2.0 or CaviWipes HP \u2014 mix & match.",
+      "products": [
+        "CAVIWIPES",
+        "CAVIWIPES 2.0",
+        "CAVIWIPES HP"
+      ],
+      "buyQty": 10,
+      "freeQty": 2,
+      "code": "KKE26",
+      "section": "totalcare",
+      "qualify": {
+        "q1": 0.25,
+        "q2": 0.5,
+        "q3": 0.75,
+        "q4": 1.0
+      }
+    },
+    {
+      "id": "bp_totalcare_3plus1",
+      "label": "3+1 on TotalCare (non-wipes)",
+      "description": "All TotalCare excluding wipes \u2014 mix & match.",
+      "products": "ALL_TOTALCARE_NONWIPES",
+      "buyQty": 3,
+      "freeQty": 1,
+      "code": "KKE26",
+      "section": "totalcare",
+      "qualify": {
+        "q1": 0.25,
+        "q2": 0.5,
+        "q3": 0.75,
+        "q4": 1.0
+      }
+    }
+  ],
+  "upsellRules": [
+    {
+      "if_buying": [
+        "HARMONIZE",
+        "HERCULITE ULTRA",
+        "SONICFILL 3",
+        "POINT 4"
+      ],
+      "suggest": "SIMPLISHADE",
+      "reason": "Already buying composites \u2014 SimpliShade is a natural add with 4+1 promo",
+      "promo_id": "np_simplishade_4plus1"
+    },
+    {
+      "if_buying": [
+        "SIMPLISHADE",
+        "HARMONIZE",
+        "HERCULITE ULTRA"
+      ],
+      "suggest": "OPTIBOND SOLO PLUS",
+      "reason": "Buying composites but no bonding agent \u2014 OptiBond Solo Plus completes the workflow",
+      "promo_id": null
+    },
+    {
+      "if_buying": [
+        "OPTIBOND SOLO PLUS",
+        "OPTIBOND UNIVERSAL",
+        "OPTIBOND EXTRA"
+      ],
+      "suggest": "MAXCEM ELITE",
+      "reason": "Buying bonding but no cement \u2014 MaxCem Elite pairs naturally. Buy 4 get 1 free.",
+      "promo_id": "np_maxcem_4plus1"
+    },
+    {
+      "if_buying": [
+        "MAXCEM ELITE"
+      ],
+      "suggest": "MAXCEM ELITE CHROMA",
+      "reason": "Buys MaxCem Elite \u2014 Chroma is the color-change upgrade, same 4+1 promo applies",
+      "promo_id": "np_maxcem_4plus1"
+    },
+    {
+      "if_buying": [
+        "OPTIBOND UNIVERSAL"
+      ],
+      "suggest": "OPTIBOND 360",
+      "reason": "Uses OptiBond Universal \u2014 360 is the self-etch upgrade with same 4+1 promo",
+      "promo_id": "np_optibond_4plus1"
+    },
+    {
+      "if_buying": [
+        "CAVIWIPES",
+        "CAVIWIPES 2.0",
+        "CAVIWIPES XL"
+      ],
+      "suggest": "CAVICIDE",
+      "reason": "Buying CaviWipes \u2014 CaviCide surface disinfectant completes infection control",
+      "promo_id": null
+    },
+    {
+      "if_buying": [
+        "HERCULITE ULTRA FLOW",
+        "FLOW-IT ALC"
+      ],
+      "suggest": "SONICFILL 3",
+      "reason": "Buying flowables \u2014 SonicFill 3 is the bulk-fill upgrade. Buy 4 get 1 free.",
+      "promo_id": "np_simplishade_4plus1"
+    }
+  ]
+}
