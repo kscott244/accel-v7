@@ -99,7 +99,9 @@ function applyOverlays(grps: any[]): any[] {
     }));
   }
 
-  // 2. CONTACT OVERRIDES — inject into BADGER at runtime so AcctDetail can read them
+  // 2. CONTACT OVERRIDES — intentionally mutates BADGER (L1 static data) with L3 overlay data.
+  //    BADGER is mutable by design (see src/lib/data.ts). Guards prevent double-application.
+  //    This is the only deliberate L3→L1 write in the codebase.
   const contacts = OV.contacts || {};
   Object.entries(contacts).forEach(([id, co]: any) => {
     if (!BADGER[id]) BADGER[id] = {};
@@ -426,18 +428,9 @@ function AppInner() {
     Object.values(OVERLAYS_REF.groupMoves||{}).forEach((m:any) => {
       if (m.childId && m.targetGroupId) overrides.push(m);
     });
-    // From localStorage (session fallback for any moves not yet synced)
-    try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key?.startsWith("group-override:")) {
-          const val = JSON.parse(localStorage.getItem(key) || "{}");
-          if (val.childId && val.targetGroupId && !overrides.find(o => o.childId === val.childId)) {
-            overrides.push(val);
-          }
-        }
-      }
-    } catch {}
+    // Note: localStorage "group-override:" keys are no longer read here.
+    // groupMoves is now persisted in overlays (durable, cross-device) via patchOverlay.
+    // LS keys written before the patchOverlay migration are intentionally ignored.
     if (overrides.length === 0) return grps;
 
     // Build lookup: childId → target group id
