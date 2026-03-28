@@ -7,6 +7,34 @@ export const BENCH_AVG       = 747;   // avg Q1 spend per solo private practice
 export const BENCH_TOP       = 1498;  // top-quartile Q1 spend per office
 export type  BenchMode       = "avg" | "top";
 
+// ── Strategic account inclusion thresholds ────────────────────────
+// Centralized — do not scatter these in UI components.
+// A group appears in War Room if ANY rule matches (unless forceExclude).
+export const WR_THRESHOLDS = {
+  minLocs:        5,      // 5+ locations = multi-site worth tracking
+  minCyQ1:        10000,  // $10K+ CY Q1 = already meaningful revenue
+  minBenchGapAnn: 25000,  // $25K+ annual benchmark gap = real opportunity
+} as const;
+
+export type IncludeReason = "DSO" | "Multi-site" | "Large gap" | "Strategic" | "Pinned";
+
+// Returns null if excluded, otherwise returns the primary reason for inclusion
+export function shouldInclude(
+  group: any,
+  card: DsoCard,
+  intel: any,
+): IncludeReason | null {
+  const gIntel = intel?.[group.id] || {};
+  if (gIntel.forceExclude) return null;
+  if (gIntel.forceInclude || gIntel.pinned) return "Pinned";
+  const c2 = (group.class2 || "").toUpperCase();
+  if (c2 === "DSO" || c2 === "EMERGING DSO" || c2.includes("DSO")) return "DSO";
+  if (card.locs >= WR_THRESHOLDS.minLocs && card.cy1 >= WR_THRESHOLDS.minCyQ1) return "Multi-site";
+  if (card.benchGapAnn >= WR_THRESHOLDS.minBenchGapAnn) return "Large gap";
+  if (card.locs >= WR_THRESHOLDS.minLocs) return "Multi-site";
+  return null;
+}
+
 // ── Product families Ken sells ────────────────────────────────────
 export const DSO_FAMILIES = ["COMPOSITE","BOND","CEMENT","INFECTION CONTROL","TEMP CEMENT"] as const;
 export type  ProductFamily = typeof DSO_FAMILIES[number];
@@ -82,18 +110,19 @@ export function opportunityStatement(
 
 // ── DSO card data shape ───────────────────────────────────────────
 export interface DsoCard {
-  group:       any;
-  locs:        number;
-  cy1:         number;
-  py1:         number;
-  perOffice:   number;
-  benchQ:      number;
-  benchGapQ:   number;
-  benchGapAnn: number;
-  momentum:    number;   // cy1 - py1
-  coverage:    { present: ProductFamily[]; missing: ProductFamily[] };
-  confidence:  Confidence;
-  statement:   string;
+  group:         any;
+  locs:          number;
+  cy1:           number;
+  py1:           number;
+  perOffice:     number;
+  benchQ:        number;
+  benchGapQ:     number;
+  benchGapAnn:   number;
+  momentum:      number;   // cy1 - py1
+  coverage:      { present: ProductFamily[]; missing: ProductFamily[] };
+  confidence:    Confidence;
+  statement:     string;
+  includeReason: IncludeReason;
 }
 
 export function buildDsoCard(group: any, benchMode: BenchMode, qk = "1"): DsoCard {
@@ -153,9 +182,12 @@ export interface DsoIntel {
   lastContact?:        string;
   status?:             StatusOpt;
   strategy?:           StrategyOpt;
+  accelTier?:          string;
   pinned?:             boolean;
+  forceInclude?:       boolean;  // pull into War Room regardless of class2/size
+  forceExclude?:       boolean;  // remove from War Room regardless of rules
   notes?:              string;
-  teamOppQ?:           number | null;  // manual estimated team opportunity
+  teamOppQ?:           number | null;
 }
 
 export function getIntel(overlays: any, groupId: string): DsoIntel {
