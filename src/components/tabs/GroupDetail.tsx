@@ -6,6 +6,7 @@ import { $$, $f, pc } from "@/lib/format";
 import { getTierLabel } from "@/lib/tier";
 import { BADGER, OVERLAYS_REF } from "@/lib/data";
 import { Back, Chev, Pill, Stat, Bar, AccountId, GroupBadge, fixGroupName } from "@/components/primitives";
+import { TaskWidget } from "@/components/tabs/TasksTab";
 
 let SCHEIN_REPS: {fsc:any[], es:any[]} = {fsc:[], es:[]};
 try {
@@ -34,7 +35,7 @@ const STATUS_PILL: Record<string,{label:string,color:string}> = {
   unknown: {label:"Unknown", color:"#7878a0"},
 };
 
-function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesStore=null}) {
+function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesStore=null,onAddTask=null}) {
   const [q,setQ]=useState("1");
   const qk=q;
 
@@ -1323,6 +1324,9 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
 
         {groupContacts.length===0&&(!resResult||resDismissed||(resResult.contacts||[]).length===0)&&<div style={{fontSize:11,color:T.t4,paddingTop:6}}>No contacts yet. Hit Research to find contacts, or add manually.</div>}
       </div>
+
+      {/* ── TASKS ── */}
+      {onAddTask&&<TaskWidget group={group} tasks={overlays?.tasks||[]} onAddTask={onAddTask}/>}
 
       {/* ── GROUP NOTES ── */}
       <div className="anim" style={{animationDelay:"32ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:10}}>
