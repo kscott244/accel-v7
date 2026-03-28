@@ -1199,7 +1199,7 @@ function SaleCalculator({acctTier,tierRate,isAccel,acctType,onAdd}) {
     {calc?<button onClick={()=>onAdd(calc.totalCredited,{desc:`${calc.desc} (${calc.units.toFixed(1)} units)`,ws:calc.totalWS,tierRate,sku:calc.sku})} style={{width:"100%",height:42,borderRadius:10,border:"none",background:`linear-gradient(90deg,${T.blue},${T.cyan})`,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
       Apply +{$f(calc.totalCredited)} → Updates Q1
     </button>:<div style={{padding:8,textAlign:"center",fontSize:11,color:T.t4}}>Search a product, enter doctor spend → see credited amount</div>}
-      {showReorder&&<ReorderInvoice acct={acct} activeQ={q||"1"} onClose={()=>setShowReorder(false)}/>}
+      {showReorder&&<ReorderInvoice acct={acct} activeQ={q||"1"} salesStore={salesStore} onClose={()=>setShowReorder(false)}/>}
   </div>;
 }
 
