@@ -968,6 +968,7 @@ const [showCopilot, setShowCopilot] = useState(false);
           {!view && tab==="admin" && <AdminTab groups={groups||[]} scored={scored} overlays={overlays} patchOverlay={patchOverlay} salesStore={salesStore}/>}
           {view?.type==="group" && <GroupDetail group={view.data} groups={groups||[]} goMain={()=>setView(null)} overlays={overlays} patchOverlay={patchOverlay} goAcct={(a:any)=>setView({type:"acct",data:{...a,gName:fixGroupName(view.data),gId:view.data.id,gTier:view.data.tier},from:view.data})} salesStore={salesStore} onAddTask={(data:any)=>addTask(data,null,view.data)}/>}
           {view?.type==="acct" && <AcctDetail acct={view.data} goBack={()=>view?.from?setView({type:"group",data:view.from}):setView(null)} adjs={adjs} setAdjs={setAdjs} groups={groups||[]} goGroup={goGroupFn} overlays={overlays} patchOverlay={patchOverlay} reapplyGroupOverrides={reapplyGroupOverrides} goAcct={(s:any)=>setView({type:"acct",data:{...s,gId:view.data.gId,gName:view.data.gName},from:view?.from})} salesStore={salesStore} onAddTask={(data:any)=>addTask(data,view.data,null)}/>}
+{showCopilot&&<CopilotPanel scored={scored||[]} goAcct={goSmartFn} onClose={()=>setShowCopilot(false)}/>}
         </>;
       })()}
       </TabErrorBoundary>
@@ -987,8 +988,6 @@ const [showCopilot, setShowCopilot] = useState(false);
         </div>
       </div>}
 
-
-{showCopilot&&<CopilotPanel scored={scored||[]} goAcct={goSmartFn} onClose={()=>setShowCopilot(false)}/>}
       {/* NAV BAR */}
       <nav style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:960,zIndex:100,borderTop:`1px solid ${T.b1}`,background:"rgba(10,10,15,.92)",backdropFilter:"blur(32px)"}}>
         <div style={{display:"flex",height:56,alignItems:"center",justifyContent:"space-around",padding:"0 4px"}}>
@@ -1011,7 +1010,6 @@ const [showCopilot, setShowCopilot] = useState(false);
     </div>
   );
 }
-
 
 
 
