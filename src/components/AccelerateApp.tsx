@@ -574,11 +574,7 @@ function AppInner() {
 
       try {
         const { PRELOADED } = require("@/data/preloaded-data");
-        // Apply manual-parents remap to preloaded data so structural groups
-        // (like Downtown DDS) show correctly even before a CSV upload.
-        const { applyManualParents } = require("@/lib/csv");
-        const remappedGroups = applyManualParents ? applyManualParents(PRELOADED.groups) : PRELOADED.groups;
-        const preloadedGroups = applyGroupOverrides(applyOverlays(rollupGroupTotals(hydrateDealer(remappedGroups))));
+        const preloadedGroups = applyGroupOverrides(applyOverlays(rollupGroupTotals(hydrateDealer(PRELOADED.groups))));
         setGroups(preloadedGroups);
         setDataSource(`Pre-loaded ${PRELOADED.generated} · upload CSV to refresh`);
         // Auto-detect activeQ from data if not already set
