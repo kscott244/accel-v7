@@ -10,6 +10,7 @@ import { Back, Chev, Pill, Stat, Bar, AccountId, GroupBadge, fixGroupName } from
 import { scorePriority } from "@/lib/priority";
 import { branchSpread } from "@/lib/stemm";
 import ReorderInvoice from "@/components/tabs/ReorderInvoice";
+import { TaskWidget } from "@/components/tabs/TasksTab";
 
 // ─── MULTI-DEALER COMBINED VIEW ──────────────────────────────────
 function MultiDealerView({acct}) {
@@ -76,7 +77,7 @@ function MultiDealerView({acct}) {
   </div>;
 }
 
-function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup,overlays,patchOverlay=null,reapplyGroupOverrides=null,goAcct=null,salesStore=null}) {
+function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup,overlays,patchOverlay=null,reapplyGroupOverrides=null,goAcct=null,salesStore=null,onAddTask=null}) {
   const [q,setQ]=useState("1");
   const [showForm,setShowForm]=useState(false);
   const [toast,setToast]=useState(null);
@@ -760,6 +761,9 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
         })}
         <div style={{display:"flex",gap:12,marginTop:6,fontSize:9,color:T.t4}}><span>▬ PY</span><span style={{color:T.blue}}>▬ CY</span></div>
       </div>
+
+      {/* ── TASKS ── */}
+      {onAddTask&&<TaskWidget acct={acct} tasks={overlays?.tasks||[]} onAddTask={onAddTask}/>}
 
       {/* ── MANUAL SALE ── */}
       <div className="anim" style={{animationDelay:"32ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:10}}>
