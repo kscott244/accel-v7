@@ -1,36 +1,51 @@
 # CURRENT PHASE -- accel-v7
 
-## Active: Phase A17 -- Group Affiliation Badge (AcctDetail) COMPLETE
+## Active: Phase A18 -- New Adds Feature COMPLETE
 
 ### What Was Done
 
-**Goal**: Surface a group affiliation badge on account cards so Ken can see at a glance which organization an account belongs to, with one-tap navigation to the parent group.
+**Goal**: Implement the New Adds feature using docs/new_adds.json — 67 accounts with new Q1 2026 product purchases presented in a RED/GREEN KPI view.
 
-**Scope decision**: The badge is only meaningful as a navigational aid — telling you WHERE an account belongs and letting you jump there. It's redundant inside GroupDetail (you're already in the group) and inside product drill-down cards (same context). The highest-value placement is AcctDetail, where Ken lands after tapping an account card and benefits most from the "this is part of X org" signal.
+### Schema (docs/new_adds.json)
+Array of 67 objects. Fields: `mdm`, `name`, `products[]`, `addr`, `city`, `state`, `zip`, `email`, `phone`, `color` (RED|GREEN), `first_date`, `last_date`.
+- 66 RED, 1 GREEN
+- 64 Master-CM MDMs, 2 BNK, 1 HEN
+- 10 missing email, 1 missing phone — handled gracefully
+
+### RED/GREEN interpretation
+The `color` field is **pre-assigned in the source data** — Ken's own judgment from the export. RED = needs follow-up (first-time buyer who hasn't reordered or stalled). GREEN = on track (confirmed repeat buyer). We display it as-is; we do not recompute it.
+
+### What already existed
+`NewAddsSection.tsx` was already built (150 lines) and wired into TodayTab as a collapsible toggle. The component was functional but had two gaps:
+
+1. **No KPI summary** — just a text count, no visual executive summary
+2. **Wrong matching logic** — the `childToGroup` lookup used child IDs only. But 64 of 67 accounts have Master-CM MDMs, which are PARENT/group IDs, not child IDs. Nearly all accounts silently had no match → no navigation.
+3. **Hardcoded counts** in TodayTab banner subtitle ("67 accounts · 66 need follow-up")
 
 ### Changes
 
-**`src/components/tabs/AcctDetail.tsx`** (commit `dfa5ea46b5`):
-- Added `GroupBadge` to import from `@/components/primitives`
-- Rendered `GroupBadge` in the account header, below the health status pill
-- Only renders when `parentGroup.locs >= 3` (real multi-location org, not solo practice)
-- Badge taps call `goGroup()` to navigate to parent group detail view
-- Uses `fixGroupName(parentGroup)` for clean name display (strips tier/CM suffix noise)
-- Count source: `parentGroup.locs` (the rollup already on the group object, set during `applyOverlays`) with fallback to `parentGroup.children?.length`
-- Zero changes to grouping logic, merge behavior, or data persistence
+**`src/components/tabs/NewAddsSection.tsx`** (commit `4d8e95ea5b`):
+- Added `KPISummary` component: 2-column RED/GREEN KPI pills with large counts + conversion progress bar
+- Added `parentToGroup` lookup keyed by `g.id` to match Master-CM MDMs correctly
+- Navigation: goAcct for child matches (BNK/HEN), goGroup for parent matches (Master-CM) — correct for 64/67 accounts
+- Chev only renders when card is navigable; cursor changes accordingly
+- All fields handled defensively (missing email/phone/addr skip gracefully)
+- 248 lines total (up from 150)
 
-### Count source assumption
-`parentGroup.locs` is the canonical location count set during data processing — it reflects the actual number of children after overlays are applied. No new grouping or counting logic introduced.
+**`src/components/tabs/TodayTab.tsx`** (commit `9ea379f7bb`):
+- Imported `new_adds.json` directly and computed `NA_TOTAL`, `NA_RED`, `NA_GREEN` as module-level constants
+- Banner subtitle now reads from live data instead of hardcoded strings
 
 ### Build
-Brace/paren balance delta = 0. HTTP 200 on live site.
+Brace/paren balance delta = 0 on both files. Deploy state: success. HTTP 200.
 
 ### Deploy
-Commit `dfa5ea46b54717a0389f7732e334f5b0bbcdd4db` — READY
+Commit `9ea379f7bb63f0b85d51e82e191d616396550644` — READY
 
 ---
 
 ## Previously Completed
+- A17 -- Group Affiliation Badge in AcctDetail (dfa5ea46b5)
 - A16.5 -- Full Workflow Smoke Test Harness (eb0e71a308 / 6e8cfaf2da)
 - A16.4 -- Merge self-test harness, applyGroupCreates extraction (4bcdb28dfe)
 - A16.3 -- Merge direction + source card elimination (0b348f4fc7 / 60c95ff27f)
