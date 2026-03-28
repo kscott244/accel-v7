@@ -8,6 +8,9 @@ import { $$ } from "@/lib/format";
 // Source of truth: overlays.groups (applied) + overlays.skippedCpidIds (dismissed)
 import CPID_MERGES from "@/data/cpid-pending-merges.json";
 import CPID_REVIEW from "@/data/cpid-review-queue.json";
+// Anchor-orphan suggestions — static snapshot, never written to
+import DATA_DISCOVERIES from "@/data/data_discoveries.json";
+const ANCHOR_ORPHANS: any[] = (DATA_DISCOVERIES as any).anchor_orphans || [];
 
 import { BADGER, OVERLAYS_REF } from "@/lib/data";
 import { AccountId } from "@/components/primitives";
@@ -62,6 +65,15 @@ function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:a
   });
 
   // Contact form
+  // Orphan suggestions state
+  const [orphanDentalOnly, setOrphanDentalOnly] = useState(true);
+  const [skippedOrphanKeys, setSkippedOrphanKeys] = useState<Record<string,boolean>>(() => {
+    try {
+      const fromOv: Record<string,boolean> = {};
+      (overlays?.skippedOrphanIds || []).forEach((k:string) => { fromOv[k] = true; });
+      return fromOv;
+    } catch { return {}; }
+  });
   const [contactSearch, setContactSearch] = useState("");
   const [contactAccount, setContactAccount] = useState<any>(null);
   const [contactName, setContactName] = useState("");
@@ -141,6 +153,7 @@ function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:a
       {sectionBtn("names","✏️ Names")}
       {sectionBtn("contacts","📇 Contacts")}
       {sectionBtn("dupes","🔗 Dupes")}
+      {sectionBtn("orphans","🏥 Orphans")}
       {sectionBtn("data","💾 Data")}
       {sectionBtn("history","📜 History")}
     </div>
@@ -624,6 +637,97 @@ function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:a
         </div>;
       })()}
     </div>}
+
+    {/* ── ORPHAN SUGGESTIONS SECTION ── */}
+    {section==="orphans"&&(()=>{
+      const DENTAL_KW = ["dental","dds","dmd","orthodont","endodont","oral","periodon","prostho","smile","teeth","tooth","implant"];
+      const isDental = (name:string) => { const nl=(name||"").toLowerCase(); return DENTAL_KW.some(k=>nl.includes(k)); };
+      const orphanKey = (s:any) => `${s.anchor_id}__${s.orphan_child_id}`;
+      const applied = Object.keys(overlays?.groups||{});
+
+      const filtered = ANCHOR_ORPHANS.filter(s => {
+        if (s.anchor_id === "Master-Unmatched") return false;
+        if (skippedOrphanKeys[orphanKey(s)]) return false;
+        if (applied.includes(s.anchor_id) && (overlays?.groups?.[s.anchor_id]?.childIds||[]).includes(s.orphan_child_id)) return false;
+        if (orphanDentalOnly && !isDental(s.anchor_name) && !isDental(s.orphan_child_name)) return false;
+        return true;
+      });
+
+      const skipOrphan = (s:any) => {
+        const key = orphanKey(s);
+        setSkippedOrphanKeys(prev => {
+          const next = {...prev,[key]:true};
+          const newIds = Object.keys(next).filter(k=>next[k]);
+          saveOverlays({...OVERLAYS_REF, skippedOrphanIds: newIds});
+          return next;
+        });
+      };
+
+      const approveOrphan = (s:any) => {
+        // Add orphan_child_id into anchor's overlay group (create if not exists)
+        const existing = (overlays?.groups||{})[s.anchor_id];
+        const baseChildIds: string[] = existing?.childIds || [];
+        if (baseChildIds.includes(s.orphan_child_id)) { showToast("Already in group"); return; }
+        const grp = {
+          id: s.anchor_id,
+          name: s.anchor_name.replace(/:\s*Master-CM\d+$/i,"").trim(),
+          class2: s.anchor_locs >= 3 ? "DSO" : "Emerging DSO",
+          tier: "Standard",
+          childIds: [...baseChildIds, s.orphan_child_id],
+          source: "orphan-approve",
+          createdAt: existing?.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        const next = {...OVERLAYS_REF, groups:{...(OVERLAYS_REF.groups||{}),[s.anchor_id]:grp}};
+        saveOverlays(next).then((ok:boolean) => {
+          if (ok) showToast(`✅ Added to ${grp.name}`);
+          else showToast("❌ Save failed", false);
+        });
+      };
+
+      const doneCount = ANCHOR_ORPHANS.filter(s => s.anchor_id!=="Master-Unmatched" && (skippedOrphanKeys[orphanKey(s)] || (applied.includes(s.anchor_id) && (overlays?.groups?.[s.anchor_id]?.childIds||[]).includes(s.orphan_child_id)))).length;
+
+      return <div>
+        <div style={{fontSize:14,fontWeight:700,color:T.t1,marginBottom:4}}>Orphan Suggestions</div>
+        <div style={{fontSize:11,color:T.t3,marginBottom:10}}>Accounts at anchor-group addresses that aren't linked yet. Approve to add to the group, skip to dismiss.</div>
+
+        {/* Filter + stats bar */}
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+          <button onClick={()=>setOrphanDentalOnly(v=>!v)} style={{
+            padding:"5px 12px",borderRadius:8,border:`1px solid ${orphanDentalOnly?"rgba(79,142,247,.4)":T.b1}`,
+            background:orphanDentalOnly?"rgba(79,142,247,.12)":"transparent",
+            color:orphanDentalOnly?T.blue:T.t3,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit"
+          }}>🦷 Dental only</button>
+          <span style={{fontSize:10,color:T.t4,marginLeft:"auto"}}>{filtered.length} pending · {doneCount} resolved</span>
+        </div>
+
+        {filtered.length===0&&<div style={{fontSize:12,color:T.t4,textAlign:"center",padding:"30px 0"}}>
+          {doneCount>0?"All suggestions reviewed ✓":"No suggestions match current filter."}
+        </div>}
+
+        {filtered.map((s:any,i:number)=>{
+          const anchorClean = s.anchor_name.replace(/:\s*Master-CM\d+$/i,"").trim();
+          const inGroup = applied.includes(s.anchor_id);
+          return <div key={orphanKey(s)} className="anim" style={{animationDelay:`${i*15}ms`,background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:12,marginBottom:8}}>
+            {/* Orphan → Anchor */}
+            <div style={{marginBottom:6}}>
+              <div style={{fontSize:11,fontWeight:700,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.orphan_child_name}</div>
+              <div style={{fontSize:9,color:T.t4,marginTop:1}}>📍 {s.addr}{s.city?", "+s.city:""}</div>
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}>
+              <span style={{fontSize:9,color:T.t4}}>→ add to</span>
+              <span style={{fontSize:10,fontWeight:600,color:T.purple,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{anchorClean}</span>
+              <span style={{flexShrink:0,fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:5,background:"rgba(167,139,250,.1)",color:T.purple,border:"1px solid rgba(167,139,250,.2)"}}>{s.anchor_locs} locs</span>
+              {inGroup&&<span style={{flexShrink:0,fontSize:9,color:T.green}}>✓ active</span>}
+            </div>
+            <div style={{display:"flex",gap:6}}>
+              <button onClick={()=>approveOrphan(s)} disabled={saving} style={{flex:1,padding:"7px 0",borderRadius:8,border:"none",background:T.blue,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Approve</button>
+              <button onClick={()=>skipOrphan(s)} style={{padding:"7px 14px",borderRadius:8,border:`1px solid ${T.b1}`,background:"transparent",color:T.t3,fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>Skip</button>
+            </div>
+          </div>;
+        })}
+      </div>;
+    })()}
 
     {section==="data"&&<div>
       <div style={{fontSize:14,fontWeight:700,color:T.t1,marginBottom:4}}>Import Manager</div>
