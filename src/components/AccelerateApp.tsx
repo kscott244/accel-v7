@@ -211,6 +211,13 @@ function AppInner() {
     } catch {}
     return [];
   });
+  // Hydrate tasks from durable overlays once overlays load (cross-device sync)
+  // Only if localStorage is empty — overlays is the authoritative source
+  const tasksHydratedRef = useRef(false);
+  const saveTasks = (next: any[]) => {
+    try { localStorage.setItem("accel_tasks_v1", JSON.stringify(next)); } catch {}
+    if (patchOverlay) patchOverlay([{ op: "set", path: "tasks", value: next }]);
+  };
   const addTask = (data: any, linkedAcct?: any, linkedGroup?: any) => {
     const newTask = {
       id: Date.now(),
@@ -222,25 +229,13 @@ function AppInner() {
       completed: false,
       createdAt: new Date().toISOString(),
     };
-    setTasks(prev => {
-      const next = [newTask, ...prev];
-      try { localStorage.setItem("accel_tasks_v1", JSON.stringify(next)); } catch {}
-      return next;
-    });
+    setTasks(prev => { const next = [newTask, ...prev]; saveTasks(next); return next; });
   };
   const completeTask = (id: number) => {
-    setTasks(prev => {
-      const next = prev.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
-      try { localStorage.setItem("accel_tasks_v1", JSON.stringify(next)); } catch {}
-      return next;
-    });
+    setTasks(prev => { const next = prev.map(t => t.id === id ? { ...t, completed: !t.completed } : t); saveTasks(next); return next; });
   };
   const deleteTask = (id: number) => {
-    setTasks(prev => {
-      const next = prev.filter(t => t.id !== id);
-      try { localStorage.setItem("accel_tasks_v1", JSON.stringify(next)); } catch {}
-      return next;
-    });
+    setTasks(prev => { const next = prev.filter(t => t.id !== id); saveTasks(next); return next; });
   };
   const [view, setView] = useState(null);
   const [showMore, setShowMore] = useState(false);
@@ -967,10 +962,10 @@ function AppInner() {
           {!view && tab==="est" && <EstTab pct={estPct} setPct={setEstPct} q1CY={q1CY} groups={groups||[]} goAcct={goSmartFn}/>}
           {!view && tab==="dealers" && <DealersTab scored={scored} groups={groups||[]} goAcct={goSmartFn} goGroup={goGroupFn} activeQ={activeQ||"1"} overlays={overlays} patchOverlay={patchOverlay}/>}
           {!view && tab==="outreach" && <OutreachTab scored={scored}/>}
-          {!view && tab==="tasks" && <TasksTab tasks={tasks} onAddTask={(data)=>addTask(data)} onCompleteTask={completeTask} onDeleteTask={deleteTask}/>}
+          {!view && tab==="tasks" && <TasksTab tasks={tasks} onAddTask={(data)=>addTask(data)} onCompleteTask={completeTask} onDeleteTask={deleteTask} goAcct={goSmartFn}/>}
           {!view && tab==="admin" && <AdminTab groups={groups||[]} scored={scored} overlays={overlays} patchOverlay={patchOverlay} salesStore={salesStore}/>}
-          {view?.type==="group" && <GroupDetail group={view.data} groups={groups||[]} goMain={()=>setView(null)} overlays={overlays} patchOverlay={patchOverlay} goAcct={(a:any)=>setView({type:"acct",data:{...a,gName:fixGroupName(view.data),gId:view.data.id,gTier:view.data.tier},from:view.data})} salesStore={salesStore}/>}
-          {view?.type==="acct" && <AcctDetail acct={view.data} goBack={()=>view?.from?setView({type:"group",data:view.from}):setView(null)} adjs={adjs} setAdjs={setAdjs} groups={groups||[]} goGroup={goGroupFn} overlays={overlays} patchOverlay={patchOverlay} reapplyGroupOverrides={reapplyGroupOverrides} goAcct={(s:any)=>setView({type:"acct",data:{...s,gId:view.data.gId,gName:view.data.gName},from:view?.from})} salesStore={salesStore}/>}
+          {view?.type==="group" && <GroupDetail group={view.data} groups={groups||[]} goMain={()=>setView(null)} overlays={overlays} patchOverlay={patchOverlay} goAcct={(a:any)=>setView({type:"acct",data:{...a,gName:fixGroupName(view.data),gId:view.data.id,gTier:view.data.tier},from:view.data})} salesStore={salesStore} onAddTask={(data:any)=>addTask(data,null,view.data)}/>}
+          {view?.type==="acct" && <AcctDetail acct={view.data} goBack={()=>view?.from?setView({type:"group",data:view.from}):setView(null)} adjs={adjs} setAdjs={setAdjs} groups={groups||[]} goGroup={goGroupFn} overlays={overlays} patchOverlay={patchOverlay} reapplyGroupOverrides={reapplyGroupOverrides} goAcct={(s:any)=>setView({type:"acct",data:{...s,gId:view.data.gId,gName:view.data.gName},from:view?.from})} salesStore={salesStore} onAddTask={(data:any)=>addTask(data,view.data,null)}/>}
         </>;
       })()}
       </TabErrorBoundary>
