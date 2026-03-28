@@ -270,23 +270,29 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
              totalTargets: clustered.length, modeLabel, isEndgame, isSprint, allCandidates: clustered };
   }, [scored, odDone]);
 
-  // ── Today Focus: top 5 from overdrive (visits first, then calls) ──
+  // ── Today Focus: top 5 PENDING accounts (visits first, then calls, then broader pool)
+  // Accounts cleared via Win/Loss/½ are removed immediately and replaced from the queue.
   const todayFocus = useMemo(() => {
     if (!overdrive) return [];
     const seen = new Set<string>();
     const list: any[] = [];
-    for (const a of [...overdrive.visitList, ...overdrive.callList]) {
-      if (!seen.has(a.id) && list.length < 5) { seen.add(a.id); list.push(a); }
+    // Priority order: visits → calls → remaining candidates
+    const pool = [...overdrive.visitList, ...overdrive.callList,
+                  ...(overdrive.allCandidates||[])];
+    for (const a of pool) {
+      if (!seen.has(a.id) && !odDone[a.id] && list.length < 5) {
+        seen.add(a.id); list.push(a);
+      }
     }
     return list;
-  }, [overdrive]);
+  }, [overdrive, odDone]);
 
   // ── Recovery: next accounts beyond Today Focus, sorted by priority score ──
   const recovery = useMemo(() => {
     if (!overdrive) return [];
     const focusIds = new Set(todayFocus.map((a:any) => a.id));
     return overdrive.allCandidates
-      .filter((a:any) => !focusIds.has(a.id))
+      .filter((a:any) => !focusIds.has(a.id) && !odDone[a.id])
       .map((a:any) => {
         const p = scorePriority(a, activeQ);
         return {...a, _priorityScore:p.priorityScore, _priorityBucket:p.priorityBucket,
@@ -294,7 +300,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
       })
       .sort((a:any,b:any) => b._priorityScore - a._priorityScore)
       .slice(0, 8);
-  }, [overdrive, todayFocus, activeQ]);
+  }, [overdrive, todayFocus, activeQ, odDone]);
 
   // ── Protect: strong accounts worth defending (always uses activeQ) ──
   const protect = useMemo(() => {
