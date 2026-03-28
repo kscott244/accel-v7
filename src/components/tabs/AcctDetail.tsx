@@ -478,7 +478,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
       })()}
 
       {/* ── WHO MATTERS ── */}
-      {(badger||(savedContacts&&(savedContacts.contactName||savedContacts.contacts?.length>0)))&&(()=>{
+      {(badger||officeFeel||(savedContacts&&(savedContacts.contactName||savedContacts.contacts?.length>0)))&&(()=>{
         const allContacts:any[] = savedContacts?.contacts?.length>0
           ? savedContacts.contacts
           : savedContacts?.contactName
