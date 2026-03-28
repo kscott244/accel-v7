@@ -19,6 +19,41 @@
       "source": "manual-merge",
       "createdAt": "2026-03-27T05:36:10Z",
       "updatedAt": "2026-03-27T05:36:10Z"
+    },
+    "Master-DT-DOWNTOWN-DDS": {
+      "id": "Master-DT-DOWNTOWN-DDS",
+      "name": "Downtown DDS",
+      "class2": "DSO",
+      "tier": "Standard",
+      "childIds": [
+        "Master-CM9835082",
+        "Master-CM633822",
+        "Master-CM262372",
+        "Master-CM17706065",
+        "Master-CM585014",
+        "Master-CM1757799",
+        "Master-CM215822"
+      ],
+      "source": "manual",
+      "locations": [
+        {
+          "addr": "1023 Main St",
+          "city": "Bridgeport",
+          "st": "CT"
+        },
+        {
+          "addr": "205 Main St",
+          "city": "Norwalk",
+          "st": "CT"
+        },
+        {
+          "addr": "145 Boston Post Rd",
+          "city": "West Haven",
+          "st": "CT"
+        }
+      ],
+      "createdAt": "2026-03-27T00:00:00.000Z",
+      "updatedAt": "2026-03-27T00:00:00.000Z"
     }
   },
   "groupMoves": {},
@@ -55,7 +90,7 @@
       {
         "id": 1774652073352,
         "name": "Dr. Michael Capalbo",
-        "role": "Owner/DMD – Capalbo Dental Group (Wakefield & Wickford)",
+        "role": "Owner/DMD \u2013 Capalbo Dental Group (Wakefield & Wickford)",
         "phone": "(401) 789-6118",
         "email": "wakefield@capalbodentalgroup.com",
         "notes": "From AI research",
@@ -64,7 +99,7 @@
       {
         "id": 1774652074767,
         "name": "Dr. Roy Shakun",
-        "role": "Owner/DMD – West Hartford Family Dental",
+        "role": "Owner/DMD \u2013 West Hartford Family Dental",
         "phone": "(860) 233-0552",
         "email": "",
         "notes": "From AI research",
@@ -73,7 +108,7 @@
       {
         "id": 1774652076110,
         "name": "Dr. Matthew Capalbo",
-        "role": "Associate Owner/DMD – Capalbo Dental Group",
+        "role": "Associate Owner/DMD \u2013 Capalbo Dental Group",
         "phone": "(401) 789-6118",
         "email": "",
         "notes": "From AI research",
@@ -82,7 +117,7 @@
       {
         "id": 1774652077658,
         "name": "Dr. Marcus Capalbo",
-        "role": "Associate Owner/DMD – Capalbo Dental Group",
+        "role": "Associate Owner/DMD \u2013 Capalbo Dental Group",
         "phone": "(401) 295-1992",
         "email": "",
         "notes": "From AI research",
@@ -93,5 +128,5 @@
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-28T03:22:32.875Z"
+  "lastUpdated": "2026-03-27T00:00:00.000Z"
 }
