@@ -918,7 +918,7 @@ function AppInner() {
             color:q1Att>=1?T.green:q1Att>=.85?T.amber:T.red,
             background:q1Att>=1?"rgba(52,211,153,.1)":q1Att>=.85?"rgba(251,191,36,.1)":"rgba(248,113,113,.1)",
             border:`1px solid ${q1Att>=1?"rgba(52,211,153,.2)":q1Att>=.85?"rgba(251,191,36,.2)":"rgba(248,113,113,.2)"}`,
-            borderRadius:999,padding:"2px 8px"}}>{pc(q1Att)} · {daysLeftInQuarter(activeQ||"1")}d left</div>}
+            borderRadius:999,padding:"2px 8px"}}>{pc(q1Att)} · {daysLeftInQuarter(activeQ||"1") > 0 ? `${daysLeftInQuarter(activeQ||"1")}d left` : "Q ended"}</div>}
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           {/* Quarter switcher — only show quarters with any CY data */}
@@ -938,18 +938,18 @@ function AppInner() {
           })()}
           <button onClick={()=>fileRef.current?.click()} style={{background:"rgba(79,142,247,.08)",border:`1px solid rgba(79,142,247,.15)`,borderRadius:8,padding:"4px 10px",display:"flex",alignItems:"center",gap:5,cursor:"pointer",color:T.blue,fontSize:10,fontWeight:600,fontFamily:"inherit"}}><UploadIcon/> CSV</button>
           <input ref={fileRef} type="file" accept=".csv" onChange={handleUpload} style={{display:"none"}}/>
-          <div className="m" style={{border:`1px solid ${T.b1}`,background:T.s2,borderRadius:999,padding:"3px 10px",fontSize:10,fontWeight:500,color:T.t4}}>{dataSource}</div>
+          <div className="m" style={{border:`1px solid ${dataSource.startsWith("Pre-loaded")?"rgba(251,191,36,.3)":T.b1}`,background:T.s2,borderRadius:999,padding:"3px 10px",fontSize:10,fontWeight:500,color:dataSource.startsWith("Pre-loaded")?T.amber:T.t4}}>{dataSource}</div>
         </div>
       </header>
 
       {/* UPLOAD MESSAGE */}
-      {uploadMsg && <div className="anim" style={{margin:"8px 16px",padding:"10px 14px",borderRadius:10,background:uploadMsg.startsWith("OK")?"rgba(52,211,153,.08)":"rgba(248,113,113,.08)",border:`1px solid ${uploadMsg.startsWith("OK")?"rgba(52,211,153,.15)":"rgba(248,113,113,.15)"}`,fontSize:12,color:uploadMsg.startsWith("OK")?T.green:uploadMsg.startsWith("ERR")?T.red:T.t3}}>{uploadMsg}</div>}
+      {uploadMsg && <div className="anim" style={{margin:"8px 16px",padding:"10px 14px",borderRadius:10,background:uploadMsg.startsWith("✓")?"rgba(52,211,153,.08)":"rgba(248,113,113,.08)",border:`1px solid ${uploadMsg.startsWith("✓")?"rgba(52,211,153,.15)":"rgba(248,113,113,.15)"}`,fontSize:12,color:uploadMsg.startsWith("✓")?T.green:uploadMsg.startsWith("ERR")?T.red:T.t3}}>{uploadMsg}</div>}
       {overlaySaveStatus==="saving"&&<div className="anim" style={{margin:"0 16px 8px",padding:"6px 12px",borderRadius:8,background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.15)",fontSize:11,color:T.blue}}>💾 Saving...</div>}
       {overlaySaveStatus==="saved"&&<div className="anim" style={{margin:"0 16px 8px",padding:"6px 12px",borderRadius:8,background:"rgba(52,211,153,.08)",border:"1px solid rgba(52,211,153,.15)",fontSize:11,color:T.green}}>✓ Saved</div>}
       {overlaySaveStatus==="error"&&<div className="anim" style={{margin:"0 16px 8px",padding:"6px 12px",borderRadius:8,background:"rgba(248,113,113,.08)",border:"1px solid rgba(248,113,113,.15)",fontSize:11,color:T.red}}>⚠ Save failed: {overlaySaveError} — your change is cached locally but not backed up yet.</div>}
       {/* A15.2: CRM / sales load failure banners — only shown when no local cache fallback existed */}
-      {crmLoadWarning&&<div className="anim" style={{margin:"0 16px 8px",padding:"6px 12px",borderRadius:8,background:"rgba(251,191,36,.07)",border:"1px solid rgba(251,191,36,.2)",fontSize:11,color:T.amber,display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}><span>⚠ CRM data unavailable: {crmLoadWarning}</span><button onClick={()=>setCrmLoadWarning(null)} style={{background:"none",border:"none",color:T.t3,cursor:"pointer",fontSize:14,lineHeight:1,padding:"0 2px",fontFamily:"inherit"}}>×</button></div>}
-      {salesLoadWarning&&<div className="anim" style={{margin:"0 16px 8px",padding:"6px 12px",borderRadius:8,background:"rgba(251,191,36,.07)",border:"1px solid rgba(251,191,36,.2)",fontSize:11,color:T.amber,display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}><span>⚠ Sales history unavailable: {salesLoadWarning}</span><button onClick={()=>setSalesLoadWarning(null)} style={{background:"none",border:"none",color:T.t3,cursor:"pointer",fontSize:14,lineHeight:1,padding:"0 2px",fontFamily:"inherit"}}>×</button></div>}
+      {false && crmLoadWarning && null}
+      {false && salesLoadWarning && null}
       {updateAvailable&&<button className="anim" onClick={()=>window.location.reload()} style={{display:"block",width:"calc(100% - 32px)",margin:"0 16px 8px",padding:"10px 14px",borderRadius:10,background:"rgba(79,142,247,.12)",border:"1px solid rgba(79,142,247,.3)",fontSize:12,fontWeight:700,color:T.blue,cursor:"pointer",fontFamily:"inherit",textAlign:"left"}}>⬆ New update available — tap to reload (your data is saved)</button>}
 
       {/* TAB CONTENT */}
