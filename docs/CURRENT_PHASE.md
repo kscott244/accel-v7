@@ -1,60 +1,55 @@
 # CURRENT PHASE -- accel-v7
 
-## Status: War Room live. Ready to build.
+## Status: Second Brain live. Ready to build.
 
-### Phase 3: GroupDetail → War Room — March 28, 2026
+### Phase 4: AcctDetail → Field Rep Second Brain — March 28, 2026
 
-Redesigned GroupDetail section order and layout density. No logic changed, no data changed — purely presentation and information hierarchy.
+Redesigned AcctDetail section order around real field use. Logic unchanged, layout restructured.
 
-**Commit:** `b4c7bc4a`
+**Commit:** `0454e8d9`
 **Deploy:** HTTP 200 ✅
-**Lines:** 1,656 → 1,566 (−90 lines, −5%)
+**Lines:** 1,202 → 1,019 (−183 lines, −15%)
 
 **New section order (vs old):**
 
-| # | New | Was |
-|---|-----|-----|
-| 1 | Sticky header | same |
-| 2 | Hero: name + health + Q selector + stats + Intel Brief | Hero (with ret bar — removed) |
-| 3 | **What to do next** (Next Best Moves) | AI Group Intel |
-| 4 | **Opportunities** | Suggested Merges |
-| 5 | **Locations** (with ghost locs inline) | Next Best Moves |
-| 6 | **Products** (stopped first, then buying) | Distributor Split |
-| 7 | **Distributor Leverage** (split bars + FSC inline per row) | FSC Contacts (separate) |
-| 8 | **Contacts** (saved + research-found unified) | Group Contacts |
-| 9 | Notes | Group Notes |
-| 10 | AI Group Intel | Contact modal |
-| 11 | Suggested Merges | Opportunities |
-| 12 | Modals: contact, merge, FSC edit | Product Health |
-| — | — | Locations (was after products) |
+| # | New | Was | Why |
+|---|-----|-----|-----|
+| 1 | Sticky header (Research + Briefing buttons) | same | — |
+| 2 | **Hero** — tighter: name + health + Q + stats | Account Header | Removed address line, tightened dealer/group into subtitle |
+| 3 | **Next Best Move** | Position 12 | First content after hero — most actionable |
+| 4 | **Who Matters** — doctor + feel + contacts + notes unified | Badger card (pos 8) + standalone contacts (pos 9) | Single "who to call" card, no split |
+| 5 | **Activity** — follow-up callout + log form + entries | Position 15 | Immediate field capture |
+| 6 | **Product Story** — stopped first, buying, white space + branch spread header | Account Intel (pos 11) | Win-backs surface first |
+| 7 | Parent Group | same | Contextual, not primary |
+| 8 | Multi-Dealer View | same | — |
+| 9 | Product Breakdown Bars (detail, tappable monthly) | same | Detail layer |
+| 10 | Log a Sale (was "Manual Sale") | same | — |
+| 11 | Research Results (Deep Research + AI Briefing) | Positions 3-4 (above hero) | On-demand, below fold |
+| 12 | Sales History | same | — |
+| 13 | Modals: Move, Group Link, ReorderInvoice | same | — |
 
-**What changed:**
-- "Next Best Moves" and "Opportunities" promoted above the fold — now the first things visible after the hero
-- Locations moved up (position 5 vs end), before products and distributor
-- Distributor Split and FSC Contacts merged into one "Distributor Leverage" section — FSC rep row appears inline under each distributor bar
-- Group Contacts and research-found contacts unified into one "Contacts" panel — research contacts show with save button, saved contacts show with call/edit
-- Ret bar removed from hero (redundant with health badge + Ret stat)
-- "Account Brief" renamed "Intel Brief" — still collapsible, same content
-- MONTHS_SHORT/QMAP constants extracted from duplicated product loop → single shared constant
-- Ghost locations moved inline with the Locations section
-- Products section: "Stopped" always shown first (win-back opportunities surface immediately)
-- AI Group Intel moved below the fold (it's secondary to the action items)
+**What was removed:**
+- "Root Depth" STEMM bar from Badger card — too abstract for field use, not actionable
+- Address line from hero (Badger card has it; redundant)
+- Separate "Standalone Contacts" card — merged into "Who Matters"
+- "Branch Spread" as a buried subsection — promoted to header pills on Product Story
 
 **What was NOT changed:**
-- All useMemo computations (scoring, productSignals, nextBestMoves, briefLines, etc.)
-- All state variables
-- All save/patch functions (FSC, contacts, notes, merge)
-- Product drill-down full-screen view (selProduct)
-- executeMerge() and the merge modal
-- All patchOverlay calls
+- All state, useEffect, useMemo — identical
+- runAI(), runDeepResearch(), applyGroupOverride() — identical
+- SaleCalculator component — identical
+- MultiDealerView component — identical
+- Product breakdown bars with monthly expansion — identical
+- All patchOverlay calls — identical
+- Move modal, Group Link modal, ReorderInvoice — identical
 
 ---
 
 ## Previously Completed
-- Phase 2 — Mission Control (Today tab → 5 action buckets)
+- Phase 3 — GroupDetail War Room (section reorder, distributor+FSC merged, contacts unified)
+- Phase 2 — Today Tab Mission Control (5 action buckets)
 - Phase 1 — Data Boundary Hardening
 - patchOverlay Migration — SHA conflict bug eliminated
-- March 28 Cleanup — applyManualParents, productSignals, dead code
 
 ## Last Updated
 March 28, 2026
