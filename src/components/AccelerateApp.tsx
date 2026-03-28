@@ -72,6 +72,7 @@ class TabErrorBoundary extends Component<
 import { BADGER, PARENT_NAMES, DEALERS, PARENT_DEALERS, WEEK_ROUTES, OVERLAYS_REF as _OVERLAYS_REF_INIT, EMPTY_OVERLAYS } from "@/lib/data";
 import * as DataModule from "@/lib/data";
 import { applyGroupCreates } from "@/lib/mergeGroups";
+import { applyManualParents } from "@/lib/csv";
 
 // OVERLAYS: runtime-loaded from data/overlays.json via API — NOT a static import
 // Default empty shape used until loadOverlays() resolves on app mount
@@ -574,7 +575,7 @@ function AppInner() {
 
       try {
         const { PRELOADED } = require("@/data/preloaded-data");
-        const preloadedGroups = applyGroupOverrides(applyOverlays(rollupGroupTotals(hydrateDealer(PRELOADED.groups))));
+        const preloadedGroups = applyGroupOverrides(applyOverlays(rollupGroupTotals(hydrateDealer(applyManualParents(PRELOADED.groups)))));
         setGroups(preloadedGroups);
         setDataSource(`Pre-loaded ${PRELOADED.generated} · upload CSV to refresh`);
         // Auto-detect activeQ from data if not already set
@@ -965,7 +966,6 @@ function AppInner() {
           }
         };
         const goGroupFn = (g:any) => { window.scrollTo(0,0); setView({type:"group", data:g}); };
-        const goAcctFn = (a:any, from?:any) => { window.scrollTo(0,0); setView({type:"acct", data:a, from}); };
         return <>
           {!view && tab==="today" && <DashboardTab scored={scored} goAcct={goSmartFn} q1CY={q1CY} q1Gap={q1Gap} q1Att={q1Att} adjCount={adjs.length} totalAdj={totalAdjQ1} groups={groups||[]} goGroup={goGroupFn} activeQ={activeQ||"1"} weeklyDelta={weeklyDelta} tasks={tasks} onCompleteTask={completeTask} onGoTasks={()=>{setTab("tasks");setView(null);}}/> }
           {!view && tab==="groups" && <GroupsTab groups={groups||[]} goGroup={goGroupFn} filt={gFilt} setFilt={setGFilt} search={gSearch} setSearch={setGSearch} groupedPrivates={groupedPrivates}/>}
