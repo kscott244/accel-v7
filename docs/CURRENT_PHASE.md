@@ -1,40 +1,82 @@
 # CURRENT PHASE -- accel-v7
 
-## Status: Pricing tab rebuilt. Territory content moved. Ready to build.
+## Status: DSO War Room live. Ready to build.
 
-### Phase — Pricing Tab Rebuild — March 28, 2026
+### Phase A16 — DSO War Room Baseline — March 28, 2026
 
 **Commits:**
-- `055ed233` — PricingTab (DashTab.tsx): Quick Credit + SKU Lookup + Quote placeholder
-- `ad0adadf` — TerritoryTab: attainment, tier revenue, top groups, gap leaderboard
-- `98305890` — App: wire both tabs, Territory in More menu
+- `6fef0c05` — src/lib/dsoWarRoom.ts: benchmark math, coverage, sort, intel types
+- `6b15d3ab` — DsoWarRoomTab: full war room screen
+- `5fc1e028` — App: War Room in More menu, render wired
+- `00922b31` — GroupDetail: benchmark panel for DSO groups
 
 **Deploy:** HTTP 200 ✅
 
 ---
 
-**What changed:**
+**What was built:**
 
-**Pricing tab — now three focused tools only:**
+### `src/lib/dsoWarRoom.ts`
+All logic is deterministic — no AI.
+- `buildDsoCard()` — computes cy1, py1, perOffice, benchQ, benchGapQ, benchGapAnn, momentum, coverage, confidence, opportunity statement
+- `coverageOf()` — which of the 5 Kerr families (Composite, Bond, Cement, Infection Control, Temp Cement) are present/missing per group
+- `confidenceOf()` — Observed (3+ children with revenue) / Partial (1-2) / Estimated (0)
+- `opportunityStatement()` — deterministic template: "33 offices at $129/office vs $747 benchmark — $19K quarterly gap / $76K annualized upside. Diamond pricing already in place."
+- `sortCards()` — 4 modes: Largest Gap, Lowest $/Office, Momentum, Pinned First
+- `getIntel()` — reads dsoIntel overlay per group
 
-1. **Quick Credit** — enter any order amount, see your credited revenue at every tier simultaneously (Silver/Gold/Platinum/Diamond/Std). No product needed. Uses ~55% blended wholesale rate. Designed for use right after a call — "I just got a $5K order, what did I credit?"
+### DsoWarRoomTab (More → War Room)
+**Header:** group count, total offices, total quarterly gap, total annual upside
 
-2. **SKU Pricing Lookup** — search by SKU# or product name, get a clean pricing table showing MSRP and wholesale at every tier. Designed for in-front-of-doctor or distributor-rep use. Turn the phone around and show them the price.
+**Controls:**
+- Benchmark toggle: Avg $747 · Top Quartile $1,498
+- Sort: Largest Gap · Lowest $/Office · Momentum · Pinned First
 
-3. **Quote Builder** — placeholder, clearly labeled "Coming Soon" with a description of what it will do (pull stopped products, apply tier pricing, generate a suggested reorder). Space is claimed, nothing is broken.
+**Each card shows:**
+- Group name, tier badge, class2 badge, confidence badge, status badge
+- Pin button (★/☆)
+- 3-stat grid: Offices · $/Office vs benchmark · CY Q1
+- Benchmark gap block (quarterly + annualized) — red, only shown when behind
+- Product family coverage: 5 color-coded pills (green = present, red = missing)
+- Deterministic opportunity statement
+- Intel preview: procurement contact, competitor, owner, strategy, team opp estimate, notes snippet
 
-**Territory tab — in More menu:**
-All the dashboard content that was on the Pricing tab moved here intact:
-- CY revenue + attainment bar
-- Revenue by tier breakdown
-- Top 5 groups by CY
-- Gap leaderboard (top 10 recovery targets, tappable → AcctDetail)
+**Actions per card:** ✏ Intel · + Task · Open →
 
-Nothing was deleted — just reorganized. Territory is now one tap from the More menu.
+**Intel drawer (full-screen slide-up):**
+- Procurement contact name + phone
+- Main competitor
+- Relationship owner
+- Last contact date
+- Status: No Contact / In Progress / Meeting Set / Active Push
+- Strategy: Corporate Procurement / Regional Leadership / Local Doctor Conversion / Distributor Driven / Unknown
+- Est. team opportunity (manual $/quarter — clearly labeled "manual")
+- Notes
+
+All intel persists to `overlays.dsoIntel[groupId]` via patchOverlay → GitHub.
+
+### GroupDetail benchmark panel
+For DSO and Emerging DSO groups only — appears above "Next Move" section.
+Shows: CY Q1 · Benchmark · Gap · Opportunity statement.
+Clearly separated from existing performance data.
+
+### Benchmarks
+- Average: $747/office/quarter (from actual territory data: 502 solo practices)
+- Top Quartile: $1,498/office/quarter
+- Both modes available via toggle on War Room screen
+
+### What was cut (by design)
+- No auth / multi-user
+- No regional CSV ingestion
+- No Stu endo auto-math (manual teamOppQ field instead)
+- No AI-generated text (all deterministic)
+- No scoring engine changes
+- No Today tab changes
 
 ---
 
 ## Previously Completed
+- Phase — Pricing Tab (Quick Credit, SKU Lookup, Tier Switch)
 - Phase 12 — Territory Copilot Knowledge Layer
 - Phase 11 — AI Query Copilot
 - Phase 10 — Action-Hub Polish
