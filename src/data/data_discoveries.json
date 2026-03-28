@@ -1,0 +1,4025 @@
+{
+  "anchor_orphans": [
+    {
+      "anchor_id": "Master-CM1191419",
+      "anchor_name": "DENTAL ASSOCIATES OF CONNECTICUT",
+      "anchor_locs": 33,
+      "orphan_child_id": "Master-CM277163",
+      "orphan_child_name": "KEVIN M. STANTON, D.M.D.",
+      "orphan_group_id": "Master-CM277163",
+      "orphan_group_name": "KEVIN M. STANTON, D.M.D.: Master-CM277163",
+      "addr": "120 Park Lane Rd Unit B202",
+      "city": "New Milford",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1191419",
+      "anchor_name": "DENTAL ASSOCIATES OF CONNECTICUT",
+      "anchor_locs": 33,
+      "orphan_child_id": "Master-CM172008",
+      "orphan_child_name": "CT FAMILY DENTISTRY",
+      "orphan_group_id": "Master-CM172008",
+      "orphan_group_name": "CT FAMILY DENTISTRY: Master-CM172008",
+      "addr": "945 Main St Ste 101",
+      "city": "Manchester",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1191419",
+      "anchor_name": "DENTAL ASSOCIATES OF CONNECTICUT",
+      "anchor_locs": 33,
+      "orphan_child_id": "Master-CM222068",
+      "orphan_child_name": "CARE DENTAL CENTER- MERCH",
+      "orphan_group_id": "Master-CM222068",
+      "orphan_group_name": "CARE DENTAL CENTER- MERCH: Master-CM222068",
+      "addr": "191 Franklin Ave",
+      "city": "Hartford",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1191419",
+      "anchor_name": "DENTAL ASSOCIATES OF CONNECTICUT",
+      "anchor_locs": 33,
+      "orphan_child_id": "Master-CM225946",
+      "orphan_child_name": "KATE KIGURADZE",
+      "orphan_group_id": "Master-CM225946",
+      "orphan_group_name": "KATE KIGURADZE: Master-CM225946",
+      "addr": "106 Noroton Ave Ste #103",
+      "city": "Darien",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1191419",
+      "anchor_name": "DENTAL ASSOCIATES OF CONNECTICUT",
+      "anchor_locs": 33,
+      "orphan_child_id": "Master-CM915216",
+      "orphan_child_name": "KETEVAN KIGURADZE DDS",
+      "orphan_group_id": "Master-CM915216",
+      "orphan_group_name": "KETEVAN KIGURADZE DDS: Master-CM915216",
+      "addr": "106 Noroton Ave Ste 103",
+      "city": "Darien",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1191419",
+      "anchor_name": "DENTAL ASSOCIATES OF CONNECTICUT",
+      "anchor_locs": 33,
+      "orphan_child_id": "Master-CM9817324",
+      "orphan_child_name": "MARC CRAIG DMD",
+      "orphan_group_id": "Master-CM9817324",
+      "orphan_group_name": "MARC CRAIG DMD: Master-CM9817324",
+      "addr": "1090 Meriden Waterbury Tpke Suite 3",
+      "city": "Cheshire",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1191419",
+      "anchor_name": "DENTAL ASSOCIATES OF CONNECTICUT",
+      "anchor_locs": 33,
+      "orphan_child_id": "Master-CM888988",
+      "orphan_child_name": "R & A ASSOCIATES OF CHESHIRE LLC",
+      "orphan_group_id": "Master-CM888988",
+      "orphan_group_name": "R & A ASSOCIATES OF CHESHIRE LLC: Master-CM888988",
+      "addr": "1090 Meriden Waterbury Tpke",
+      "city": "Cheshire",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1191419",
+      "anchor_name": "DENTAL ASSOCIATES OF CONNECTICUT",
+      "anchor_locs": 33,
+      "orphan_child_id": "Master-CM221607",
+      "orphan_child_name": "ROBERT KANIA",
+      "orphan_group_id": "Master-CM221607",
+      "orphan_group_name": "ROBERT KANIA: Master-CM221607",
+      "addr": "35 Pearl St",
+      "city": "New Britain",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1191419",
+      "anchor_name": "DENTAL ASSOCIATES OF CONNECTICUT",
+      "anchor_locs": 33,
+      "orphan_child_id": "Master-CM1054921",
+      "orphan_child_name": "NEW BRITAIN DENTAL ARTS LLC",
+      "orphan_group_id": "Master-CM1054921",
+      "orphan_group_name": "NEW BRITAIN DENTAL ARTS LLC: Master-CM1054921",
+      "addr": "35 Pearl St Ste 204",
+      "city": "New Britain",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1191419",
+      "anchor_name": "DENTAL ASSOCIATES OF CONNECTICUT",
+      "anchor_locs": 33,
+      "orphan_child_id": "Master-CM1335086",
+      "orphan_child_name": "NEUROLOGIC ASSOCIATES",
+      "orphan_group_id": "Master-CM1335086",
+      "orphan_group_name": "NEUROLOGIC ASSOCIATES: Master-CM1335086",
+      "addr": "35 Pearl St Ste 201",
+      "city": "New Britain",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1486131",
+      "anchor_name": "DENTAL WHALE: Master-CM1486131",
+      "anchor_locs": 47,
+      "orphan_child_id": "Master-CM056306",
+      "orphan_child_name": "RICHARD L SCHECHTMAN DDS",
+      "orphan_group_id": "Master-CM056306",
+      "orphan_group_name": "RICHARD L SCHECHTMAN DDS: Master-CM056306",
+      "addr": "3630 Hill Blvd Ste 405",
+      "city": "Jefferson Valley",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1486131",
+      "anchor_name": "DENTAL WHALE: Master-CM1486131",
+      "anchor_locs": 47,
+      "orphan_child_id": "Master-CM265107",
+      "orphan_child_name": "ROBERT CROSS DDS",
+      "orphan_group_id": "Master-CM265107",
+      "orphan_group_name": "ROBERT CROSS DDS: Master-CM265107",
+      "addr": "3630 Hill Blvd Ste 302",
+      "city": "Jefferson Valley",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1486131",
+      "anchor_name": "DENTAL WHALE: Master-CM1486131",
+      "anchor_locs": 47,
+      "orphan_child_id": "Master-CM1807376",
+      "orphan_child_name": "SANDRA KELLETT",
+      "orphan_group_id": "Master-CM1807376",
+      "orphan_group_name": "SANDRA KELLETT: Master-CM1807376",
+      "addr": "3630 Hill Blvd Ste 303",
+      "city": "Jefferson Valley",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1486131",
+      "anchor_name": "DENTAL WHALE: Master-CM1486131",
+      "anchor_locs": 47,
+      "orphan_child_id": "Master-CM953708",
+      "orphan_child_name": "12 MONTH SMILES",
+      "orphan_group_id": "Master-CM953708",
+      "orphan_group_name": "12 MONTH SMILES: Master-CM953708",
+      "addr": "300 Hemingway Ave",
+      "city": "East Haven",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1486131",
+      "anchor_name": "DENTAL WHALE: Master-CM1486131",
+      "anchor_locs": 47,
+      "orphan_child_id": "Master-CM1998037",
+      "orphan_child_name": "12 MONTH SMILES",
+      "orphan_group_id": "Master-CM1998037",
+      "orphan_group_name": "12 MONTH SMILES: Master-CM1998037",
+      "addr": "300 Hemingway Ave",
+      "city": "East Haven",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1486131",
+      "anchor_name": "DENTAL WHALE: Master-CM1486131",
+      "anchor_locs": 47,
+      "orphan_child_id": "Master-CM051914",
+      "orphan_child_name": "COMPREHENSIVE DENTAL GROUP",
+      "orphan_group_id": "Master-CM051914",
+      "orphan_group_name": "COMPREHENSIVE DENTAL GROUP: Master-CM051914",
+      "addr": "999 Summer St Ste 400",
+      "city": "Stamford",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1486131",
+      "anchor_name": "DENTAL WHALE: Master-CM1486131",
+      "anchor_locs": 47,
+      "orphan_child_id": "Master-CM120991",
+      "orphan_child_name": "STAMFORD ORTHODONTICS",
+      "orphan_group_id": "Master-CM120991",
+      "orphan_group_name": "STAMFORD ORTHODONTICS: Master-CM120991",
+      "addr": "999 Summer St Ste 201",
+      "city": "Stamford",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1486131",
+      "anchor_name": "DENTAL WHALE: Master-CM1486131",
+      "anchor_locs": 47,
+      "orphan_child_id": "Master-CM095424",
+      "orphan_child_name": "PETER A. GARDELL DDS",
+      "orphan_group_id": "Master-CM095424",
+      "orphan_group_name": "PETER A. GARDELL DDS: Master-CM095424",
+      "addr": "999 Summer St Ste 203",
+      "city": "Stamford",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1486131",
+      "anchor_name": "DENTAL WHALE: Master-CM1486131",
+      "anchor_locs": 47,
+      "orphan_child_id": "Master-CM230487",
+      "orphan_child_name": "OFC OF BRAD ERIK SHWIDOCK DMD",
+      "orphan_group_id": "Master-CM230487",
+      "orphan_group_name": "OFC OF BRAD ERIK SHWIDOCK DMD: Master-CM230487",
+      "addr": "999 Summer St Ste 306",
+      "city": "Stamford",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1486131",
+      "anchor_name": "DENTAL WHALE: Master-CM1486131",
+      "anchor_locs": 47,
+      "orphan_child_id": "Master-CM1344810",
+      "orphan_child_name": "CARLESI, VINCENT R",
+      "orphan_group_id": "Master-CM1344810",
+      "orphan_group_name": "CARLESI, VINCENT R: Master-CM1344810",
+      "addr": "999 Summer St Ste 304",
+      "city": "Stamford",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1486131",
+      "anchor_name": "DENTAL WHALE: Master-CM1486131",
+      "anchor_locs": 47,
+      "orphan_child_id": "Master-CM144910",
+      "orphan_child_name": "FAIRFIELD ENDODONTICS",
+      "orphan_group_id": "Master-CM144910",
+      "orphan_group_name": "FAIRFIELD ENDODONTICS: Master-CM144910",
+      "addr": "999 Summer St Ste 301",
+      "city": "Stamford",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1486131",
+      "anchor_name": "DENTAL WHALE: Master-CM1486131",
+      "anchor_locs": 47,
+      "orphan_child_id": "Master-CM1903005",
+      "orphan_child_name": "MATTHEW LOPRESTI",
+      "orphan_group_id": "Master-CM1903005",
+      "orphan_group_name": "MATTHEW LOPRESTI: Master-CM1903005",
+      "addr": "75 Tresser Blvd Unit 467",
+      "city": "Stamford",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1486131",
+      "anchor_name": "DENTAL WHALE: Master-CM1486131",
+      "anchor_locs": 47,
+      "orphan_child_id": "Master-CM125728",
+      "orphan_child_name": "JAMES BRANCO DDS",
+      "orphan_group_id": "Master-CM125728",
+      "orphan_group_name": "JAMES BRANCO DDS: Master-CM125728",
+      "addr": "1075 Central Park Ave",
+      "city": "Scarsdale",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1486131",
+      "anchor_name": "DENTAL WHALE: Master-CM1486131",
+      "anchor_locs": 47,
+      "orphan_child_id": "Master-CM063556",
+      "orphan_child_name": "DENTAL IMPLANTS DYNAMICS  P.C.",
+      "orphan_group_id": "Master-CM063556",
+      "orphan_group_name": "DENTAL IMPLANTS DYNAMICS  P.C.: Master-CM063556",
+      "addr": "1075 Central Park Ave Ste 410",
+      "city": "Scarsdale",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1486131",
+      "anchor_name": "DENTAL WHALE: Master-CM1486131",
+      "anchor_locs": 47,
+      "orphan_child_id": "Master-CM1100934",
+      "orphan_child_name": "JEFF SUH DDS",
+      "orphan_group_id": "Master-CM1100934",
+      "orphan_group_name": "JEFF SUH DDS: Master-CM1100934",
+      "addr": "1075 Central Park Ave Ste 200",
+      "city": "Scarsdale",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1486131",
+      "anchor_name": "DENTAL WHALE: Master-CM1486131",
+      "anchor_locs": 47,
+      "orphan_child_id": "Master-CM17702768",
+      "orphan_child_name": "MARIGOLD DENTAL STUDIO",
+      "orphan_group_id": "Master-CM17702768",
+      "orphan_group_name": "MARIGOLD DENTAL STUDIO: Master-CM17702768",
+      "addr": "727 East Ave",
+      "city": "Pawtucket",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1486131",
+      "anchor_name": "DENTAL WHALE: Master-CM1486131",
+      "anchor_locs": 47,
+      "orphan_child_id": "Master-CM17748711",
+      "orphan_child_name": "JEFFREY O'CONNELL",
+      "orphan_group_id": "Master-CM17748711",
+      "orphan_group_name": "JEFFREY O'CONNELL: Master-CM17748711",
+      "addr": "115 Technology Dr Unit B106",
+      "city": "Trumbull",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1486131",
+      "anchor_name": "DENTAL WHALE: Master-CM1486131",
+      "anchor_locs": 47,
+      "orphan_child_id": "Master-CM1169609",
+      "orphan_child_name": "SALVATORE FLORIO, D.D.S.",
+      "orphan_group_id": "Master-CM1169609",
+      "orphan_group_name": "SALVATORE FLORIO, D.D.S.: Master-CM1169609",
+      "addr": "115 Technology Dr Suite B-101",
+      "city": "Trumbull",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1486131",
+      "anchor_name": "DENTAL WHALE: Master-CM1486131",
+      "anchor_locs": 47,
+      "orphan_child_id": "Master-CM122405",
+      "orphan_child_name": "ASSOCIATES IN ENDODONTICS",
+      "orphan_group_id": "Master-CM122405",
+      "orphan_group_name": "ASSOCIATES IN ENDODONTICS: Master-CM122405",
+      "addr": "928 Farmington Ave",
+      "city": "West Hartford",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1873360",
+      "anchor_name": "DENTAL 365: Master-CM1873360",
+      "anchor_locs": 23,
+      "orphan_child_id": "Master-CM1311698",
+      "orphan_child_name": "RONALD CWIK",
+      "orphan_group_id": "Master-CM1311698",
+      "orphan_group_name": "RONALD CWIK: Master-CM1311698",
+      "addr": "652 Boston Post Rd Ste 4",
+      "city": "Guilford",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1873360",
+      "anchor_name": "DENTAL 365: Master-CM1873360",
+      "anchor_locs": 23,
+      "orphan_child_id": "Master-CM461321",
+      "orphan_child_name": "WIND,DDS, ROBERT",
+      "orphan_group_id": "Master-CM461321",
+      "orphan_group_name": "WIND,DDS, ROBERT: Master-CM461321",
+      "addr": "222 Route 59 Ste 209",
+      "city": "Suffern",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1873360",
+      "anchor_name": "DENTAL 365: Master-CM1873360",
+      "anchor_locs": 23,
+      "orphan_child_id": "Master-CM126047",
+      "orphan_child_name": "AESTHETICS DENTAL ASSOCIATES",
+      "orphan_group_id": "Master-CM126047",
+      "orphan_group_name": "AESTHETICS DENTAL ASSOCIATES: Master-CM126047",
+      "addr": "222 Westchester Ave",
+      "city": "West Harrison",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1873360",
+      "anchor_name": "DENTAL 365: Master-CM1873360",
+      "anchor_locs": 23,
+      "orphan_child_id": "Master-CM307860",
+      "orphan_child_name": "CAROLYN CLEMENZA, DDS",
+      "orphan_group_id": "Master-CM307860",
+      "orphan_group_name": "CAROLYN CLEMENZA, DDS: Master-CM307860",
+      "addr": "359 E Main St Ste 2e",
+      "city": "Mount Kisco",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1873360",
+      "anchor_name": "DENTAL 365: Master-CM1873360",
+      "anchor_locs": 23,
+      "orphan_child_id": "Master-CM1203920",
+      "orphan_child_name": "BANK, DAVID E",
+      "orphan_group_id": "Master-CM1203920",
+      "orphan_group_name": "BANK, DAVID E: Master-CM1203920",
+      "addr": "359 E Main St Ste 4g/E",
+      "city": "Mount Kisco",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM074737",
+      "anchor_name": "42 NORTH: Master-CM074737",
+      "anchor_locs": 32,
+      "orphan_child_id": "Master-CM252626",
+      "orphan_child_name": "FERDA HATIBOGLU",
+      "orphan_group_id": "Master-CM252626",
+      "orphan_group_name": "FERDA HATIBOGLU: Master-CM252626",
+      "addr": "295 Washington Ave",
+      "city": "Hamden",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM074737",
+      "anchor_name": "42 NORTH: Master-CM074737",
+      "anchor_locs": 32,
+      "orphan_child_id": "Master-CM225917",
+      "orphan_child_name": "CAMP SAMBOR & ASSOCIATES",
+      "orphan_group_id": "Master-CM225917",
+      "orphan_group_name": "CAMP SAMBOR & ASSOCIATES: Master-CM225917",
+      "addr": "35 Pleasant St Ste 2b",
+      "city": "Meriden",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM074737",
+      "anchor_name": "42 NORTH: Master-CM074737",
+      "anchor_locs": 32,
+      "orphan_child_id": "Master-CM189706",
+      "orphan_child_name": "OFC OF MICHAEL A BROWN DDS",
+      "orphan_group_id": "Master-CM189706",
+      "orphan_group_name": "OFC OF MICHAEL A BROWN DDS: Master-CM189706",
+      "addr": "333 Kennedy Dr",
+      "city": "Torrington",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM175757",
+      "anchor_name": "ABRA DENTAL: Master-CM175757",
+      "anchor_locs": 4,
+      "orphan_child_id": "Master-CM704467",
+      "orphan_child_name": "ALL ABOUT KIDS PED DTSTRY",
+      "orphan_group_id": "Master-CM704467",
+      "orphan_group_name": "ALL ABOUT KIDS PED DTSTRY: Master-CM704467",
+      "addr": "47 West St Ste 203",
+      "city": "Danbury",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM175757",
+      "anchor_name": "ABRA DENTAL: Master-CM175757",
+      "anchor_locs": 4,
+      "orphan_child_id": "Master-CM721414",
+      "orphan_child_name": "ALL ABOUT KIDS",
+      "orphan_group_id": "Master-CM721414",
+      "orphan_group_name": "ALL ABOUT KIDS: Master-CM721414",
+      "addr": "47 West St Ste 2",
+      "city": "Danbury",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM175757",
+      "anchor_name": "ABRA DENTAL: Master-CM175757",
+      "anchor_locs": 4,
+      "orphan_child_id": "Master-CM9814079",
+      "orphan_child_name": "ALL ABOUT KIDS - PEDO - STAMFORD",
+      "orphan_group_id": "Master-CM9814079",
+      "orphan_group_name": "ALL ABOUT KIDS - PEDO - STAMFORD: Master-CM9814079",
+      "addr": "127 Greyrock Pl Unit C1",
+      "city": "Stamford",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM175757",
+      "anchor_name": "ABRA DENTAL: Master-CM175757",
+      "anchor_locs": 4,
+      "orphan_child_id": "Master-CM17672868",
+      "orphan_child_name": "ALL ABOUT KIDS PEDIATRIC DENTISTRY",
+      "orphan_group_id": "Master-CM17672868",
+      "orphan_group_name": "ALL ABOUT KIDS PEDIATRIC DENTISTRY: Master-CM17672868",
+      "addr": "127 Greyrock Pl",
+      "city": "Stamford",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM175757",
+      "anchor_name": "ABRA DENTAL: Master-CM175757",
+      "anchor_locs": 4,
+      "orphan_child_id": "Master-CM2044676",
+      "orphan_child_name": "ORTHODONTICS - AAK - STAMFORD",
+      "orphan_group_id": "Master-CM2044676",
+      "orphan_group_name": "ORTHODONTICS - AAK - STAMFORD: Master-CM2044676",
+      "addr": "127 Greyrock Pl Unit C2",
+      "city": "Stamford",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM055546",
+      "anchor_name": "HEARTLAND DENTAL CARE: Master-CM055546",
+      "anchor_locs": 12,
+      "orphan_child_id": "Master-CM221536",
+      "orphan_child_name": "ORAL & MAXILLOFACIAL SURGEONS PC",
+      "orphan_group_id": "Master-CM221536",
+      "orphan_group_name": "ORAL & MAXILLOFACIAL SURGEONS PC: Master-CM221536",
+      "addr": "131 New London Tpke Ste 106",
+      "city": "Glastonbury",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM055546",
+      "anchor_name": "HEARTLAND DENTAL CARE: Master-CM055546",
+      "anchor_locs": 12,
+      "orphan_child_id": "Master-CM075109",
+      "orphan_child_name": "ROBERT S EMILIO DDS LLC",
+      "orphan_group_id": "Master-CM075109",
+      "orphan_group_name": "ROBERT S EMILIO DDS LLC: Master-CM075109",
+      "addr": "111 East Ave Ste 214",
+      "city": "Norwalk",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM354571",
+      "anchor_name": "DENTAL CARE ALLIANCE: Master-CM354571",
+      "anchor_locs": 22,
+      "orphan_child_id": "Master-CM132736",
+      "orphan_child_name": "CENTER DENTAL",
+      "orphan_group_id": "Master-CM132736",
+      "orphan_group_name": "CENTER DENTAL: Master-CM132736",
+      "addr": "836 Farmington Ave Ste 120",
+      "city": "West Hartford",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM354571",
+      "anchor_name": "DENTAL CARE ALLIANCE: Master-CM354571",
+      "anchor_locs": 22,
+      "orphan_child_id": "Master-CM141858",
+      "orphan_child_name": "WEST HARTFORD DENTAL PC",
+      "orphan_group_id": "Master-CM141858",
+      "orphan_group_name": "WEST HARTFORD DENTAL PC: Master-CM141858",
+      "addr": "Ste 217a 836 Farmington Ave",
+      "city": "West Hartford",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM354571",
+      "anchor_name": "DENTAL CARE ALLIANCE: Master-CM354571",
+      "anchor_locs": 22,
+      "orphan_child_id": "Master-CM656183",
+      "orphan_child_name": "CENTRAL CT OM & IMPLANT",
+      "orphan_group_id": "Master-CM656183",
+      "orphan_group_name": "CENTRAL CT OM & IMPLANT: Master-CM656183",
+      "addr": "836 Farmington Ave Ste 223",
+      "city": "West Hartford",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM354571",
+      "anchor_name": "DENTAL CARE ALLIANCE: Master-CM354571",
+      "anchor_locs": 22,
+      "orphan_child_id": "Master-CM130501",
+      "orphan_child_name": "JOEL GOODMAN",
+      "orphan_group_id": "Master-CM130501",
+      "orphan_group_name": "JOEL GOODMAN: Master-CM130501",
+      "addr": "836 Farmington Ave Ste 225",
+      "city": "West Hartford",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM354571",
+      "anchor_name": "DENTAL CARE ALLIANCE: Master-CM354571",
+      "anchor_locs": 22,
+      "orphan_child_id": "Master-CM174761",
+      "orphan_child_name": "LANA SKAKUN DMD",
+      "orphan_group_id": "Master-CM174761",
+      "orphan_group_name": "LANA SKAKUN DMD: Master-CM174761",
+      "addr": "836 Farmington Ave Suite 129",
+      "city": "West Hartford",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM354571",
+      "anchor_name": "DENTAL CARE ALLIANCE: Master-CM354571",
+      "anchor_locs": 22,
+      "orphan_child_id": "Master-CM048918",
+      "orphan_child_name": "CENTRAL CONNECTICUT ENDODONTICS PC",
+      "orphan_group_id": "Master-CM048918",
+      "orphan_group_name": "CENTRAL CONNECTICUT ENDODONTICS PC: Master-CM048918",
+      "addr": "836 Farmington Ave Ste 115",
+      "city": "West Hartford",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM354571",
+      "anchor_name": "DENTAL CARE ALLIANCE: Master-CM354571",
+      "anchor_locs": 22,
+      "orphan_child_id": "Master-CM173648",
+      "orphan_child_name": "JOSEPH VIANA",
+      "orphan_group_id": "Master-CM173648",
+      "orphan_group_name": "JOSEPH VIANA: Master-CM173648",
+      "addr": "970 N Broadway Ste 211",
+      "city": "Yonkers",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM354571",
+      "anchor_name": "DENTAL CARE ALLIANCE: Master-CM354571",
+      "anchor_locs": 22,
+      "orphan_child_id": "Master-CM202791",
+      "orphan_child_name": "DRS. FRANK AND JOHN CASTANARO",
+      "orphan_group_id": "Master-CM202791",
+      "orphan_group_name": "DRS. FRANK AND JOHN CASTANARO: Master-CM202791",
+      "addr": "970 N Broadway Ste 304",
+      "city": "Yonkers",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM354571",
+      "anchor_name": "DENTAL CARE ALLIANCE: Master-CM354571",
+      "anchor_locs": 22,
+      "orphan_child_id": "Master-CM143669",
+      "orphan_child_name": "LARRY M GENSER DDS",
+      "orphan_group_id": "Master-CM143669",
+      "orphan_group_name": "LARRY M GENSER DDS: Master-CM143669",
+      "addr": "970 N Broadway Ste 301",
+      "city": "Yonkers",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM354571",
+      "anchor_name": "DENTAL CARE ALLIANCE: Master-CM354571",
+      "anchor_locs": 22,
+      "orphan_child_id": "Master-CM236764",
+      "orphan_child_name": "MARY ANN PIETROPAOLO DMD",
+      "orphan_group_id": "Master-CM236764",
+      "orphan_group_name": "MARY ANN PIETROPAOLO DMD: Master-CM236764",
+      "addr": "970 N Broadway Ste 305a",
+      "city": "Yonkers",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM354571",
+      "anchor_name": "DENTAL CARE ALLIANCE: Master-CM354571",
+      "anchor_locs": 22,
+      "orphan_child_id": "Master-CM074587",
+      "orphan_child_name": "RICHARD AMATO",
+      "orphan_group_id": "Master-CM074587",
+      "orphan_group_name": "RICHARD AMATO: Master-CM074587",
+      "addr": "324 Elm St Ste 103a",
+      "city": "Monroe",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM098299",
+      "anchor_name": "SMILE BRANDS: Master-CM098299",
+      "anchor_locs": 33,
+      "orphan_child_id": "Master-CM333918",
+      "orphan_child_name": "ENT & ALLERGY ASSOC.",
+      "orphan_group_id": "Master-CM333918",
+      "orphan_group_name": "ENT & ALLERGY ASSOC.: Master-CM333918",
+      "addr": "3020 Westchester Ave",
+      "city": "Purchase",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1064374",
+      "anchor_name": "SMILE DOCTORS: Master-CM1064374",
+      "anchor_locs": 21,
+      "orphan_child_id": "Master-CM866835",
+      "orphan_child_name": "DR. JARED S.PERCYZ D.D.S.",
+      "orphan_group_id": "Master-CM866835",
+      "orphan_group_name": "DR. JARED S.PERCYZ D.D.S.: Master-CM866835",
+      "addr": "27 Meriden Ave",
+      "city": "Southington",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1064374",
+      "anchor_name": "SMILE DOCTORS: Master-CM1064374",
+      "anchor_locs": 21,
+      "orphan_child_id": "Master-CM1377742",
+      "orphan_child_name": "DR HOWARD LEVINBOOK",
+      "orphan_group_id": "Master-CM1377742",
+      "orphan_group_name": "DR HOWARD LEVINBOOK: Master-CM1377742",
+      "addr": "27 Meriden Ave Suite 1b",
+      "city": "Southington",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1064374",
+      "anchor_name": "SMILE DOCTORS: Master-CM1064374",
+      "anchor_locs": 21,
+      "orphan_child_id": "Master-CM17699391",
+      "orphan_child_name": "CENTER FOR DENTAL EXCELLENCE",
+      "orphan_group_id": "Master-CM17699391",
+      "orphan_group_name": "CENTER FOR DENTAL EXCELLENCE: Master-CM17699391",
+      "addr": "340 Bantam Rd",
+      "city": "Litchfield",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1064374",
+      "anchor_name": "SMILE DOCTORS: Master-CM1064374",
+      "anchor_locs": 21,
+      "orphan_child_id": "Master-CM115805",
+      "orphan_child_name": "TUYEN NGUYEN",
+      "orphan_group_id": "Master-CM115805",
+      "orphan_group_name": "TUYEN NGUYEN: Master-CM115805",
+      "addr": "477 Connecticut Blvd",
+      "city": "East Hartford",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1064374",
+      "anchor_name": "SMILE DOCTORS: Master-CM1064374",
+      "anchor_locs": 21,
+      "orphan_child_id": "Master-CM095984",
+      "orphan_child_name": "RI ORTHODONTIC GROUP",
+      "orphan_group_id": "Master-CM095984",
+      "orphan_group_name": "RI ORTHODONTIC GROUP: Master-CM095984",
+      "addr": "24 Salt Pond Rd Ste A3",
+      "city": "Wakefield",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1064374",
+      "anchor_name": "SMILE DOCTORS: Master-CM1064374",
+      "anchor_locs": 21,
+      "orphan_child_id": "Master-CM329106",
+      "orphan_child_name": "DR DONNA HAGERTY",
+      "orphan_group_id": "Master-CM329106",
+      "orphan_group_name": "DR DONNA HAGERTY: Master-CM329106",
+      "addr": "24 Salt Pond Rd Ste E3",
+      "city": "Wakefield",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1064374",
+      "anchor_name": "SMILE DOCTORS: Master-CM1064374",
+      "anchor_locs": 21,
+      "orphan_child_id": "Master-CM135319",
+      "orphan_child_name": "BLAKE WINOKUR",
+      "orphan_group_id": "Master-CM135319",
+      "orphan_group_name": "BLAKE WINOKUR: Master-CM135319",
+      "addr": "53 North St",
+      "city": "Danbury",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1064374",
+      "anchor_name": "SMILE DOCTORS: Master-CM1064374",
+      "anchor_locs": 21,
+      "orphan_child_id": "Master-CM131919",
+      "orphan_child_name": "JENNIFER A BOYCE DMD",
+      "orphan_group_id": "Master-CM131919",
+      "orphan_group_name": "JENNIFER A BOYCE DMD: Master-CM131919",
+      "addr": "53 North St Ste 3",
+      "city": "Danbury",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1064374",
+      "anchor_name": "SMILE DOCTORS: Master-CM1064374",
+      "anchor_locs": 21,
+      "orphan_child_id": "Master-CM17785066",
+      "orphan_child_name": "SD DANBURY - NORTH",
+      "orphan_group_id": "Master-CM17785066",
+      "orphan_group_name": "SD DANBURY - NORTH: Master-CM17785066",
+      "addr": "53 North St Ste 4",
+      "city": "Danbury",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM048310",
+      "anchor_name": "COLUMBIA DENTAL: Master-CM048310",
+      "anchor_locs": 26,
+      "orphan_child_id": "Master-CM2045017",
+      "orphan_child_name": "COLUMBIA DENTAL",
+      "orphan_group_id": "Master-CM2045017",
+      "orphan_group_name": "COLUMBIA DENTAL: Master-CM2045017",
+      "addr": "1389 W Main St Ste 212",
+      "city": "Waterbury",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1618511",
+      "anchor_name": "AFFINITY DENTAL MANAGEMENT: Master-CM1618511",
+      "anchor_locs": 16,
+      "orphan_child_id": "Master-CM89144",
+      "orphan_child_name": "FARMINGTON VALLEY ORTHODONTIC ASSOCIATES",
+      "orphan_group_id": "Master-CM89144",
+      "orphan_group_name": "FARMINGTON VALLEY ORTHODONTIC ASSOCIATES: Master-CM89144",
+      "addr": "20 W Avon Rd",
+      "city": "Avon",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1618511",
+      "anchor_name": "AFFINITY DENTAL MANAGEMENT: Master-CM1618511",
+      "anchor_locs": 16,
+      "orphan_child_id": "Master-CM119788",
+      "orphan_child_name": "THOMSEN FAMILY DENTISTRY",
+      "orphan_group_id": "Master-CM119788",
+      "orphan_group_name": "THOMSEN FAMILY DENTISTRY: Master-CM119788",
+      "addr": "55 Town Line Rd Ste 202",
+      "city": "Wethersfield",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1618511",
+      "anchor_name": "AFFINITY DENTAL MANAGEMENT: Master-CM1618511",
+      "anchor_locs": 16,
+      "orphan_child_id": "Master-CM186878",
+      "orphan_child_name": "ROCKY HILL DENTAL ASSOCIATES",
+      "orphan_group_id": "Master-CM186878",
+      "orphan_group_name": "ROCKY HILL DENTAL ASSOCIATES: Master-CM186878",
+      "addr": "55 Town Line Rd Ste 100",
+      "city": "Wethersfield",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1618511",
+      "anchor_name": "AFFINITY DENTAL MANAGEMENT: Master-CM1618511",
+      "anchor_locs": 16,
+      "orphan_child_id": "Master-CM129830",
+      "orphan_child_name": "CT PERIODONTAL SPECIALISTS, LLC",
+      "orphan_group_id": "Master-CM129830",
+      "orphan_group_name": "CT PERIODONTAL SPECIALISTS, LLC: Master-CM129830",
+      "addr": "360 Tolland Tpke Ste 1-C",
+      "city": "Manchester",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1618511",
+      "anchor_name": "AFFINITY DENTAL MANAGEMENT: Master-CM1618511",
+      "anchor_locs": 16,
+      "orphan_child_id": "Master-CM076593",
+      "orphan_child_name": "RONALD J ALBERT DMD",
+      "orphan_group_id": "Master-CM076593",
+      "orphan_group_name": "RONALD J ALBERT DMD: Master-CM076593",
+      "addr": "360 Tolland Tpke Ste 2b",
+      "city": "Manchester",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1618511",
+      "anchor_name": "AFFINITY DENTAL MANAGEMENT: Master-CM1618511",
+      "anchor_locs": 16,
+      "orphan_child_id": "Master-CM071824",
+      "orphan_child_name": "ANDREW S BREIMAN AND ASSOCIATES",
+      "orphan_group_id": "Master-CM071824",
+      "orphan_group_name": "ANDREW S BREIMAN AND ASSOCIATES: Master-CM071824",
+      "addr": "35 E Grassy Sprain Rd",
+      "city": "Yonkers",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1918118",
+      "anchor_name": "HASKINS, DR JEFFREY W: Master-CM1918118",
+      "anchor_locs": 9,
+      "orphan_child_id": "Master-CM1676722",
+      "orphan_child_name": "FORTIER LAWRENCE DR",
+      "orphan_group_id": "Master-CM1676722",
+      "orphan_group_name": "FORTIER LAWRENCE DR: Master-CM1676722",
+      "addr": "465 Silas Deane Hwy",
+      "city": "Wethersfield",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM169871",
+      "anchor_name": "MB2: Master-CM169871",
+      "anchor_locs": 8,
+      "orphan_child_id": "Master-CM179329",
+      "orphan_child_name": "FELDMAN ORTHODONTICS",
+      "orphan_group_id": "Master-CM179329",
+      "orphan_group_name": "FELDMAN ORTHODONTICS: Master-CM179329",
+      "addr": "435 Highland Ave Ste 200",
+      "city": "Cheshire",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM169871",
+      "anchor_name": "MB2: Master-CM169871",
+      "anchor_locs": 8,
+      "orphan_child_id": "Master-CM701840",
+      "orphan_child_name": "GREATER WATERBURY ORAL AND MAXILLOFACIAL SURGEONS",
+      "orphan_group_id": "Master-CM701840",
+      "orphan_group_name": "GREATER WATERBURY ORAL AND MAXILLOFACIAL SURGEONS: Master-CM701840",
+      "addr": "435 Highland Ave",
+      "city": "Cheshire",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM673640",
+      "anchor_name": "THE SMILIST: Master-CM673640",
+      "anchor_locs": 9,
+      "orphan_child_id": "Master-CM152428",
+      "orphan_child_name": "THOMAS VALLUZZO DMD",
+      "orphan_group_id": "Master-CM152428",
+      "orphan_group_name": "THOMAS VALLUZZO DMD: Master-CM152428",
+      "addr": "57 North St Ste 318",
+      "city": "Danbury",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM673640",
+      "anchor_name": "THE SMILIST: Master-CM673640",
+      "anchor_locs": 9,
+      "orphan_child_id": "Master-CM054796",
+      "orphan_child_name": "STEPHEN KOWALCZYK",
+      "orphan_group_id": "Master-CM054796",
+      "orphan_group_name": "STEPHEN KOWALCZYK: Master-CM054796",
+      "addr": "57 North St",
+      "city": "Danbury",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM673640",
+      "anchor_name": "THE SMILIST: Master-CM673640",
+      "anchor_locs": 9,
+      "orphan_child_id": "Master-CM191344",
+      "orphan_child_name": "JOHN F BARTA DMD",
+      "orphan_group_id": "Master-CM191344",
+      "orphan_group_name": "JOHN F BARTA DMD: Master-CM191344",
+      "addr": "57 North St",
+      "city": "Danbury",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM673640",
+      "anchor_name": "THE SMILIST: Master-CM673640",
+      "anchor_locs": 9,
+      "orphan_child_id": "Master-CM352218",
+      "orphan_child_name": "IVAN K WEINSTEIN DDS",
+      "orphan_group_id": "Master-CM352218",
+      "orphan_group_name": "IVAN K WEINSTEIN DDS: Master-CM352218",
+      "addr": "57 North St Ste 122a",
+      "city": "Danbury",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM128801",
+      "anchor_name": "DOCTOR DENTAL: Master-CM128801",
+      "anchor_locs": 18,
+      "orphan_child_id": "Master-CM17758596",
+      "orphan_child_name": "BRIGHT SMILES",
+      "orphan_group_id": "Master-CM17758596",
+      "orphan_group_name": "BRIGHT SMILES: Master-CM17758596",
+      "addr": "18 Kane St",
+      "city": "West Hartford",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM94845",
+      "anchor_name": "PLUM DENTAL: Master-CM94845",
+      "anchor_locs": 26,
+      "orphan_child_id": "Master-CM1237563",
+      "orphan_child_name": "ROCKY HILL DENTAL GROUP PLLC",
+      "orphan_group_id": "Master-CM1237563",
+      "orphan_group_name": "ROCKY HILL DENTAL GROUP PLLC: Master-CM1237563",
+      "addr": "412 Cromwell Ave",
+      "city": "Rocky Hill",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM94845",
+      "anchor_name": "PLUM DENTAL: Master-CM94845",
+      "anchor_locs": 26,
+      "orphan_child_id": "Master-CM385952",
+      "orphan_child_name": "RON CAPALBO",
+      "orphan_group_id": "Master-CM052034",
+      "orphan_group_name": "COUSINS,CONSTANCE DDS: Master-CM052034",
+      "addr": "130 Granite St",
+      "city": "Westerly",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM94845",
+      "anchor_name": "PLUM DENTAL: Master-CM94845",
+      "anchor_locs": 26,
+      "orphan_child_id": "Master-CM230703",
+      "orphan_child_name": "DR ELLIOT H KIMMEL & ASSOCIATES PC",
+      "orphan_group_id": "Master-CM230703",
+      "orphan_group_name": "DR ELLIOT H KIMMEL & ASSOCIATES PC: Master-CM230703",
+      "addr": "27 Broad St",
+      "city": "New London",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM94845",
+      "anchor_name": "PLUM DENTAL: Master-CM94845",
+      "anchor_locs": 26,
+      "orphan_child_id": "Master-CM061279",
+      "orphan_child_name": "ASCHAFFENBURG & ENGLISH",
+      "orphan_group_id": "Master-CM061279",
+      "orphan_group_name": "ASCHAFFENBURG & ENGLISH: Master-CM061279",
+      "addr": "222 Jefferson Blvd Ste 301",
+      "city": "Warwick",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM198796",
+      "anchor_name": "COUNTY DENTAL GROUP: Master-CM198796",
+      "anchor_locs": 4,
+      "orphan_child_id": "Master-CM077364",
+      "orphan_child_name": "CENTER FOR HOLISTIC DENTISTRY",
+      "orphan_group_id": "Master-CM077364",
+      "orphan_group_name": "CENTER FOR HOLISTIC DENTISTRY: Master-CM077364",
+      "addr": "2649 Strang Blvd Ste 201",
+      "city": "Yorktown Heights",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM701326",
+      "anchor_name": "SMILE SOURCE: Master-CM701326",
+      "anchor_locs": 9,
+      "orphan_child_id": "Master-CM888724",
+      "orphan_child_name": "USE 609993 DR ROBERT A KIEL",
+      "orphan_group_id": "Master-CM888724",
+      "orphan_group_name": "USE 609993 DR ROBERT A KIEL: Master-CM888724",
+      "addr": "281 Hartford Tpke",
+      "city": "Vernon",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM701326",
+      "anchor_name": "SMILE SOURCE: Master-CM701326",
+      "anchor_locs": 9,
+      "orphan_child_id": "Master-CM17713661",
+      "orphan_child_name": "BABAR R KHAN DMD",
+      "orphan_group_id": "Master-CM17713661",
+      "orphan_group_name": "BABAR R KHAN DMD: Master-CM17713661",
+      "addr": "281 Hartford Tpke Ste 210",
+      "city": "Vernon",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-Unmatched",
+      "anchor_name": "UNMATCHED ACCOUNT: Master-Unmatched",
+      "anchor_locs": 27,
+      "orphan_child_id": "Master-CM17720541",
+      "orphan_child_name": "CAPE COD PERIO",
+      "orphan_group_id": "Master-CM17720541",
+      "orphan_group_name": "CAPE COD PERIO: Master-CM17720541",
+      "addr": "244 Willow St Ste 1 Dr Joe Nguyen",
+      "city": "Yarmouth Port",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-Unmatched",
+      "anchor_name": "UNMATCHED ACCOUNT: Master-Unmatched",
+      "anchor_locs": 27,
+      "orphan_child_id": "Master-CM086717",
+      "orphan_child_name": "KEVIN MICHAEL KENNEDY DDS",
+      "orphan_group_id": "Master-CM086717",
+      "orphan_group_name": "KEVIN MICHAEL KENNEDY DDS: Master-CM086717",
+      "addr": "3193 Main St",
+      "city": "Bridgeport",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-Unmatched",
+      "anchor_name": "UNMATCHED ACCOUNT: Master-Unmatched",
+      "anchor_locs": 27,
+      "orphan_child_id": "Master-CM075425",
+      "orphan_child_name": "JOONG S LEE DDS",
+      "orphan_group_id": "Master-CM075425",
+      "orphan_group_name": "JOONG S LEE DDS: Master-CM075425",
+      "addr": "Ste 3-H 123 York St",
+      "city": "New Haven",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-Unmatched",
+      "anchor_name": "UNMATCHED ACCOUNT: Master-Unmatched",
+      "anchor_locs": 27,
+      "orphan_child_id": "Master-CM859041",
+      "orphan_child_name": "USE 44882 ALAN FRIEDLER",
+      "orphan_group_id": "Master-CM234359",
+      "orphan_group_name": "NEW HAVEN ORAL MAXILLOFACIAL SURGERY: Master-CM234359",
+      "addr": "123 York St Ste 1a",
+      "city": "New Haven",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-Unmatched",
+      "anchor_name": "UNMATCHED ACCOUNT: Master-Unmatched",
+      "anchor_locs": 27,
+      "orphan_child_id": "Master-CM261267",
+      "orphan_child_name": "DAVID J. WOHL, DDS",
+      "orphan_group_id": "Master-CM261267",
+      "orphan_group_name": "DAVID J. WOHL, DDS: Master-CM261267",
+      "addr": "111 Beach Rd 1st Floor",
+      "city": "Fairfield",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-Unmatched",
+      "anchor_name": "UNMATCHED ACCOUNT: Master-Unmatched",
+      "anchor_locs": 27,
+      "orphan_child_id": "Master-CM1086508",
+      "orphan_child_name": "THUNDERMIST HEALTH ASSOC INC",
+      "orphan_group_id": "Master-CM1086508",
+      "orphan_group_name": "THUNDERMIST HEALTH ASSOC INC: Master-CM1086508",
+      "addr": "4th Fl 25 John A Cummings Way",
+      "city": "Woonsocket",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-Unmatched",
+      "anchor_name": "UNMATCHED ACCOUNT: Master-Unmatched",
+      "anchor_locs": 27,
+      "orphan_child_id": "Master-CM286923",
+      "orphan_child_name": "HARRIS  HARNICK",
+      "orphan_group_id": "Master-CM286923",
+      "orphan_group_name": "HARRIS  HARNICK: Master-CM286923",
+      "addr": "4th Fl 25 John A Cummings Way",
+      "city": "Woonsocket",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-Unmatched",
+      "anchor_name": "UNMATCHED ACCOUNT: Master-Unmatched",
+      "anchor_locs": 27,
+      "orphan_child_id": "Master-CM105155",
+      "orphan_child_name": "BARNETT & SHOFLICK FAMILY DENTISTRY",
+      "orphan_group_id": "Master-CM105155",
+      "orphan_group_name": "BARNETT & SHOFLICK FAMILY DENTISTRY: Master-CM105155",
+      "addr": "2139 Silas Deane Hwy Ste 102",
+      "city": "Rocky Hill",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-Unmatched",
+      "anchor_name": "UNMATCHED ACCOUNT: Master-Unmatched",
+      "anchor_locs": 27,
+      "orphan_child_id": "Master-CM1374737",
+      "orphan_child_name": "SHOFLICK & MCCABE PLLC",
+      "orphan_group_id": "Master-CM1374737",
+      "orphan_group_name": "SHOFLICK & MCCABE PLLC: Master-CM1374737",
+      "addr": "2139 Silas Deane Hwy Ste 206a",
+      "city": "Rocky Hill",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-Unmatched",
+      "anchor_name": "UNMATCHED ACCOUNT: Master-Unmatched",
+      "anchor_locs": 27,
+      "orphan_child_id": "Master-CM185758",
+      "orphan_child_name": "FUSCO FAMILY DENTISTRY",
+      "orphan_group_id": "Master-CM185758",
+      "orphan_group_name": "FUSCO FAMILY DENTISTRY: Master-CM185758",
+      "addr": "2139 Silas Deane Hwy Ste 200",
+      "city": "Rocky Hill",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-Unmatched",
+      "anchor_name": "UNMATCHED ACCOUNT: Master-Unmatched",
+      "anchor_locs": 27,
+      "orphan_child_id": "Master-CM296382",
+      "orphan_child_name": "DRS MH CHANG AND YW CHANG DDS",
+      "orphan_group_id": "Master-CM296382",
+      "orphan_group_name": "DRS MH CHANG AND YW CHANG DDS: Master-CM296382",
+      "addr": "30 E Hartsdale Ave Joeming Jamie Chan",
+      "city": "Hartsdale",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-Unmatched",
+      "anchor_name": "UNMATCHED ACCOUNT: Master-Unmatched",
+      "anchor_locs": 27,
+      "orphan_child_id": "Master-CM375594",
+      "orphan_child_name": "NEWINGTON FAMILY DENTISTRY",
+      "orphan_group_id": "Master-CM375594",
+      "orphan_group_name": "NEWINGTON FAMILY DENTISTRY: Master-CM375594",
+      "addr": "365 Willard Ave Ste 2f",
+      "city": "Newington",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-Unmatched",
+      "anchor_name": "UNMATCHED ACCOUNT: Master-Unmatched",
+      "anchor_locs": 27,
+      "orphan_child_id": "Master-CM866145",
+      "orphan_child_name": "THEODORE J ADAMIDIS DMD",
+      "orphan_group_id": "Master-CM866145",
+      "orphan_group_name": "THEODORE J ADAMIDIS DMD: Master-CM866145",
+      "addr": "365 Willard Ave",
+      "city": "Newington",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-Unmatched",
+      "anchor_name": "UNMATCHED ACCOUNT: Master-Unmatched",
+      "anchor_locs": 27,
+      "orphan_child_id": "Master-CM1844704",
+      "orphan_child_name": "DR THEODORE ADAMIDIS",
+      "orphan_group_id": "Master-CM1844704",
+      "orphan_group_name": "DR THEODORE ADAMIDIS: Master-CM1844704",
+      "addr": "365 Willard Ave Ste 2",
+      "city": "Newington",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-Unmatched",
+      "anchor_name": "UNMATCHED ACCOUNT: Master-Unmatched",
+      "anchor_locs": 27,
+      "orphan_child_id": "Master-CM563585",
+      "orphan_child_name": "KENNETH R. FINN DMD, LLC",
+      "orphan_group_id": "Master-CM563585",
+      "orphan_group_name": "KENNETH R. FINN DMD, LLC: Master-CM563585",
+      "addr": "530 Hopmeadow St Ste 110",
+      "city": "Simsbury",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-Unmatched",
+      "anchor_name": "UNMATCHED ACCOUNT: Master-Unmatched",
+      "anchor_locs": 27,
+      "orphan_child_id": "Master-CM180759",
+      "orphan_child_name": "OFC OF MARK DANIEL POCHEBIT DDS",
+      "orphan_group_id": "Master-CM180759",
+      "orphan_group_name": "OFC OF MARK DANIEL POCHEBIT DDS: Master-CM180759",
+      "addr": "151 Waterman St",
+      "city": "Providence",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-Unmatched",
+      "anchor_name": "UNMATCHED ACCOUNT: Master-Unmatched",
+      "anchor_locs": 27,
+      "orphan_child_id": "Master-CM123715",
+      "orphan_child_name": "PETER A PAYNE DMD",
+      "orphan_group_id": "Master-CM123715",
+      "orphan_group_name": "PETER A PAYNE DMD: Master-CM123715",
+      "addr": "151 Waterman St",
+      "city": "Providence",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-Unmatched",
+      "anchor_name": "UNMATCHED ACCOUNT: Master-Unmatched",
+      "anchor_locs": 27,
+      "orphan_child_id": "Master-CM1397093",
+      "orphan_child_name": "GRANDBY DENTAL CENTER",
+      "orphan_group_id": "Master-CM1397093",
+      "orphan_group_name": "GRANDBY DENTAL CENTER: Master-CM1397093",
+      "addr": "41 Hartford Ave",
+      "city": "Granby",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-Unmatched",
+      "anchor_name": "UNMATCHED ACCOUNT: Master-Unmatched",
+      "anchor_locs": 27,
+      "orphan_child_id": "Master-CM045913",
+      "orphan_child_name": "WILLIAM B CHAN DMD INC",
+      "orphan_group_id": "Master-CM085819",
+      "orphan_group_name": "NEXT LEVEL: Master-CM085819",
+      "addr": "2359 Mendon Rd",
+      "city": "Cumberland",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1281472",
+      "anchor_name": "PROHEALTH DENTAL MANAGEMENT: Master-CM1281472",
+      "anchor_locs": 9,
+      "orphan_child_id": "Master-CM2007062",
+      "orphan_child_name": "NEW YORK EYE AND FACE",
+      "orphan_group_id": "Master-CM2007062",
+      "orphan_group_name": "NEW YORK EYE AND FACE: Master-CM2007062",
+      "addr": "244 Westchester Ave Ste 111",
+      "city": "White Plains",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1513664",
+      "anchor_name": "ROBERT J KOLTS DDS: Master-CM1513664",
+      "anchor_locs": 8,
+      "orphan_child_id": "Master-CM1908413",
+      "orphan_child_name": "SAMUEL SCHUSTER DDS",
+      "orphan_group_id": "Master-CM1908413",
+      "orphan_group_name": "SAMUEL SCHUSTER DDS: Master-CM1908413",
+      "addr": "11 Medical Park Dr Ste 106",
+      "city": "Pomona",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1513664",
+      "anchor_name": "ROBERT J KOLTS DDS: Master-CM1513664",
+      "anchor_locs": 8,
+      "orphan_child_id": "Master-CM948766",
+      "orphan_child_name": "JONATHAN R TIGER",
+      "orphan_group_id": "Master-CM948766",
+      "orphan_group_name": "JONATHAN R TIGER: Master-CM948766",
+      "addr": "11 Medical Park Dr Ste 202",
+      "city": "Pomona",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1513664",
+      "anchor_name": "ROBERT J KOLTS DDS: Master-CM1513664",
+      "anchor_locs": 8,
+      "orphan_child_id": "Master-CM189754",
+      "orphan_child_name": "JONATHAN TIGER",
+      "orphan_group_id": "Master-CM189754",
+      "orphan_group_name": "JONATHAN TIGER: Master-CM189754",
+      "addr": "11 Medical Park Dr Ste 202",
+      "city": "Pomona",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1513664",
+      "anchor_name": "ROBERT J KOLTS DDS: Master-CM1513664",
+      "anchor_locs": 8,
+      "orphan_child_id": "Master-CM139615",
+      "orphan_child_name": "PARKVIEW FAMILY DENTAL, PC",
+      "orphan_group_id": "Master-CM139615",
+      "orphan_group_name": "PARKVIEW FAMILY DENTAL, PC: Master-CM139615",
+      "addr": "Suite 201 11 Medical Park Dr.",
+      "city": "Pomona",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1513664",
+      "anchor_name": "ROBERT J KOLTS DDS: Master-CM1513664",
+      "anchor_locs": 8,
+      "orphan_child_id": "Master-CM617770",
+      "orphan_child_name": "AESTHETIC PODIATRY AND SPORTS",
+      "orphan_group_id": "Master-CM617770",
+      "orphan_group_name": "AESTHETIC PODIATRY AND SPORTS: Master-CM617770",
+      "addr": "10 Mitchell Pl Ste 105",
+      "city": "White Plains",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM947226",
+      "anchor_name": "SELECT DENTAL MANAGEMENT: Master-CM947226",
+      "anchor_locs": 10,
+      "orphan_child_id": "Master-CM141951",
+      "orphan_child_name": "COSMETIC AND GENERAL DENTISTRY",
+      "orphan_group_id": "Master-CM1613697",
+      "orphan_group_name": "SELECT DENTAL MANAGEMENT: Master-CM1613697",
+      "addr": "115 N Main St",
+      "city": "New City",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1836151",
+      "anchor_name": "SPECIALTY 1 PARTNERS: Master-CM1836151",
+      "anchor_locs": 17,
+      "orphan_child_id": "Master-CM173275",
+      "orphan_child_name": "ADVANCED ENDODONTICS OF CT PC",
+      "orphan_group_id": "Master-CM173275",
+      "orphan_group_name": "ADVANCED ENDODONTICS OF CT PC: Master-CM173275",
+      "addr": "546 S Broad St Ste 3b",
+      "city": "Meriden",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1836151",
+      "anchor_name": "SPECIALTY 1 PARTNERS: Master-CM1836151",
+      "anchor_locs": 17,
+      "orphan_child_id": "Master-CM270277",
+      "orphan_child_name": "ADVANCED EYE PHYSICIANS",
+      "orphan_group_id": "Master-CM270277",
+      "orphan_group_name": "ADVANCED EYE PHYSICIANS: Master-CM270277",
+      "addr": "546 S Broad St Ste 1d",
+      "city": "Meriden",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1836151",
+      "anchor_name": "SPECIALTY 1 PARTNERS: Master-CM1836151",
+      "anchor_locs": 17,
+      "orphan_child_id": "Master-CM080714",
+      "orphan_child_name": "RICHARD L. KALMANS, DDS",
+      "orphan_group_id": "Master-CM080714",
+      "orphan_group_name": "RICHARD L. KALMANS, DDS: Master-CM080714",
+      "addr": "90 Morgan St Ste 305",
+      "city": "Stamford",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1836151",
+      "anchor_name": "SPECIALTY 1 PARTNERS: Master-CM1836151",
+      "anchor_locs": 17,
+      "orphan_child_id": "Master-CM080098",
+      "orphan_child_name": "JOSEPH SCIARRINO DDS",
+      "orphan_group_id": "Master-CM080098",
+      "orphan_group_name": "JOSEPH SCIARRINO DDS: Master-CM080098",
+      "addr": "90 Morgan St Ste 308",
+      "city": "Stamford",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1836151",
+      "anchor_name": "SPECIALTY 1 PARTNERS: Master-CM1836151",
+      "anchor_locs": 17,
+      "orphan_child_id": "Master-CM168854",
+      "orphan_child_name": "GORDON & MALTZ",
+      "orphan_group_id": "Master-CM1913436",
+      "orphan_group_name": "END045 CUSTOM ENDODONTICS MINO: Master-CM1913436",
+      "addr": "19 Squadron Blvd",
+      "city": "New City",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1836151",
+      "anchor_name": "SPECIALTY 1 PARTNERS: Master-CM1836151",
+      "anchor_locs": 17,
+      "orphan_child_id": "Master-CM910199",
+      "orphan_child_name": "IRWIN STEVEN SCHIFF DDS",
+      "orphan_group_id": "Master-CM910199",
+      "orphan_group_name": "IRWIN STEVEN SCHIFF DDS: Master-CM910199",
+      "addr": "22 Mulberry St",
+      "city": "Middletown",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1836151",
+      "anchor_name": "SPECIALTY 1 PARTNERS: Master-CM1836151",
+      "anchor_locs": 17,
+      "orphan_child_id": "Master-CM107677",
+      "orphan_child_name": "JOHN THOMAS LYNCH DMD",
+      "orphan_group_id": "Master-CM107677",
+      "orphan_group_name": "JOHN THOMAS LYNCH DMD: Master-CM107677",
+      "addr": "22 Mulberry St Ste 1b",
+      "city": "Middletown",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM172041",
+      "anchor_name": "ROLIGO DENTAL: Master-CM172041",
+      "anchor_locs": 4,
+      "orphan_child_id": "Master-CM064815",
+      "orphan_child_name": "CANTERINO DENTAL ASSOCIATES",
+      "orphan_group_id": "Master-CM161620",
+      "orphan_group_name": "YOUR SMILE GROUP: Master-CM161620",
+      "addr": "984 N Broadway Ste 408",
+      "city": "Yonkers",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM172041",
+      "anchor_name": "ROLIGO DENTAL: Master-CM172041",
+      "anchor_locs": 4,
+      "orphan_child_id": "Master-CM062882",
+      "orphan_child_name": "EDWARD F SPIEGEL DDS",
+      "orphan_group_id": "Master-CM062882",
+      "orphan_group_name": "EDWARD F SPIEGEL DDS: Master-CM062882",
+      "addr": "984 N Broadway",
+      "city": "Yonkers",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM172041",
+      "anchor_name": "ROLIGO DENTAL: Master-CM172041",
+      "anchor_locs": 4,
+      "orphan_child_id": "Master-CM057526",
+      "orphan_child_name": "THOMAS BAZDEKIS",
+      "orphan_group_id": "Master-CM057526",
+      "orphan_group_name": "THOMAS BAZDEKIS: Master-CM057526",
+      "addr": "984 N Broadway Ste L-03",
+      "city": "Yonkers",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1493456",
+      "anchor_name": "LAKEVIEW DENTAL: Master-CM1493456",
+      "anchor_locs": 5,
+      "orphan_child_id": "Master-CM107289",
+      "orphan_child_name": "STRATFORD ORTHODONTICS PC",
+      "orphan_group_id": "Master-CM107289",
+      "orphan_group_name": "STRATFORD ORTHODONTICS PC: Master-CM107289",
+      "addr": "2499 Main St Ste 1",
+      "city": "Stratford",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1493456",
+      "anchor_name": "LAKEVIEW DENTAL: Master-CM1493456",
+      "anchor_locs": 5,
+      "orphan_child_id": "Master-CM047170",
+      "orphan_child_name": "STRATFORD ORTHODONTICS",
+      "orphan_group_id": "Master-CM047170",
+      "orphan_group_name": "STRATFORD ORTHODONTICS: Master-CM047170",
+      "addr": "2499 Main St Unit D",
+      "city": "Stratford",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM208039",
+      "anchor_name": "JON-PAUL VANREGENMRTER: Master-CM208039",
+      "anchor_locs": 3,
+      "orphan_child_id": "Master-CM224709",
+      "orphan_child_name": "DENTAL ASSOCS OF WAKEFIELD",
+      "orphan_group_id": "Master-CM224709",
+      "orphan_group_name": "DENTAL ASSOCS OF WAKEFIELD: Master-CM224709",
+      "addr": "26 S County Commons Way Ste A6",
+      "city": "Wakefield",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM17673266",
+      "anchor_name": "PLUM DENTAL GROUP LLC: Master-CM17673266",
+      "anchor_locs": 11,
+      "orphan_child_id": "Master-CM268401",
+      "orphan_child_name": "LEE W MCNEISH DMD",
+      "orphan_group_id": "Master-CM268401",
+      "orphan_group_name": "LEE W MCNEISH DMD: Master-CM268401",
+      "addr": "650 Chase Pkwy Ste 1",
+      "city": "Waterbury",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM074662",
+      "anchor_name": "NORTH AMERICAN DENTAL GROUP: Master-CM074662",
+      "anchor_locs": 16,
+      "orphan_child_id": "Master-CM17685416",
+      "orphan_child_name": "GUERRINO DENTISTRY",
+      "orphan_group_id": "Master-CM17685416",
+      "orphan_group_name": "GUERRINO DENTISTRY: Master-CM17685416",
+      "addr": "455 Central Park Ave Ste 2",
+      "city": "Scarsdale",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM074662",
+      "anchor_name": "NORTH AMERICAN DENTAL GROUP: Master-CM074662",
+      "anchor_locs": 16,
+      "orphan_child_id": "Master-CM069903",
+      "orphan_child_name": "ANN ECKHOFF",
+      "orphan_group_id": "Master-CM069903",
+      "orphan_group_name": "ANN ECKHOFF: Master-CM069903",
+      "addr": "455 Central Park Ave",
+      "city": "Scarsdale",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM074662",
+      "anchor_name": "NORTH AMERICAN DENTAL GROUP: Master-CM074662",
+      "anchor_locs": 16,
+      "orphan_child_id": "Master-CM163337",
+      "orphan_child_name": "ALBERT TSAI",
+      "orphan_group_id": "Master-CM163337",
+      "orphan_group_name": "ALBERT TSAI: Master-CM163337",
+      "addr": "455 Central Park Ave",
+      "city": "Scarsdale",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM074662",
+      "anchor_name": "NORTH AMERICAN DENTAL GROUP: Master-CM074662",
+      "anchor_locs": 16,
+      "orphan_child_id": "Master-CM944411",
+      "orphan_child_name": "GENERATION FAMILY DENTAL L",
+      "orphan_group_id": "Master-CM944411",
+      "orphan_group_name": "GENERATION FAMILY DENTAL L: Master-CM944411",
+      "addr": "455 Central Park Ave Ste 3",
+      "city": "Scarsdale",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM074662",
+      "anchor_name": "NORTH AMERICAN DENTAL GROUP: Master-CM074662",
+      "anchor_locs": 16,
+      "orphan_child_id": "Master-CM252714",
+      "orphan_child_name": "MADELON RUTH MURPHY DMD",
+      "orphan_group_id": "Master-CM252714",
+      "orphan_group_name": "MADELON RUTH MURPHY DMD: Master-CM252714",
+      "addr": "455 Central Park Ave Ste 309",
+      "city": "Scarsdale",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM168437",
+      "anchor_name": "ALPHA DENTAL: Master-CM168437",
+      "anchor_locs": 3,
+      "orphan_child_id": "Master-CM1788916",
+      "orphan_child_name": "ALPHA DENTAL - NO. DARTMOU",
+      "orphan_group_id": "Master-CM1788916",
+      "orphan_group_name": "ALPHA DENTAL - NO. DARTMOU: Master-CM1788916",
+      "addr": "145 Faunce Corner Mall Rd",
+      "city": "North Dartmouth",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM1004874",
+      "anchor_name": "THE HRHCARE HEALTH CENTER AT POUGHKEEPSIE: Master-CM1004874",
+      "anchor_locs": 4,
+      "orphan_child_id": "Master-CM193514",
+      "orphan_child_name": "JOON S. LEE DDS PC",
+      "orphan_group_id": "Master-CM193514",
+      "orphan_group_name": "JOON S. LEE DDS PC: Master-CM193514",
+      "addr": "503 S Broadway Suite 250",
+      "city": "Yonkers",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM083552",
+      "anchor_name": "WESTCHESTER PUTNAM ENDODONTIC ASSOCIATES: Master-CM083552",
+      "anchor_locs": 3,
+      "orphan_child_id": "Master-CM305441",
+      "orphan_child_name": "STERN ORTHODONTICS",
+      "orphan_group_id": "Master-CM305441",
+      "orphan_group_name": "STERN ORTHODONTICS: Master-CM305441",
+      "addr": "101 S Bedford Rd Ste 214",
+      "city": "Mount Kisco",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM083552",
+      "anchor_name": "WESTCHESTER PUTNAM ENDODONTIC ASSOCIATES: Master-CM083552",
+      "anchor_locs": 3,
+      "orphan_child_id": "Master-CM178209",
+      "orphan_child_name": "GREENWICH SMILES",
+      "orphan_group_id": "Master-CM178209",
+      "orphan_group_name": "GREENWICH SMILES: Master-CM178209",
+      "addr": "25 Valley Dr Ste 2a",
+      "city": "Greenwich",
+      "state": "",
+      "signal": "address-anchor"
+    },
+    {
+      "anchor_id": "Master-CM828468",
+      "anchor_name": "AFFORDABLE CARE: Master-CM828468",
+      "anchor_locs": 6,
+      "orphan_child_id": "Master-CM047258",
+      "orphan_child_name": "JEFFREY HINDIN",
+      "orphan_group_id": "Master-CM047258",
+      "orphan_group_name": "JEFFREY HINDIN: Master-CM047258",
+      "addr": "2 Executive Blvd Ste 206",
+      "city": "Suffern",
+      "state": "",
+      "signal": "address-anchor"
+    }
+  ],
+  "email_matches": [
+    {
+      "domain": "allaboutkidsteeth.com",
+      "child_ids": [
+        "Master-CM704467",
+        "Master-CM721414"
+      ],
+      "parent_ids": [
+        "Master-CM704467",
+        "Master-CM721414"
+      ],
+      "signal": "email-domain"
+    },
+    {
+      "domain": "scarsdaleoralsurgery.com",
+      "child_ids": [
+        "Master-CM071824",
+        "Master-CM097754"
+      ],
+      "parent_ids": [
+        "Master-CM097754",
+        "Master-CM071824"
+      ],
+      "signal": "email-domain"
+    },
+    {
+      "domain": "nyu.edu",
+      "child_ids": [
+        "Master-CM911563",
+        "Master-CM164745",
+        "Master-CM492215"
+      ],
+      "parent_ids": [
+        "Master-CM492215",
+        "Master-CM164745",
+        "Master-CM911563"
+      ],
+      "signal": "email-domain"
+    },
+    {
+      "domain": "ct.gov",
+      "child_ids": [
+        "Master-CM309740",
+        "Master-CM1125672",
+        "Master-CM914234"
+      ],
+      "parent_ids": [
+        "Master-CM309740",
+        "Master-CM914234",
+        "Master-CM1125672"
+      ],
+      "signal": "email-domain"
+    }
+  ],
+  "plum_mismatches": [
+    {
+      "plum_name": "Capalbo, Michael Brian",
+      "kerr_child_id": "Master-CM385952",
+      "kerr_child_name": "RON CAPALBO",
+      "kerr_group_id": "Master-CM052034",
+      "kerr_group_name": "COUSINS,CONSTANCE DDS: Master-CM052034",
+      "addr": "130 Granite St",
+      "city": "Westerly",
+      "signal": "plum-truth-file"
+    },
+    {
+      "plum_name": "Capalbo Dental Grp Of Wickford",
+      "kerr_child_id": "Master-CM052034",
+      "kerr_child_name": "COUSINS,CONSTANCE DDS",
+      "kerr_group_id": "Master-CM052034",
+      "kerr_group_name": "COUSINS,CONSTANCE DDS: Master-CM052034",
+      "addr": "29 Updike Ave",
+      "city": "North Kingstown",
+      "signal": "plum-truth-file"
+    },
+    {
+      "plum_name": "Capitol Hill Dental",
+      "kerr_child_id": "Master-CM051593",
+      "kerr_child_name": "HENRY LEVIN DMD",
+      "kerr_group_id": "Master-CM051593",
+      "kerr_group_name": "HENRY LEVIN DMD: Master-CM051593",
+      "addr": "276 Smith St",
+      "city": "Providence",
+      "signal": "plum-truth-file"
+    },
+    {
+      "plum_name": "Hanzel, Melvin",
+      "kerr_child_id": "Master-CM061279",
+      "kerr_child_name": "ASCHAFFENBURG & ENGLISH",
+      "kerr_group_id": "Master-CM061279",
+      "kerr_group_name": "ASCHAFFENBURG & ENGLISH: Master-CM061279",
+      "addr": "222 Jefferson Blvd Ste 100",
+      "city": "Warwick",
+      "signal": "plum-truth-file"
+    },
+    {
+      "plum_name": "Childrens Dentistry Of RI LLC",
+      "kerr_child_id": "Master-CM385952",
+      "kerr_child_name": "RON CAPALBO",
+      "kerr_group_id": "Master-CM052034",
+      "kerr_group_name": "COUSINS,CONSTANCE DDS: Master-CM052034",
+      "addr": "130 Granite St Ste C",
+      "city": "Westerly",
+      "signal": "plum-truth-file"
+    },
+    {
+      "plum_name": "Warwick   Dr. Ragge",
+      "kerr_child_id": "Master-CM061279",
+      "kerr_child_name": "ASCHAFFENBURG & ENGLISH",
+      "kerr_group_id": "Master-CM061279",
+      "kerr_group_name": "ASCHAFFENBURG & ENGLISH: Master-CM061279",
+      "addr": "222 Jefferson Blvd",
+      "city": "Warwick",
+      "signal": "plum-truth-file"
+    },
+    {
+      "plum_name": "Ocean State Ortho   Westerly",
+      "kerr_child_id": "Master-CM385952",
+      "kerr_child_name": "RON CAPALBO",
+      "kerr_group_id": "Master-CM052034",
+      "kerr_group_name": "COUSINS,CONSTANCE DDS: Master-CM052034",
+      "addr": "130 Granite St",
+      "city": "Westerly",
+      "signal": "plum-truth-file"
+    },
+    {
+      "plum_name": "Family Dentist Inc",
+      "kerr_child_id": "Master-CM1777243",
+      "kerr_child_name": "FAMILY DENTIST INC",
+      "kerr_group_id": "Master-CM1777243",
+      "kerr_group_name": "FAMILY DENTIST INC: Master-CM1777243",
+      "addr": "480 Broadway",
+      "city": "Pawtucket",
+      "signal": "plum-truth-file"
+    },
+    {
+      "plum_name": "Cranston Dental Assoc LLC",
+      "kerr_child_id": "Master-CM606766",
+      "kerr_child_name": "LORI G POLACEK MD",
+      "kerr_group_id": "Master-CM606766",
+      "kerr_group_name": "LORI G POLACEK MD: Master-CM606766",
+      "addr": "2000 Chapel View Blvd Ste 370",
+      "city": "Cranston",
+      "signal": "plum-truth-file"
+    },
+    {
+      "plum_name": "Cranston Dental Assoc LLC",
+      "kerr_child_id": "Master-CM207391",
+      "kerr_child_name": "STEVEN A FAZZINI DMD",
+      "kerr_group_id": "Master-CM207391",
+      "kerr_group_name": "STEVEN A FAZZINI DMD: Master-CM207391",
+      "addr": "2000 Chapel View Blvd Ste 370",
+      "city": "Cranston",
+      "signal": "plum-truth-file"
+    },
+    {
+      "plum_name": "Capalbo, Michael",
+      "kerr_child_id": "Master-CM313121",
+      "kerr_child_name": "STEPHEN T SKOLY",
+      "kerr_group_id": "Master-CM313121",
+      "kerr_group_name": "STEPHEN T SKOLY: Master-CM313121",
+      "addr": "30 Chapel View Blvd Ste 200",
+      "city": "Cranston",
+      "signal": "plum-truth-file"
+    },
+    {
+      "plum_name": "Capalbo, Michael",
+      "kerr_child_id": "Master-CM168023",
+      "kerr_child_name": "DR. WILLIAM LORD DELGIZZO, DMD",
+      "kerr_group_id": "Master-CM168023",
+      "kerr_group_name": "DR. WILLIAM LORD DELGIZZO, DMD: Master-CM168023",
+      "addr": "30 Chapel View Blvd Ste 200",
+      "city": "Cranston",
+      "signal": "plum-truth-file"
+    },
+    {
+      "plum_name": "Marcus Capalbo",
+      "kerr_child_id": "Master-CM230703",
+      "kerr_child_name": "DR ELLIOT H KIMMEL & ASSOCIATES PC",
+      "kerr_group_id": "Master-CM230703",
+      "kerr_group_name": "DR ELLIOT H KIMMEL & ASSOCIATES PC: Master-CM230703",
+      "addr": "27 Broad St",
+      "city": "New London",
+      "signal": "plum-truth-file"
+    },
+    {
+      "plum_name": "Rocky Hill Dental Group PLLC",
+      "kerr_child_id": "Master-CM1237563",
+      "kerr_child_name": "ROCKY HILL DENTAL GROUP PLLC",
+      "kerr_group_id": "Master-CM1237563",
+      "kerr_group_name": "ROCKY HILL DENTAL GROUP PLLC: Master-CM1237563",
+      "addr": "412 Cromwell Ave",
+      "city": "Rocky Hill",
+      "signal": "plum-truth-file"
+    },
+    {
+      "plum_name": "Mansfield Family Dental PLLC",
+      "kerr_child_id": "Master-CM258714",
+      "kerr_child_name": "DR DONALD GRIPPO",
+      "kerr_group_id": "Master-CM1836151",
+      "kerr_group_name": "SPECIALTY 1 PARTNERS: Master-CM1836151",
+      "addr": "10 Higgins Hwy Ste 1",
+      "city": "Mansfield Center",
+      "signal": "plum-truth-file"
+    },
+    {
+      "plum_name": "West Side Dental PLLC",
+      "kerr_child_id": "Master-CM268401",
+      "kerr_child_name": "LEE W MCNEISH DMD",
+      "kerr_group_id": "Master-CM268401",
+      "kerr_group_name": "LEE W MCNEISH DMD: Master-CM268401",
+      "addr": "650 Chase Pkwy Ste 3",
+      "city": "Waterbury",
+      "signal": "plum-truth-file"
+    },
+    {
+      "plum_name": "Cheshire Family Dental, PLLC",
+      "kerr_child_id": "Master-CM171763",
+      "kerr_child_name": "MOON SOO LEE DDS",
+      "kerr_group_id": "Master-CM1191419",
+      "kerr_group_name": "DENTAL ASSOCIATES OF CONNECTICUT",
+      "addr": "1090 Meriden Waterbury Tpke",
+      "city": "Cheshire",
+      "signal": "plum-truth-file"
+    },
+    {
+      "plum_name": "Cheshire Family Dental, PLLC",
+      "kerr_child_id": "Master-CM9817324",
+      "kerr_child_name": "MARC CRAIG DMD",
+      "kerr_group_id": "Master-CM9817324",
+      "kerr_group_name": "MARC CRAIG DMD: Master-CM9817324",
+      "addr": "1090 Meriden Waterbury Tpke",
+      "city": "Cheshire",
+      "signal": "plum-truth-file"
+    },
+    {
+      "plum_name": "Cheshire Family Dental, PLLC",
+      "kerr_child_id": "Master-CM888988",
+      "kerr_child_name": "R & A ASSOCIATES OF CHESHIRE LLC",
+      "kerr_group_id": "Master-CM888988",
+      "kerr_group_name": "R & A ASSOCIATES OF CHESHIRE LLC: Master-CM888988",
+      "addr": "1090 Meriden Waterbury Tpke",
+      "city": "Cheshire",
+      "signal": "plum-truth-file"
+    }
+  ],
+  "clean_groups": {
+    "Master-CM1164885": {
+      "name": "PACIFIC DENTAL SERVICES: Master-CM1164885",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM1256103"
+      ]
+    },
+    "Master-CM741069": {
+      "name": "ADRIANA TORENA, D.M.D., P.C.: Master-CM741069",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM741069"
+      ]
+    },
+    "Master-CM941816": {
+      "name": "CAPALBO DENTAL GROUP: Master-CM941816",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM2007697"
+      ]
+    },
+    "Master-CM217198": {
+      "name": "JEFFREY J. STUCKERT DMD PA: Master-CM217198",
+      "child_count": 2,
+      "child_ids": [
+        "Master-CM945280",
+        "Master-CM17687682"
+      ]
+    },
+    "Master-CM702997": {
+      "name": "MODERN FAMILY DENTAL: Master-CM702997",
+      "child_count": 2,
+      "child_ids": [
+        "Master-CM1229849",
+        "Master-CM1537361"
+      ]
+    },
+    "Master-CM234359": {
+      "name": "NEW HAVEN ORAL MAXILLOFACIAL SURGERY: Master-CM234359",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM859041"
+      ]
+    },
+    "Master-CM177130": {
+      "name": "NUVA SMILE: Master-CM177130",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM180713"
+      ]
+    },
+    "Master-CM887688": {
+      "name": "RESOLUTE DENTAL PARTNERS L: Master-CM887688",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM887688"
+      ]
+    },
+    "Master-CM084416": {
+      "name": "VARTANIAN DENTAL: Master-CM084416",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM655748"
+      ]
+    },
+    "Master-CM871211": {
+      "name": "ZEN DENTISTRY: Master-CM871211",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM871211"
+      ]
+    },
+    "Master-CM308834": {
+      "name": "CT MAXILLOFACIAL SURGEONS: Master-CM308834",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM194567"
+      ]
+    },
+    "Master-CM1415266": {
+      "name": "FOREVER SMILES DENTISTRY: Master-CM1415266",
+      "child_count": 3,
+      "child_ids": [
+        "Master-CM1370158",
+        "Master-CM1415266",
+        "Master-CM074748"
+      ]
+    },
+    "Master-CM1410265": {
+      "name": "DMITRY STILLMAN: Master-CM1410265",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM1410265"
+      ]
+    },
+    "Master-CM285333": {
+      "name": "PARADIGM ORAL SURGERY: Master-CM285333",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM067210"
+      ]
+    },
+    "Master-CM056306": {
+      "name": "RICHARD L SCHECHTMAN DDS: Master-CM056306",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM056306"
+      ]
+    },
+    "Master-CM200171": {
+      "name": "SOBEL MARMOR FISHER: Master-CM200171",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM200171"
+      ]
+    },
+    "Master-CM087474": {
+      "name": "BARRON, TOM DR: Master-CM087474",
+      "child_count": 3,
+      "child_ids": [
+        "Master-CM068131",
+        "Master-CM164557",
+        "Master-CM052883"
+      ]
+    },
+    "Master-CM1125557": {
+      "name": "AFFINTY DENTAL: Master-CM1125557",
+      "child_count": 3,
+      "child_ids": [
+        "Master-CM1594385",
+        "Master-CM1775016",
+        "Master-CM952527"
+      ]
+    },
+    "Master-CM270817": {
+      "name": "NEW ENGLAND DENTAL HEALTH SERVICES PC: Master-CM270817",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM270817"
+      ]
+    },
+    "Master-CM090537": {
+      "name": "SOUTH COAST ENDODONTICS: Master-CM090537",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM090537"
+      ]
+    },
+    "Master-CM089080": {
+      "name": "WAREHAM FAMILY DENTAL INC: Master-CM089080",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM1612922"
+      ]
+    },
+    "Master-CM1913436": {
+      "name": "END045 CUSTOM ENDODONTICS MINO: Master-CM1913436",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM168854"
+      ]
+    },
+    "Master-CM161620": {
+      "name": "YOUR SMILE GROUP: Master-CM161620",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM064815"
+      ]
+    },
+    "Master-CM2036099": {
+      "name": "GUIDED PRACTICE SOLUTIONS(DSO): Master-CM2036099",
+      "child_count": 2,
+      "child_ids": [
+        "Master-CM117230",
+        "Master-CM1707773"
+      ]
+    },
+    "Master-CM051585": {
+      "name": "BURNSIDE DENTAL CARE PC: Master-CM051585",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM051585"
+      ]
+    },
+    "Master-CM828468": {
+      "name": "AFFORDABLE CARE: Master-CM828468",
+      "child_count": 6,
+      "child_ids": [
+        "Master-CM1098817",
+        "Master-CM1915319",
+        "Master-CM1826741",
+        "Master-CM1233640",
+        "Master-CM1122218",
+        "Master-CM136604"
+      ]
+    },
+    "Master-CM1062181": {
+      "name": "NEW ENGLAND FAMILY DENTISTRY: Master-CM1062181",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM473639"
+      ]
+    },
+    "Master-CM984954": {
+      "name": "KANCHAN PANDE DDS: Master-CM984954",
+      "child_count": 2,
+      "child_ids": [
+        "Master-CM984954",
+        "Master-CM056374"
+      ]
+    },
+    "Master-CM052034": {
+      "name": "COUSINS,CONSTANCE DDS: Master-CM052034",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM385952"
+      ]
+    },
+    "Master-CM054823": {
+      "name": "UNDERBITE MANAGEMENT AND CONSULTING: Master-CM054823",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM867878"
+      ]
+    },
+    "Master-CM257942": {
+      "name": "COASTAL DENTAL: Master-CM257942",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM257942"
+      ]
+    },
+    "Master-CM301012": {
+      "name": "ROOT CANAL SPECIALISTS PC: Master-CM301012",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM301012"
+      ]
+    },
+    "Master-CM122789": {
+      "name": "PAUL  GUERRINO: Master-CM122789",
+      "child_count": 2,
+      "child_ids": [
+        "Master-CM122789",
+        "Master-CM256310"
+      ]
+    },
+    "Master-CM083552": {
+      "name": "WESTCHESTER PUTNAM ENDODONTIC ASSOCIATES: Master-CM083552",
+      "child_count": 3,
+      "child_ids": [
+        "Master-CM082777",
+        "Master-CM858712",
+        "Master-CM083552"
+      ]
+    },
+    "Master-CM545834": {
+      "name": "ADVANTAGE DENTAL GROUP LLC: Master-CM545834",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM160406"
+      ]
+    },
+    "Master-CM161288": {
+      "name": "FOX PEDIATRIC & ADOLESCENT: Master-CM161288",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM161288"
+      ]
+    },
+    "Master-CM058305": {
+      "name": "DAWN M MIKAITIS DMD LLC: Master-CM058305",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM058305"
+      ]
+    },
+    "Master-CM085819": {
+      "name": "NEXT LEVEL: Master-CM085819",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM045913"
+      ]
+    },
+    "Master-CM879456": {
+      "name": "SABUSKA COMPANY: Master-CM879456",
+      "child_count": 4,
+      "child_ids": [
+        "Master-CM107648",
+        "Master-CM271002",
+        "Master-CM1354846",
+        "Master-CM1085673"
+      ]
+    },
+    "Master-CM092292": {
+      "name": "SOUTHFIELD FAMILY DENTAL CENTER (GUARDIAN DENTISTRY PARTNERS): Master-CM092292",
+      "child_count": 2,
+      "child_ids": [
+        "Master-CM1966497",
+        "Master-CM646875"
+      ]
+    },
+    "Master-CM186299": {
+      "name": "CROWN DOCTOR DENTAL LAB ATTN: WAYNE E.R.: Master-CM186299",
+      "child_count": 2,
+      "child_ids": [
+        "Master-CM186299",
+        "Master-CM859793"
+      ]
+    },
+    "Master-CM191286": {
+      "name": "MY DENTAL (MA): Master-CM191286",
+      "child_count": 2,
+      "child_ids": [
+        "Master-CM1474033",
+        "Master-CM191286"
+      ]
+    },
+    "Master-CM168437": {
+      "name": "ALPHA DENTAL: Master-CM168437",
+      "child_count": 3,
+      "child_ids": [
+        "Master-CM1125865",
+        "Master-CM101181",
+        "Master-CM161522"
+      ]
+    },
+    "Master-CM1613697": {
+      "name": "SELECT DENTAL MANAGEMENT: Master-CM1613697",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM166690"
+      ]
+    },
+    "Master-CM17673266": {
+      "name": "PLUM DENTAL GROUP LLC: Master-CM17673266",
+      "child_count": 11,
+      "child_ids": [
+        "Master-CM492080",
+        "Master-CM894618",
+        "Master-CM108635",
+        "Master-CM109862",
+        "Master-CM200329",
+        "Master-CM209099",
+        "Master-CM17729478",
+        "Master-CM1987711",
+        "Master-CM1994926",
+        "Master-CM124969",
+        "Master-CM17724385"
+      ]
+    },
+    "Master-CM252291": {
+      "name": "DENTISTRY & BRACES: Master-CM252291",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM225841"
+      ]
+    },
+    "Master-CM913445": {
+      "name": "MICHAEL GAUDIO, DMD: Master-CM913445",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM913445"
+      ]
+    },
+    "Master-CM1086038": {
+      "name": "ADMIRE DENTAL: Master-CM1086038",
+      "child_count": 2,
+      "child_ids": [
+        "Master-CM9840932",
+        "Master-CM1913476"
+      ]
+    },
+    "Master-CM275058": {
+      "name": "MIDDLETOWN ORTHODONTICS: Master-CM275058",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM061237"
+      ]
+    },
+    "Master-CM1493456": {
+      "name": "LAKEVIEW DENTAL: Master-CM1493456",
+      "child_count": 5,
+      "child_ids": [
+        "Master-CM920702",
+        "Master-CM191650",
+        "Master-CM082700",
+        "Master-CM120809",
+        "Master-CM368802"
+      ]
+    },
+    "Master-CM107215": {
+      "name": "KIDDSMILES PEDIATRIC DENTISTRY: Master-CM107215",
+      "child_count": 2,
+      "child_ids": [
+        "Master-CM1079848",
+        "Master-CM1774972"
+      ]
+    },
+    "Master-CM216446": {
+      "name": "BONITA PRACTICE SOLUTIONS: Master-CM216446",
+      "child_count": 3,
+      "child_ids": [
+        "Master-CM076357",
+        "Master-CM103825",
+        "Master-CM1907904"
+      ]
+    },
+    "Master-CM172041": {
+      "name": "ROLIGO DENTAL: Master-CM172041",
+      "child_count": 4,
+      "child_ids": [
+        "Master-CM172041",
+        "Master-CM225422",
+        "Master-CM589855",
+        "Master-CM101386"
+      ]
+    },
+    "Master-CM1258075": {
+      "name": "SPECIALTY DENTAL BRANDS: Master-CM1258075",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM658296"
+      ]
+    },
+    "Master-CM222800": {
+      "name": "SIMPLY DENTAL MANAGEMENT: Master-CM222800",
+      "child_count": 3,
+      "child_ids": [
+        "Master-CM717412",
+        "Master-CM068686",
+        "Master-CM1712971"
+      ]
+    },
+    "Master-CM1836151": {
+      "name": "SPECIALTY 1 PARTNERS: Master-CM1836151",
+      "child_count": 17,
+      "child_ids": [
+        "Master-CM2004055",
+        "Master-CM135138",
+        "Master-CM1461386",
+        "Master-CM258714",
+        "Master-CM890812",
+        "Master-CM692567",
+        "Master-CM144874",
+        "Master-CM869355",
+        "Master-CM213565",
+        "Master-CM1885129",
+        "Master-CM203826",
+        "Master-CM050293",
+        "Master-CM633873",
+        "Master-CM867042",
+        "Master-CM187287",
+        "Master-CM2008507",
+        "Master-CM076463"
+      ]
+    },
+    "Master-CM118940": {
+      "name": "CT PEDIATRIC DENTISTRY: Master-CM118940",
+      "child_count": 2,
+      "child_ids": [
+        "Master-CM118940",
+        "Master-CM266598"
+      ]
+    },
+    "Master-CM591885": {
+      "name": "WILLIAM  CONROY, JR.: Master-CM591885",
+      "child_count": 2,
+      "child_ids": [
+        "Master-CM145846",
+        "Master-CM189283"
+      ]
+    },
+    "Master-CM680778": {
+      "name": "DENTAL 365: Master-CM680778",
+      "child_count": 2,
+      "child_ids": [
+        "Master-CM906343",
+        "Master-CM188502"
+      ]
+    },
+    "Master-CM184636": {
+      "name": "CENTER FOR DENTAL EXCELLENCE: Master-CM184636",
+      "child_count": 3,
+      "child_ids": [
+        "Master-CM184636",
+        "Master-CM100133",
+        "Master-CM140047"
+      ]
+    },
+    "Master-CM947226": {
+      "name": "SELECT DENTAL MANAGEMENT: Master-CM947226",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM120971"
+      ]
+    },
+    "Master-CM051617": {
+      "name": "HARBOR POINT DENTAL GROUP: Master-CM051617",
+      "child_count": 2,
+      "child_ids": [
+        "Master-CM1993487",
+        "Master-CM168889"
+      ]
+    },
+    "Master-CM141688": {
+      "name": "KOOL SMILES BENEVIS: Master-CM141688",
+      "child_count": 2,
+      "child_ids": [
+        "Master-CM180797",
+        "Master-CM1233101"
+      ]
+    },
+    "Master-CM075385": {
+      "name": "CHILDREN AND FAMILY DENTISTRY & BRACES: Master-CM075385",
+      "child_count": 3,
+      "child_ids": [
+        "Master-CM075385",
+        "Master-CM914825",
+        "Master-CM110488"
+      ]
+    },
+    "Master-CM1281472": {
+      "name": "PROHEALTH DENTAL MANAGEMENT: Master-CM1281472",
+      "child_count": 9,
+      "child_ids": [
+        "Master-CM1915855",
+        "Master-CM184449",
+        "Master-CM112772",
+        "Master-CM875687",
+        "Master-CM092274",
+        "Master-CM1980755",
+        "Master-CM1857428",
+        "Master-CM1734539",
+        "Master-CM341436"
+      ]
+    },
+    "Master-CM673640": {
+      "name": "THE SMILIST: Master-CM673640",
+      "child_count": 4,
+      "child_ids": [
+        "Master-CM112027",
+        "Master-CM2005829",
+        "Master-CM1988062",
+        "Master-CM1811252"
+      ]
+    },
+    "Master-CM169871": {
+      "name": "MB2: Master-CM169871",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM415903"
+      ]
+    },
+    "Master-CM1064374": {
+      "name": "SMILE DOCTORS: Master-CM1064374",
+      "child_count": 8,
+      "child_ids": [
+        "Master-CM298247",
+        "Master-CM943154",
+        "Master-CM212948",
+        "Master-CM1049632",
+        "Master-CM1030926",
+        "Master-CM1823132",
+        "Master-CM1228876",
+        "Master-CM494380"
+      ]
+    },
+    "Master-CM098299": {
+      "name": "SMILE BRANDS: Master-CM098299",
+      "child_count": 23,
+      "child_ids": [
+        "Master-CM272315",
+        "Master-CM062853",
+        "Master-CM236470",
+        "Master-CM145786",
+        "Master-CM073178",
+        "Master-CM1050114",
+        "Master-CM103968",
+        "Master-CM260390",
+        "Master-CM096190",
+        "Master-CM287558",
+        "Master-CM867984",
+        "Master-CM734197",
+        "Master-CM858723",
+        "Master-CM1865354",
+        "Master-CM1872715",
+        "Master-CM214728",
+        "Master-CM1897240",
+        "Master-CM1178819",
+        "Master-CM2000574",
+        "Master-CM059175",
+        "Master-CM491686",
+        "Master-CM252941",
+        "Master-CM136542"
+      ]
+    },
+    "Master-CM354571": {
+      "name": "DENTAL CARE ALLIANCE: Master-CM354571",
+      "child_count": 15,
+      "child_ids": [
+        "Master-CM364415",
+        "Master-CM532323",
+        "Master-CM862244",
+        "Master-CM264691",
+        "Master-CM860944",
+        "Master-CM904625",
+        "Master-CM897105",
+        "Master-CM1733174",
+        "Master-CM071176",
+        "Master-CM057034",
+        "Master-CM051399",
+        "Master-CM155720",
+        "Master-CM175601",
+        "Master-CM074843",
+        "Master-CM092390"
+      ]
+    },
+    "Master-CM055546": {
+      "name": "HEARTLAND DENTAL CARE: Master-CM055546",
+      "child_count": 5,
+      "child_ids": [
+        "Master-CM634031",
+        "Master-CM081913",
+        "Master-CM196097",
+        "Master-CM591342",
+        "Master-CM061359"
+      ]
+    },
+    "Master-CM1873360": {
+      "name": "DENTAL 365: Master-CM1873360",
+      "child_count": 12,
+      "child_ids": [
+        "Master-CM067467",
+        "Master-CM1837342",
+        "Master-CM1812756",
+        "Master-CM1535703",
+        "Master-CM1811828",
+        "Master-CM175960",
+        "Master-CM052414",
+        "Master-CM086511",
+        "Master-CM165527",
+        "Master-CM2017130",
+        "Master-CM1995159",
+        "Master-CM17678661"
+      ]
+    },
+    "Master-CM1486131": {
+      "name": "DENTAL WHALE: Master-CM1486131",
+      "child_count": 41,
+      "child_ids": [
+        "Master-CM606675",
+        "Master-CM171174",
+        "Master-CM083844",
+        "Master-CM197711",
+        "Master-CM170217",
+        "Master-CM1050347",
+        "Master-CM1081897",
+        "Master-CM861640",
+        "Master-CM1816265",
+        "Master-CM076133",
+        "Master-CM218849",
+        "Master-CM9815729",
+        "Master-CM207287",
+        "Master-CM104886",
+        "Master-CM098230",
+        "Master-CM984344",
+        "Master-CM088859",
+        "Master-CM118862",
+        "Master-CM220480",
+        "Master-CM1080870",
+        "Master-CM225395",
+        "Master-CM079936",
+        "Master-CM1994555",
+        "Master-CM083171",
+        "Master-CM1143838",
+        "Master-CM564193",
+        "Master-CM155685",
+        "Master-CM204271",
+        "Master-CM896512",
+        "Master-CM2028253",
+        "Master-CM899975",
+        "Master-CM211753",
+        "Master-CM172000",
+        "Master-CM056710",
+        "Master-CM253803",
+        "Master-CM142771",
+        "Master-CM599146",
+        "Master-CM081639",
+        "Master-CM1157942",
+        "Master-CM596394",
+        "Master-CM113317"
+      ]
+    },
+    "Master-CM106952": {
+      "name": "ASPEN: Master-CM106952",
+      "child_count": 2,
+      "child_ids": [
+        "Master-CM103894",
+        "Master-CM108158"
+      ]
+    }
+  },
+  "gold_silver_groups": {
+    "Master-CM873641": {
+      "name": "COMMUNITY HEALTH CENTER",
+      "tier": "Gold",
+      "child_count": 12,
+      "child_ids": [
+        "Master-CM091018",
+        "Master-CM150836",
+        "Master-CM913397",
+        "Master-CM685656",
+        "Master-CM213093",
+        "Master-CM127960",
+        "Master-CM286699",
+        "Master-CM316937",
+        "Master-CM873641",
+        "Master-CM870078",
+        "Master-CM274886",
+        "Master-CM1134827"
+      ]
+    },
+    "Master-CM418412": {
+      "name": "CHELSEA PEDIATRIC DENTISTRY AND ORTHODONTICS",
+      "tier": "Gold",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM418412"
+      ]
+    },
+    "Master-CM701179": {
+      "name": "ADVANCED DENTAL BRANDS",
+      "tier": "Gold",
+      "child_count": 27,
+      "child_ids": [
+        "Master-CM590407",
+        "Master-CM948354",
+        "Master-CM894109",
+        "Master-CM174506",
+        "Master-CM072651",
+        "Master-CM139496",
+        "Master-CM061913",
+        "Master-CM063082",
+        "Master-CM196234",
+        "Master-CM096844",
+        "Master-CM085368",
+        "Master-CM088397",
+        "Master-CM201059",
+        "Master-CM103473",
+        "Master-CM208702",
+        "Master-CM701179",
+        "Master-CM1253647",
+        "Master-CM143387",
+        "Master-CM102000",
+        "Master-CM247479",
+        "Master-CM655613",
+        "Master-CM466085",
+        "Master-CM211560",
+        "Master-CM328599",
+        "Master-CM528711",
+        "Master-CM1596511",
+        "Master-CM284329"
+      ]
+    },
+    "Master-CM1191267": {
+      "name": "HARBOR COMMUNITY HLTH PLYMOUTH",
+      "tier": "Silver",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM1191267"
+      ]
+    },
+    "Master-CM1906724": {
+      "name": "BEACON ORAL SPECIALISTS MANAGEMENT",
+      "tier": "Silver",
+      "child_count": 3,
+      "child_ids": [
+        "Master-CM1413729",
+        "Master-CM497067",
+        "Master-CM128845"
+      ]
+    },
+    "Master-CM1604951": {
+      "name": "TEND DENTAL SERVICES",
+      "tier": "Top 100-Silver",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM1897933"
+      ]
+    },
+    "Master-CM104870": {
+      "name": "THUNDERMIST HEALTH CENTER",
+      "tier": "Gold",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM104870"
+      ]
+    },
+    "Master-CM701326": {
+      "name": "SMILE SOURCE",
+      "tier": "Gold",
+      "child_count": 17,
+      "child_ids": [
+        "Master-CM114608",
+        "Master-CM1068081",
+        "Master-CM1189919",
+        "Master-CM153496",
+        "Master-CM297639",
+        "Master-CM858758",
+        "Master-CM258520",
+        "Master-CM057276",
+        "Master-CM210911",
+        "Master-CM806326",
+        "Master-CM071678",
+        "Master-CM1137605",
+        "Master-CM1486316",
+        "Master-CM866064",
+        "Master-CM099785",
+        "Master-CM094937",
+        "Master-CM192788"
+      ]
+    },
+    "Master-CM1250304": {
+      "name": "DINA JO ALBANO DMD",
+      "tier": "Silver",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM1250304"
+      ]
+    },
+    "Master-CM118011": {
+      "name": "ADVANTAGE DENTAL",
+      "tier": "Gold",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM068168"
+      ]
+    },
+    "Master-CM214584": {
+      "name": "PCHC DENTAL",
+      "tier": "Gold",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM214584"
+      ]
+    },
+    "Master-CM494816": {
+      "name": "SMILES FOR THE FUTURE",
+      "tier": "Top 100-Gold",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM494816"
+      ]
+    },
+    "Master-CM131268": {
+      "name": "BORIS N BLINDER SR DMD",
+      "tier": "Top 100-Gold",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM131268"
+      ]
+    },
+    "Master-CM858971": {
+      "name": "DR. ALAN SCHUPACK",
+      "tier": "Top 100-Gold",
+      "child_count": 1,
+      "child_ids": [
+        "Master-CM858971"
+      ]
+    }
+  },
+  "signals": [
+    "parent_cm",
+    "normalized_address",
+    "anchor_orphan",
+    "doctor_name_in_address",
+    "email_domain",
+    "external_truth_files",
+    "class2_dso_single_location"
+  ],
+  "new_adds": [
+    {
+      "mdm": "BNK-02F4CECD26D01DB34C5AF22AD1C131F4-9152DC760B99EF5BFAABEEE381802E8A",
+      "name": "BLUE SKY DENTAL",
+      "products": [
+        "CAVIWIPES 2.0"
+      ],
+      "addr": "530 Hopmeadow St",
+      "city": "Simsbury",
+      "state": "CT",
+      "zip": "6070",
+      "email": "",
+      "phone": "7862942769",
+      "color": "RED",
+      "first_date": "12-Feb-26",
+      "last_date": "20-Mar-26"
+    },
+    {
+      "mdm": "BNK-012A94CA457F59B55892F72AE2EDACE8-5F2051D185A1829C9E4C7991E6D339E8",
+      "name": "DFAS-COLUMBUS CENTER",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "W8zw Ri Arng Med Det Bldg 235",
+      "city": "East Greenwich",
+      "state": "RI",
+      "zip": "2818",
+      "email": "",
+      "phone": "2156171654",
+      "color": "RED",
+      "first_date": "14-Jan-26",
+      "last_date": "14-Jan-26"
+    },
+    {
+      "mdm": "HEN-983C97CB49920949362A2CAA45319B70-74A3236AA4BF6C831014C9414938DC69",
+      "name": "Westport",
+      "products": [
+        "CAVIWIPES XL"
+      ],
+      "addr": "1375 Post Rd E Marc David Schlenoff",
+      "city": "Westport",
+      "state": "CT",
+      "zip": "6880",
+      "email": "",
+      "phone": "",
+      "color": "RED",
+      "first_date": "24-Mar-26",
+      "last_date": "24-Mar-26"
+    },
+    {
+      "mdm": "Master-CM046557",
+      "name": "VINCENT DAGOSTINO",
+      "products": [
+        "CAVIWIPES",
+        "CAVIWIPES XL"
+      ],
+      "addr": "2457 E Main St",
+      "city": "Waterbury",
+      "state": "CT",
+      "zip": "6705",
+      "email": "vdagostino@sbcglobal.net",
+      "phone": "2037552744",
+      "color": "RED",
+      "first_date": "3-Mar-26",
+      "last_date": "16-Mar-26"
+    },
+    {
+      "mdm": "Master-CM047480",
+      "name": "HEALTHFIRST FAMILY CARE CENTER INC",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "387 Quarry St",
+      "city": "Fall River",
+      "state": "MA",
+      "zip": "2723",
+      "email": "dr.amador@icloud.com",
+      "phone": "5086798111",
+      "color": "RED",
+      "first_date": "7-Feb-22",
+      "last_date": "16-Mar-26"
+    },
+    {
+      "mdm": "Master-CM047696",
+      "name": "RORY PERIMENIS",
+      "products": [
+        "CAVIWIPES 2.0"
+      ],
+      "addr": "324 Elm St",
+      "city": "Monroe",
+      "state": "CT",
+      "zip": "6468",
+      "email": "",
+      "phone": "2034598990",
+      "color": "RED",
+      "first_date": "13-Jan-26",
+      "last_date": "13-Jan-26"
+    },
+    {
+      "mdm": "Master-CM048325",
+      "name": "DOUGLAS HOPE",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "381 Hopmeadow St",
+      "city": "Weatogue",
+      "state": "CT",
+      "zip": "6089",
+      "email": "",
+      "phone": "8606514915",
+      "color": "RED",
+      "first_date": "21-Jan-22",
+      "last_date": "20-Mar-26"
+    },
+    {
+      "mdm": "Master-CM048575",
+      "name": "DAVID EDELSON",
+      "products": [
+        "OPTIBOND eXTRa"
+      ],
+      "addr": "92 East St",
+      "city": "Plainville",
+      "state": "CT",
+      "zip": "6062",
+      "email": "dmd92east@gmail.com",
+      "phone": "8607471004",
+      "color": "RED",
+      "first_date": "3-Oct-23",
+      "last_date": "20-Mar-26"
+    },
+    {
+      "mdm": "Master-CM048850",
+      "name": "STEPHEN WOLPO D.D.S.",
+      "products": [
+        "MAXCEM ELITE"
+      ],
+      "addr": "60 Strawberry Hill Ave",
+      "city": "Stamford",
+      "state": "CT",
+      "zip": "6902",
+      "email": "steve@smilesensations.com",
+      "phone": "2033239277",
+      "color": "RED",
+      "first_date": "5-Apr-22",
+      "last_date": "13-Jan-26"
+    },
+    {
+      "mdm": "Master-CM049128",
+      "name": "DENTAL SOLUTIONS",
+      "products": [
+        "CAVIWIPES",
+        "HARMONIZE"
+      ],
+      "addr": "131 New London Tpke",
+      "city": "Glastonbury",
+      "state": "CT",
+      "zip": "6033",
+      "email": "dentalsolutions131@gmail.com",
+      "phone": "8606330486",
+      "color": "RED",
+      "first_date": "22-Feb-22",
+      "last_date": "2-Mar-26"
+    },
+    {
+      "mdm": "Master-CM049971",
+      "name": "OSCAR GONZALEZ",
+      "products": [
+        "CAVIWIPES XL"
+      ],
+      "addr": "1340 Boulevard",
+      "city": "West Hartford",
+      "state": "CT",
+      "zip": "6119",
+      "email": "drgonzalez@ogsmiles.com",
+      "phone": "8605212500",
+      "color": "RED",
+      "first_date": "20-Jan-25",
+      "last_date": "3-Mar-26"
+    },
+    {
+      "mdm": "Master-CM050415",
+      "name": "PAUL E APPELBAUM DMD",
+      "products": [
+        "OPTIBOND UNIVERSAL",
+        "CAVIWIPES XL"
+      ],
+      "addr": "1445 Wampanoag Trl",
+      "city": "Riverside",
+      "state": "RI",
+      "zip": "2915",
+      "email": "applebaumdental@gmail.com",
+      "phone": "4014332400",
+      "color": "RED",
+      "first_date": "1-Aug-22",
+      "last_date": "19-Mar-26"
+    },
+    {
+      "mdm": "Master-CM051399",
+      "name": "DR JACK L GISH AND ASSOCIATES PC",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "836 Farmington Ave",
+      "city": "West Hartford",
+      "state": "CT",
+      "zip": "6119",
+      "email": "",
+      "phone": "8602318077",
+      "color": "RED",
+      "first_date": "11-Jan-22",
+      "last_date": "20-Mar-26"
+    },
+    {
+      "mdm": "Master-CM051426",
+      "name": "NEWPORT AVE SMILES",
+      "products": [
+        "CAVIWIPES XL"
+      ],
+      "addr": "500 Newport Ave",
+      "city": "Pawtucket",
+      "state": "RI",
+      "zip": "2861",
+      "email": "mari120784@yahoo.com",
+      "phone": "4017265600",
+      "color": "RED",
+      "first_date": "12-Mar-24",
+      "last_date": "11-Feb-26"
+    },
+    {
+      "mdm": "Master-CM051593",
+      "name": "HENRY LEVIN DMD",
+      "products": [
+        "MAXCEM ELITE"
+      ],
+      "addr": "276 Smith St",
+      "city": "Providence",
+      "state": "RI",
+      "zip": "2908",
+      "email": "info@levindental.com",
+      "phone": "4013311116",
+      "color": "RED",
+      "first_date": "15-Jan-26",
+      "last_date": "4-Mar-26"
+    },
+    {
+      "mdm": "Master-CM052414",
+      "name": "ERIC M GEORGE DMD LTD",
+      "products": [
+        "CAVIWIPES 2.0"
+      ],
+      "addr": "121 Sandy Bottom Rd",
+      "city": "Coventry",
+      "state": "RI",
+      "zip": "2816",
+      "email": "",
+      "phone": "4018223352",
+      "color": "RED",
+      "first_date": "28-Oct-24",
+      "last_date": "6-Mar-26"
+    },
+    {
+      "mdm": "Master-CM053755",
+      "name": "LISA DAFT",
+      "products": [
+        "CAVIWIPES HP"
+      ],
+      "addr": "520 Taunton Ave",
+      "city": "Seekonk",
+      "state": "MA",
+      "zip": "2771",
+      "email": "cvanderpool@gmail.com",
+      "phone": "5083363066",
+      "color": "RED",
+      "first_date": "7-Jan-26",
+      "last_date": "7-Jan-26"
+    },
+    {
+      "mdm": "Master-CM054373",
+      "name": "CENTER FOR DENTAL HEALTH",
+      "products": [
+        "CAVIWIPES XL"
+      ],
+      "addr": "37 North Ave",
+      "city": "Norwalk",
+      "state": "CT",
+      "zip": "6851",
+      "email": "norwalkdental37@gmail.com",
+      "phone": "2038462085",
+      "color": "RED",
+      "first_date": "27-Jan-22",
+      "last_date": "18-Mar-26"
+    },
+    {
+      "mdm": "Master-CM055825",
+      "name": "NEIL HOSS",
+      "products": [
+        "OPTIBOND eXTRa"
+      ],
+      "addr": "115 Hartford Tpke",
+      "city": "Tolland",
+      "state": "CT",
+      "zip": "6084",
+      "email": "drhossdmd@gmail.com",
+      "phone": "(860) 351-1495",
+      "color": "RED",
+      "first_date": "21-Feb-22",
+      "last_date": "30-Jan-26"
+    },
+    {
+      "mdm": "Master-CM055988",
+      "name": "DANBURY DENTAL GROUP",
+      "products": [
+        "SONICFILL 3"
+      ],
+      "addr": "57 North St",
+      "city": "Danbury",
+      "state": "CT",
+      "zip": "6810",
+      "email": "dnbry.dental.assoc@snet.net",
+      "phone": "2037923316",
+      "color": "RED",
+      "first_date": "8-Nov-23",
+      "last_date": "5-Mar-26"
+    },
+    {
+      "mdm": "Master-CM057171",
+      "name": "PETER JAY RATHMAN DMD",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "125 Strawberry Hill Ave",
+      "city": "Stamford",
+      "state": "CT",
+      "zip": "6902",
+      "email": "jchdmd@gmail.com",
+      "phone": "2033271470",
+      "color": "RED",
+      "first_date": "3-Jan-22",
+      "last_date": "17-Feb-26"
+    },
+    {
+      "mdm": "Master-CM058433",
+      "name": "ELLINGTON DENTAL ASSOCIATES",
+      "products": [
+        "CAVIWIPES 2.0"
+      ],
+      "addr": "175 West Rd",
+      "city": "Ellington",
+      "state": "CT",
+      "zip": "6029",
+      "email": "lgraff222@gmail.com",
+      "phone": "8608722452",
+      "color": "RED",
+      "first_date": "21-Feb-22",
+      "last_date": "20-Jan-26"
+    },
+    {
+      "mdm": "Master-CM059175",
+      "name": "RESTELLERDMD PC",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "69 Main St",
+      "city": "East Haven",
+      "state": "CT",
+      "zip": "6512",
+      "email": "rsteller9@msn.com",
+      "phone": "2034678100",
+      "color": "RED",
+      "first_date": "14-Feb-23",
+      "last_date": "16-Mar-26"
+    },
+    {
+      "mdm": "Master-CM059198",
+      "name": "DEBRA KAUFMAN DAREN DDS",
+      "products": [
+        "CAVIWIPES",
+        "MAXCEM ELITE CHROMA"
+      ],
+      "addr": "131 Boston Post Rd",
+      "city": "East Lyme",
+      "state": "CT",
+      "zip": "6333",
+      "email": "children.dental@snet.net",
+      "phone": "8607390348",
+      "color": "RED",
+      "first_date": "19-Feb-26",
+      "last_date": "19-Feb-26"
+    },
+    {
+      "mdm": "Master-CM059502",
+      "name": "SETH KEILES",
+      "products": [
+        "SIMPLISHADE"
+      ],
+      "addr": "3505 Hill Blvd",
+      "city": "Yorktown Heights",
+      "state": "NY",
+      "zip": "10598",
+      "email": "sk@nwdentist.com",
+      "phone": "9142453103",
+      "color": "RED",
+      "first_date": "9-Feb-26",
+      "last_date": "9-Feb-26"
+    },
+    {
+      "mdm": "Master-CM060396",
+      "name": "FRANK A DEQUATTRO DMD PC",
+      "products": [
+        "CAVIWIPES 2.0"
+      ],
+      "addr": "24 Salt Pond Rd",
+      "city": "Wakefield",
+      "state": "RI",
+      "zip": "2879",
+      "email": "tara@drdequattrodmd.com",
+      "phone": "4017839890",
+      "color": "RED",
+      "first_date": "5-Feb-26",
+      "last_date": "18-Mar-26"
+    },
+    {
+      "mdm": "Master-CM061359",
+      "name": "STEPHEN BELLORINI",
+      "products": [
+        "CAVIWIPES1",
+        "SIMPLISHADE"
+      ],
+      "addr": "11 Bay State Ct",
+      "city": "Brewster",
+      "state": "MA",
+      "zip": "2631",
+      "email": "sjbdmd84@yahoo.com",
+      "phone": "5088963343",
+      "color": "RED",
+      "first_date": "15-Mar-22",
+      "last_date": "16-Mar-26"
+    },
+    {
+      "mdm": "Master-CM063000",
+      "name": "CRANSTON ORTHODONTICS",
+      "products": [
+        "CAVIWIPES 2.0"
+      ],
+      "addr": "59 Phenix Ave",
+      "city": "Cranston",
+      "state": "RI",
+      "zip": "2920",
+      "email": "frontdesk@cranstonorthodontics.com",
+      "phone": "4014644999",
+      "color": "RED",
+      "first_date": "25-Jan-23",
+      "last_date": "19-Feb-26"
+    },
+    {
+      "mdm": "Master-CM063055",
+      "name": "MANCHESTER FAMILY DENTAL",
+      "products": [
+        "CAVIWIPES XL"
+      ],
+      "addr": "945 Main St",
+      "city": "Manchester",
+      "state": "CT",
+      "zip": "6040",
+      "email": "updoctor@gmail.com",
+      "phone": "8606435350",
+      "color": "RED",
+      "first_date": "19-Dec-23",
+      "last_date": "4-Mar-26"
+    },
+    {
+      "mdm": "Master-CM063082",
+      "name": "DR JOHN HARTLEY",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "207 Upper Main St",
+      "city": "Edgartown",
+      "state": "MA",
+      "zip": "2539",
+      "email": "ap@advanceddentalmanagement.com",
+      "phone": "5089399000",
+      "color": "RED",
+      "first_date": "10-Feb-22",
+      "last_date": "2-Mar-26"
+    },
+    {
+      "mdm": "Master-CM063238",
+      "name": "DENTAL DREAMS",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "1054 Kings Hwy",
+      "city": "New Bedford",
+      "state": "MA",
+      "zip": "2745",
+      "email": "purvesh211@gmail.com",
+      "phone": "5089950340",
+      "color": "RED",
+      "first_date": "21-Apr-22",
+      "last_date": "23-Mar-26"
+    },
+    {
+      "mdm": "Master-CM063421",
+      "name": "LEVY DENTAL GROUP",
+      "products": [
+        "CAVIWIPES XL"
+      ],
+      "addr": "921 State St",
+      "city": "New Haven",
+      "state": "CT",
+      "zip": "6511",
+      "email": "jepucci@snet.net",
+      "phone": "2038652245",
+      "color": "RED",
+      "first_date": "24-May-23",
+      "last_date": "19-Mar-26"
+    },
+    {
+      "mdm": "Master-CM064394",
+      "name": "CROMWELL DENTAL",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "30 Country Squire Dr",
+      "city": "Cromwell",
+      "state": "CT",
+      "zip": "6416",
+      "email": "rbreault@cromwelldental.com",
+      "phone": "8606356445",
+      "color": "RED",
+      "first_date": "19-Jul-24",
+      "last_date": "18-Mar-26"
+    },
+    {
+      "mdm": "Master-CM064944",
+      "name": "GREAT EXPRESSIONS",
+      "products": [
+        "CAVIWIPES 2.0"
+      ],
+      "addr": "381 S Little Tor Rd",
+      "city": "New City",
+      "state": "NY",
+      "zip": "10956",
+      "email": "drpjkim@yahoo.com",
+      "phone": "8456345208",
+      "color": "RED",
+      "first_date": "2-Apr-24",
+      "last_date": "4-Mar-26"
+    },
+    {
+      "mdm": "Master-CM065179",
+      "name": "HUDSON RIVER HEALTHCARE",
+      "products": [
+        "CAVIWIPES HP"
+      ],
+      "addr": "1037 Main St",
+      "city": "Peekskill",
+      "state": "NY",
+      "zip": "10566",
+      "email": "chames@hrhcare.org",
+      "phone": "9147348800",
+      "color": "RED",
+      "first_date": "7-Nov-25",
+      "last_date": "5-Mar-26"
+    },
+    {
+      "mdm": "Master-CM065570",
+      "name": "JEFFREY G LATIMER, DDS",
+      "products": [
+        "EMPOWER"
+      ],
+      "addr": "414 South St",
+      "city": "Hyannis",
+      "state": "MA",
+      "zip": "2601",
+      "email": "sethlati@gmail.com",
+      "phone": "5087755518",
+      "color": "RED",
+      "first_date": "2-Mar-26",
+      "last_date": "2-Mar-26"
+    },
+    {
+      "mdm": "Master-CM066126",
+      "name": "ELLINGTON DENTAL ASSOCIATES",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "175 West Rd",
+      "city": "Ellington",
+      "state": "CT",
+      "zip": "6029",
+      "email": "katrina@ellingtondental.com",
+      "phone": "8608701121",
+      "color": "RED",
+      "first_date": "21-Sep-22",
+      "last_date": "20-Mar-26"
+    },
+    {
+      "mdm": "Master-CM066213",
+      "name": "GEORGE STEPHEN PAPAGEORGE DDS",
+      "products": [
+        "CAVIWIPES 2.0",
+        "MAXCEM ELITE",
+        "SIMPLISHADE"
+      ],
+      "addr": "70 Villa Pkwy",
+      "city": "Highland Falls",
+      "state": "NY",
+      "zip": "10928",
+      "email": "drpapageorge@verizon.net",
+      "phone": "8454463500",
+      "color": "RED",
+      "first_date": "4-Nov-22",
+      "last_date": "2-Mar-26"
+    },
+    {
+      "mdm": "Master-CM066450",
+      "name": "AVON DENTAL LAB",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "20 W Avon Rd",
+      "city": "Avon",
+      "state": "CT",
+      "zip": "6001",
+      "email": "avondental@snet.net",
+      "phone": "8606730451",
+      "color": "RED",
+      "first_date": "12-Jan-22",
+      "last_date": "25-Mar-26"
+    },
+    {
+      "mdm": "Master-CM067033",
+      "name": "DREW ORTHODONTICS",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "9 Dale St",
+      "city": "West Hartford",
+      "state": "CT",
+      "zip": "6107",
+      "email": "",
+      "phone": "8602368376",
+      "color": "RED",
+      "first_date": "11-Jan-22",
+      "last_date": "24-Mar-26"
+    },
+    {
+      "mdm": "Master-CM067467",
+      "name": "BRUSH AND FLOSS DENTAL CENTER",
+      "products": [
+        "CAVIWIPES 2.0"
+      ],
+      "addr": "4949 Main St",
+      "city": "Stratford",
+      "state": "CT",
+      "zip": "6614",
+      "email": "klbr48@gmail.com",
+      "phone": "2033789500",
+      "color": "RED",
+      "first_date": "5-Dec-24",
+      "last_date": "2-Mar-26"
+    },
+    {
+      "mdm": "Master-CM068686",
+      "name": "PEDIATRIC DENTISTRY",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "1 Lake St",
+      "city": "New Britain",
+      "state": "CT",
+      "zip": "6052",
+      "email": "info@just4kidzdentistry.com",
+      "phone": "8602242419",
+      "color": "RED",
+      "first_date": "1-Apr-22",
+      "last_date": "24-Mar-26"
+    },
+    {
+      "mdm": "Master-CM071176",
+      "name": "DENTAL CONCEPTS INC",
+      "products": [
+        "CAVIWIPES 2.0"
+      ],
+      "addr": "75 Dolson Ave",
+      "city": "Middletown",
+      "state": "NY",
+      "zip": "10940",
+      "email": "dolsonavenuedental@gmail.com",
+      "phone": "8455121246",
+      "color": "RED",
+      "first_date": "5-Jul-24",
+      "last_date": "11-Mar-26"
+    },
+    {
+      "mdm": "Master-CM071678",
+      "name": "ADVANCED DENTAL",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "39 Webster Square Rd",
+      "city": "Berlin",
+      "state": "CT",
+      "zip": "6037",
+      "email": "mmaroon@advanceddental.com",
+      "phone": "8608283933",
+      "color": "RED",
+      "first_date": "18-Apr-22",
+      "last_date": "13-Mar-26"
+    },
+    {
+      "mdm": "Master-CM073178",
+      "name": "GENTLE DENTISTRY",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "2 Albert St",
+      "city": "Middletown",
+      "state": "NY",
+      "zip": "10940",
+      "email": "info@nygentledentistry.com",
+      "phone": "8453425411",
+      "color": "RED",
+      "first_date": "4-Jan-22",
+      "last_date": "20-Mar-26"
+    },
+    {
+      "mdm": "Master-CM073756",
+      "name": "PREMIER DENTAL-E.V",
+      "products": [
+        "HERCULITE ULTRA FLOW"
+      ],
+      "addr": "516 Route 303",
+      "city": "Orangeburg",
+      "state": "NY",
+      "zip": "10962",
+      "email": "",
+      "phone": "8453592221",
+      "color": "RED",
+      "first_date": "4-Mar-26",
+      "last_date": "4-Mar-26"
+    },
+    {
+      "mdm": "Master-CM074843",
+      "name": "HUNTINGTON",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "534 Shelton Ave",
+      "city": "Shelton",
+      "state": "CT",
+      "zip": "6484",
+      "email": "mcalvao@sbcglobal.net",
+      "phone": "2039296338",
+      "color": "RED",
+      "first_date": "6-Jan-22",
+      "last_date": "25-Mar-26"
+    },
+    {
+      "mdm": "Master-CM077455",
+      "name": "CHESTER DENTAL ASSOCIATES",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "10 Moffatt Ln",
+      "city": "Chester",
+      "state": "NY",
+      "zip": "10918",
+      "email": "chestersmiles@frontiernet.net",
+      "phone": "8454692833",
+      "color": "RED",
+      "first_date": "2-Nov-22",
+      "last_date": "21-Jan-26"
+    },
+    {
+      "mdm": "Master-CM077728",
+      "name": "CONNECTICUT ENDODONTIC ASSOCIATES PC",
+      "products": [
+        "CAVIWIPES XL"
+      ],
+      "addr": "360 Tolland Tpke",
+      "city": "Manchester",
+      "state": "CT",
+      "zip": "6042",
+      "email": "",
+      "phone": "8606464811",
+      "color": "RED",
+      "first_date": "7-Jan-22",
+      "last_date": "3-Mar-26"
+    },
+    {
+      "mdm": "Master-CM079804",
+      "name": "CT PERIODONTAL & IMPLANT ASSOCIATES",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "1185 Silas Deane Hwy",
+      "city": "Wethersfield",
+      "state": "CT",
+      "zip": "6109",
+      "email": "barrygelber@gmail.com",
+      "phone": "8605632331",
+      "color": "RED",
+      "first_date": "29-Aug-22",
+      "last_date": "23-Mar-26"
+    },
+    {
+      "mdm": "Master-CM080235",
+      "name": "EXQUISITE SMILES",
+      "products": [
+        "CAVIWIPES 2.0"
+      ],
+      "addr": "3 Howarth Ave",
+      "city": "Attleboro",
+      "state": "MA",
+      "zip": "2703",
+      "email": "jphelandmd@comcast.net",
+      "phone": "5087615320",
+      "color": "RED",
+      "first_date": "16-Jun-22",
+      "last_date": "10-Mar-26"
+    },
+    {
+      "mdm": "Master-CM080734",
+      "name": "DENTAL ASSOCIATES",
+      "products": [
+        "CAVIWIPES XL",
+        "NX3",
+        "EMPOWER"
+      ],
+      "addr": "1 Aspetuck Ave",
+      "city": "New Milford",
+      "state": "CT",
+      "zip": "6776",
+      "email": "cepeckdds@gmail.com",
+      "phone": "8603554137",
+      "color": "RED",
+      "first_date": "10-Jan-22",
+      "last_date": "23-Mar-26"
+    },
+    {
+      "mdm": "Master-CM081003",
+      "name": "HAISSAM RAMADAN DMD",
+      "products": [
+        "HARMONIZE",
+        "HERCULITE ULTRA FLOW"
+      ],
+      "addr": "54 Main St",
+      "city": "Danbury",
+      "state": "CT",
+      "zip": "6810",
+      "email": "info@newenglanddentalllc.com",
+      "phone": "2037308440",
+      "color": "RED",
+      "first_date": "11-Jan-22",
+      "last_date": "13-Feb-26"
+    },
+    {
+      "mdm": "Master-CM081913",
+      "name": "RESERVOIR COMMONS DENTAL ASSOC",
+      "products": [
+        "CAVIWIPES",
+        "HARMONIZE",
+        "HERCULITE ULTRA FLOW"
+      ],
+      "addr": "203 Storrs Rd",
+      "city": "Mansfield Center",
+      "state": "CT",
+      "zip": "6250",
+      "email": "dr.rosen4@gmail.com",
+      "phone": "8604239717",
+      "color": "RED",
+      "first_date": "3-Feb-22",
+      "last_date": "23-Mar-26"
+    },
+    {
+      "mdm": "Master-CM086124",
+      "name": "PUTNAM FAMILY DENTAL",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "233 Pomfret St",
+      "city": "Putnam",
+      "state": "CT",
+      "zip": "6260",
+      "email": "aldengen@yahoo.com",
+      "phone": "8609285334",
+      "color": "RED",
+      "first_date": "20-Jan-22",
+      "last_date": "16-Mar-26"
+    },
+    {
+      "mdm": "Master-CM086260",
+      "name": "LEONARD TADDEI DDS",
+      "products": [
+        "MAXCEM ELITE"
+      ],
+      "addr": "770 Aquidneck Ave",
+      "city": "Middletown",
+      "state": "RI",
+      "zip": "2842",
+      "email": "lctdmd@aol.com",
+      "phone": "4018472094",
+      "color": "RED",
+      "first_date": "7-Jan-22",
+      "last_date": "17-Mar-26"
+    },
+    {
+      "mdm": "Master-CM087939",
+      "name": "DRS WERNICK & DYM PC",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "170 Main St",
+      "city": "East Hartford",
+      "state": "CT",
+      "zip": "6118",
+      "email": "hdym@msn.com",
+      "phone": "8605683366",
+      "color": "RED",
+      "first_date": "1-Mar-24",
+      "last_date": "18-Mar-26"
+    },
+    {
+      "mdm": "Master-CM088859",
+      "name": "JEFFREY COHEN MARK KRAMER MD",
+      "products": [
+        "MAXCEM ELITE CHROMA"
+      ],
+      "addr": "1075 Central Park Ave",
+      "city": "Scarsdale",
+      "state": "NY",
+      "zip": "10583",
+      "email": "drdan@child-dds.com",
+      "phone": "9147225100",
+      "color": "GREEN",
+      "first_date": "22-Jan-26",
+      "last_date": "25-Feb-26"
+    },
+    {
+      "mdm": "Master-CM090249",
+      "name": "ZELMANOW & ZELMANOW",
+      "products": [
+        "SIMPLISHADE"
+      ],
+      "addr": "319 Flanders Rd",
+      "city": "East Lyme",
+      "state": "CT",
+      "zip": "6333",
+      "email": "office@zelmanowdental.com",
+      "phone": "8607396915",
+      "color": "RED",
+      "first_date": "15-Apr-24",
+      "last_date": "16-Feb-26"
+    },
+    {
+      "mdm": "Master-CM091034",
+      "name": "DENTAL AND IMPLANT CENTER",
+      "products": [
+        "CAVIWIPES"
+      ],
+      "addr": "75 Berlin Rd",
+      "city": "Cromwell",
+      "state": "CT",
+      "zip": "6416",
+      "email": "conanpatty@yahoo.com",
+      "phone": "8606351515",
+      "color": "RED",
+      "first_date": "8-Nov-22",
+      "last_date": "24-Mar-26"
+    },
+    {
+      "mdm": "Master-CM091643",
+      "name": "CARL COTOIA",
+      "products": [
+        "CAVIWIPES 2.0"
+      ],
+      "addr": "183 Waterman St",
+      "city": "Providence",
+      "state": "RI",
+      "zip": "2906",
+      "email": "dorie930@yahoo.com",
+      "phone": "4018318998",
+      "color": "RED",
+      "first_date": "21-Mar-22",
+      "last_date": "20-Mar-26"
+    },
+    {
+      "mdm": "Master-CM092049",
+      "name": "JESSICA M BONIFATE",
+      "products": [
+        "CAVICIDE HP"
+      ],
+      "addr": "1 Pondfield Rd",
+      "city": "Bronxville",
+      "state": "NY",
+      "zip": "10708",
+      "email": "jbonifate37@aol.com",
+      "phone": "9143378430",
+      "color": "RED",
+      "first_date": "7-Jan-26",
+      "last_date": "7-Jan-26"
+    },
+    {
+      "mdm": "Master-CM094475",
+      "name": "ASPEN DENTAL - SEEKONK",
+      "products": [
+        "CAVIWIPES",
+        "EMPOWER"
+      ],
+      "addr": "20 Commerce Way",
+      "city": "Seekonk",
+      "state": "MA",
+      "zip": "2771",
+      "email": "drcpatel@aspendental.com",
+      "phone": "5083366700",
+      "color": "RED",
+      "first_date": "13-Jan-22",
+      "last_date": "24-Mar-26"
+    },
+    {
+      "mdm": "Master-CM096098",
+      "name": "MICHAEL S. MCKAY, DMD",
+      "products": [
+        "CAVIWIPES HP"
+      ],
+      "addr": "1536 Norwich New London Tpke",
+      "city": "Uncasville",
+      "state": "CT",
+      "zip": "6382",
+      "email": "familydentistry1536@yahoo.com",
+      "phone": "8608483262",
+      "color": "RED",
+      "first_date": "10-Feb-26",
+      "last_date": "10-Feb-26"
+    },
+    {
+      "mdm": "Master-CM096271",
+      "name": "CANAL SIDE FAMILY DENTAL",
+      "products": [
+        "CAVIWIPES",
+        "MAXCEM ELITE CHROMA"
+      ],
+      "addr": "258 Main St",
+      "city": "Buzzards Bay",
+      "state": "MA",
+      "zip": "2532",
+      "email": "stephpurner@hotmail.com",
+      "phone": "5087592721",
+      "color": "RED",
+      "first_date": "15-Mar-22",
+      "last_date": "2-Mar-26"
+    },
+    {
+      "mdm": "Master-CM096784",
+      "name": "DANBURY HOSPITAL",
+      "products": [
+        "CAVIWIPES",
+        "CAVIWIPES XL",
+        "HARMONIZE"
+      ],
+      "addr": "70 Main St",
+      "city": "Danbury",
+      "state": "CT",
+      "zip": "6810",
+      "email": "kelli.stock@wchn.org",
+      "phone": "2037915050",
+      "color": "RED",
+      "first_date": "20-Mar-26",
+      "last_date": "20-Mar-26"
+    },
+    {
+      "mdm": "Master-CM097202",
+      "name": "JOHN FATSE",
+      "products": [
+        "CAVIWIPES 2.0"
+      ],
+      "addr": "324 Elm St",
+      "city": "Monroe",
+      "state": "CT",
+      "zip": "6468",
+      "email": "amanda@drfatse.net",
+      "phone": "2032685051",
+      "color": "RED",
+      "first_date": "2-Jan-24",
+      "last_date": "5-Mar-26"
+    }
+  ],
+  "territory_zips": [
+    "025",
+    "026",
+    "027",
+    "028",
+    "029",
+    "060",
+    "061",
+    "062",
+    "063",
+    "064",
+    "065",
+    "066",
+    "067",
+    "068",
+    "069",
+    "105",
+    "106",
+    "107",
+    "108",
+    "109"
+  ]
+}
