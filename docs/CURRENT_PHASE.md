@@ -1,68 +1,59 @@
 # CURRENT PHASE -- accel-v7
 
-## Status: Action-Hub Polish live. Ready to build.
+## Status: AI Query Copilot live. Ready to build.
 
-### Phase 10: Account / Group Detail Action-Hub Polish — March 28, 2026
+### Phase 11: In-App AI Query Copilot — March 28, 2026
 
 **Commits:**
-- `41324c8a` — AcctDetail: call in header, demote Move, icon Research/Briefing, tighter NBM
-- `ca074896` — GroupDetail: collapse locations >3, auto-save hint, tighten Next Move
+- `acf3ec8a` — API route: /api/ask-copilot (intent parsing via Haiku)
+- `d14a5697` — CopilotPanel component
+- `fd802cf0` — App: Ask button in nav, CopilotPanel wired
 
 **Deploy:** HTTP 200 ✅
 
-**AcctDetail changes:**
+**Architecture — grounded, not generative:**
 
-*Sticky header*
-- 📞 Call button appears in header when a phone number is known (from Badger or officeFeel). Most-used action, now always reachable without scrolling.
-- Research and Briefing buttons reduced to icon-only (🔍 ✦) to save horizontal space. Title attributes preserve discoverability.
+The system is intentionally split into two layers to prevent hallucination:
 
-*Hero card*
-- Move button demoted from a styled pill to a small muted text link ("Move ›"). It's an infrequent admin action and was visually competing with Reorder.
-- 🧾 Reorder stays as a small icon button.
+1. **Intent layer (LLM)** — Haiku receives only the user's question and a structured prompt. It returns a JSON command (e.g. `{type:"rank", metric:"cy1", product:"SIMPLISHADE", limit:5}`). It never sees actual account data and never produces numbers.
 
-*Next Best Move*
-- Prose trimmed on three items:
-  - "Not on Accelerate. At $X PY spend, Silver tier would lower their cost. Pitch the program." → "$X PY — not on Accelerate. Silver tier lowers their cost."
-  - "Retention at N% — $X gap. Check in on supply chain, competitor activity, or budget cycle." → "N% retention, $X gap — check in on supply chain or budget."
-  - "Up $X vs last year. Reinforce — ask about upcoming procedures to lock in Q2." → "Up $X vs last year — reinforce and lock in Q2."
+2. **Execution layer (client-side)** — The JSON command is executed against the real in-memory `scored` accounts array. All filtering, sorting, and aggregation uses actual loaded data. The LLM cannot fabricate results.
 
-*Who Matters — contacts*
-- Phone numbers shown with a small 📞 pill badge instead of a plain text link. More tappable, more obviously actionable.
+**Supported query types:**
 
-*Log a Sale empty state*
-- Verbose explanation removed. Replaced with shorter one-liner.
+- **RANK** — "Who's my top SimpliShade account?" → sorts accounts by CY spend on that product
+- **FILTER** — "Which accounts buy bond but not composite?" → filters by product presence/absence
+- **FOLLOW_UP** — "Who's gone dark?" → filters by last-order days, gap, retention
+- **OPPORTUNITY** — "Best MaxCem win-back?" → finds accounts with PY spend but zero CY
+- **UNKNOWN** — returns a clear "couldn't understand" message, never guesses
 
-**GroupDetail changes:**
+**Product synonym handling (in the LLM prompt):**
+- "bond" / "bonding agent" → OPTIBOND
+- "composite" / "comp" → [HARMONIZE, SIMPLISHADE, SONICFILL]
+- "cement" → MAXCEM
+- "curing light" → DEMI
+- Partials: "simplishade", "sonicfill", "maxcem" → uppercased and matched
 
-*Locations — collapse when large*
-- Groups with ≤3 locations: all shown as before.
-- Groups with >3 locations: first 3 shown by default, with a "Show all" link in the section header and a "↓ Show all N locations" button at the bottom of the visible list.
-- State: `showAllLocs` (local, resets on navigation). No data change.
-- Threshold of 3 chosen because: the most important locations (sorted by gap descending) are the ones that drive action. Seeing the top 3 is enough to start. The full list is one tap away.
+**Entry point:**
+- ✦ Ask button added to the bottom nav (between Dealers and More)
+- Opens a slide-up panel — no new tab, no navigation disruption
+- Results are tappable — tap any account to navigate to AcctDetail
 
-*Notes*
-- Explicit "Save" button removed. Notes already auto-save on blur (onBlur handler was already there). Replaced with a subtle "Auto-saves when you leave" hint.
-- ✓ Saved flash indicator kept — it fires on the blur save.
-
-*Next Move label*
-- "What to do next" → "Next Move" (shorter, same meaning, better mobile fit).
-
-**What was NOT changed:**
-- All data logic, useMemos, overlay saves — identical
-- Move modal, reorder modal — identical
-- GroupDetail: merge, contacts, tasks, AI intel — identical
-- AcctDetail: product story, activity log, parent group, research card — identical
+**What it cannot do (by design):**
+- Cannot answer questions about data not in the app (external prices, competitor data)
+- Cannot produce numbers it didn't derive from the actual account records
+- Cannot answer questions about specific dates or calendar events
+- Returns "No accounts match" rather than inventing results
 
 ---
 
 ## Previously Completed
+- Phase 10 — Action-Hub Polish (call in header, locations collapse, feel fix)
 - Phase 9 — Feel Factor (office-level, Cold/Warm/Hot)
 - Phase 8 — Tasks operating layer
 - Phase 7 — Route with Intent
 - Phase 6 — DealersTab Channel Console
 - Phase 5 — GroupsTab Territory Navigator
-- Phase 4 — AcctDetail Second Brain
-- Phase 3 — GroupDetail War Room
 
 ## Last Updated
 March 28, 2026
