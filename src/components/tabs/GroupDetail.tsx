@@ -943,52 +943,63 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
   };
 
   return <div style={{paddingBottom:80}}>
+
+    {/* ── STICKY HEADER ── */}
     <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"10px 16px"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <button onClick={goMain} style={{background:"none",border:"none",color:T.blue,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:13,fontWeight:600,fontFamily:"inherit"}}><Back/> Groups</button>
         <button onClick={runGroupResearch} disabled={resLoading}
-          style={{background:"rgba(34,211,238,.08)",border:"1px solid rgba(34,211,238,.2)",borderRadius:8,padding:"4px 12px",fontSize:10,fontWeight:700,color:resLoading?"rgba(34,211,238,.5)":T.cyan,cursor:resLoading?"not-allowed":"pointer",fontFamily:"inherit",letterSpacing:".3px"}}>
+          style={{background:"rgba(34,211,238,.08)",border:"1px solid rgba(34,211,238,.2)",borderRadius:8,padding:"4px 12px",fontSize:10,fontWeight:700,color:resLoading?"rgba(34,211,238,.5)":T.cyan,cursor:resLoading?"not-allowed":"pointer",fontFamily:"inherit"}}>
           {resLoading ? "Searching..." : (resResult ? "Re-research" : "Research")}
         </button>
       </div>
     </div>
-    <div style={{padding:"16px 16px 0"}}>
-      <div className="anim" style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
+
+    <div style={{padding:"12px 16px 0"}}>
+
+      {/* ── HERO ── */}
+      <div className="anim" style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:10}}>
+
+        {/* Name + health + merge */}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
           <div style={{flex:1,minWidth:0}}>
-            <div style={{fontSize:16,fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fixGroupName(group)}</div>
-            <div style={{fontSize:11,color:T.t3,marginTop:2}}>{group.locs} location{group.locs!==1?"s":""} · {getTierLabel(group.tier,group.class2)}</div>
+            <div style={{fontSize:15,fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fixGroupName(group)}</div>
+            <div style={{fontSize:10,color:T.t3,marginTop:1}}>{group.locs} location{group.locs!==1?"s":""} · {getTierLabel(group.tier,group.class2)}</div>
           </div>
-          <div style={{display:"flex",gap:6,flexShrink:0,marginLeft:8,alignItems:"center"}}>
-            <span style={{fontSize:10,fontWeight:700,color:healthColor,background:`${healthColor}14`,border:`1px solid ${healthColor}30`,borderRadius:6,padding:"3px 9px"}}>{healthLabel}</span>
-            <button onClick={()=>{setShowMerge(true);setMergeSearch("");setMergeTarget(null);}} style={{fontSize:9,fontWeight:700,color:T.purple,background:"rgba(167,139,250,.08)",border:"1px solid rgba(167,139,250,.18)",borderRadius:6,padding:"3px 9px",cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>⊕ Merge</button>
+          <div style={{display:"flex",gap:5,flexShrink:0,marginLeft:8,alignItems:"center"}}>
+            <span style={{fontSize:9,fontWeight:700,color:healthColor,background:`${healthColor}14`,border:`1px solid ${healthColor}30`,borderRadius:5,padding:"2px 8px"}}>{healthLabel}</span>
+            <button onClick={()=>{setShowMerge(true);setMergeSearch("");setMergeTarget(null);}} style={{fontSize:9,fontWeight:700,color:T.purple,background:"rgba(167,139,250,.08)",border:"1px solid rgba(167,139,250,.18)",borderRadius:5,padding:"2px 8px",cursor:"pointer",fontFamily:"inherit"}}>⊕ Merge</button>
           </div>
         </div>
-        {mergeToast&&<div style={{marginBottom:8,padding:"8px 12px",borderRadius:8,fontSize:11,fontWeight:600,color:mergeToast.startsWith("✅")?T.green:T.red,background:mergeToast.startsWith("✅")?"rgba(52,211,153,.08)":"rgba(248,113,113,.08)",border:`1px solid ${mergeToast.startsWith("✅")?"rgba(52,211,153,.2)":"rgba(248,113,113,.2)"}`}}>{mergeToast}</div>}
-        {/* Retention bar */}
-        <div style={{margin:"10px 0 12px"}}>
-          <Bar pct={Math.min(ret,100)} color={`linear-gradient(90deg,${healthColor},${healthColor}99)`}/>
-        </div>
+
+        {/* Merge toast */}
+        {mergeToast&&<div style={{marginBottom:8,padding:"7px 10px",borderRadius:7,fontSize:11,fontWeight:600,color:mergeToast.startsWith("✅")?T.green:T.red,background:mergeToast.startsWith("✅")?"rgba(52,211,153,.08)":"rgba(248,113,113,.08)",border:`1px solid ${mergeToast.startsWith("✅")?"rgba(52,211,153,.2)":"rgba(248,113,113,.2)"}`}}>{mergeToast}</div>}
+
         {/* Quarter selector */}
-        <div style={{display:"flex",gap:4,marginBottom:12}}>
+        <div style={{display:"flex",gap:3,marginBottom:10}}>
           {["1","2","3","4","FY"].map(qr=>(
-            <button key={qr} onClick={()=>setQ(qr)} style={{flex:1,padding:"6px 0",borderRadius:8,fontSize:11,fontWeight:600,cursor:"pointer",border:`1px solid ${q===qr?"rgba(79,142,247,.25)":T.b2}`,background:q===qr?"rgba(79,142,247,.12)":T.s2,color:q===qr?T.blue:T.t3,fontFamily:"inherit"}}>{qr==="FY"?"FY":`Q${qr}`}</button>
+            <button key={qr} onClick={()=>setQ(qr)} style={{flex:1,padding:"5px 0",borderRadius:7,fontSize:10,fontWeight:600,cursor:"pointer",border:`1px solid ${q===qr?"rgba(79,142,247,.25)":T.b2}`,background:q===qr?"rgba(79,142,247,.12)":T.s2,color:q===qr?T.blue:T.t3,fontFamily:"inherit"}}>{qr==="FY"?"FY":`Q${qr}`}</button>
           ))}
         </div>
-        <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t4,marginBottom:4}}>Group Total</div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}>
-          <Stat l="PY" v={$$(py)} c={T.t2}/><Stat l="CY" v={$$(cy)} c={T.blue}/><Stat l="Gap" v={gap<=0?`+${$$(Math.abs(gap))}`:$$(gap)} c={gap<=0?T.green:T.red}/><Stat l="Ret" v={ret+"%"} c={healthColor}/>
+
+        {/* Stats strip */}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6}}>
+          <Stat l="PY" v={$$(py)} c={T.t2}/>
+          <Stat l="CY" v={$$(cy)} c={T.blue}/>
+          <Stat l="Gap" v={gap<=0?`+${$$(Math.abs(gap))}`:$$(gap)} c={gap<=0?T.green:T.red}/>
+          <Stat l="Ret" v={ret+"%"} c={healthColor}/>
         </div>
-        {/* ACCOUNT BRIEF toggle */}
-        {briefLines.length>0&&<div style={{marginTop:12,borderTop:`1px solid ${T.b2}`,paddingTop:10}}>
+
+        {/* Account Brief — collapsible */}
+        {briefLines.length>0&&<div style={{marginTop:10,borderTop:`1px solid ${T.b2}`,paddingTop:8}}>
           <button onClick={()=>setBriefOpen(v=>!v)} style={{background:"none",border:"none",padding:0,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"inherit",width:"100%",textAlign:"left"}}>
-            <span style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan}}>Account Brief</span>
+            <span style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan}}>Intel Brief</span>
             <span style={{fontSize:10,color:T.t4,marginLeft:"auto",transition:"transform .2s",display:"inline-block",transform:briefOpen?"rotate(90deg)":"rotate(0deg)"}}>›</span>
           </button>
-          {briefOpen&&<div style={{marginTop:8,display:"flex",flexDirection:"column",gap:6}}>
+          {briefOpen&&<div style={{marginTop:7,display:"flex",flexDirection:"column",gap:5}}>
             {briefLines.map((line,i)=>(
               <div key={i} style={{display:"flex",gap:8,alignItems:"flex-start"}}>
-                <span style={{width:5,height:5,borderRadius:"50%",background:line.color,flexShrink:0,marginTop:5}}/>
+                <span style={{width:4,height:4,borderRadius:"50%",background:line.color,flexShrink:0,marginTop:6}}/>
                 <span style={{fontSize:11,color:T.t2,lineHeight:1.5}}>{line.text}</span>
               </div>
             ))}
@@ -996,253 +1007,220 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
         </div>}
       </div>
 
-
-      {/* GROUP AI INTEL (A16.1) */}
-      {(resLoading || (resResult && !resDismissed)) && <div className="anim" style={{background:T.s1,border:"1px solid rgba(34,211,238,.2)",borderRadius:16,padding:16,marginBottom:16}}>
-        {/* Header row */}
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-          <div style={{display:"flex",alignItems:"center",gap:8}}>
-            <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan}}>Group Intel</div>
-            {resResult&&resResult.statusPill&&!resLoading&&(()=>{const sp=STATUS_PILL[resResult.statusPill]||STATUS_PILL.unknown;return<span style={{fontSize:9,fontWeight:700,color:sp.color,background:sp.color+"20",borderRadius:4,padding:"2px 7px"}}>{sp.label}</span>;})()}
-          </div>
-          {!resLoading&&<button onClick={()=>setResDismissed(true)} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:16,lineHeight:1,padding:"0 4px",fontFamily:"inherit"}}>x</button>}
-        </div>
-        {/* Loading skeleton */}
-        {resLoading && <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {[80,60,90].map((w,i)=>(
-            <div key={i} style={{height:12,borderRadius:6,background:T.s3,width:w+"%",opacity:.6}}/>
-          ))}
-        </div>}
-        {resResult && !resLoading && <>
-          {/* Status note — styled differently for provider errors vs normal status */}
-          {resResult.status&&(resResult.isProviderError
-            ? <div style={{padding:"9px 12px",background:"rgba(248,113,113,.07)",border:"1px solid rgba(248,113,113,.2)",borderRadius:8,marginBottom:8}}>
-                <div style={{fontSize:10,fontWeight:700,color:"#f87171",textTransform:"uppercase",letterSpacing:"1px",marginBottom:3}}>
-                  {resResult.isQuotaError ? "Usage Limit Reached" : "Research Unavailable"}
-                </div>
-                <div style={{fontSize:11,color:T.t2,lineHeight:1.5}}>{resResult.status}</div>
-                {resResult.isQuotaError&&<div style={{fontSize:10,color:T.t4,marginTop:4}}>Check console.anthropic.com to add credits.</div>}
-              </div>
-            : <div style={{fontSize:12,color:T.t2,lineHeight:1.5,marginBottom:8}}>{resResult.status}</div>
-          )}
-          {/* Ownership note */}
-          {resResult.ownership&&<div style={{fontSize:11,color:T.t3,marginBottom:8,fontStyle:"italic"}}>{resResult.ownership}</div>}
-          {/* Competitive intel — high-value signal */}
-          {resResult.competitive&&<div style={{padding:"7px 10px",background:"rgba(251,191,36,.06)",border:"1px solid rgba(251,191,36,.15)",borderRadius:8,marginBottom:10}}>
-            <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",color:T.amber,letterSpacing:"1px",marginBottom:3}}>Competitive Signal</div>
-            <div style={{fontSize:11,color:T.t2,lineHeight:1.5}}>{resResult.competitive}</div>
-          </div>}
-          {/* Website */}
-          {resResult.website&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,padding:"8px 10px",background:T.s2,borderRadius:8}}>
-            <span style={{fontSize:11,color:T.blue,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{resResult.website}</span>
-            <button onClick={saveResWebsite} disabled={resWebsiteSaved}
-              style={{background:resWebsiteSaved?"rgba(52,211,153,.1)":"rgba(79,142,247,.1)",border:"1px solid "+(resWebsiteSaved?"rgba(52,211,153,.2)":"rgba(79,142,247,.2)"),borderRadius:6,padding:"2px 8px",fontSize:9,fontWeight:700,color:resWebsiteSaved?T.green:T.blue,cursor:resWebsiteSaved?"default":"pointer",fontFamily:"inherit",flexShrink:0,marginLeft:8}}>
-              {resWebsiteSaved ? "Saved" : "Save"}
-            </button>
-          </div>}
-          {/* Contacts — with inline call/email actions */}
-          {(resResult.contacts||[]).length>0&&<div style={{marginBottom:10}}>
-            <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",color:T.t4,letterSpacing:"1px",marginBottom:6}}>Contacts Found</div>
-            {(resResult.contacts||[]).map((c:any,i:number)=>{
-              const sl = SCOPE_LABELS[(c.scope||1)-1] || SCOPE_LABELS[0];
-              const sc = T[SCOPE_COLORS_KEYS[(c.scope||1)-1]] || T.t4;
-              const isSaved = savedResContacts.has(i);
-              const isTopContact = (c.scope||1) === 1;
-              return <div key={i} style={{padding:"9px 10px",background:isTopContact?"rgba(34,211,238,.04)":T.s2,borderRadius:8,marginBottom:6,border:isTopContact?"1px solid rgba(34,211,238,.15)":"1px solid transparent"}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:1}}>
-                      <div style={{fontSize:12,fontWeight:700,color:T.t1}}>{c.name||"Unknown"}</div>
-                      <span style={{fontSize:9,fontWeight:700,color:sc,background:sc+"18",borderRadius:4,padding:"1px 5px",flexShrink:0}}>{sl}</span>
-                    </div>
-                    {c.role&&<div style={{fontSize:10,color:T.t3,marginBottom:3}}>{c.role}</div>}
-                    <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
-                      {c.phone&&<a href={`tel:${c.phone.replace(/\D/g,"")}`} style={{fontSize:10,color:T.cyan,textDecoration:"none",display:"flex",alignItems:"center",gap:3}}>📞 {c.phone}</a>}
-                      {c.email&&<a href={`mailto:${c.email}`} style={{fontSize:10,color:T.blue,textDecoration:"none",display:"flex",alignItems:"center",gap:3}}>✉ {c.email}</a>}
-                    </div>
-                  </div>
-                  <button onClick={()=>saveResContact(c,i)} disabled={isSaved}
-                    style={{background:isSaved?"rgba(52,211,153,.1)":"rgba(79,142,247,.1)",border:"1px solid "+(isSaved?"rgba(52,211,153,.2)":"rgba(79,142,247,.2)"),borderRadius:6,padding:"3px 9px",fontSize:10,fontWeight:700,color:isSaved?T.green:T.blue,cursor:isSaved?"default":"pointer",fontFamily:"inherit",flexShrink:0,marginLeft:8}}>
-                    {isSaved ? "Saved" : "+ Save"}
-                  </button>
-                </div>
-              </div>;
-            })}
-          </div>}
-          {/* Call Prep — merged hooks + talking points into single prioritized list */}
-          {((resResult.talkingPoints||[]).length>0||(resResult.hooks||[]).length>0)&&<div style={{marginBottom:4}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-              <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",color:T.t4,letterSpacing:"1px"}}>Call Prep</div>
-              <button onClick={saveResNotes} style={{background:"rgba(251,191,36,.08)",border:"1px solid rgba(251,191,36,.2)",borderRadius:5,padding:"1px 7px",fontSize:9,fontWeight:700,color:T.amber,cursor:"pointer",fontFamily:"inherit"}}>+ Add to Notes</button>
-            </div>
-            {/* Talking points first — these are the highest-value callPrep items */}
-            {(resResult.talkingPoints||[]).map((tp:string,i:number)=>(
-              <div key={"tp-"+i} style={{fontSize:11,color:T.t1,lineHeight:1.5,display:"flex",gap:8,alignItems:"flex-start",marginBottom:6,padding:"7px 10px",background:T.s2,borderRadius:8}}>
-                <span style={{color:T.cyan,flexShrink:0,fontWeight:700,fontSize:10,marginTop:1}}>{i+1}</span>
-                <span>{tp}</span>
-              </div>
-            ))}
-            {/* Hooks after — softer signals */}
-            {(resResult.hooks||[]).length>0&&<>
-              {(resResult.talkingPoints||[]).length>0&&<div style={{fontSize:9,color:T.t4,textTransform:"uppercase",letterSpacing:"1px",marginTop:8,marginBottom:4}}>Also worth mentioning</div>}
-              {(resResult.hooks||[]).map((h:string,i:number)=>(
-                <div key={"h-"+i} style={{fontSize:11,color:T.t3,lineHeight:1.5,display:"flex",gap:6,alignItems:"flex-start",marginBottom:4}}>
-                  <span style={{color:T.t4,flexShrink:0}}>·</span><span>{h}</span>
-                </div>
-              ))}
-            </>}
-          </div>}
-        </>}
-      </div>}
-
-            {/* SUGGESTED MERGES FROM RESEARCH */}
-      {(mergeMatchLoading || suggestedMerges.filter(m=>!dismissedSuggestions.has(m.id)).length > 0) && <div className="anim" style={{background:T.s1,border:`1px solid rgba(167,139,250,.25)`,borderRadius:16,padding:16,marginBottom:16}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.purple}}>🔗 Suggested Merges</div>
-          {mergeMatchLoading && <div style={{fontSize:10,color:T.t4}}>Scanning...</div>}
-        </div>
-        {mergeMatchLoading && <div style={{height:10,borderRadius:5,background:T.s3,width:"60%",opacity:.5}}/>}
-        {suggestedMerges.filter(m=>!dismissedSuggestions.has(m.id)).map((m:any)=>{
-          const matchedGroup = groups.find((g:any)=>g.id===m.id);
-          const mName = matchedGroup ? fixGroupName(matchedGroup) : m.id;
-          const mLocs = matchedGroup?.locs || matchedGroup?.children?.length || 1;
-          const mPY = matchedGroup ? Object.values(matchedGroup.pyQ||{}).reduce((s:any,v:any)=>s+v,0) : 0;
-          return <div key={m.id} style={{padding:"10px 12px",background:T.s2,borderRadius:10,marginBottom:8,border:`1px solid ${T.purple}20`}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:12,fontWeight:700,color:T.t1}}>{mName}</div>
-                <div style={{fontSize:10,color:T.t3,marginTop:1}}>{mLocs} loc{mLocs!==1?"s":""} · PY ${(mPY/1000).toFixed(1)}k</div>
-                <div style={{fontSize:10,color:T.purple,marginTop:3,fontStyle:"italic"}}>{m.reason}</div>
-              </div>
-            </div>
-            <div style={{display:"flex",gap:6,marginTop:8}}>
-              <button onClick={async ()=>{
-                if (!patchOverlay) return;
-                const canonicalId = group.id;
-                const existingChildIds = (group.childIds||[group.id,...(group.children||[]).map((c:any)=>c.id)]);
-                const newChildIds = [...new Set([...existingChildIds, m.id])];
-                const next = {
-                  ...OVERLAYS_REF,
-                  groups: {
-                    ...OVERLAYS_REF.groups,
-                    [canonicalId]: {
-                      ...(OVERLAYS_REF.groups?.[canonicalId]||{}),
-                      id: canonicalId,
-                      name: fixGroupName(group),
-                      tier: group.tier||"Standard",
-                      class2: group.class2||"Private Practice",
-                      childIds: newChildIds,
-                      source: "manual-merge",
-                      updatedAt: new Date().toISOString(),
-                    }
-                  }
-                };
-                await patchOverlay([{ op: "set", path: `groups.${canonicalId}`, value: next.groups[canonicalId] }]);
-                setSuggestedMerges(prev=>prev.filter(s=>s.id!==m.id));
-              }} style={{flex:1,padding:"7px 0",borderRadius:8,background:`${T.purple}18`,border:`1px solid ${T.purple}40`,color:T.purple,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-                + Merge
-              </button>
-              <button onClick={()=>setDismissedSuggestions(prev=>new Set([...prev,m.id]))}
-                style={{padding:"7px 14px",borderRadius:8,background:T.s1,border:`1px solid ${T.b2}`,color:T.t4,fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>
-                Skip
-              </button>
-            </div>
-          </div>;
-        })}
-      </div>}
-
-      {/* NEXT BEST MOVES */}
-      {nextBestMoves.length>0&&<div className="anim" style={{animationDelay:"12ms",background:T.s1,border:`1px solid rgba(79,142,247,.15)`,borderRadius:16,padding:16,marginBottom:16}}>
-        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue,marginBottom:12}}>Next Best Move</div>
-        <div style={{display:"flex",flexDirection:"column",gap:7}}>
+      {/* ── WHAT TO DO NEXT ── */}
+      {nextBestMoves.length>0&&<div className="anim" style={{animationDelay:"8ms",background:T.s1,border:`1px solid rgba(79,142,247,.2)`,borderLeft:`3px solid ${T.blue}`,borderRadius:14,padding:"12px 14px",marginBottom:10}}>
+        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue,marginBottom:10}}>What to do next</div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
           {nextBestMoves.map((m,i)=>(
-            <div key={i} style={{display:"flex",alignItems:"center",gap:10,background:T.s2,borderRadius:10,padding:"10px 12px",border:`1px solid ${m.color}18`}}>
-              <div style={{width:20,height:20,borderRadius:"50%",background:`${m.color}18`,border:`1px solid ${m.color}40`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                <span style={{fontSize:9,fontWeight:700,color:m.color}}>{i+1}</span>
+            <div key={i} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"9px 10px",background:T.s2,borderRadius:10,border:`1px solid ${m.color}18`}}>
+              <div style={{width:18,height:18,borderRadius:"50%",background:`${m.color}18`,border:`1px solid ${m.color}40`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1}}>
+                <span style={{fontSize:8,fontWeight:700,color:m.color}}>{i+1}</span>
               </div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:11,fontWeight:700,color:T.t1,lineHeight:1.3}}>{m.action}</div>
                 <div style={{fontSize:10,color:T.t3,marginTop:2,lineHeight:1.3}}>{m.why}</div>
               </div>
-              <div style={{width:3,height:32,borderRadius:2,background:m.color,flexShrink:0,opacity:.7}}/>
+              <div style={{width:3,height:28,borderRadius:2,background:m.color,flexShrink:0,marginTop:4,opacity:.7}}/>
             </div>
           ))}
         </div>
       </div>}
 
-      {/* DISTRIBUTOR SPLIT */}
-      {distBreakdown.rows.length>0&&<div className="anim" style={{animationDelay:"15ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
-        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.orange,marginBottom:12}}>Distributor Split</div>
+      {/* ── OPPORTUNITIES ── */}
+      {opportunitySignals.length>0&&<div className="anim" style={{animationDelay:"12ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:10}}>
+        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.orange,marginBottom:10}}>Opportunities</div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {opportunitySignals.map((sig,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 10px",background:T.s2,borderRadius:10,border:`1px solid ${sig.color}18`}}>
+              <span style={{fontSize:13,width:18,textAlign:"center",flexShrink:0,color:sig.color}}>{sig.icon}</span>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:11,fontWeight:700,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{sig.label}</div>
+                <div style={{fontSize:10,color:T.t3,marginTop:1}}>{sig.detail}</div>
+              </div>
+              <div style={{width:3,height:24,borderRadius:2,background:sig.color,flexShrink:0,opacity:.6}}/>
+            </div>
+          ))}
+        </div>
+      </div>}
+
+      {/* ── LOCATIONS ── */}
+      {sortedChildren.length>0&&<div className="anim" style={{animationDelay:"16ms",marginBottom:10}}>
+        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3,marginBottom:7}}>Locations · {sortedChildren.length}</div>
+        {sortedChildren.map((c,i)=>{
+          const cPy=c.pyQ?.[qk]||0;const cCy=c.cyQ?.[qk]||0;const cGap=cPy-cCy;const cRet=cPy>0?Math.round(cCy/cPy*100):0;
+          const cRetColor=cRet>=70?T.green:cRet>=40?T.amber:T.red;
+          const borderColor=cGap>2000?"rgba(248,113,113,.2)":cGap<=0&&cPy>0?"rgba(52,211,153,.15)":T.b1;
+          return <button key={c.id} className="anim" onClick={()=>goAcct(c)} style={{animationDelay:`${i*25}ms`,width:"100%",textAlign:"left",background:T.s1,border:`1px solid ${borderColor}`,borderRadius:11,padding:"10px 12px",marginBottom:6,cursor:"pointer"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
+              <div style={{fontSize:12,fontWeight:600,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.name}</div>
+              <Chev/>
+            </div>
+            <div style={{fontSize:9,color:T.t3,marginBottom:5}}>
+              {[c.addr,[c.city,c.st].filter(Boolean).join(" ")].filter(Boolean).join(", ")}
+              {c.dealer&&c.dealer!=="All Other"&&<span style={{color:T.cyan}}> · {c.dealer}</span>}
+              {c.last!=null&&<span style={{color:T.t4}}> · Last {c.last}d</span>}
+            </div>
+            <div style={{display:"flex",gap:10}}>
+              <Pill l="PY" v={$$(cPy)} c={T.t2}/><Pill l="CY" v={$$(cCy)} c={T.blue}/><Pill l="Gap" v={cGap<=0?`+${$$(Math.abs(cGap))}`:$$(cGap)} c={cGap<=0?T.green:T.red}/><div style={{marginLeft:"auto"}}><Pill l="Ret" v={cRet+"%"} c={cRetColor}/></div>
+            </div>
+            {(c.products||[]).length>0&&<div style={{marginTop:6,display:"flex",gap:3,flexWrap:"wrap"}}>
+              {c.products.slice(0,4).map((p,j)=>{const pCy=p[`cy${qk}`]||0;const pPy=p[`py${qk}`]||0;return <span key={j} style={{fontSize:8,color:pPy>200&&pCy===0?T.red:T.t3,background:pPy>200&&pCy===0?"rgba(248,113,113,.06)":T.s2,borderRadius:3,padding:"2px 4px",border:`1px solid ${pPy>200&&pCy===0?"rgba(248,113,113,.12)":T.b2}`}}>{p.n.split(" ")[0]} {pPy>200&&pCy===0?"!$0":$$(pCy)}</span>;})}
+            </div>}
+          </button>;
+        })}
+        {ghostLocations.map((c:any,i:number)=>(
+          <div key={c.id} style={{background:"rgba(167,139,250,.04)",border:"1px dashed rgba(167,139,250,.3)",borderRadius:11,padding:"10px 12px",marginBottom:6,opacity:.8}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
+              <div style={{fontSize:12,fontWeight:600,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",color:T.t2}}>{c.name}</div>
+              <span style={{fontSize:8,fontWeight:700,color:T.purple,background:"rgba(167,139,250,.15)",borderRadius:3,padding:"2px 6px",border:"1px solid rgba(167,139,250,.3)",flexShrink:0,marginLeft:8}}>NEW ✦</span>
+            </div>
+            {(c.city||c.addr)&&<div style={{fontSize:9,color:T.t4,marginBottom:4}}>{c.addr?`${c.addr}, `:""}{c.city}{c.st?`, ${c.st}`:""}{c.zip?` ${c.zip}`:""}</div>}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{fontSize:9,color:T.purple,fontStyle:"italic"}}>Found in research · not yet in territory data</div>
+              <button onClick={()=>setGhostLocations(prev=>{const next=prev.filter((_:any,j:number)=>j!==i);try{localStorage.setItem(`ghost_locs:${group.id}`,JSON.stringify(next));}catch{}return next;})} style={{background:"none",border:"none",color:T.t4,fontSize:9,cursor:"pointer",fontFamily:"inherit",padding:0}}>dismiss</button>
+            </div>
+          </div>
+        ))}
+      </div>}
+
+      {/* ── PRODUCTS ── */}
+      {hasProducts&&(()=>{
+        const MONTHS_S=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+        const QMAP:Record<number,string>={1:"Q1",2:"Q1",3:"Q1",4:"Q2",5:"Q2",6:"Q2",7:"Q3",8:"Q3",9:"Q3",10:"Q4",11:"Q4",12:"Q4"};
+        const childIdSet=new Set((group.children||[]).map((c:any)=>c.id));
+        const monthData=(prodName:string)=>{
+          const recs=salesStore?.records?(Object.values(salesStore.records) as any[]).filter((r:any)=>childIdSet.has(r.childId)&&r.l3===prodName):[];
+          const mb:Record<number,{py:number,cy:number}>={};
+          for(let m=1;m<=12;m++)mb[m]={py:0,cy:0};
+          recs.forEach((r:any)=>{const m=r.month||1;if(m>=1&&m<=12){mb[m].py+=r.py||0;mb[m].cy+=r.cy||0;}});
+          return [12,11,10,9,8,7,6,5,4,3,2,1].filter(m=>mb[m].py>0||mb[m].cy>0).map(m=>({m,label:MONTHS_S[m-1],q:QMAP[m],py:mb[m].py,cy:mb[m].cy}));
+        };
+        const MonthTable=({rows}:any)=>rows.length===0
+          ?<div style={{fontSize:10,color:T.t4,textAlign:"center",padding:"6px 0"}}>No monthly data · upload CSV to populate</div>
+          :<>
+            <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:4,marginBottom:4,paddingBottom:4,borderBottom:"1px solid rgba(255,255,255,.05)"}}>
+              {["Month","Q","PY","CY"].map(h=><span key={h} style={{fontSize:8,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:".5px"}}>{h}</span>)}
+            </div>
+            {rows.map(({m,label,q,py,cy}:any)=>(
+              <div key={m} style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:4,padding:"3px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}>
+                <span style={{fontSize:10,color:T.t2}}>{label}</span>
+                <span style={{fontSize:9,color:T.t4}}>{q}</span>
+                <span className="m" style={{fontSize:10,color:T.t3,fontFamily:"monospace"}}>{$$(py)}</span>
+                <span className="m" style={{fontSize:10,color:(py-cy)>0?T.red:(py-cy)<0?T.green:T.blue,fontFamily:"monospace",fontWeight:600}}>{$$(cy)}</span>
+              </div>
+            ))}
+          </>;
+        return <div className="anim" style={{animationDelay:"20ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:10}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+            <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue}}>Products</div>
+            <span style={{fontSize:9,color:T.t4}}>tap · monthly history</span>
+          </div>
+          {groupStopped.length>0&&<>
+            <div style={{fontSize:10,fontWeight:700,color:T.red,marginBottom:7}}>Stopped ({groupStopped.length})</div>
+            {groupStopped.map((p,i)=>{
+              const isExp=expandedProduct===p.name;
+              return <div key={i} style={{marginBottom:8,borderRadius:8,background:"rgba(248,113,113,.04)",border:`1px solid ${isExp?"rgba(248,113,113,.25)":"rgba(248,113,113,.08)"}`,overflow:"hidden"}}>
+                <div onClick={()=>setExpandedProduct(isExp?null:p.name)} style={{padding:"8px 10px",cursor:"pointer"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:p.locsDown.length>0?4:0}}>
+                    <span style={{fontSize:11,fontWeight:600,color:T.t1}}>{p.name}</span>
+                    <div style={{display:"flex",alignItems:"center",gap:7}}>
+                      <span className="m" style={{fontSize:10,color:T.red}}>Was {$$(p.py)} → $0</span>
+                      <span onClick={e=>{e.stopPropagation();setSelProduct(p.name);}} style={{fontSize:9,color:T.t4,cursor:"pointer",textDecoration:"underline"}}>Locs</span>
+                      <span style={{fontSize:10,color:T.t3,transition:"transform .2s",display:"inline-block",transform:isExp?"rotate(90deg)":"rotate(0deg)"}}>›</span>
+                    </div>
+                  </div>
+                  {p.locsDown.length>0&&<div style={{fontSize:9,color:T.t4,lineHeight:1.5}}>
+                    {p.locsDown.slice(0,3).map((l:string)=>l.split(" ").slice(0,2).join(" ")).join(" · ")}{p.locsDown.length>3&&<span> +{p.locsDown.length-3} more</span>}
+                  </div>}
+                </div>
+                {isExp&&<div style={{borderTop:"1px solid rgba(248,113,113,.1)",background:"rgba(0,0,0,.2)",padding:"8px 10px"}}><MonthTable rows={monthData(p.name)}/></div>}
+              </div>;
+            })}
+          </>}
+          {groupBuying.length>0&&<>
+            {groupStopped.length>0&&<div style={{marginBottom:8}}/>}
+            <div style={{fontSize:10,fontWeight:700,color:T.green,marginBottom:7}}>Buying ({groupBuying.length})</div>
+            {groupBuying.slice(0,10).map((p,i)=>{
+              const mx=groupBuying[0]?.cy||1;const trend=p.py>0?p.cy/p.py:1;const pGap=p.py-p.cy;
+              const isExp2=expandedProduct===p.name;
+              return <div key={i} style={{marginBottom:7,borderRadius:8,border:`1px solid ${isExp2?"rgba(79,142,247,.2)":"transparent"}`,overflow:"hidden"}}>
+                <div onClick={()=>setExpandedProduct(isExp2?null:p.name)} style={{cursor:"pointer"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
+                    <span style={{fontSize:11,color:T.t2,flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</span>
+                    <div style={{display:"flex",gap:5,flexShrink:0,marginLeft:8,alignItems:"center"}}>
+                      <span className="m" style={{fontSize:9,color:T.t4}}>{$$(p.py)}</span>
+                      <span className="m" style={{fontSize:10,color:trend>=0.8?T.blue:T.amber,fontWeight:600}}>{$$(p.cy)}</span>
+                      {pGap>0&&<span className="m" style={{fontSize:9,color:T.red,fontWeight:600}}>-{$$(pGap)}</span>}
+                      <span onClick={e=>{e.stopPropagation();setSelProduct(p.name);}} style={{fontSize:9,color:T.t4,cursor:"pointer",textDecoration:"underline"}}>Locs</span>
+                      <span style={{fontSize:10,color:T.t3,transition:"transform .2s",display:"inline-block",transform:isExp2?"rotate(90deg)":"rotate(0deg)"}}>›</span>
+                    </div>
+                  </div>
+                  <div style={{height:3,borderRadius:2,background:T.s3,overflow:"hidden"}}>
+                    <div className="bar-g" style={{animationDelay:`${i*40}ms`,height:"100%",borderRadius:2,width:`${Math.min(p.cy/mx*100,100)}%`,background:trend>=0.8?`linear-gradient(90deg,${T.blue},${T.cyan})`:T.amber}}/>
+                  </div>
+                  {p.locsDown.length>0&&<div style={{fontSize:9,color:T.amber,marginTop:2}}>⚠ {p.locsDown.slice(0,2).map((l:string)=>l.split(" ").slice(0,2).join(" ")).join(", ")} stopped</div>}
+                </div>
+                {isExp2&&<div style={{borderTop:"1px solid rgba(79,142,247,.1)",background:"rgba(0,0,0,.15)",padding:"8px 4px 4px",marginTop:6}}><MonthTable rows={monthData(p.name)}/></div>}
+              </div>;
+            })}
+          </>}
+        </div>;
+      })()}
+
+      {/* ── DISTRIBUTOR LEVERAGE ── */}
+      {distBreakdown.rows.length>0&&<div className="anim" style={{animationDelay:"24ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:10}}>
+        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.orange,marginBottom:10}}>Distributor Leverage</div>
         {distBreakdown.rows.map((row,i)=>{
-          const DIST_COLOR: Record<string,string> = {
-            Schein:"#4f8ef7",Patterson:"#a78bfa",Benco:"#22d3ee",Darby:"#fbbf24","DDS Dental":"#f97316","Dental City":"#10b981","All Other":"#7878a0"
-          };
-          const c = DIST_COLOR[row.dist] || "#7878a0";
-          const shareDelta = row.cyPct - row.pyPct; // gaining or losing share vs PY
-          const trend = row.py > 0 ? row.cy/row.py : null;
-          return <div key={row.dist} style={{marginBottom:i<distBreakdown.rows.length-1?12:0}}>
+          const DIST_COLOR:Record<string,string>={Schein:"#4f8ef7",Patterson:"#a78bfa",Benco:"#22d3ee",Darby:"#fbbf24","DDS Dental":"#f97316","Dental City":"#10b981","All Other":"#7878a0"};
+          const dc=DIST_COLOR[row.dist]||"#7878a0";
+          const shareDelta=row.cyPct-row.pyPct;
+          const trend=row.py>0?row.cy/row.py:null;
+          const fsc=fscMap[row.dist];
+          const childCount=(group.children||[]).filter((c:any)=>c.dealer===row.dist).length;
+          return <div key={row.dist} style={{marginBottom:i<distBreakdown.rows.length-1?14:0}}>
+            {/* Dist header */}
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-              <div style={{display:"flex",alignItems:"center",gap:6}}>
-                <span style={{fontSize:11,fontWeight:700,color:c,background:`${c}18`,borderRadius:5,padding:"2px 8px"}}>{row.dist}</span>
+              <div style={{display:"flex",alignItems:"center",gap:5}}>
+                <span style={{fontSize:10,fontWeight:700,color:dc,background:`${dc}18`,borderRadius:4,padding:"2px 7px"}}>{row.dist}</span>
                 <span style={{fontSize:9,color:T.t4}}>{row.locs} loc{row.locs!==1?"s":""}</span>
-                {shareDelta > 0.03 && <span style={{fontSize:9,color:T.green,fontWeight:600}}>▲ gaining share</span>}
-                {shareDelta < -0.03 && <span style={{fontSize:9,color:T.red,fontWeight:600}}>▼ losing share</span>}
+                {shareDelta>0.03&&<span style={{fontSize:9,color:T.green,fontWeight:600}}>▲ share</span>}
+                {shareDelta<-0.03&&<span style={{fontSize:9,color:T.red,fontWeight:600}}>▼ share</span>}
               </div>
               <div style={{textAlign:"right"}}>
-                <span className="m" style={{fontSize:13,fontWeight:700,color:T.t1}}>{$$(row.cy)}</span>
-                <span style={{fontSize:9,color:T.t4,marginLeft:5}}>{Math.round(row.cyPct*100)}%</span>
-                {trend!==null&&<span style={{fontSize:9,color:trend>=0.9?T.green:trend>=0.7?T.amber:T.red,marginLeft:6,fontWeight:600}}>{Math.round(trend*100)}%</span>}
+                <span className="m" style={{fontSize:12,fontWeight:700,color:T.t1}}>{$$(row.cy)}</span>
+                <span style={{fontSize:9,color:T.t4,marginLeft:4}}>{Math.round(row.cyPct*100)}%</span>
+                {trend!==null&&<span style={{fontSize:9,color:trend>=0.9?T.green:trend>=0.7?T.amber:T.red,marginLeft:5,fontWeight:600}}>{Math.round(trend*100)}%</span>}
               </div>
             </div>
-            {/* CY share bar */}
-            <div style={{height:6,borderRadius:3,background:T.s3,overflow:"hidden",marginBottom:2}}>
-              <div className="bar-g" style={{animationDelay:`${i*60}ms`,height:"100%",borderRadius:3,width:`${row.cyPct*100}%`,background:`linear-gradient(90deg,${c},${c}99)`}}/>
+            {/* Share bar */}
+            <div style={{height:5,borderRadius:3,background:T.s3,overflow:"hidden",marginBottom:1}}>
+              <div className="bar-g" style={{animationDelay:`${i*60}ms`,height:"100%",borderRadius:3,width:`${row.cyPct*100}%`,background:`linear-gradient(90deg,${dc},${dc}99)`}}/>
             </div>
-            {/* PY ghost bar for comparison */}
-            <div style={{display:"flex",alignItems:"center",gap:4}}>
-              <div style={{flex:1,height:3,borderRadius:2,background:T.s3,overflow:"hidden"}}>
-                <div style={{height:"100%",borderRadius:2,width:`${row.pyPct*100}%`,background:`${c}40`}}/>
+            <div style={{display:"flex",alignItems:"center",gap:3,marginBottom:8}}>
+              <div style={{flex:1,height:2,borderRadius:2,background:T.s3,overflow:"hidden"}}>
+                <div style={{height:"100%",borderRadius:2,width:`${row.pyPct*100}%`,background:`${dc}40`}}/>
               </div>
               <span style={{fontSize:8,color:T.t4,flexShrink:0}}>{$$(row.py)} PY</span>
             </div>
+            {/* Inline FSC rep */}
+            {groupDists.includes(row.dist)&&<div style={{display:"flex",alignItems:"center",gap:6,padding:"6px 10px",background:T.s2,borderRadius:8,border:`1px solid ${T.b2}`}}>
+              <span style={{fontSize:9,color:T.t4,flexShrink:0}}>FSC</span>
+              {fsc
+                ?<div style={{flex:1,minWidth:0,display:"flex",alignItems:"center",gap:8}}>
+                    <span style={{fontSize:11,fontWeight:600,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fsc.name}</span>
+                    {fsc.phone&&<a href={`tel:${fsc.phone.replace(/\D/g,"")}`} style={{fontSize:9,color:T.cyan,textDecoration:"none",flexShrink:0}}>📞 {fsc.phone}</a>}
+                  </div>
+                :<span style={{fontSize:10,color:T.t4,fontStyle:"italic",flex:1}}>No FSC</span>
+              }
+              <div style={{display:"flex",gap:4,flexShrink:0}}>
+                {fsc?.phone&&<a href={`tel:${fsc.phone.replace(/\D/g,"")}`} style={{background:"rgba(34,211,153,.1)",border:"1px solid rgba(34,211,153,.2)",borderRadius:5,padding:"2px 7px",fontSize:9,fontWeight:600,color:T.green,textDecoration:"none"}}>Call</a>}
+                <button onClick={()=>openEdit(row.dist)} style={{background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.15)",borderRadius:5,padding:"2px 7px",fontSize:9,fontWeight:600,color:T.blue,cursor:"pointer",fontFamily:"inherit"}}>{fsc?"Edit":"+ Add"}</button>
+                {fsc?.source==="manual"&&<button onClick={()=>deleteRep(row.dist)} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:10,padding:"0 2px"}}>✕</button>}
+              </div>
+            </div>}
           </div>;
         })}
-      </div>}
-
-      {/* FSC / DISTRIBUTOR REPS */}
-      {groupDists.length>0&&<div className="anim" style={{animationDelay:"20ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan}}>FSC Contacts</div>
-          <div style={{fontSize:9,color:T.t4}}>Applies to all locations in this group</div>
-        </div>
-        {groupDists.map(dist=>{
-          const fsc = fscMap[dist];
-          const distColor = dist==="Schein"?"rgba(79,142,247,1)":dist==="Patterson"?"rgba(168,85,247,1)":dist==="Benco"?"rgba(34,211,153,1)":dist==="Darby"?"rgba(251,146,60,1)":"rgba(148,163,184,1)";
-          const childCount = (group.children||[]).filter((c:any)=>c.dealer===dist).length;
-          return <div key={dist} style={{marginBottom:8,padding:"10px 12px",borderRadius:10,background:T.s2,border:`1px solid ${T.b2}`}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,flex:1,minWidth:0}}>
-                <span style={{fontSize:10,fontWeight:700,color:distColor,background:`${distColor}18`,borderRadius:5,padding:"2px 7px",flexShrink:0}}>{dist}</span>
-                <span style={{fontSize:9,color:T.t4,flexShrink:0}}>{childCount} loc{childCount!==1?"s":""}</span>
-                {fsc
-                  ? <div style={{flex:1,minWidth:0}}>
-                      <span style={{fontSize:12,fontWeight:600,color:T.t1,display:"block",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fsc.name}</span>
-                      {fsc.phone&&<a href={`tel:${fsc.phone.replace(/\D/g,"")}`} style={{fontSize:10,color:T.cyan,textDecoration:"none"}}>{fsc.phone}</a>}
-                      {fsc.source==="badger"&&!fsc.phone&&<span style={{fontSize:9,color:T.t4,fontStyle:"italic"}}> from Badger</span>}
-                    </div>
-                  : <span style={{fontSize:11,color:T.t4,fontStyle:"italic"}}>No FSC assigned</span>
-                }
-              </div>
-              <div style={{display:"flex",gap:6,flexShrink:0,marginLeft:8}}>
-                {fsc?.phone&&<a href={`tel:${fsc.phone.replace(/\D/g,"")}`} style={{background:"rgba(34,211,153,.1)",border:"1px solid rgba(34,211,153,.2)",borderRadius:6,padding:"3px 8px",fontSize:10,fontWeight:600,color:T.green,textDecoration:"none",display:"flex",alignItems:"center"}}>Call</a>}
-                <button onClick={()=>openEdit(dist)} style={{background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.15)",borderRadius:6,padding:"3px 8px",fontSize:10,fontWeight:600,color:T.blue,cursor:"pointer",fontFamily:"inherit"}}>{fsc?"Edit":"+ Add"}</button>
-                {fsc?.source==="manual"&&<button onClick={()=>deleteRep(dist)} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:11,padding:"2px 4px"}}>✕</button>}
-              </div>
-            </div>
-            {fsc?.notes&&<div style={{marginTop:6,fontSize:10,color:T.t3,fontStyle:"italic",lineHeight:1.4}}>{fsc.notes}</div>}
-          </div>;
-        })}
-        {/* Edit modal */}
+        {/* Schein roster edit modal */}
         {editDist&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:200,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={e=>{if(e.target===e.currentTarget)setEditDist(null)}}>
           <div style={{background:T.s1,borderRadius:"20px 20px 0 0",padding:24,width:"100%",maxWidth:480,paddingBottom:40}}>
             <div style={{fontSize:13,fontWeight:700,marginBottom:16}}>FSC for {editDist}</div>
@@ -1250,14 +1228,13 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
               <div style={{fontSize:10,color:T.t3,marginBottom:4,fontWeight:600}}>Name *</div>
               <input value={editName} onChange={e=>setEditName(e.target.value)} placeholder="Rep name" style={{width:"100%",background:T.s2,border:`1px solid ${T.b1}`,borderRadius:8,padding:"8px 10px",fontSize:13,color:T.t1,fontFamily:"inherit"}}/>
             </div>
-            {/* Quick-pick from Schein CT roster */}
             <div style={{marginBottom:12}}>
               <div style={{fontSize:10,color:T.t3,marginBottom:6,fontWeight:600}}>Pick from Schein Roster (CT + NE)</div>
               <input value={rosterSearch} onChange={e=>setRosterSearch(e.target.value)}
                 placeholder="Search FSC or ES by name"
                 style={{width:"100%",background:T.s2,border:"1px solid "+T.b1,borderRadius:8,padding:"7px 10px",fontSize:12,color:T.t1,fontFamily:"inherit",marginBottom:6}}/>
-              {rosterSearch.trim().length > 0 && <div style={{maxHeight:160,overflowY:"auto",borderRadius:8,border:"1px solid "+T.b1,background:T.s2}}>
-                {filteredRoster.length === 0 && <div style={{padding:"10px",fontSize:11,color:T.t4}}>No matches</div>}
+              {rosterSearch.trim().length>0&&<div style={{maxHeight:160,overflowY:"auto",borderRadius:8,border:"1px solid "+T.b1,background:T.s2}}>
+                {filteredRoster.length===0&&<div style={{padding:"10px",fontSize:11,color:T.t4}}>No matches</div>}
                 {filteredRoster.map((r:any,i:number)=>(
                   <button key={i} onClick={()=>pickFromRoster(r)}
                     style={{width:"100%",textAlign:"left",padding:"8px 12px",background:"none",border:"none",borderBottom:"1px solid "+T.b2,color:T.t1,cursor:"pointer",fontFamily:"inherit"}}>
@@ -1283,271 +1260,205 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
         </div>}
       </div>}
 
-      {/* GROUP CONTACTS */}
-      <div className="anim" style={{animationDelay:"30ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:groupContacts.length>0?12:0}}>
-          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.purple}}>Group Contacts</div>
-          <button onClick={()=>openContactForm()} style={{background:"rgba(167,139,250,.1)",border:"1px solid rgba(167,139,250,.2)",borderRadius:7,padding:"3px 10px",fontSize:10,fontWeight:700,color:T.purple,cursor:"pointer",fontFamily:"inherit"}}>+ Add</button>
+      {/* ── CONTACTS ── */}
+      <div className="anim" style={{animationDelay:"28ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:10}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:groupContacts.length>0||((resResult?.contacts||[]).length>0)?10:0}}>
+          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.purple}}>Contacts</div>
+          <button onClick={()=>openContactForm()} style={{background:"rgba(167,139,250,.1)",border:"1px solid rgba(167,139,250,.2)",borderRadius:6,padding:"2px 8px",fontSize:9,fontWeight:700,color:T.purple,cursor:"pointer",fontFamily:"inherit"}}>+ Add</button>
         </div>
-        {groupContacts.length===0&&<div style={{fontSize:11,color:T.t4,paddingTop:8}}>No contacts yet. Add distributor reps, DSO contacts, or anyone relevant to this group.</div>}
+
+        {/* Saved contacts */}
         {groupContacts.map((c:any,i:number)=>(
-          <div key={c.id} style={{borderTop:i>0?`1px solid ${T.b2}`:"none",paddingTop:i>0?10:0,marginTop:i>0?10:0}}>
+          <div key={c.id} style={{borderTop:i>0?`1px solid ${T.b2}`:"none",paddingTop:i>0?9:0,marginTop:i>0?9:0}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:12,fontWeight:700,color:T.t1}}>{c.name}</div>
                 {c.role&&<div style={{fontSize:10,color:T.purple,marginTop:1}}>{c.role}</div>}
                 <div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:4}}>
-                  {c.phone&&<a href={`tel:${c.phone.replace(/\D/g,"")}`} style={{fontSize:11,color:T.cyan,textDecoration:"none"}}>{c.phone}</a>}
-                  {c.email&&<a href={`mailto:${c.email}`} style={{fontSize:11,color:T.blue,textDecoration:"none"}}>{c.email}</a>}
+                  {c.phone&&<a href={`tel:${c.phone.replace(/\D/g,"")}`} style={{fontSize:10,color:T.cyan,textDecoration:"none"}}>{c.phone}</a>}
+                  {c.email&&<a href={`mailto:${c.email}`} style={{fontSize:10,color:T.blue,textDecoration:"none"}}>{c.email}</a>}
                 </div>
-                {c.notes&&<div style={{fontSize:10,color:T.t3,marginTop:4,fontStyle:"italic",lineHeight:1.4}}>{c.notes}</div>}
+                {c.notes&&<div style={{fontSize:10,color:T.t3,marginTop:3,fontStyle:"italic",lineHeight:1.4}}>{c.notes}</div>}
               </div>
-              <div style={{display:"flex",gap:6,flexShrink:0,marginLeft:10}}>
-                {c.phone&&<a href={`tel:${c.phone.replace(/\D/g,"")}`} style={{background:"rgba(34,211,153,.1)",border:"1px solid rgba(34,211,153,.2)",borderRadius:6,padding:"3px 8px",fontSize:10,fontWeight:600,color:T.green,textDecoration:"none"}}>Call</a>}
-                <button onClick={()=>openContactForm(c)} style={{background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.15)",borderRadius:6,padding:"3px 8px",fontSize:10,fontWeight:600,color:T.blue,cursor:"pointer",fontFamily:"inherit"}}>Edit</button>
-                <button onClick={()=>deleteContact(c.id)} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:12,padding:"2px 4px"}}>✕</button>
+              <div style={{display:"flex",gap:5,flexShrink:0,marginLeft:8}}>
+                {c.phone&&<a href={`tel:${c.phone.replace(/\D/g,"")}`} style={{background:"rgba(34,211,153,.1)",border:"1px solid rgba(34,211,153,.2)",borderRadius:5,padding:"2px 7px",fontSize:9,fontWeight:600,color:T.green,textDecoration:"none"}}>Call</a>}
+                <button onClick={()=>openContactForm(c)} style={{background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.15)",borderRadius:5,padding:"2px 7px",fontSize:9,fontWeight:600,color:T.blue,cursor:"pointer",fontFamily:"inherit"}}>Edit</button>
+                <button onClick={()=>deleteContact(c.id)} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:11,padding:"0 2px"}}>✕</button>
               </div>
             </div>
           </div>
         ))}
+
+        {/* Research-found contacts */}
+        {resResult&&!resLoading&&(resResult.contacts||[]).length>0&&<>
+          {groupContacts.length>0&&<div style={{borderTop:`1px solid ${T.b2}`,margin:"8px 0"}}/>}
+          <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",color:T.t4,letterSpacing:"1px",marginBottom:7}}>From Research</div>
+          {(resResult.contacts||[]).map((c:any,i:number)=>{
+            const SCOPE_LABELS=["Decision Maker","Practice Manager","Regional / DSO","Coordinator"];
+            const SCOPE_COLORS_KEYS=["cyan","blue","purple","t4"];
+            const sl=SCOPE_LABELS[(c.scope||1)-1]||SCOPE_LABELS[0];
+            const sc=T[SCOPE_COLORS_KEYS[(c.scope||1)-1]]||T.t4;
+            const isSaved=savedResContacts.has(i);
+            return <div key={i} style={{padding:"8px 10px",background:(c.scope||1)===1?"rgba(34,211,238,.04)":T.s2,borderRadius:8,marginBottom:6,border:(c.scope||1)===1?"1px solid rgba(34,211,238,.15)":"1px solid transparent"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:1}}>
+                    <div style={{fontSize:12,fontWeight:700,color:T.t1}}>{c.name||"Unknown"}</div>
+                    <span style={{fontSize:8,fontWeight:700,color:sc,background:sc+"18",borderRadius:3,padding:"1px 5px",flexShrink:0}}>{sl}</span>
+                  </div>
+                  {c.role&&<div style={{fontSize:10,color:T.t3,marginBottom:3}}>{c.role}</div>}
+                  <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                    {c.phone&&<a href={`tel:${c.phone.replace(/\D/g,"")}`} style={{fontSize:10,color:T.cyan,textDecoration:"none"}}>📞 {c.phone}</a>}
+                    {c.email&&<a href={`mailto:${c.email}`} style={{fontSize:10,color:T.blue,textDecoration:"none"}}>✉ {c.email}</a>}
+                  </div>
+                </div>
+                <button onClick={()=>saveResContact(c,i)} disabled={isSaved}
+                  style={{background:isSaved?"rgba(52,211,153,.1)":"rgba(79,142,247,.1)",border:"1px solid "+(isSaved?"rgba(52,211,153,.2)":"rgba(79,142,247,.2)"),borderRadius:5,padding:"3px 8px",fontSize:9,fontWeight:700,color:isSaved?T.green:T.blue,cursor:isSaved?"default":"pointer",fontFamily:"inherit",flexShrink:0,marginLeft:8}}>
+                  {isSaved?"Saved":"+ Save"}
+                </button>
+              </div>
+            </div>;
+          })}
+        </>}
+
+        {groupContacts.length===0&&(!resResult||resDismissed||(resResult.contacts||[]).length===0)&&<div style={{fontSize:11,color:T.t4,paddingTop:6}}>No contacts yet. Hit Research to find contacts, or add manually.</div>}
       </div>
 
-      {/* GROUP NOTES */}
-      <div className="anim" style={{animationDelay:"35ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.amber}}>Group Notes</div>
+      {/* ── GROUP NOTES ── */}
+      <div className="anim" style={{animationDelay:"32ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:10}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.amber}}>Notes</div>
           {noteSaved&&<span style={{fontSize:9,color:T.green}}>✓ Saved</span>}
         </div>
         <textarea
           value={groupNote}
           onChange={e=>setGroupNote(e.target.value)}
           onBlur={e=>saveNote(e.target.value)}
-          placeholder={`Notes about ${fixGroupName(group)} as a whole — competitive intel, buying patterns, key relationships, anything that applies to all locations...`}
+          placeholder={`Notes for ${fixGroupName(group)} — intel, patterns, relationships, anything that applies across all locations...`}
           rows={4}
-          style={{width:"100%",background:T.s2,border:`1px solid ${T.b1}`,borderRadius:8,padding:"10px 12px",fontSize:12,color:T.t1,fontFamily:"inherit",resize:"none",lineHeight:1.5,outline:"none",boxSizing:"border-box"}}
+          style={{width:"100%",background:T.s2,border:`1px solid ${T.b1}`,borderRadius:8,padding:"9px 11px",fontSize:12,color:T.t1,fontFamily:"inherit",resize:"none",lineHeight:1.5,outline:"none",boxSizing:"border-box"}}
         />
-        <button onClick={()=>saveNote(groupNote)} style={{marginTop:8,background:"rgba(251,191,36,.1)",border:"1px solid rgba(251,191,36,.2)",borderRadius:8,padding:"6px 16px",fontSize:11,fontWeight:600,color:T.amber,cursor:"pointer",fontFamily:"inherit"}}>Save Note</button>
+        <button onClick={()=>saveNote(groupNote)} style={{marginTop:6,background:"rgba(251,191,36,.1)",border:"1px solid rgba(251,191,36,.2)",borderRadius:7,padding:"5px 14px",fontSize:11,fontWeight:600,color:T.amber,cursor:"pointer",fontFamily:"inherit"}}>Save</button>
       </div>
 
-      {/* ADD/EDIT CONTACT MODAL */}
-      {showContactForm&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:200,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={e=>{if(e.target===e.currentTarget)setShowContactForm(false)}}>
-        <div style={{background:T.s1,borderRadius:"20px 20px 0 0",padding:24,width:"100%",maxWidth:480,paddingBottom:40}}>
-          <div style={{fontSize:13,fontWeight:700,marginBottom:16}}>{editContact?"Edit Contact":"Add Group Contact"}</div>
-          {[
-            {label:"Name *",val:cName,set:setCName,ph:"e.g. Gabrielle Martin",type:"text"},
-            {label:"Role / Title",val:cRole,set:setCRole,ph:"e.g. Special Markets Rep — RI",type:"text"},
-            {label:"Phone",val:cPhone,set:setCPhone,ph:"(xxx) xxx-xxxx",type:"tel"},
-            {label:"Email",val:cEmail,set:setCEmail,ph:"email@schein.com",type:"email"},
-          ].map(({label,val,set,ph,type})=>(
-            <div key={label} style={{marginBottom:10}}>
-              <div style={{fontSize:10,color:T.t3,marginBottom:4,fontWeight:600}}>{label}</div>
-              <input value={val} onChange={e=>set(e.target.value)} placeholder={ph} type={type} style={{width:"100%",background:T.s2,border:`1px solid ${T.b1}`,borderRadius:8,padding:"8px 10px",fontSize:13,color:T.t1,fontFamily:"inherit"}}/>
-            </div>
-          ))}
-          <div style={{marginBottom:16}}>
-            <div style={{fontSize:10,color:T.t3,marginBottom:4,fontWeight:600}}>Notes</div>
-            <textarea value={cNotes} onChange={e=>setCNotes(e.target.value)} placeholder="Relationship context, how they can help, best time to reach..." rows={3} style={{width:"100%",background:T.s2,border:`1px solid ${T.b1}`,borderRadius:8,padding:"8px 10px",fontSize:12,color:T.t1,fontFamily:"inherit",resize:"none"}}/>
+      {/* ── AI GROUP INTEL ── */}
+      {(resLoading||(resResult&&!resDismissed))&&<div className="anim" style={{background:T.s1,border:"1px solid rgba(34,211,238,.2)",borderRadius:14,padding:"12px 14px",marginBottom:10}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+          <div style={{display:"flex",alignItems:"center",gap:7}}>
+            <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan}}>Group Intel</div>
+            {resResult&&resResult.statusPill&&!resLoading&&(()=>{const sp=STATUS_PILL[resResult.statusPill]||STATUS_PILL.unknown;return<span style={{fontSize:9,fontWeight:700,color:sp.color,background:sp.color+"20",borderRadius:4,padding:"2px 7px"}}>{sp.label}</span>;})()}
           </div>
-          <div style={{display:"flex",gap:10}}>
-            <button onClick={()=>setShowContactForm(false)} style={{flex:1,padding:"10px 0",borderRadius:10,fontSize:13,fontWeight:600,cursor:"pointer",border:`1px solid ${T.b1}`,background:T.s2,color:T.t3,fontFamily:"inherit"}}>Cancel</button>
-            <button onClick={saveContact} disabled={!cName.trim()} style={{flex:2,padding:"10px 0",borderRadius:10,fontSize:13,fontWeight:700,cursor:cName.trim()?"pointer":"not-allowed",border:"none",background:cName.trim()?T.purple:"rgba(167,139,250,.3)",color:"#fff",fontFamily:"inherit"}}>Save Contact</button>
-          </div>
+          {!resLoading&&<button onClick={()=>setResDismissed(true)} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:15,lineHeight:1,padding:"0 4px"}}>×</button>}
         </div>
-      </div>}
-
-
-      {/* OPPORTUNITIES */}
-      {opportunitySignals.length>0&&<div className="anim" style={{animationDelay:"38ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
-        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.orange,marginBottom:12}}>Opportunities</div>
-        <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {opportunitySignals.map((sig,i)=>(
-            <div key={i} style={{display:"flex",alignItems:"center",gap:10,background:T.s2,borderRadius:10,padding:"9px 12px",border:`1px solid ${sig.color}18`}}>
-              <span style={{fontSize:14,width:20,textAlign:"center",flexShrink:0,color:sig.color}}>{sig.icon}</span>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:11,fontWeight:700,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{sig.label}</div>
-                <div style={{fontSize:10,color:T.t3,marginTop:1}}>{sig.detail}</div>
+        {resLoading&&<div style={{display:"flex",flexDirection:"column",gap:8}}>{[80,60,90].map((w,i)=><div key={i} style={{height:11,borderRadius:5,background:T.s3,width:w+"%",opacity:.6}}/>)}</div>}
+        {resResult&&!resLoading&&<>
+          {resResult.status&&(resResult.isProviderError
+            ?<div style={{padding:"8px 10px",background:"rgba(248,113,113,.07)",border:"1px solid rgba(248,113,113,.2)",borderRadius:8,marginBottom:8}}>
+                <div style={{fontSize:9,fontWeight:700,color:"#f87171",textTransform:"uppercase",letterSpacing:"1px",marginBottom:3}}>{resResult.isQuotaError?"Usage Limit Reached":"Research Unavailable"}</div>
+                <div style={{fontSize:11,color:T.t2,lineHeight:1.5}}>{resResult.status}</div>
+                {resResult.isQuotaError&&<div style={{fontSize:10,color:T.t4,marginTop:4}}>Check console.anthropic.com to add credits.</div>}
               </div>
-              <div style={{width:3,height:28,borderRadius:2,background:sig.color,flexShrink:0}}/>
-            </div>
-          ))}
-        </div>
-      </div>}
-
-      {/* GROUP PRODUCT ROLLUP */}
-      {hasProducts&&<div className="anim" style={{animationDelay:"40ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
-        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue,marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <span>Group Product Health</span>
-          <span style={{fontSize:9,color:T.t4,fontWeight:400,textTransform:"none",letterSpacing:0}}>Tap row · monthly history</span>
-        </div>
-
-        {/* Stopped across group */}
-        {groupStopped.length>0&&<div style={{marginBottom:groupBuying.length>0?14:0}}>
-          <div style={{fontSize:10,fontWeight:700,color:T.red,marginBottom:8}}>Stopped Buying ({groupStopped.length} products)</div>
-          {groupStopped.map((p,i)=>{
-            const isExp = expandedProduct === p.name;
-            const childIds2 = new Set((group.children||[]).map((c:any)=>c.id));
-            const recs = salesStore?.records ? (Object.values(salesStore.records) as any[]).filter((r:any)=>childIds2.has(r.childId)&&r.l3===p.name) : [];
-            // Build month rows newest-first: months 1-12, filter to rows with any data
-            const MONTHS_SHORT2 = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-            const QMAP: Record<number,string> = {1:"Q1",2:"Q1",3:"Q1",4:"Q2",5:"Q2",6:"Q2",7:"Q3",8:"Q3",9:"Q3",10:"Q4",11:"Q4",12:"Q4"};
-            const mb: Record<number,{py:number,cy:number}> = {};
-            for(let m=1;m<=12;m++) mb[m]={py:0,cy:0};
-            recs.forEach((r:any)=>{ const m=r.month||1; if(m>=1&&m<=12){mb[m].py+=r.py||0;mb[m].cy+=r.cy||0;} });
-            const monthRows = [12,11,10,9,8,7,6,5,4,3,2,1].filter(m=>mb[m].py>0||mb[m].cy>0).map(m=>({m,label:MONTHS_SHORT2[m-1],q:QMAP[m],py:mb[m].py,cy:mb[m].cy}));
-            return <div key={i} style={{marginBottom:10,borderRadius:8,background:"rgba(248,113,113,.04)",border:`1px solid ${isExp?"rgba(248,113,113,.25)":"rgba(248,113,113,.08)"}`,overflow:"hidden"}}>
-              {/* Summary row — tap to toggle inline expansion */}
-              <div onClick={()=>setExpandedProduct(isExp?null:p.name)} style={{padding:"8px 10px",cursor:"pointer"}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:p.locsDown.length>0?4:0}}>
-                  <span style={{fontSize:12,fontWeight:600,color:T.t1}}>{p.name}</span>
-                  <div style={{display:"flex",alignItems:"center",gap:8}}>
-                    <span className="m" style={{fontSize:10,color:T.red,flexShrink:0}}>Was {$$(p.py)} → $0</span>
-                    {/* Details link → full-screen drill */}
-                    <span onClick={e=>{e.stopPropagation();setSelProduct(p.name);}} style={{fontSize:9,color:T.t4,cursor:"pointer",textDecoration:"underline",flexShrink:0}}>Locs</span>
-                    <span style={{fontSize:10,color:T.t3,transition:"transform .2s",display:"inline-block",transform:isExp?"rotate(90deg)":"rotate(0deg)"}}>›</span>
-                  </div>
-                </div>
-                {p.locsDown.length>0&&<div style={{fontSize:9,color:T.t4,lineHeight:1.5}}>
-                  {p.locsDown.slice(0,3).map(l=>l.split(" ").slice(0,2).join(" ")).join(" · ")}
-                  {p.locsDown.length>3&&<span> +{p.locsDown.length-3} more</span>}
-                </div>}
-              </div>
-              {/* Inline month table */}
-              {isExp&&<div style={{borderTop:"1px solid rgba(248,113,113,.1)",background:"rgba(0,0,0,.2)",padding:"8px 10px"}}>
-                {monthRows.length===0
-                  ? <div style={{fontSize:10,color:T.t4,textAlign:"center",padding:"6px 0"}}>No monthly data — upload a CSV with sales data to populate</div>
-                  : <>
-                      <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:4,marginBottom:4,paddingBottom:4,borderBottom:"1px solid rgba(255,255,255,.05)"}}>
-                        {["Month","Q","PY","CY"].map(h=><span key={h} style={{fontSize:8,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:"0.5px"}}>{h}</span>)}
-                      </div>
-                      {monthRows.map(({m,label,q,py,cy})=>(
-                        <div key={m} style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:4,padding:"3px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}>
-                          <span style={{fontSize:10,color:T.t2}}>{label}</span>
-                          <span style={{fontSize:9,color:T.t4}}>{q}</span>
-                          <span className="m" style={{fontSize:10,color:T.t3,fontFamily:"monospace"}}>{$$(py)}</span>
-                          <span className="m" style={{fontSize:10,color:cy>0?T.blue:T.red,fontFamily:"monospace",fontWeight:cy>0?400:600}}>{cy>0?$$(cy):"–"}</span>
-                        </div>
-                      ))}
-                    </>
-                }
-              </div>}
-            </div>;
-          })}
-        </div>}
-
-        {/* Buying across group */}
-        {groupBuying.length>0&&<div>
-          <div style={{fontSize:10,fontWeight:700,color:T.green,marginBottom:8}}>Currently Buying ({groupBuying.length} products)</div>
-          {groupBuying.slice(0,10).map((p,i)=>{
-            const mx=groupBuying[0]?.cy||1;
-            const trend=p.py>0?p.cy/p.py:1;
-            const pGap=p.py-p.cy;
-            const isExp2 = expandedProduct === p.name;
-            const childIds3 = new Set((group.children||[]).map((c:any)=>c.id));
-            const recs2 = salesStore?.records ? (Object.values(salesStore.records) as any[]).filter((r:any)=>childIds3.has(r.childId)&&r.l3===p.name) : [];
-            const MONTHS_SHORT3 = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-            const QMAP2: Record<number,string> = {1:"Q1",2:"Q1",3:"Q1",4:"Q2",5:"Q2",6:"Q2",7:"Q3",8:"Q3",9:"Q3",10:"Q4",11:"Q4",12:"Q4"};
-            const mb2: Record<number,{py:number,cy:number}> = {};
-            for(let m=1;m<=12;m++) mb2[m]={py:0,cy:0};
-            recs2.forEach((r:any)=>{ const m=r.month||1; if(m>=1&&m<=12){mb2[m].py+=r.py||0;mb2[m].cy+=r.cy||0;} });
-            const monthRows2 = [12,11,10,9,8,7,6,5,4,3,2,1].filter(m=>mb2[m].py>0||mb2[m].cy>0).map(m=>({m,label:MONTHS_SHORT3[m-1],q:QMAP2[m],py:mb2[m].py,cy:mb2[m].cy}));
-            return <div key={i} style={{marginBottom:8,borderRadius:8,border:`1px solid ${isExp2?"rgba(79,142,247,.2)":"transparent"}`,overflow:"hidden"}}>
-              {/* Summary row */}
-              <div onClick={()=>setExpandedProduct(isExp2?null:p.name)} style={{cursor:"pointer"}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
-                  <span style={{fontSize:11,color:T.t2,flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</span>
-                  <div style={{display:"flex",gap:6,flexShrink:0,marginLeft:8,alignItems:"center"}}>
-                    <span className="m" style={{fontSize:9,color:T.t4}}>{$$(p.py)}</span>
-                    <span className="m" style={{fontSize:10,color:trend>=0.8?T.blue:T.amber,fontWeight:600}}>{$$(p.cy)}</span>
-                    {pGap>0&&<span className="m" style={{fontSize:9,color:T.red,fontWeight:600}}>-{$$(pGap)}</span>}
-                    <span onClick={e=>{e.stopPropagation();setSelProduct(p.name);}} style={{fontSize:9,color:T.t4,cursor:"pointer",textDecoration:"underline",flexShrink:0}}>Locs</span>
-                    <span style={{fontSize:10,color:T.t3,transition:"transform .2s",display:"inline-block",transform:isExp2?"rotate(90deg)":"rotate(0deg)"}}>›</span>
-                  </div>
-                </div>
-                <div style={{height:4,borderRadius:2,background:T.s3,overflow:"hidden"}}>
-                  <div className="bar-g" style={{animationDelay:`${i*40}ms`,height:"100%",borderRadius:2,width:`${Math.min(p.cy/mx*100,100)}%`,background:trend>=0.8?`linear-gradient(90deg,${T.blue},${T.cyan})`:T.amber}}/>
-                </div>
-                {p.locsDown.length>0&&<div style={{fontSize:9,color:T.amber,marginTop:2}}>
-                  ⚠ {p.locsDown.slice(0,2).map(l=>l.split(" ").slice(0,2).join(" ")).join(", ")} stopped
-                </div>}
-              </div>
-              {/* Inline month table */}
-              {isExp2&&<div style={{borderTop:"1px solid rgba(79,142,247,.1)",background:"rgba(0,0,0,.15)",padding:"8px 4px 4px",marginTop:6}}>
-                {monthRows2.length===0
-                  ? <div style={{fontSize:10,color:T.t4,textAlign:"center",padding:"6px 0"}}>No monthly data — upload a CSV with sales data to populate</div>
-                  : <>
-                      <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:4,marginBottom:4,paddingBottom:4,borderBottom:"1px solid rgba(255,255,255,.05)"}}>
-                        {["Month","Q","PY","CY"].map(h=><span key={h} style={{fontSize:8,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:"0.5px"}}>{h}</span>)}
-                      </div>
-                      {monthRows2.map(({m,label,q,py,cy})=>{
-                        const mGap=py-cy;
-                        return <div key={m} style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:4,padding:"3px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}>
-                          <span style={{fontSize:10,color:T.t2}}>{label}</span>
-                          <span style={{fontSize:9,color:T.t4}}>{q}</span>
-                          <span className="m" style={{fontSize:10,color:T.t3,fontFamily:"monospace"}}>{$$(py)}</span>
-                          <span className="m" style={{fontSize:10,color:mGap>0?T.red:mGap<0?T.green:T.blue,fontFamily:"monospace",fontWeight:600}}>{$$(cy)}</span>
-                        </div>;
-                      })}
-                    </>
-                }
-              </div>}
-            </div>;
-          })}
-        </div>}
-      </div>}
-
-      <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3,marginBottom:8}}>Locations ({sortedChildren.length})</div>
-      {sortedChildren.map((c,i)=>{
-        const cPy=c.pyQ?.[qk]||0;const cCy=c.cyQ?.[qk]||0;const cGap=cPy-cCy;const cRet=cPy>0?Math.round(cCy/cPy*100):0;
-        const cRetColor = cRet>=70?T.green:cRet>=40?T.amber:T.red;
-        const borderColor = cGap>2000?"rgba(248,113,113,.2)":cGap<=0&&cPy>0?"rgba(52,211,153,.15)":T.b1;
-        return <button key={c.id} className="anim" onClick={()=>goAcct(c)} style={{animationDelay:`${i*30}ms`,width:"100%",textAlign:"left",background:T.s1,border:`1px solid ${borderColor}`,borderRadius:12,padding:"12px 14px",marginBottom:8,cursor:"pointer"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-            <div style={{fontSize:12,fontWeight:600,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.name}</div><Chev/>
-          </div>
-          <div style={{fontSize:10,color:T.t3,marginBottom:6}}>{[c.addr,[c.city,c.st,c.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")}{c.dealer&&c.dealer!=="All Other"?<span style={{color:T.cyan}}> · {c.dealer}</span>:""}{c.last!=null?` · Last ${c.last}d ago`:""}</div>
-          <Bar pct={cRet} color={`linear-gradient(90deg,${cRetColor},${cRetColor}99)`}/>
-          <div style={{display:"flex",gap:12,marginTop:6}}>
-            <Pill l="PY" v={$$(cPy)} c={T.t2}/><Pill l="CY" v={$$(cCy)} c={T.blue}/><Pill l="Gap" v={cGap<=0?`+${$$(Math.abs(cGap))}`:$$(cGap)} c={cGap<=0?T.green:T.red}/><div style={{marginLeft:"auto"}}><Pill l="Ret" v={cRet+"%"} c={cRetColor}/></div>
-          </div>
-          {(c.products||[]).length>0&&<div style={{marginTop:8,display:"flex",gap:4,flexWrap:"wrap"}}>
-            {c.products.slice(0,4).map((p,j)=>{
-              const pCy=p[`cy${qk}`]||0;const pPy=p[`py${qk}`]||0;
-              return <span key={j} style={{fontSize:8,color:pPy>200&&pCy===0?T.red:T.t3,background:pPy>200&&pCy===0?"rgba(248,113,113,.06)":T.s2,borderRadius:4,padding:"2px 5px",border:`1px solid ${pPy>200&&pCy===0?"rgba(248,113,113,.12)":T.b2}`}}>{p.n.split(" ")[0]} {pPy>200&&pCy===0?"!$0":$$(pCy)}</span>;
-            })}
-          </div>}
-        </button>;
-      })}
-
-      {/* GHOST LOCATIONS — found in research, not in CSV */}
-      {ghostLocations.map((c:any, i:number) => (
-        <div key={c.id} style={{
-          background: "rgba(167,139,250,.04)",
-          border: "1px dashed rgba(167,139,250,.3)",
-          borderRadius: 12, padding: "12px 14px", marginBottom: 8,
-          opacity: 0.8
-        }}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-            <div style={{fontSize:12,fontWeight:600,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",color:T.t2}}>{c.name}</div>
-            <span style={{fontSize:9,fontWeight:700,color:T.purple,background:"rgba(167,139,250,.15)",borderRadius:4,padding:"2px 7px",border:"1px solid rgba(167,139,250,.3)",flexShrink:0,marginLeft:8}}>NEW ✦</span>
-          </div>
-          {(c.city||c.addr) && (
-            <div style={{fontSize:10,color:T.t4,marginBottom:6}}>
-              {c.addr ? `${c.addr}, ` : ""}{c.city}{c.st ? `, ${c.st}` : ""}{c.zip ? ` ${c.zip}` : ""}
-            </div>
+            :<div style={{fontSize:12,color:T.t2,lineHeight:1.5,marginBottom:8}}>{resResult.status}</div>
           )}
-          <div style={{fontSize:10,color:T.purple,fontStyle:"italic"}}>Found in research · not yet in your territory data</div>
-          <button onClick={() => setGhostLocations(prev => {
-            const next = prev.filter((_:any, j:number) => j !== i);
-            try { localStorage.setItem(`ghost_locs:${group.id}`, JSON.stringify(next)); } catch {}
-            return next;
-          })} style={{marginTop:8,background:"none",border:"none",color:T.t4,fontSize:10,cursor:"pointer",fontFamily:"inherit",padding:0}}>
-            dismiss
-          </button>
+          {resResult.ownership&&<div style={{fontSize:11,color:T.t3,marginBottom:8,fontStyle:"italic"}}>{resResult.ownership}</div>}
+          {resResult.competitive&&<div style={{padding:"7px 10px",background:"rgba(251,191,36,.06)",border:"1px solid rgba(251,191,36,.15)",borderRadius:8,marginBottom:8}}>
+            <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",color:T.amber,letterSpacing:"1px",marginBottom:3}}>Competitive Signal</div>
+            <div style={{fontSize:11,color:T.t2,lineHeight:1.5}}>{resResult.competitive}</div>
+          </div>}
+          {resResult.website&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,padding:"7px 10px",background:T.s2,borderRadius:8}}>
+            <span style={{fontSize:11,color:T.blue,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{resResult.website}</span>
+            <button onClick={saveResWebsite} disabled={resWebsiteSaved} style={{background:resWebsiteSaved?"rgba(52,211,153,.1)":"rgba(79,142,247,.1)",border:"1px solid "+(resWebsiteSaved?"rgba(52,211,153,.2)":"rgba(79,142,247,.2)"),borderRadius:5,padding:"2px 7px",fontSize:9,fontWeight:700,color:resWebsiteSaved?T.green:T.blue,cursor:resWebsiteSaved?"default":"pointer",fontFamily:"inherit",flexShrink:0,marginLeft:8}}>{resWebsiteSaved?"Saved":"Save"}</button>
+          </div>}
+          {((resResult.talkingPoints||[]).length>0||(resResult.hooks||[]).length>0)&&<div style={{marginBottom:4}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:7}}>
+              <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",color:T.t4,letterSpacing:"1px"}}>Call Prep</div>
+              <button onClick={saveResNotes} style={{background:"rgba(251,191,36,.08)",border:"1px solid rgba(251,191,36,.2)",borderRadius:5,padding:"1px 7px",fontSize:9,fontWeight:700,color:T.amber,cursor:"pointer",fontFamily:"inherit"}}>+ Add to Notes</button>
+            </div>
+            {(resResult.talkingPoints||[]).map((tp:string,i:number)=>(
+              <div key={"tp-"+i} style={{fontSize:11,color:T.t1,lineHeight:1.5,display:"flex",gap:7,alignItems:"flex-start",marginBottom:5,padding:"6px 9px",background:T.s2,borderRadius:7}}>
+                <span style={{color:T.cyan,flexShrink:0,fontWeight:700,fontSize:9,marginTop:1}}>{i+1}</span>
+                <span>{tp}</span>
+              </div>
+            ))}
+            {(resResult.hooks||[]).length>0&&<>
+              {(resResult.talkingPoints||[]).length>0&&<div style={{fontSize:8,color:T.t4,textTransform:"uppercase",letterSpacing:"1px",marginTop:7,marginBottom:4}}>Also worth mentioning</div>}
+              {(resResult.hooks||[]).map((h:string,i:number)=>(
+                <div key={"h-"+i} style={{fontSize:11,color:T.t3,lineHeight:1.5,display:"flex",gap:5,alignItems:"flex-start",marginBottom:3}}>
+                  <span style={{color:T.t4,flexShrink:0}}>·</span><span>{h}</span>
+                </div>
+              ))}
+            </>}
+          </div>}
+        </>}
+      </div>}
+
+      {/* ── SUGGESTED MERGES ── */}
+      {(mergeMatchLoading||suggestedMerges.filter(m=>!dismissedSuggestions.has(m.id)).length>0)&&<div className="anim" style={{background:T.s1,border:`1px solid rgba(167,139,250,.25)`,borderRadius:14,padding:"12px 14px",marginBottom:10}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.purple}}>🔗 Suggested Merges</div>
+          {mergeMatchLoading&&<div style={{fontSize:10,color:T.t4}}>Scanning...</div>}
         </div>
-      ))}
+        {mergeMatchLoading&&<div style={{height:10,borderRadius:5,background:T.s3,width:"60%",opacity:.5}}/>}
+        {suggestedMerges.filter(m=>!dismissedSuggestions.has(m.id)).map((m:any)=>{
+          const matchedGroup=groups.find((g:any)=>g.id===m.id);
+          const mName=matchedGroup?fixGroupName(matchedGroup):m.id;
+          const mLocs=matchedGroup?.locs||matchedGroup?.children?.length||1;
+          const mPY=matchedGroup?Object.values(matchedGroup.pyQ||{}).reduce((s:any,v:any)=>s+v,0):0;
+          return <div key={m.id} style={{padding:"9px 11px",background:T.s2,borderRadius:9,marginBottom:7,border:`1px solid ${T.purple}20`}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:12,fontWeight:700,color:T.t1}}>{mName}</div>
+                <div style={{fontSize:9,color:T.t3,marginTop:1}}>{mLocs} loc{mLocs!==1?"s":""} · PY ${(mPY/1000).toFixed(1)}k</div>
+                <div style={{fontSize:10,color:T.purple,marginTop:2,fontStyle:"italic"}}>{m.reason}</div>
+              </div>
+            </div>
+            <div style={{display:"flex",gap:6,marginTop:6}}>
+              <button onClick={async()=>{
+                if(!patchOverlay)return;
+                const canonicalId=group.id;
+                const existingChildIds=(group.childIds||[group.id,...(group.children||[]).map((c:any)=>c.id)]);
+                const newChildIds=[...new Set([...existingChildIds,m.id])];
+                const next={...OVERLAYS_REF,groups:{...OVERLAYS_REF.groups,[canonicalId]:{...(OVERLAYS_REF.groups?.[canonicalId]||{}),id:canonicalId,name:fixGroupName(group),tier:group.tier||"Standard",class2:group.class2||"Private Practice",childIds:newChildIds,source:"manual-merge",updatedAt:new Date().toISOString()}}};
+                await patchOverlay([{op:"set",path:`groups.${canonicalId}`,value:next.groups[canonicalId]}]);
+                setSuggestedMerges(prev=>prev.filter(s=>s.id!==m.id));
+              }} style={{flex:1,padding:"6px 0",borderRadius:7,background:`${T.purple}18`,border:`1px solid ${T.purple}40`,color:T.purple,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>+ Merge</button>
+              <button onClick={()=>setDismissedSuggestions(prev=>new Set([...prev,m.id]))} style={{padding:"6px 12px",borderRadius:7,background:T.s1,border:`1px solid ${T.b2}`,color:T.t4,fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>Skip</button>
+            </div>
+          </div>;
+        })}
+      </div>}
+
     </div>
 
-    {/* ── MERGE GROUP MODAL ── */}
+    {/* ── CONTACT MODAL ── */}
+    {showContactForm&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:200,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={e=>{if(e.target===e.currentTarget)setShowContactForm(false)}}>
+      <div style={{background:T.s1,borderRadius:"20px 20px 0 0",padding:24,width:"100%",maxWidth:480,paddingBottom:40}}>
+        <div style={{fontSize:13,fontWeight:700,marginBottom:16}}>{editContact?"Edit Contact":"Add Contact"}</div>
+        {[
+          {label:"Name *",val:cName,set:setCName,ph:"e.g. Gabrielle Martin",type:"text"},
+          {label:"Role / Title",val:cRole,set:setCRole,ph:"e.g. Special Markets Rep — RI",type:"text"},
+          {label:"Phone",val:cPhone,set:setCPhone,ph:"(xxx) xxx-xxxx",type:"tel"},
+          {label:"Email",val:cEmail,set:setCEmail,ph:"email@schein.com",type:"email"},
+        ].map(({label,val,set,ph,type})=>(
+          <div key={label} style={{marginBottom:10}}>
+            <div style={{fontSize:10,color:T.t3,marginBottom:4,fontWeight:600}}>{label}</div>
+            <input value={val} onChange={e=>set(e.target.value)} placeholder={ph} type={type} style={{width:"100%",background:T.s2,border:`1px solid ${T.b1}`,borderRadius:8,padding:"8px 10px",fontSize:13,color:T.t1,fontFamily:"inherit"}}/>
+          </div>
+        ))}
+        <div style={{marginBottom:16}}>
+          <div style={{fontSize:10,color:T.t3,marginBottom:4,fontWeight:600}}>Notes</div>
+          <textarea value={cNotes} onChange={e=>setCNotes(e.target.value)} placeholder="Relationship context, best time to reach..." rows={3} style={{width:"100%",background:T.s2,border:`1px solid ${T.b1}`,borderRadius:8,padding:"8px 10px",fontSize:12,color:T.t1,fontFamily:"inherit",resize:"none"}}/>
+        </div>
+        <div style={{display:"flex",gap:10}}>
+          <button onClick={()=>setShowContactForm(false)} style={{flex:1,padding:"10px 0",borderRadius:10,fontSize:13,fontWeight:600,cursor:"pointer",border:`1px solid ${T.b1}`,background:T.s2,color:T.t3,fontFamily:"inherit"}}>Cancel</button>
+          <button onClick={saveContact} disabled={!cName.trim()} style={{flex:2,padding:"10px 0",borderRadius:10,fontSize:13,fontWeight:700,cursor:cName.trim()?"pointer":"not-allowed",border:"none",background:cName.trim()?T.purple:"rgba(167,139,250,.3)",color:"#fff",fontFamily:"inherit"}}>Save</button>
+        </div>
+      </div>
+    </div>}
+
+    {/* ── MERGE MODAL ── */}
+
+        {/* ── MERGE GROUP MODAL ── */}
     {showMerge&&<div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.75)",backdropFilter:"blur(8px)",display:"flex",flexDirection:"column",justifyContent:"flex-end"}} onClick={()=>{setShowMerge(false);setMergeTarget(null);}}>
       <div style={{background:T.s1,borderRadius:"20px 20px 0 0",padding:20,maxHeight:"80vh",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
 
@@ -1650,7 +1561,6 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
 
 
 export default GroupDetail;
-
 
 
 
