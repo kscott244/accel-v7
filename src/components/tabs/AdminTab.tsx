@@ -16,7 +16,7 @@ const ANCHOR_ORPHANS: any[] = (DATA_DISCOVERIES as any).anchor_orphans || [];
 import { BADGER, OVERLAYS_REF } from "@/lib/data";
 import { AccountId } from "@/components/primitives";
 
-function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:any[], scored:any[], overlays:any, saveOverlays:any, salesStore?:any}) {
+function AdminTab({groups, scored, overlays, patchOverlay, salesStore}:{groups:any[], scored:any[], overlays:any, patchOverlay:any, salesStore?:any}) {
   const [section, setSection] = useState<string>("groups"); // groups | detach | names | contacts
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{msg:string,ok:boolean}|null>(null);
@@ -130,11 +130,10 @@ function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:a
     ).slice(0,6);
   };
 
-  // All admin saves go through saveOverlays (central persistence service)
-  // This updates in-memory state, writes to localStorage cache, and commits to GitHub
-  async function adminSave(nextOverlays: any, successMsg: string) {
+  // All admin saves go through patchOverlay (atomic ops, no SHA conflicts)
+  async function adminSave(ops: any[], successMsg: string) {
     setSaving(true);
-    const ok = await saveOverlays(nextOverlays);
+    const ok = await patchOverlay(ops);
     if (ok) {
       showToast(`✅ ${successMsg}`);
       setNewGroupName(""); setChildIds([]); setChildIdInput(""); setEditingGroup(null);
@@ -193,10 +192,8 @@ function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:a
               <div style={{display:"flex",gap:6}}>
                 <button onClick={()=>{setEditingGroup(g);setNewGroupName(g.name);setNewGroupClass(g.class2||"Emerging DSO");setChildIds(g.childIds||[]);}} style={{fontSize:10,color:T.blue,background:"none",border:`1px solid ${T.blue}`,borderRadius:6,padding:"3px 8px",cursor:"pointer",fontFamily:"inherit"}}>Edit</button>
                 <button onClick={()=>{
-                  if(saveOverlays){
-                    const next={...OVERLAYS_REF,groups:{...(OVERLAYS_REF.groups||{})}};
-                    delete next.groups[g.id];
-                    saveOverlays(next).then(ok=>{ if(ok) showToast("✅ Deleted"); else showToast("❌ Delete failed",false); });
+                  if(patchOverlay){
+                    patchOverlay([{ op: "delete", path: `groups.${g.id}` }]).then((ok:boolean)=>{ if(ok) showToast("✅ Deleted"); else showToast("❌ Delete failed",false); });
                   }
                 }} disabled={saving} style={{fontSize:10,color:T.red,background:"none",border:`1px solid ${T.red}`,borderRadius:6,padding:"3px 8px",cursor:"pointer",fontFamily:"inherit"}}>Delete</button>
               </div>
@@ -297,10 +294,9 @@ function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:a
           if(!newGroupName.trim()||childIds.length===0){showToast("❌ Need a name and at least one account",false);return;}
           const id = editingGroup?.id || `Master-CUSTOM-${Date.now()}`;
           const cls = groupType==="private"?"Private Practice":newGroupClass;
-          if (saveOverlays) {
+          if (patchOverlay) {
             const grp = {id,name:newGroupName.trim(),class2:cls,childIds,tier:"Standard",groupType,createdAt:editingGroup?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
-            const next = { ...OVERLAYS_REF, groups: { ...(OVERLAYS_REF.groups||{}), [id]: grp } };
-            saveOverlays(next).then(ok => {
+            patchOverlay([{ op: "set", path: `groups.${id}`, value: grp }]).then((ok:boolean) => {
               if(ok){ showToast("✅ Group saved"); setGroupType("multi"); }
               else showToast("❌ Save failed",false);
             });
@@ -459,7 +455,7 @@ function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:a
                 style={{width:"100%",padding:"8px 10px",borderRadius:8,border:`1px solid ${T.b1}`,background:T.bg,color:T.t1,fontSize:11,fontFamily:"inherit",boxSizing:"border-box"}}/>
             </div>
           ))}
-          <button onClick={()=>saveOverlays&&saveOverlays({...OVERLAYS_REF,contacts:{...(OVERLAYS_REF.contacts||{}),[contactAccount.id]:{contactName:contactName.trim()||undefined,email:contactEmail.trim()||undefined,phone:contactPhone.trim()||undefined,note:contactNote.trim()||undefined,savedAt:new Date().toISOString()}}}).then(ok=>{if(ok)showToast("✅ Contact saved");else showToast("❌ Save failed",false);})} disabled={saving||(!contactName.trim()&&!contactEmail.trim())}
+          <button onClick={()=>patchOverlay&&patchOverlay([{ op: "set", path: `contacts.${contactAccount.id}`, value: {contactName:contactName.trim()||undefined,email:contactEmail.trim()||undefined,phone:contactPhone.trim()||undefined,note:contactNote.trim()||undefined,savedAt:new Date().toISOString()} }]).then((ok:boolean)=>{if(ok)showToast("✅ Contact saved");else showToast("❌ Save failed",false);})} disabled={saving||(!contactName.trim()&&!contactEmail.trim())}
             style={{width:"100%",padding:"11px 0",borderRadius:10,border:"none",background:T.blue,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
             {saving?"Saving...":"Save Contact"}
           </button>
@@ -488,15 +484,14 @@ function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:a
             const next={...prev,[id]:true};
             // A15.6: persist skips to overlays (GitHub) so they survive device changes
             const newSkipIds = Object.keys(next).filter(k=>next[k]);
-            saveOverlays({...OVERLAYS_REF, skippedCpidIds: newSkipIds});
+            patchOverlay([{ op: "addSkippedCpidIds", ids: [id] }]);
             try{localStorage.setItem("cpid_skipped",JSON.stringify(next));}catch{}
             return next;
           });
         };
         const approvePair = (p:any) => {
           const grp={id:p.id,name:p.name,class2:p.class2||"Private Practice",childIds:p.childIds,tier:"Standard",source:"auto-merge",score:p.score,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
-          const next={...OVERLAYS_REF,groups:{...(OVERLAYS_REF.groups||{}),[p.id]:grp}};
-          saveOverlays(next).then((ok:boolean)=>{if(ok)showToast(`✅ Merged: ${p.name}`);else showToast("❌ Save failed",false);});
+          patchOverlay([{ op: "set", path: `groups.${p.id}`, value: grp }]).then((ok:boolean)=>{if(ok)showToast(`✅ Merged: ${p.name}`);else showToast("❌ Save failed",false);});
         };
         // A19: "Apply All" bulk-write removed — group creation requires per-item approval.
         // Each merge must be individually approved using the Approve button on each card.
@@ -544,15 +539,14 @@ function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:a
         const approveReview = (p:any) => {
           const betterName=(p.groupA.pyQ1>=p.groupB.pyQ1?p.groupA.name:p.groupB.name).replace(/:\s*Master-CM\d+$/i,'').trim();
           const grp={id:p.groupA.id,name:betterName,class2:"Private Practice",childIds:[p.groupA.childId,p.groupB.childId],tier:"Standard",source:"review-merge",score:p.score,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
-          const next={...OVERLAYS_REF,groups:{...(OVERLAYS_REF.groups||{}),[p.groupA.id]:grp}};
-          saveOverlays(next).then((ok:boolean)=>{if(ok)showToast(`✅ Merged: ${betterName}`);else showToast("❌ Save failed",false);});
+          patchOverlay([{ op: "set", path: `groups.${p.groupA.id}`, value: grp }]).then((ok:boolean)=>{if(ok)showToast(`✅ Merged: ${betterName}`);else showToast("❌ Save failed",false);});
         };
         const skipReview = (id:string) => {
           setSkippedMergeIds(prev=>{
             const next={...prev,[id]:true};
             // A15.6: persist skips to overlays (GitHub) so they survive device changes
             const newSkipIds = Object.keys(next).filter(k=>next[k]);
-            saveOverlays({...OVERLAYS_REF, skippedCpidIds: newSkipIds});
+            patchOverlay([{ op: "addSkippedCpidIds", ids: [id] }]);
             try{localStorage.setItem("cpid_skipped",JSON.stringify(next));}catch{}
             return next;
           });
@@ -649,8 +643,7 @@ function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:a
                   const id=`Master-MERGE-${primary.id.split("-").pop()}`;
                   if(saveOverlays){
                     const grp={id,name:primary.name,class2:"Private Practice",tier:"Standard",childIds:c.accts.map((a:any)=>a.id),createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
-                    const next={...OVERLAYS_REF,groups:{...(OVERLAYS_REF.groups||{}),[id]:grp}};
-                    saveOverlays(next).then((ok:boolean)=>{if(ok)showToast(`✅ Merged ${c.accts.length} as "${primary.name}"`);else showToast("❌ Merge failed",false);});
+                    patchOverlay([{ op: "set", path: `groups.${id}`, value: grp }]).then((ok:boolean)=>{if(ok)showToast(`✅ Merged ${c.accts.length} as "${primary.name}"`);else showToast("❌ Merge failed",false);});
                   }
                 }} style={{flex:1,padding:"8px 0",borderRadius:8,border:"none",background:T.blue,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Merge ({c.accts.length})</button>
                 <button onClick={()=>{const u={...dismissed,[c.addr]:true};try{localStorage.setItem("dupe_dismissed",JSON.stringify(u));}catch{} showToast("Skipped");}} style={{padding:"8px 14px",borderRadius:8,border:`1px solid ${T.b1}`,background:"transparent",color:T.t3,fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>Skip</button>
@@ -681,7 +674,7 @@ function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:a
         setSkippedOrphanKeys(prev => {
           const next = {...prev,[key]:true};
           const newIds = Object.keys(next).filter(k=>next[k]);
-          saveOverlays({...OVERLAYS_REF, skippedOrphanIds: newIds});
+          patchOverlay([{ op: "replaceSection", section: "skippedOrphanIds", value: newIds }]);
           return next;
         });
       };
@@ -701,8 +694,7 @@ function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:a
           createdAt: existing?.createdAt || new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
-        const next = {...OVERLAYS_REF, groups:{...(OVERLAYS_REF.groups||{}),[s.anchor_id]:grp}};
-        saveOverlays(next).then((ok:boolean) => {
+        patchOverlay([{ op: "set", path: `groups.${s.anchor_id}`, value: grp }]).then((ok:boolean) => {
           if (ok) showToast(`✅ Added to ${grp.name}`);
           else showToast("❌ Save failed", false);
         });
