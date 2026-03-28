@@ -37,6 +37,7 @@ const STATUS_PILL: Record<string,{label:string,color:string}> = {
 
 function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesStore=null,onAddTask=null}) {
   const [q,setQ]=useState("1");
+  const [showAllLocs,setShowAllLocs]=useState(false);
   const qk=q;
 
   // ── Merge group state ──
@@ -1010,7 +1011,7 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
 
       {/* ── WHAT TO DO NEXT ── */}
       {nextBestMoves.length>0&&<div className="anim" style={{animationDelay:"8ms",background:T.s1,border:`1px solid rgba(79,142,247,.2)`,borderLeft:`3px solid ${T.blue}`,borderRadius:14,padding:"12px 14px",marginBottom:10}}>
-        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue,marginBottom:10}}>What to do next</div>
+        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue,marginBottom:8}}>Next Move</div>
         <div style={{display:"flex",flexDirection:"column",gap:6}}>
           {nextBestMoves.map((m,i)=>(
             <div key={i} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"9px 10px",background:T.s2,borderRadius:10,border:`1px solid ${m.color}18`}}>
@@ -1046,8 +1047,11 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
 
       {/* ── LOCATIONS ── */}
       {sortedChildren.length>0&&<div className="anim" style={{animationDelay:"16ms",marginBottom:10}}>
-        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3,marginBottom:7}}>Locations · {sortedChildren.length}</div>
-        {sortedChildren.map((c,i)=>{
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:7}}>
+          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3}}>Locations · {sortedChildren.length}</div>
+          {sortedChildren.length>3&&<button onClick={()=>setShowAllLocs(v=>!v)} style={{background:"none",border:"none",fontSize:9,color:T.blue,cursor:"pointer",fontFamily:"inherit",padding:0}}>{showAllLocs?"Show less":"Show all"}</button>}
+        </div>
+        {(showAllLocs?sortedChildren:sortedChildren.slice(0,3)).map((c,i)=>{
           const cPy=c.pyQ?.[qk]||0;const cCy=c.cyQ?.[qk]||0;const cGap=cPy-cCy;const cRet=cPy>0?Math.round(cCy/cPy*100):0;
           const cRetColor=cRet>=70?T.green:cRet>=40?T.amber:T.red;
           const borderColor=cGap>2000?"rgba(248,113,113,.2)":cGap<=0&&cPy>0?"rgba(52,211,153,.15)":T.b1;
@@ -1069,6 +1073,7 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
             </div>}
           </button>;
         })}
+        {!showAllLocs&&sortedChildren.length>3&&<button onClick={()=>setShowAllLocs(true)} style={{width:"100%",padding:"6px 0",borderRadius:9,background:T.s1,border:`1px solid ${T.b1}`,fontSize:11,color:T.blue,cursor:"pointer",fontFamily:"inherit",marginBottom:6}}>↓ Show all {sortedChildren.length} locations</button>}
         {ghostLocations.map((c:any,i:number)=>(
           <div key={c.id} style={{background:"rgba(167,139,250,.04)",border:"1px dashed rgba(167,139,250,.3)",borderRadius:11,padding:"10px 12px",marginBottom:6,opacity:.8}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
@@ -1342,7 +1347,7 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
           rows={4}
           style={{width:"100%",background:T.s2,border:`1px solid ${T.b1}`,borderRadius:8,padding:"9px 11px",fontSize:12,color:T.t1,fontFamily:"inherit",resize:"none",lineHeight:1.5,outline:"none",boxSizing:"border-box"}}
         />
-        <button onClick={()=>saveNote(groupNote)} style={{marginTop:6,background:"rgba(251,191,36,.1)",border:"1px solid rgba(251,191,36,.2)",borderRadius:7,padding:"5px 14px",fontSize:11,fontWeight:600,color:T.amber,cursor:"pointer",fontFamily:"inherit"}}>Save</button>
+        <div style={{marginTop:4,fontSize:9,color:T.t4}}>Auto-saves when you leave</div>
       </div>
 
       {/* ── AI GROUP INTEL ── */}
