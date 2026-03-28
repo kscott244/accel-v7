@@ -116,14 +116,15 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup,overlays,patchOverl
         if (v) setSavedContacts(JSON.parse(v));
       }
     } catch {}
-    // Load group move: overlays.groupMoves is durable, localStorage is fallback
+    // Load group move: overlays.groupMoves is the durable source (L3).
+    // LS fallback reads pre-migration keys only — new saves no longer write here.
     try {
       const fromOverlay = overlays?.groupMoves?.[acct.id];
       if (fromOverlay) {
         setGroupOverride(fromOverlay);
       } else {
         const v = localStorage.getItem(overrideKey);
-        if (v) setGroupOverride(JSON.parse(v));
+        if (v) setGroupOverride(JSON.parse(v)); // pre-migration fallback only
       }
     } catch {}
     // Load activity log: merge overlays (durable) with localStorage (recent unsynced)
@@ -156,7 +157,7 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup,overlays,patchOverl
       targetGroupName: fixGroupName(targetGroup),
       savedAt: new Date().toISOString(),
     };
-    try { localStorage.setItem(overrideKey, JSON.stringify(override)); } catch {}
+    // Note: no longer writing to localStorage — groupMoves persisted via patchOverlay (overlays layer)
     setGroupOverride(override);
     setShowMoveModal(false);
     setMoveSearch("");
