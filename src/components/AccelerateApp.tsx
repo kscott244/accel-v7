@@ -962,7 +962,7 @@ function AppInner() {
         return <>
           {!view && tab==="today" && <DashboardTab scored={scored} goAcct={goSmartFn} q1CY={q1CY} q1Gap={q1Gap} q1Att={q1Att} adjCount={adjs.length} totalAdj={totalAdjQ1} groups={groups||[]} goGroup={goGroupFn} activeQ={activeQ||"1"} weeklyDelta={weeklyDelta} tasks={tasks} onCompleteTask={completeTask} onGoTasks={()=>{setTab("tasks");setView(null);}}/> }
           {!view && tab==="groups" && <GroupsTab groups={groups||[]} goGroup={goGroupFn} filt={gFilt} setFilt={setGFilt} search={gSearch} setSearch={setGSearch} groupedPrivates={groupedPrivates}/>}
-          {!view && tab==="map" && <MapTab/>}
+          {!view && tab==="map" && <MapTab scored={scored||[]} goAcct={goSmartFn}/>}
           {!view && tab==="calc" && <DashTab groups={groups||[]} q1CY={q1CY} q1Att={q1Att} q1Gap={q1Gap} scored={scored} goAcct={goSmartFn} activeQ={activeQ||"1"}/>}
           {!view && tab==="est" && <EstTab pct={estPct} setPct={setEstPct} q1CY={q1CY} groups={groups||[]} goAcct={goSmartFn}/>}
           {!view && tab==="dealers" && <DealersTab scored={scored} groups={groups||[]} goAcct={goSmartFn} goGroup={goGroupFn} activeQ={activeQ||"1"} overlays={overlays} patchOverlay={patchOverlay}/>}
