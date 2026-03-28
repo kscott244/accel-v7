@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "lastUpdated": "2026-03-28T06:44:54.312Z",
+  "lastUpdated": "2026-03-28T06:54:38.539Z",
   "batches": [
     {
       "id": "batch_1774374654922_44800",
@@ -97,6 +97,13 @@
       "id": "batch_1774680293405_44800",
       "filename": "KenSales2025vs3-24-26.csv",
       "uploadedAt": "2026-03-28T06:44:53.420Z",
+      "rowCount": 44800,
+      "newRecords": 0
+    },
+    {
+      "id": "batch_1774680877515_44800",
+      "filename": "KenSales2025vs3-24-26.csv",
+      "uploadedAt": "2026-03-28T06:54:37.535Z",
       "rowCount": 44800,
       "newRecords": 0
     }
