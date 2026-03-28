@@ -462,21 +462,12 @@ function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:a
           const next={...OVERLAYS_REF,groups:{...(OVERLAYS_REF.groups||{}),[p.id]:grp}};
           saveOverlays(next).then((ok:boolean)=>{if(ok)showToast(`✅ Merged: ${p.name}`);else showToast("❌ Save failed",false);});
         };
-        const applyAll = () => {
-          if(pending.length===0){showToast("All already applied");return;}
-          if(!confirm(`Apply ${pending.length} auto-merges at once? Each will be validated by the integrity guard. Approve one at a time if unsure.`)) return;
-          const newGroups={...(OVERLAYS_REF.groups||{})};
-          pending.forEach((p:any)=>{newGroups[p.id]={id:p.id,name:p.name,class2:p.class2||"Private Practice",childIds:p.childIds,tier:"Standard",source:"auto-merge",score:p.score,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};});
-          const next={...OVERLAYS_REF,groups:newGroups};
-          setSaving(true);
-          saveOverlays(next).then((ok:boolean)=>{setSaving(false);if(ok)showToast(`✅ Applied ${pending.length} auto-merges`);else showToast("❌ Apply failed — check integrity violations",false);});
-        };
+        // A19: "Apply All" bulk-write removed — group creation requires per-item approval.
+        // Each merge must be individually approved using the Approve button on each card.
         const doneCount=(CPID_MERGES as any[]).length-pending.length;
         return <div>
           {doneCount>0&&<div style={{fontSize:10,color:T.green,marginBottom:8}}>✓ {doneCount} already applied</div>}
-          {pending.length>0&&<button onClick={applyAll} disabled={saving} style={{width:"100%",padding:"10px 0",borderRadius:10,border:"none",background:"rgba(52,211,153,.15)",color:T.green,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",marginBottom:12,border:"1px solid rgba(52,211,153,.3)"}}>
-            {saving?"Applying...":(`Apply All ${pending.length} Recommended Merges`)}
-          </button>}
+          {/* Apply All removed (A19) — use per-card Approve button below */}
           {pending.length===0&&<div style={{fontSize:12,color:T.t4,textAlign:"center",padding:"20px 0"}}>All auto-merges have been applied or skipped.</div>}
           {pending.map((p:any,i:number)=>(
             <div key={p.id} className="anim" style={{animationDelay:`${i*20}ms`,background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:12,marginBottom:8}}>
