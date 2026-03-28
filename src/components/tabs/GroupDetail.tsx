@@ -7,6 +7,7 @@ import { getTierLabel } from "@/lib/tier";
 import { BADGER, OVERLAYS_REF } from "@/lib/data";
 import { Back, Chev, Pill, Stat, Bar, AccountId, GroupBadge, fixGroupName } from "@/components/primitives";
 import { TaskWidget } from "@/components/tabs/TasksTab";
+import { buildDsoCard, BENCH_AVG, type BenchMode } from "@/lib/dsoWarRoom";
 
 let SCHEIN_REPS: {fsc:any[], es:any[]} = {fsc:[], es:[]};
 try {
@@ -1009,6 +1010,34 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
         </div>}
       </div>
 
+      {/* ── DSO BENCHMARK PANEL ── */}
+      {(group.class2==="DSO"||group.class2==="EMERGING DSO"||(group.class2||"").toUpperCase().includes("DSO"))&&(()=>{
+        const card=buildDsoCard(group,"avg");
+        const pctBelow=card.benchQ>0?Math.round((card.benchGapQ/card.benchQ)*100):0;
+        if(card.benchGapQ<=0)return null;
+        return <div className="anim" style={{background:"rgba(248,113,113,.05)",border:"1px solid rgba(248,113,113,.2)",borderRadius:14,padding:"12px 14px",marginBottom:10}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+            <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.red}}>Benchmark Gap</div>
+            <div style={{fontSize:9,color:T.t4}}>{card.locs} offices · avg $747/office</div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:8}}>
+            <div style={{background:T.s2,borderRadius:8,padding:"6px 8px"}}>
+              <div style={{fontSize:8,color:T.t4,marginBottom:1}}>CY Q1</div>
+              <div style={{fontSize:13,fontWeight:700,color:T.blue}}>{card.cy1>=1000?`$${Math.round(card.cy1/1000)}K`:`$${Math.round(card.cy1)}`}</div>
+            </div>
+            <div style={{background:T.s2,borderRadius:8,padding:"6px 8px"}}>
+              <div style={{fontSize:8,color:T.t4,marginBottom:1}}>Benchmark</div>
+              <div style={{fontSize:13,fontWeight:700,color:T.t2}}>{card.benchQ>=1000?`$${Math.round(card.benchQ/1000)}K`:`$${Math.round(card.benchQ)}`}</div>
+            </div>
+            <div style={{background:"rgba(248,113,113,.08)",borderRadius:8,padding:"6px 8px"}}>
+              <div style={{fontSize:8,color:T.t4,marginBottom:1}}>Gap</div>
+              <div style={{fontSize:13,fontWeight:700,color:T.red}}>{card.benchGapQ>=1000?`$${Math.round(card.benchGapQ/1000)}K`:`$${Math.round(card.benchGapQ)}`}</div>
+            </div>
+          </div>
+          <div style={{fontSize:9,color:T.t3,lineHeight:1.5}}>{card.statement}</div>
+        </div>;
+      })()}
+
       {/* ── WHAT TO DO NEXT ── */}
       {nextBestMoves.length>0&&<div className="anim" style={{animationDelay:"8ms",background:T.s1,border:`1px solid rgba(79,142,247,.2)`,borderLeft:`3px solid ${T.blue}`,borderRadius:14,padding:"12px 14px",marginBottom:10}}>
         <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue,marginBottom:8}}>Next Move</div>
@@ -1570,6 +1599,5 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
 
 
 export default GroupDetail;
-
 
 
