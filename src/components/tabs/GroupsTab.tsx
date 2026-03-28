@@ -9,10 +9,11 @@ import { fixGroupName, Pill, Bar, Chev } from "@/components/primitives";
 import { scorePriority } from "@/lib/priority";
 
 // ── Row 1: Account type ───────────────────────────────────────────
-// DSO = 3+ locs or class2 DSO/EMERGING DSO
-// Mid-Market = 2 locs (group practice, not full DSO)
-// Private = single office
-const TYPE_FILTERS = ["All", "DSO", "Mid-Market", "Private"];
+// DSO          = class2 "DSO" (Kerr-designated: Aspen, Dental 365, 42 North, etc.)
+// Emerging DSO  = class2 "EMERGING DSO" (Select Dental, ProHealth, etc.)
+// Mid-Market    = class2 "STANDARD" with 2+ locs (multi-loc private practices)
+// Private       = 1 location
+const TYPE_FILTERS = ["All", "DSO", "Emerging DSO", "Mid-Market", "Private"];
 
 // ── Row 2: Sort / view mode ───────────────────────────────────────
 const VIEW_MODES = [
@@ -182,7 +183,7 @@ export default function GroupsTab({ groups, goGroup, filt, setFilt, search, setS
 
   // Normalise incoming filt to our new type keys
   // (AccelerateApp passes filt/setFilt from parent state — we reuse for type)
-  const typeFilt = ["DSO", "Mid-Market", "Private"].includes(filt) ? filt : "All";
+  const typeFilt = ["DSO", "Emerging DSO", "Mid-Market", "Private"].includes(filt) ? filt : "All";
   const setType  = (t: string) => { setFilt(t === "All" ? "All" : t); setView("all"); };
 
   const enriched = useMemo(() => groups
@@ -209,8 +210,9 @@ export default function GroupsTab({ groups, goGroup, filt, setFilt, search, setS
       _priorityScore: p.priorityScore,
       _priorityBucket: p.priorityBucket,
       _priorityReason: p.priorityReason,
-      _isDSO: locs >= 3 || g.class2 === "DSO" || g.class2 === "EMERGING DSO",
-      _isMid: locs === 2,
+      _isDSO:      g.class2 === "DSO",
+      _isEmerging: g.class2 === "EMERGING DSO",
+      _isMid:      (g.class2 !== "DSO" && g.class2 !== "EMERGING DSO") && locs > 1,
       _isPrivate: locs <= 1,
     };
   }), [groups, search]);
@@ -232,9 +234,10 @@ export default function GroupsTab({ groups, goGroup, filt, setFilt, search, setS
         )
       );
     }
-    if (typeFilt === "DSO")        l = l.filter(g => g._isDSO);
-    else if (typeFilt === "Mid-Market") l = l.filter(g => g._isMid);
-    else if (typeFilt === "Private")    l = l.filter(g => g._isPrivate);
+    if (typeFilt === "DSO")               l = l.filter(g => g._isDSO);
+    else if (typeFilt === "Emerging DSO") l = l.filter(g => g._isEmerging);
+    else if (typeFilt === "Mid-Market")   l = l.filter(g => g._isMid);
+    else if (typeFilt === "Private")      l = l.filter(g => g._isPrivate);
     return l;
   }, [enriched, typeFilt, search]);
 
