@@ -148,7 +148,7 @@ function applyOverlays(grps: any[]): any[] {
 
 // ─── EXTRACTED MODULES (Phase 3) ─────────────────────────────────
 // These were inline in this file. Extracted to src/lib/ for reuse and clarity.
-import { T, Q1_TARGET, FY_TARGET, DAYS_LEFT, QUARTER_TARGETS, daysLeftInQuarter } from "@/lib/tokens";
+import { T, Q1_TARGET, FY_TARGET, DAYS_LEFT, QUARTER_TARGETS, daysLeftInQuarter, getQuarterTarget, currentCalendarQuarter } from "@/lib/tokens";
 import {
   ACCEL_RATES, normalizeTier, isTop100, normalizePracticeType,
   getTierRate, isAccelTier, getTierLabel, extractGroupName,
@@ -586,8 +586,11 @@ function AppInner() {
           });
           const best = Object.entries(qTotals).filter(([,v])=>v>0).sort(([a],[b])=>parseInt(b)-parseInt(a))[0];
           const detected = best ? best[0] : "1";
-          try { localStorage.setItem("active_quarter", detected); } catch {}
-          return detected;
+          // If Q1 has ended and we'd default to Q1, bump to current calendar quarter
+          const calQ = currentCalendarQuarter();
+          const effective = (detected === "1" && daysLeftInQuarter("1") === 0) ? calQ : detected;
+          try { localStorage.setItem("active_quarter", effective); } catch {}
+          return effective;
         });
       } catch {
         setGroups([]);
@@ -811,7 +814,7 @@ function AppInner() {
   }, [groups, activeQ]);
 
   const q1CY = q1CYFromData + totalAdjQ1;
-  const activeTarget = QUARTER_TARGETS[activeQ||"1"] || Q1_TARGET;
+  const activeTarget = getQuarterTarget(activeQ||"1");
   const q1Gap = activeTarget - q1CY;
   const q1Att = q1CY / activeTarget;
 

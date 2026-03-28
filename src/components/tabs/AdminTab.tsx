@@ -75,6 +75,17 @@ function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:a
     } catch { return {}; }
   });
   const [contactSearch, setContactSearch] = useState("");
+
+  // Quarter target overrides — localStorage only, no GitHub write needed
+  const [targetInputs, setTargetInputs] = useState<Record<string,string>>(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem("quarter_targets") || "{}");
+      const result: Record<string,string> = {};
+      ["1","2","3","4"].forEach(q => { result[q] = stored[q] ? String(stored[q]) : ""; });
+      return result;
+    } catch { return {"1":"","2":"","3":"","4":""}; }
+  });
+  const [targetSaved, setTargetSaved] = useState(false);
   const [contactAccount, setContactAccount] = useState<any>(null);
   const [contactName, setContactName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
@@ -156,6 +167,7 @@ function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:a
       {sectionBtn("orphans","🏥 Orphans")}
       {sectionBtn("data","💾 Data")}
       {sectionBtn("history","📜 History")}
+      {sectionBtn("settings","⚙️ Settings")}
     </div>
 
     {/* ── GROUPS SECTION ── */}
@@ -837,6 +849,53 @@ function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:a
         </div>;
       })()}
     </div>}
+    {/* ── SETTINGS SECTION ── */}
+    {section==="settings"&&<div>
+      <div style={{fontSize:14,fontWeight:700,color:T.t1,marginBottom:4}}>Quarter Targets</div>
+      <div style={{fontSize:11,color:T.t3,marginBottom:16}}>Enter your credited wholesale target for each quarter when you receive it from Kerr. Saves locally on this device.</div>
+      {(["1","2","3","4"] as string[]).map(q => {
+        const label = ["Q1 (Jan–Mar)","Q2 (Apr–Jun)","Q3 (Jul–Sep)","Q4 (Oct–Dec)"][parseInt(q)-1];
+        return <div key={q} style={{marginBottom:12}}>
+          <div style={{fontSize:11,fontWeight:600,color:T.t2,marginBottom:5}}>{label}</div>
+          <div style={{display:"flex",gap:8,alignItems:"center"}}>
+            <span style={{fontSize:12,color:T.t3,flexShrink:0}}>$</span>
+            <input
+              type="number"
+              placeholder="e.g. 789602"
+              value={targetInputs[q]||""}
+              onChange={e=>setTargetInputs(prev=>({...prev,[q]:e.target.value}))}
+              style={{flex:1,background:T.s2,border:`1px solid ${T.b1}`,borderRadius:8,
+                padding:"8px 10px",color:T.t1,fontSize:13,fontFamily:"inherit",outline:"none"}}
+            />
+            {targetInputs[q]&&Number(targetInputs[q])>0&&(
+              <span style={{fontSize:10,color:T.t4,flexShrink:0}}>
+                ${Math.round(Number(targetInputs[q])/1000)}K
+              </span>
+            )}
+          </div>
+        </div>;
+      })}
+      <button
+        onClick={()=>{
+          const parsed: Record<string,number> = {};
+          ["1","2","3","4"].forEach(q => {
+            const v = Number(targetInputs[q]);
+            if (v > 0) parsed[q] = v;
+          });
+          try { localStorage.setItem("quarter_targets", JSON.stringify(parsed)); } catch {}
+          setTargetSaved(true);
+          setTimeout(()=>setTargetSaved(false), 2500);
+        }}
+        style={{width:"100%",padding:"10px 0",borderRadius:10,border:"none",
+          background:targetSaved?"rgba(52,211,153,.2)":T.blue,
+          color:targetSaved?T.green:"#fff",fontSize:12,fontWeight:700,
+          cursor:"pointer",fontFamily:"inherit",transition:"all .2s"}}
+      >{targetSaved?"✓ Saved — reload app to apply":"Save Targets"}</button>
+      <div style={{fontSize:10,color:T.t4,marginTop:10,textAlign:"center"}}>
+        Changes take effect on next app load. Active quarter auto-flips when the quarter ends.
+      </div>
+    </div>}
+
     {section==="history"&&<div>
       <div style={{fontSize:14,fontWeight:700,color:T.t1,marginBottom:4}}>Sales History</div>
       <div style={{fontSize:11,color:T.t3,marginBottom:16}}>Accumulated upload batches. Each weekly CSV is de-duped — uploading the same file twice adds no extra records.</div>

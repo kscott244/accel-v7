@@ -40,6 +40,28 @@ export function daysLeftInQuarter(q: string = "1"): number {
 // Legacy constant — kept for backward compat with callers that haven't adopted daysLeftInQuarter()
 export const DAYS_LEFT = daysLeftInQuarter("1");
 
+// Returns the effective target for a quarter — localStorage override wins over hardcoded default.
+// Ken sets Q2+ targets via Admin → Settings when he receives them from Kerr.
+export function getQuarterTarget(q: string): number {
+  if (typeof window !== "undefined") {
+    try {
+      const overrides = JSON.parse(localStorage.getItem("quarter_targets") || "{}");
+      if (overrides[q] && overrides[q] > 0) return overrides[q];
+    } catch {}
+  }
+  return QUARTER_TARGETS[q] || QUARTER_TARGETS["1"];
+}
+
+// Returns which quarter is currently active based on today's date
+// Q1: Jan-Mar, Q2: Apr-Jun, Q3: Jul-Sep, Q4: Oct-Dec
+export function currentCalendarQuarter(): string {
+  const m = new Date().getMonth(); // 0-indexed
+  if (m <= 2) return "1";
+  if (m <= 5) return "2";
+  if (m <= 8) return "3";
+  return "4";
+}
+
 // Human-readable quarter label, e.g. "Q2 2026"
 export function quarterLabel(q: string): string {
   return `Q${q} 2026`;
