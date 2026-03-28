@@ -978,7 +978,7 @@ function AppInner() {
       {/* MORE MENU OVERLAY */}
       {showMore && <div style={{position:"fixed",inset:0,zIndex:90,background:"rgba(0,0,0,.6)",backdropFilter:"blur(4px)"}} onClick={()=>setShowMore(false)}>
         <div style={{position:"absolute",bottom:58,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:928,background:T.s1,border:`1px solid ${T.b2}`,borderRadius:16,padding:"8px 0",boxShadow:"0 -8px 32px rgba(0,0,0,.5)"}} onClick={e=>e.stopPropagation()}>
-          {[{k:"calc",l:"Pricing",I:IconChart,desc:"SKU pricing & margin calculator"},{k:"map",l:"Route",I:IconMap,desc:"Week routes & Google Maps"},{k:"est",l:"Forecast",I:IconSliders,desc:"Q1 close estimator"},{k:"outreach",l:"Outreach",I:IconMail,desc:"AI email campaigns"},{k:"admin",l:"Admin",I:IconAdmin,desc:"Groups, contacts, data fixes"}].map(t=>(
+          {[{k:"tasks",l:"Tasks",I:IconTask,desc:"Follow-ups & reminders"},{k:"calc",l:"Pricing",I:IconChart,desc:"SKU pricing & margin calculator"},{k:"est",l:"Forecast",I:IconSliders,desc:"Q1 close estimator"},{k:"outreach",l:"Outreach",I:IconMail,desc:"AI email campaigns"},{k:"admin",l:"Admin",I:IconAdmin,desc:"Groups, contacts, data fixes"}].map(t=>(
             <button key={t.k} onClick={()=>{setTab(t.k);setView(null);setShowMore(false)}} style={{width:"100%",display:"flex",alignItems:"center",gap:12,padding:"12px 16px",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit",color:tab===t.k?T.blue:T.t2}}>
               <t.I c={tab===t.k?T.blue:T.t3}/>
               <div style={{textAlign:"left"}}><div style={{fontSize:13,fontWeight:600}}>{t.l}</div><div style={{fontSize:10,color:T.t4}}>{t.desc}</div></div>
@@ -993,14 +993,14 @@ function AppInner() {
       {/* NAV BAR */}
       <nav style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:960,zIndex:100,borderTop:`1px solid ${T.b1}`,background:"rgba(10,10,15,.92)",backdropFilter:"blur(32px)"}}>
         <div style={{display:"flex",height:56,alignItems:"center",justifyContent:"space-around",padding:"0 4px"}}>
-          {[{k:"today",l:"Today",I:IconBolt},{k:"groups",l:"Accounts",I:IconGroup},{k:"dealers",l:"Dealers",I:IconDealer},{k:"tasks",l:"Tasks",I:IconTask}].map(t=>(
+          {[{k:"today",l:"Today",I:IconBolt},{k:"groups",l:"Accounts",I:IconGroup},{k:"map",l:"Route",I:IconMap},{k:"dealers",l:"Dealers",I:IconDealer}].map(t=>(
             <button key={t.k} onClick={()=>{setTab(t.k);setView(null);setShowMore(false)}} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 16px",cursor:"pointer",color:tab===t.k&&!view&&!showMore?T.blue:T.t4}}>
               <t.I c={tab===t.k&&!view&&!showMore?T.blue:T.t4}/>
               <span style={{fontSize:9,fontWeight:600,letterSpacing:".5px"}}>{t.l}</span>
             </button>
           ))}
-          <button onClick={()=>setShowMore(!showMore)} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 16px",cursor:"pointer",color:showMore||["map","est","outreach","admin","calc"].includes(tab)?T.blue:T.t4}}>
-            <IconMore c={showMore||["map","est","outreach","admin","calc"].includes(tab)?T.blue:T.t4}/>
+          <button onClick={()=>setShowMore(!showMore)} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 16px",cursor:"pointer",color:showMore||["tasks","est","outreach","admin","calc"].includes(tab)?T.blue:T.t4}}>
+            <IconMore c={showMore||["tasks","est","outreach","admin","calc"].includes(tab)?T.blue:T.t4}/>
             <span style={{fontSize:9,fontWeight:600,letterSpacing:".5px"}}>More</span>
           </button>
         </div>
