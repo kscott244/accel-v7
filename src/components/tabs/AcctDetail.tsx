@@ -76,7 +76,7 @@ function MultiDealerView({acct}) {
   </div>;
 }
 
-function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup,overlays,saveOverlays,patchOverlay=null,reapplyGroupOverrides=null,goAcct=null,salesStore=null}) {
+function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup,overlays,patchOverlay=null,reapplyGroupOverrides=null,goAcct=null,salesStore=null}) {
   const [q,setQ]=useState("1");
   const [showForm,setShowForm]=useState(false);
   const [toast,setToast]=useState(null);
@@ -165,9 +165,8 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup,overlays,saveOverla
     // Re-render parent group cards immediately
     reapplyGroupOverrides?.();
     // Persist to overlays durably
-    if (saveOverlays) {
-      const next = { ...OVERLAYS_REF, groupMoves: { ...(OVERLAYS_REF.groupMoves||{}), [acct.id]: override } };
-      saveOverlays(next);
+    if (patchOverlay) {
+      patchOverlay([{ op: "set", path: `groupMoves.${acct.id}`, value: override }]);
     }
   };
 
@@ -375,9 +374,6 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
           // Persist to overlays durably — use atomic patch to avoid SHA conflicts
           if (patchOverlay) {
             patchOverlay([{ op: "set", path: `contacts.${acct.id}`, value: contacts }]);
-          } else if (saveOverlays) {
-            const next = { ...OVERLAYS_REF, contacts: { ...(OVERLAYS_REF.contacts||{}), [acct.id]: contacts } };
-            saveOverlays(next);
           }
         }
       } else {
@@ -954,9 +950,8 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
           setActLog(updated);
           try{localStorage.setItem(actLogKey,JSON.stringify(updated.slice(0,50)));}catch{}
           // Persist to overlays durably
-          if (saveOverlays) {
-            const next = { ...OVERLAYS_REF, activityLogs: { ...(OVERLAYS_REF.activityLogs||{}), [acct.id]: updated.slice(0,50) } };
-            saveOverlays(next);
+          if (patchOverlay) {
+            patchOverlay([{ op: "set", path: `activityLogs.${acct.id}`, value: updated.slice(0,50) }]);
           }
           setActContact("");setActNotes("");setActFollowUp("");setShowActForm(false);
         };
@@ -1101,7 +1096,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
             // Derive a clean group name from the account name
             const baseName = acct.name.replace(/\s+(dental|dentistry|associates|dds|dmd|llc|pc|pllc).*/i,"").trim();
             const childIds = [acct.id, ...Array.from(suggestSelected)];
-            if(saveOverlays){
+            if(patchOverlay){
               const groupEntry = {
                 id: newGroupId,
                 name: baseName,
@@ -1111,8 +1106,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
               };
-              const next = {...OVERLAYS_REF, groups:{...(OVERLAYS_REF.groups||{}), [newGroupId]: groupEntry}};
-              saveOverlays(next);
+              patchOverlay([{ op: "set", path: `groups.${newGroupId}`, value: groupEntry }]);
             }
             setSuggestModal(false);
             setGroupSuggestions([]);
