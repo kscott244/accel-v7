@@ -641,7 +641,7 @@ function AdminTab({groups, scored, overlays, patchOverlay, salesStore}:{groups:a
                 <button onClick={()=>{
                   const primary=c.accts.reduce((best:any,a:any)=>((a.pyQ?.["1"]||0)+(a.cyQ?.["1"]||0))>((best.pyQ?.["1"]||0)+(best.cyQ?.["1"]||0))?a:best,c.accts[0]);
                   const id=`Master-MERGE-${primary.id.split("-").pop()}`;
-                  if(saveOverlays){
+                  if(patchOverlay){
                     const grp={id,name:primary.name,class2:"Private Practice",tier:"Standard",childIds:c.accts.map((a:any)=>a.id),createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
                     patchOverlay([{ op: "set", path: `groups.${id}`, value: grp }]).then((ok:boolean)=>{if(ok)showToast(`✅ Merged ${c.accts.length} as "${primary.name}"`);else showToast("❌ Merge failed",false);});
                   }
