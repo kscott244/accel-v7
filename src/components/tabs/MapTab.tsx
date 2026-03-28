@@ -5,6 +5,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { T } from "@/lib/tokens";
 import { $$ } from "@/lib/format";
 import { IconMap } from "@/components/primitives";
+import { OFFICE_FEEL, normOfficeAddr } from "@/lib/data";
 
 let WEEK_ROUTES: any = { routes: {}, unplaced: [] };
 try { WEEK_ROUTES = require("@/data/week-routes.json"); } catch(e) {}
@@ -285,11 +286,15 @@ export default function MapTab({ scored = [], goAcct = null }: any) {
                             {mission.text}
                           </span>
                         </div>
-                        {/* City + doctor */}
-                        <div style={{ fontSize: 9, color: T.t4 }}>
-                          {a.city}{a.state ? `, ${a.state}` : ""}
-                          {a.doctor && <span style={{ color: T.t4 }}> · {a.doctor}</span>}
-                          {!selDay && a.day && <span style={{ color: T.t4 }}> · {a.day}</span>}
+                        {/* City + doctor + feel */}
+                        <div style={{ fontSize: 9, color: T.t4, display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap" }}>
+                          <span>{a.city}{a.state ? `, ${a.state}` : ""}{a.doctor ? ` · ${a.doctor}` : ""}{!selDay && a.day ? ` · ${a.day}` : ""}</span>
+                          {(()=>{
+                            const feel=OFFICE_FEEL[normOfficeAddr(a.address||"")];
+                            if(!feel)return null;
+                            const fc=feel.label==="Hot"?T.green:feel.label==="Warm"?T.amber:T.t4;
+                            return <span style={{color:fc,fontWeight:700,fontSize:8,background:`${fc}18`,borderRadius:3,padding:"1px 5px",border:`1px solid ${fc}28`}}>{feel.label}</span>;
+                          })()}
                         </div>
                       </div>
                       {/* Gap */}
