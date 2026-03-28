@@ -482,6 +482,7 @@ export function processCSVData(
     );
 
     const gName =
+      MANUAL_PARENT_INFO[pid]?.name ||
       pi.name ||
       (children.length === 1
         ? children[0].name
@@ -492,7 +493,7 @@ export function processCSVData(
       name:   gName,
       tier:   pi.tier   || "Standard",
       class2: pi.class2 || "Private Practice",
-      locs:   children.length,
+      locs:   (MANUAL_PARENT_INFO[pid]?.locs) || children.length,
       pyQ:    gPy,
       cyQ:    gCy,
       children,
