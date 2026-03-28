@@ -9,12 +9,11 @@ import { fixGroupName, Chev } from "@/components/primitives";
 import { scorePriority, BUCKET_STYLE } from "@/lib/priority";
 
 // ── Account type classification ───────────────────────────────────
-const TYPE_FILTERS = ["All", "DSO", "Emerging", "Mid-Market", "Private"];
+const TYPE_FILTERS = ["All", "DSO", "Mid-Market", "Private"];
 
 // ── View / sort modes ─────────────────────────────────────────────
 const VIEW_MODES = [
   { k: "priority",   l: "Priority",  color: T.blue  },
-  { k: "at-risk",    l: "At Risk",   color: T.red   },
   { k: "growing",    l: "Growing",   color: T.green },
   { k: "win-back",   l: "Win-Back",  color: T.orange},
   { k: "strategic",  l: "Strategic", color: T.purple},
@@ -121,7 +120,7 @@ function Snapshot({ enriched, setView }: any) {
 
   const tiles = [
     { label: "Gap",      val: `-${$$(totalGap)}`, view: "priority", color: T.red    },
-    { label: "At Risk",  val: `${atRisk}`,         view: "at-risk",  color: T.amber  },
+    { label: "At Risk",  val: `${atRisk}`,         view: "priority", color: T.amber  },
     { label: "Growing",  val: `${growing}`,         view: "growing",  color: T.green  },
     { label: "Win-Back", val: `${winBack}`,          view: "win-back", color: T.orange },
   ];
@@ -192,9 +191,8 @@ export default function GroupsTab({ groups, goGroup, filt, setFilt, search, setS
         )
       );
     }
-    if (typeFilt === "DSO")        l = l.filter((g: any) => g._isDSO);
-    else if (typeFilt === "Emerging")   l = l.filter((g: any) => g._isEmerging);
-    else if (typeFilt === "Mid-Market") l = l.filter((g: any) => g._isMid);
+    if (typeFilt === "DSO")          l = l.filter((g: any) => g._isDSO);
+    else if (typeFilt === "Mid-Market") l = l.filter((g: any) => g._isMid || g._isEmerging);
     else if (typeFilt === "Private")    l = l.filter((g: any) => g._isPrivate);
     return l;
   }, [enriched, typeFilt, search]);
@@ -202,10 +200,7 @@ export default function GroupsTab({ groups, goGroup, filt, setFilt, search, setS
   // ── View / sort ───────────────────────────────────────────────
   const list = useMemo(() => {
     let l = [...byType];
-    if (view === "at-risk") {
-      l = l.filter((g: any) => g._gap > 1500 && g._ret < 0.5);
-      l.sort((a: any, b: any) => b._gap - a._gap);
-    } else if (view === "growing") {
+    if (view === "growing") {
       l = l.filter((g: any) => g._cy1 > g._py1 && g._py1 > 0);
       l.sort((a: any, b: any) => (b._cy1 - b._py1) - (a._cy1 - a._py1));
     } else if (view === "win-back") {
