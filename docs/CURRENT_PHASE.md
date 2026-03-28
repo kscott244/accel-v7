@@ -1,54 +1,50 @@
 # CURRENT PHASE -- accel-v7
 
-## Status: Territory Navigator live. Ready to build.
+## Status: Channel Console live. Ready to build.
 
-### Phase 5: GroupsTab → Territory Navigator — March 28, 2026
+### Phase 6: DealersTab → Channel Influence Console — March 28, 2026
 
-Rebuilt Groups tab as a territory planning surface, not just a sorted list.
+Restructured the Dealers tab around action, not information.
 
-**Commit:** `1bad807d`
+**Commit:** `5ff70583`
 **Deploy:** HTTP 200 ✅
-**Lines:** 384 → 331 (−53 lines, −14%)
+**Lines:** 834 → 812 (−22)
 
 **What changed:**
 
-**Territory Snapshot (new)**
-Four tappable stat tiles above the filters: total gap, # at risk, # growing, # win-back. Each tile taps directly into that view. Answers "where do I stand" in one glance without drilling anywhere.
+**Sticky header with tab toggle on all views**
+The Dealers/Roster toggle was a big two-button row at the top of the main view only. Now it lives in the sticky header across all views (main, distributor drill-down, rep drill-down, group children). No more losing your place to switch to roster.
 
-**Account cards compressed**
-Old card: name + locs badge + subtitle + address line + ret bar + PY/CY pills + WIN BACK/NEW PROD tags. Three rows plus a bar.
-New card: name + locs badge + bucket tag in row 1. PY · CY · ret% · reason phrase in row 2. Gap on the right. ~35% shorter per card — more accounts visible per screen.
+**Co-Call Planner always visible**
+The most action-oriented feature was buried inside a collapsible card, closed by default. It's now a permanent section below the dealer cards — always open, distributor picker always visible. Tap a dealer, see the ranked co-call list immediately. No extra tap required.
 
-**Bucket tag on every card**
-RECOVER / PROTECT / GROW / WATCH tag replaces the retention bar. Same information, uses color from BUCKET_STYLE, much less space.
+**Gap concentration signal on dealer cards**
+Each dealer card now shows what percentage of Ken's total territory gap lives there when it's ≥20%. "Schein: 47% of gap" tells him where dealer leverage will have the biggest payoff. Previously there was no way to know this at a glance.
 
-**Two new view modes**
-- **Strategic**: high-PY accounts (≥$5K) tracking ≥70% retention. These are the accounts worth proactive scheduling — healthy but high-value.
-- **Cleanup**: accounts with <$100 in both PY and CY. Stubs, orphans, zero-activity groups that need a data review.
+**Flagged account count on dealer cards**
+Accounts with `dealerFlag=true` (dealer assignment flagged for review) now surface as "N ⚠ verify" on the dealer card. Previously these only appeared when drilling all the way into an individual account.
 
-**Renamed/simplified**
-- "All" → "Priority" (clearer intent — it's priority-sorted)
-- "Urgent" → "At Risk" (less alarm, more actionable)
-- "Emerging DSO" → "Emerging" (pill fits better on mobile)
-- Legend component removed — color meaning is now self-evident from the bucket tags
+**Account type toggle removed from top level**
+The All/Private/Groups filter was a full-width row that didn't add much — the rep drill-down already filters by dealer effectively. Removed from top level.
 
 **What was NOT changed:**
-- `enriched` useMemo — identical scoring logic
-- `byType` / `list` useMemos — same structure, added Strategic+Cleanup branches
-- All existing sort orders — identical
-- `scorePriority()` call on each group — identical
-- Search — identical
-- Props interface (`groups`, `goGroup`, `filt`, `setFilt`, `search`, `setSearch`, `groupedPrivates`) — identical
-- `goGroup()` navigation — identical
+- Full drill-down navigation (Dealers → Dist → Rep → Group → Account) — identical
+- `repGroups` useMemo — identical (FSC/rep assignment logic untouched)
+- `distStats` useMemo — identical
+- Co-call scoring and copy/Maps route — identical
+- Add Rep form — identical
+- Roster view — identical
+- All patchOverlay saves — identical
 
 ---
 
 ## Previously Completed
-- Phase 4 — AcctDetail Second Brain (Next Best Move up top, Who Matters, Activity first)
-- Phase 3 — GroupDetail War Room (section reorder, distributor+FSC merged)
-- Phase 2 — Today Tab Mission Control (5 action buckets)
+- Phase 5 — Groups Territory Navigator
+- Phase 4 — AcctDetail Second Brain
+- Phase 3 — GroupDetail War Room
+- Phase 2 — Today Mission Control
 - Phase 1 — Data Boundary Hardening
-- patchOverlay Migration — SHA conflict bug eliminated
+- patchOverlay Migration
 
 ## Last Updated
 March 28, 2026
