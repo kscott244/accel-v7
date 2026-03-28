@@ -64,6 +64,22 @@ function AccountCard({ g, i, goGroup }) {
     ? g._priorityReason
     : `${locs} loc${locs !== 1 ? "s" : ""} · ${getTierLabel(g.tier, g.class2)}`;
 
+  // Address line: single-loc → "addr, city ST zip"; multi-loc → "City1, City2, …"
+  const addrLine = (() => {
+    if (!isGroup) {
+      const parts = [];
+      if (g.addr || g.address) parts.push(g.addr || g.address);
+      const cityState = [g.city, g.st].filter(Boolean).join(", ");
+      if (cityState) parts.push(cityState);
+      if (g.zip) parts.push(g.zip);
+      return parts.join(", ");
+    }
+    const cities = [...new Set(
+      (g.children || []).map((c: any) => c.city).filter(Boolean)
+    )].slice(0, 3).join(", ");
+    return cities || ([g.city, g.st].filter(Boolean).join(", "));
+  })();
+
   return (
     <button className="anim" onClick={() => goGroup(g)}
       style={{
@@ -93,6 +109,11 @@ function AccountCard({ g, i, goGroup }) {
           <div style={{ fontSize: 10, color: T.t3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {subtitle}
           </div>
+          {addrLine && (
+            <div style={{ fontSize: 9, color: T.t4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 1 }}>
+              📍 {addrLine}
+            </div>
+          )}
         </div>
         <div style={{ flexShrink: 0, marginLeft: 12, textAlign: "right" }}>
           <div className="m" style={{ fontSize: 13, fontWeight: 700, color: g._gap <= 0 ? T.green : T.red }}>
@@ -357,3 +378,4 @@ export default function GroupsTab({ groups, goGroup, filt, setFilt, search, setS
     </div>
   );
 }
+
