@@ -34,7 +34,7 @@ const STATUS_PILL: Record<string,{label:string,color:string}> = {
   unknown: {label:"Unknown", color:"#7878a0"},
 };
 
-function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesStore=null}) {
+function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesStore=null}) {
   const [q,setQ]=useState("1");
   const qk=q;
 
@@ -55,20 +55,18 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
   const saveFSC = (dist:string, data:any) => {
     try { localStorage.setItem(fscKey(dist), JSON.stringify(data)); } catch {}
     // Persist to overlays durably
-    if (saveOverlays) {
+    if (patchOverlay) {
       const groupFSC = { ...(OVERLAYS_REF.fscReps?.[group.id] || {}), [dist]: data };
-      const next = { ...OVERLAYS_REF, fscReps: { ...(OVERLAYS_REF.fscReps||{}), [group.id]: groupFSC } };
-      saveOverlays(next);
+      patchOverlay([{ op: "set", path: `fscReps.${group.id}`, value: groupFSC }]);
     }
   };
   const removeFSC = (dist:string) => {
     try { localStorage.removeItem(fscKey(dist)); } catch {}
     // Remove from overlays durably
-    if (saveOverlays) {
+    if (patchOverlay) {
       const groupFSC = { ...(OVERLAYS_REF.fscReps?.[group.id] || {}) };
       delete groupFSC[dist];
-      const next = { ...OVERLAYS_REF, fscReps: { ...(OVERLAYS_REF.fscReps||{}), [group.id]: groupFSC } };
-      saveOverlays(next);
+      patchOverlay([{ op: "set", path: `fscReps.${group.id}`, value: groupFSC }]);
     }
   };
 
@@ -170,9 +168,8 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
       : [...groupContacts, entry];
     setGroupContacts(updated);
     try { localStorage.setItem(`grpContacts:${group.id}`, JSON.stringify(updated)); } catch {}
-    if (saveOverlays) {
-      const next = { ...OVERLAYS_REF, groupContacts: { ...(OVERLAYS_REF.groupContacts||{}), [group.id]: updated } };
-      saveOverlays(next);
+    if (patchOverlay) {
+      patchOverlay([{ op: "set", path: `groupContacts.${group.id}`, value: updated }]);
     }
     setShowContactForm(false);
   };
@@ -180,9 +177,8 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
     const updated = groupContacts.filter(c => c.id !== id);
     setGroupContacts(updated);
     try { localStorage.setItem(`grpContacts:${group.id}`, JSON.stringify(updated)); } catch {}
-    if (saveOverlays) {
-      const next = { ...OVERLAYS_REF, groupContacts: { ...(OVERLAYS_REF.groupContacts||{}), [group.id]: updated } };
-      saveOverlays(next);
+    if (patchOverlay) {
+      patchOverlay([{ op: "set", path: `groupContacts.${group.id}`, value: updated }]);
     }
   };
 
@@ -196,9 +192,8 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
   const saveNote = (val:string) => {
     setGroupNote(val);
     try { localStorage.setItem(`grpNote:${group.id}`, val); } catch {}
-    if (saveOverlays) {
-      const next = { ...OVERLAYS_REF, groupNotes: { ...(OVERLAYS_REF.groupNotes||{}), [group.id]: val } };
-      saveOverlays(next);
+    if (patchOverlay) {
+      patchOverlay([{ op: "set", path: `groupNotes.${group.id}`, value: val }]);
     }
     setNoteSaved(true);
     setTimeout(()=>setNoteSaved(false), 2000);
@@ -608,9 +603,8 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
     const updated = [...groupContacts, entry];
     setGroupContacts(updated);
     try { localStorage.setItem("grpContacts:" + group.id, JSON.stringify(updated)); } catch {}
-    if (saveOverlays) {
-      const next = { ...OVERLAYS_REF, groupContacts: { ...(OVERLAYS_REF.groupContacts||{}), [group.id]: updated } };
-      saveOverlays(next);
+    if (patchOverlay) {
+      patchOverlay([{ op: "set", path: `groupContacts.${group.id}`, value: updated }]);
     }
     setSavedResContacts(prev => new Set([...prev, idx]));
   };
@@ -638,9 +632,8 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
     }];
     setGroupContacts(updated);
     try { localStorage.setItem("grpContacts:" + group.id, JSON.stringify(updated)); } catch {}
-    if (saveOverlays) {
-      const next = { ...OVERLAYS_REF, groupContacts: { ...(OVERLAYS_REF.groupContacts||{}), [group.id]: updated } };
-      saveOverlays(next);
+    if (patchOverlay) {
+      patchOverlay([{ op: "set", path: `groupContacts.${group.id}`, value: updated }]);
     }
     setResWebsiteSaved(true);
   };
@@ -932,8 +925,7 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
       createdAt: winnerEntry?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    const next = { ...OVERLAYS_REF, groups: { ...(OVERLAYS_REF.groups||{}), [winnerGroup.id]: groupEntry } };
-    saveOverlays(next).then((ok:boolean) => {
+    patchOverlay([{ op: "set", path: `groups.${winnerGroup.id}`, value: groupEntry }]).then((ok:boolean) => {
       setMergeSaving(false);
       if (ok) {
         setMergeToast(`✅ Merged ${fixGroupName(target)} into ${fixGroupName(group)}`);
@@ -1125,7 +1117,7 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
             </div>
             <div style={{display:"flex",gap:6,marginTop:8}}>
               <button onClick={async ()=>{
-                if (!saveOverlays) return;
+                if (!patchOverlay) return;
                 const canonicalId = group.id;
                 const existingChildIds = (group.childIds||[group.id,...(group.children||[]).map((c:any)=>c.id)]);
                 const newChildIds = [...new Set([...existingChildIds, m.id])];
@@ -1145,7 +1137,7 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,saveOverlays,salesS
                     }
                   }
                 };
-                await saveOverlays(next);
+                await patchOverlay([{ op: "set", path: `groups.${canonicalId}`, value: next.groups[canonicalId] }]);
                 setSuggestedMerges(prev=>prev.filter(s=>s.id!==m.id));
               }} style={{flex:1,padding:"7px 0",borderRadius:8,background:`${T.purple}18`,border:`1px solid ${T.purple}40`,color:T.purple,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
                 + Merge
