@@ -25,6 +25,73 @@ import type { RawSalesRow } from "./sales";
 let _dealers: Record<string, string> = {};
 export function setDealers(d: Record<string, string>) { _dealers = d; }
 
+// ─── MANUAL PARENT REMAP (for preloaded data) ───────────────────
+// Applies manual-parents.json grouping to an already-processed groups array.
+// Used by AccelerateApp boot to fix preloaded data without a CSV upload.
+export function applyManualParents(groups: any[]): any[] {
+  if (!Object.keys(MANUAL_PARENT_MAP).length) return groups;
+
+  // Build child→group lookup
+  const childToGroup: Record<string, any> = {};
+  groups.forEach(g => {
+    (g.children || []).forEach((c: any) => { childToGroup[c.id] = { group: g, child: c }; });
+  });
+
+  const manualGroups: Record<string, any> = {};
+  const claimedChildIds = new Set<string>();
+
+  // For each manual parent, collect its children from existing groups
+  for (const [pid, def] of Object.entries(MANUAL_PARENT_INFO)) {
+    const children: any[] = [];
+    const totalPY: Record<string, number> = {};
+    const totalCY: Record<string, number> = {};
+
+    (def.childIds || []).forEach((cid: string) => {
+      const match = childToGroup[cid];
+      if (!match) return;
+      claimedChildIds.add(cid);
+      const c = { ...match.child, gId: pid, gName: def.name };
+      children.push(c);
+      Object.entries(c.pyQ || {}).forEach(([q, v]: any) => { totalPY[q] = (totalPY[q]||0) + v; });
+      Object.entries(c.cyQ || {}).forEach(([q, v]: any) => { totalCY[q] = (totalCY[q]||0) + v; });
+    });
+
+    if (children.length === 0) continue;
+
+    manualGroups[pid] = {
+      id: pid,
+      name: def.name,
+      tier: def.tier || "Standard",
+      class2: def.class2 || "DSO",
+      locs: def.locs || children.length,
+      pyQ: totalPY,
+      cyQ: totalCY,
+      children,
+    };
+  }
+
+  if (!Object.keys(manualGroups).length) return groups;
+
+  // Remove claimed children from their original groups, filter empty groups
+  const cleaned = groups
+    .filter(g => !Object.keys(manualGroups).includes(g.id))
+    .map(g => {
+      const kept = (g.children || []).filter((c: any) => !claimedChildIds.has(c.id));
+      if (kept.length === g.children?.length) return g;
+      const py: Record<string, number> = {};
+      const cy: Record<string, number> = {};
+      kept.forEach((c: any) => {
+        Object.entries(c.pyQ || {}).forEach(([q, v]: any) => { py[q] = (py[q]||0)+v; });
+        Object.entries(c.cyQ || {}).forEach(([q, v]: any) => { cy[q] = (cy[q]||0)+v; });
+      });
+      return { ...g, children: kept, locs: kept.length, pyQ: py, cyQ: cy };
+    })
+    .filter(g => (g.children || []).length > 0);
+
+  // Prepend manual groups
+  return [...Object.values(manualGroups), ...cleaned];
+}
+
 // ─── IMPORT REPORT ───────────────────────────────────────────────
 export interface ImportReport {
   filename: string;

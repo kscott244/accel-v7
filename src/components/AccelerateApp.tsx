@@ -574,7 +574,11 @@ function AppInner() {
 
       try {
         const { PRELOADED } = require("@/data/preloaded-data");
-        const preloadedGroups = applyGroupOverrides(applyOverlays(rollupGroupTotals(hydrateDealer(PRELOADED.groups))));
+        // Apply manual-parents remap to preloaded data so structural groups
+        // (like Downtown DDS) show correctly even before a CSV upload.
+        const { applyManualParents } = require("@/lib/csv");
+        const remappedGroups = applyManualParents ? applyManualParents(PRELOADED.groups) : PRELOADED.groups;
+        const preloadedGroups = applyGroupOverrides(applyOverlays(rollupGroupTotals(hydrateDealer(remappedGroups))));
         setGroups(preloadedGroups);
         setDataSource(`Pre-loaded ${PRELOADED.generated}`);
         // Auto-detect activeQ from data if not already set
@@ -941,7 +945,7 @@ function AppInner() {
       {/* A15.2: CRM / sales load failure banners — only shown when no local cache fallback existed */}
       {crmLoadWarning&&<div className="anim" style={{margin:"0 16px 8px",padding:"6px 12px",borderRadius:8,background:"rgba(251,191,36,.07)",border:"1px solid rgba(251,191,36,.2)",fontSize:11,color:T.amber,display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}><span>⚠ CRM data unavailable: {crmLoadWarning}</span><button onClick={()=>setCrmLoadWarning(null)} style={{background:"none",border:"none",color:T.t3,cursor:"pointer",fontSize:14,lineHeight:1,padding:"0 2px",fontFamily:"inherit"}}>×</button></div>}
       {salesLoadWarning&&<div className="anim" style={{margin:"0 16px 8px",padding:"6px 12px",borderRadius:8,background:"rgba(251,191,36,.07)",border:"1px solid rgba(251,191,36,.2)",fontSize:11,color:T.amber,display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}><span>⚠ Sales history unavailable: {salesLoadWarning}</span><button onClick={()=>setSalesLoadWarning(null)} style={{background:"none",border:"none",color:T.t3,cursor:"pointer",fontSize:14,lineHeight:1,padding:"0 2px",fontFamily:"inherit"}}>×</button></div>}
-      {updateAvailable&&<button className="anim" onClick={()=>window.location.reload()} style={{display:"block",width:"calc(100% - 32px)",margin:"0 16px 8px",padding:"10px 14px",borderRadius:10,background:"rgba(79,142,247,.12)",border:"1px solid rgba(79,142,247,.3)",fontSize:12,fontWeight:700,color:T.blue,cursor:"pointer",fontFamily:"inherit",textAlign:"left"}}>⬆ Update available — tap to reload</button>}
+      {updateAvailable&&<button className="anim" onClick={()=>window.location.reload()} style={{display:"block",width:"calc(100% - 32px)",margin:"0 16px 8px",padding:"10px 14px",borderRadius:10,background:"rgba(79,142,247,.12)",border:"1px solid rgba(79,142,247,.3)",fontSize:12,fontWeight:700,color:T.blue,cursor:"pointer",fontFamily:"inherit",textAlign:"left"}}>⬆ New update available — tap to reload (your data is saved)</button>}
 
       {/* TAB CONTENT */}
       {/* goSmart: always route child taps through the parent group when group has >1 loc.

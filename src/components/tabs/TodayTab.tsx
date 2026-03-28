@@ -92,7 +92,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
     const isEndgame = dLeft <= 5;
     const isSprint  = dLeft <= 14;
     const isCruise  = dLeft > 30;
-    const modeLabel = isEndgame ? "🔴 Endgame" : isSprint ? "🟡 Sprint" : isCruise ? "🟢 Pipeline" : "🟠 Push";
+    const modeLabel = dLeft === 0 ? "✅ Q1 Complete" : isEndgame ? "🔴 Endgame" : isSprint ? "🟡 Sprint" : isCruise ? "🟢 Pipeline" : "🟠 Push";
 
     const distMiles = (lat?: number, lng?: number): number => {
       if (!lat || !lng) return 999;
@@ -692,7 +692,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
           <div style={{width:7,height:7,borderRadius:"50%",background:T.amber,animation:"pulse 2s infinite",flexShrink:0}}/>
           <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color:T.amber}}>Today Focus</span>
-          <span style={{fontSize:10,color:T.t4,marginLeft:"auto"}}>{overdrive?.modeLabel} · {DAYS_LEFT}d left</span>
+          <span style={{fontSize:10,color:T.t4,marginLeft:"auto"}}>{overdrive?.modeLabel}{DAYS_LEFT > 0 ? ` · ${DAYS_LEFT}d left` : ""}</span>
         </div>
         {todayFocus.map((a:any,i:number)=>{
           const done = odDone[a.id];
