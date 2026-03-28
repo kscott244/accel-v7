@@ -180,11 +180,11 @@ export default function DashTab({groups, q1CY, q1Att, q1Gap, scored, goAcct, act
     {/* ── QUICK SALE CALCULATOR ── */}
     <div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(251,191,36,.04))`,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:16}}>
       <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.amber,marginBottom:12}}>Quick Sale Calculator</div>
-      <div style={{fontSize:11,color:T.t3,marginBottom:16}}>Search any Kerr product, enter doctor spend, see your credited revenue instantly.</div>
-      <div style={{marginBottom:14}}>
-        <label style={{fontSize:11,color:T.t1,display:"block",marginBottom:6,fontWeight:600}}>Account Tier</label>
+      
+      <div style={{marginBottom:10}}>
+        <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t4,marginBottom:6}}>Tier</div>
         <div className="hide-sb" style={{display:"flex",gap:4,overflowX:"auto"}}>
-          {["Standard","Top 100","Silver","Gold","Platinum","Diamond"].map(t=>(
+          {["Silver","Gold","Platinum","Diamond","Standard"].map(t=>(
             <button key={t} onClick={()=>setCalcTier(t)} style={{flexShrink:0,padding:"6px 12px",borderRadius:8,fontSize:11,fontWeight:600,cursor:"pointer",border:`1px solid ${calcTier===t?"rgba(251,191,36,.25)":T.b2}`,background:calcTier===t?"rgba(251,191,36,.08)":T.s2,color:calcTier===t?T.amber:T.t3,fontFamily:"inherit"}}>{t}{ACCEL_RATES[t]?` (${ACCEL_RATES[t]*100}%)`:""}</button>
           ))}
         </div>
@@ -205,10 +205,10 @@ export default function DashTab({groups, q1CY, q1Att, q1Gap, scored, goAcct, act
         </div>}
       </div>
       {calcSku&&<div style={{marginBottom:12}}>
-        <label style={{fontSize:11,color:T.t1,display:"block",marginBottom:4,fontWeight:600}}>Doctor Spend ($)</label>
+        <label style={{fontSize:11,color:T.t1,display:"block",marginBottom:4,fontWeight:600}}>Order Amount</label>
         <div style={{position:"relative"}}>
           <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:16,color:T.t4,fontFamily:"'JetBrains Mono',monospace"}}>$</span>
-          <input type="number" value={calcSpend} onChange={e=>setCalcSpend(e.target.value)} placeholder="e.g. 5000" style={{width:"100%",height:42,borderRadius:8,border:`1px solid ${T.b1}`,background:T.s1,color:T.t1,fontSize:16,padding:"0 12px 0 30px",outline:"none",fontFamily:"'JetBrains Mono',monospace"}}/>
+          <input type="number" value={calcSpend} onChange={e=>setCalcSpend(e.target.value)} placeholder="0" style={{width:"100%",height:42,borderRadius:8,border:`1px solid ${T.b1}`,background:T.s1,color:T.t1,fontSize:16,padding:"0 12px 0 30px",outline:"none",fontFamily:"'JetBrains Mono',monospace"}}/>
         </div>
       </div>}
       {calc&&<div style={{background:"rgba(79,142,247,.06)",border:"1px solid rgba(79,142,247,.12)",borderRadius:8,padding:12}}>
@@ -223,10 +223,8 @@ export default function DashTab({groups, q1CY, q1Att, q1Gap, scored, goAcct, act
         </div>
       </div>}
     </div>
-    <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:12,fontSize:10,color:T.t3}}>
-      <strong>How it works:</strong> Doctor spend ÷ tier MSRP = units. Units × std wholesale = raw wholesale. Accelerate tiers subtract chargeback (Silver 20%, Gold 24%, Platinum 30%, Diamond 36%). Standard / Top 100 / Private = 0%.
+
+        <div style={{fontSize:9,color:T.t4,textAlign:"center",marginTop:4,paddingTop:8,borderTop:`1px solid ${T.b2}`}}>Spend ÷ tier MSRP = units · units × wholesale = your credit</div>
     </div>
   </div>;
 }
-
-
