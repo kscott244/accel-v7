@@ -388,9 +388,11 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
   };
 
   return <div style={{paddingBottom:80}}>
+
+    {/* ── STICKY HEADER ── */}
     <div style={{position:"sticky",top:52,zIndex:40,background:"rgba(10,10,15,.9)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.b3}`,padding:"10px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
       <button onClick={goBack} style={{background:"none",border:"none",color:T.blue,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:13,fontWeight:600,fontFamily:"inherit"}}><Back/> Back</button>
-      <div style={{display:"flex",gap:6}}>
+      <div style={{display:"flex",gap:5}}>
         <button onClick={()=>drState==="idle"||drState==="error"?runDeepResearch():setDrState("idle")} style={{background:drState==="done"?"rgba(34,211,238,.12)":"rgba(34,211,238,.06)",border:`1px solid ${drState==="done"?"rgba(34,211,238,.35)":"rgba(34,211,238,.18)"}`,borderRadius:8,padding:"5px 10px",fontSize:11,fontWeight:700,color:T.cyan,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:4}}>
           {drState==="loading"?<><span style={{animation:"pulse 1s infinite"}}>●</span> Searching...</>:"🔍 Research"}
         </button>
@@ -399,518 +401,350 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
         </button>
       </div>
     </div>
-    <div style={{padding:"16px 16px 0"}}>
-      {toast&&<div className="anim" style={{background:"rgba(52,211,153,.12)",border:"1px solid rgba(52,211,153,.25)",borderRadius:12,padding:"12px 16px",marginBottom:12,display:"flex",alignItems:"center",gap:10}}>
-        <span style={{fontSize:16,color:T.green,fontWeight:700}}>+</span>
-        <div><div style={{fontSize:13,fontWeight:700,color:T.green}}>Sale recorded!</div><div style={{fontSize:11,color:T.t3}}>+{$f(toast)} credited → Q1 updated</div></div>
+
+    <div style={{padding:"12px 16px 0"}}>
+      {toast&&<div className="anim" style={{background:"rgba(52,211,153,.12)",border:"1px solid rgba(52,211,153,.25)",borderRadius:12,padding:"10px 14px",marginBottom:10,display:"flex",alignItems:"center",gap:10}}>
+        <span style={{fontSize:14,color:T.green,fontWeight:700}}>+</span>
+        <div><div style={{fontSize:12,fontWeight:700,color:T.green}}>Sale recorded!</div><div style={{fontSize:10,color:T.t3}}>+{$f(toast)} credited → Q1 updated</div></div>
       </div>}
 
-      {/* DEEP RESEARCH CARD */}
-      {(drState==="loading"||drState==="done"||drState==="error")&&<div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(34,211,238,.05))`,border:`1px solid rgba(34,211,238,.25)`,borderRadius:16,padding:16,marginBottom:12}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-          <div style={{display:"flex",alignItems:"center",gap:7}}>
-            <span style={{fontSize:13}}>🔍</span>
-            <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan}}>Live Practice Intel</span>
-          </div>
-          <button onClick={()=>{setDrState("idle");setDrIntel(null);}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:16,lineHeight:1}}>✕</button>
-        </div>
-        {drState==="loading"&&<div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {[90,70,80,50,85].map((w,i)=><div key={i} style={{height:10,borderRadius:5,background:T.s3,width:`${w}%`,animation:"pulse 1.5s infinite",animationDelay:`${i*200}ms`}}/>)}
-          <div style={{fontSize:11,color:T.t4,marginTop:4}}>Searching the web for practice intel...</div>
-        </div>}
-        {drState==="error"&&<div style={{fontSize:12,color:T.red}}>{drIntel?.error||"Research failed."}</div>}
-        {drState==="done"&&drIntel&&!drIntel.parseError&&<div>
-          {/* Status */}
-          {drIntel.statusNote&&<div style={{marginBottom:10,padding:"8px 10px",borderRadius:8,background:drIntel.status==="changed"?"rgba(248,113,113,.08)":drIntel.status==="closed"?"rgba(248,113,113,.12)":"rgba(52,211,153,.06)",border:`1px solid ${drIntel.status==="open"?"rgba(52,211,153,.15)":"rgba(248,113,113,.15)"}`}}>
-            <div style={{fontSize:9,textTransform:"uppercase",color:T.t4,marginBottom:2}}>Practice Status</div>
-            <div style={{fontSize:11,fontWeight:600,color:drIntel.status==="open"?T.green:drIntel.status==="closed"?T.red:T.amber}}>{drIntel.statusNote}</div>
-          </div>}
-          {/* Contact info */}
-          {(drIntel.phone||drIntel.email||drIntel.contactName||drIntel.website)&&<div style={{marginBottom:10,display:"flex",flexWrap:"wrap",gap:8}}>
-            {drIntel.contactName&&<div><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:1}}>Contact</div><div style={{fontSize:11,fontWeight:600}}>{drIntel.contactName}</div></div>}
-            {drIntel.phone&&<div><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:1}}>Phone</div><a href={`tel:${drIntel.phone}`} style={{fontSize:11,fontWeight:600,color:T.cyan,textDecoration:"none"}}>{drIntel.phone}</a></div>}
-            {drIntel.email&&<div><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:1}}>Email</div><div style={{fontSize:11,fontWeight:600,color:T.cyan}}>{drIntel.email}</div></div>}
-            {drIntel.website&&<div><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:1}}>Website</div><a href={drIntel.website} target="_blank" rel="noreferrer" style={{fontSize:11,fontWeight:600,color:T.blue,textDecoration:"none"}}>Visit →</a></div>}
-          </div>}
-          {/* Ownership */}
-          {drIntel.ownershipNote&&<div style={{marginBottom:10}}>
-            <div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:3}}>Ownership</div>
-            <div style={{fontSize:11,color:T.t2}}>{drIntel.ownershipNote}</div>
-          </div>}
-          {/* Hooks */}
-          {drIntel.hooks?.length>0&&<div style={{marginBottom:10}}>
-            <div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:6}}>Relationship Hooks</div>
-            {drIntel.hooks.map((h,i)=><div key={i} style={{display:"flex",gap:6,alignItems:"flex-start",marginBottom:5}}>
-              <span style={{color:T.amber,marginTop:1,fontSize:10}}>◆</span>
-              <span style={{fontSize:11,color:T.t2,lineHeight:1.5}}>{h}</span>
-            </div>)}
-          </div>}
-          {/* Competitive */}
-          {drIntel.competitive&&<div style={{marginBottom:10,padding:"8px 10px",borderRadius:8,background:"rgba(248,113,113,.05)",border:"1px solid rgba(248,113,113,.1)"}}>
-            <div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:2}}>Competitive Signal</div>
-            <div style={{fontSize:11,color:T.t2}}>{drIntel.competitive}</div>
-          </div>}
-          {/* Talking points */}
-          {drIntel.talkingPoints?.length>0&&<div>
-            <div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:6}}>Talking Points for Your Visit</div>
-            {drIntel.talkingPoints.map((p,i)=><div key={i} style={{display:"flex",gap:6,alignItems:"flex-start",marginBottom:6,padding:"6px 8px",borderRadius:7,background:"rgba(79,142,247,.05)",border:"1px solid rgba(79,142,247,.1)"}}>
-              <span style={{color:T.blue,fontWeight:700,fontSize:10,marginTop:1,flexShrink:0}}>{i+1}.</span>
-              <span style={{fontSize:11,color:T.t1,lineHeight:1.5}}>{p}</span>
-            </div>)}
-          </div>}
-          {/* SEARCHING INDICATOR */}
-          {groupSuggestions.length > 0 && groupSuggestions[0]?.id === "__searching__" && <div style={{marginTop:12,padding:"10px 12px",borderRadius:10,background:"rgba(79,142,247,.05)",border:"1px solid rgba(79,142,247,.15)",display:"flex",alignItems:"center",gap:8}}>
-            <div style={{width:12,height:12,borderRadius:"50%",border:"2px solid rgba(79,142,247,.3)",borderTopColor:T.blue,animation:"spin 0.8s linear infinite",flexShrink:0}}/>
-            <div style={{fontSize:11,color:T.t3}}>Searching for related accounts…</div>
-          </div>}
-          {/* AUTO-LINK SUGGESTION */}
-          {groupSuggestions.length > 0 && groupSuggestions[0]?.id !== "__searching__" && <div style={{marginTop:12,padding:"10px 12px",borderRadius:10,background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.2)"}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-              <div>
-                <div style={{fontSize:10,fontWeight:700,color:T.blue}}>🔗 Related Accounts Found</div>
-                <div style={{fontSize:9,color:T.t4,marginTop:1}}>Research indicates this may be a multi-location group</div>
-              </div>
-              <button onClick={()=>{setSuggestSelected(new Set(groupSuggestions.map((s:any)=>s.id)));setSuggestModal(true);}}
-                style={{background:"rgba(79,142,247,.15)",border:"1px solid rgba(79,142,247,.3)",borderRadius:8,padding:"4px 10px",fontSize:10,fontWeight:700,color:T.blue,cursor:"pointer",fontFamily:"inherit"}}>
-                Link Accounts
-              </button>
-            </div>
-            {groupSuggestions.slice(0,3).map((s:any)=>(
-              <div key={s.id} style={{marginTop:4,paddingLeft:4}}>
-                <div style={{fontSize:11,color:T.t1,fontWeight:600}}>· {s.name} — {s.city}, {s.st}</div>
-                {s.matchReason&&<div style={{fontSize:9,color:T.t4,paddingLeft:8,marginTop:1,fontStyle:"italic"}}>{s.matchReason}</div>}
-              </div>
-            ))}
-            {groupSuggestions.length > 3 && <div style={{fontSize:9,color:T.t4,marginTop:2,paddingLeft:4}}>+{groupSuggestions.length-3} more</div>}
-          </div>}
-          {drIntel.searchedAt&&<div style={{fontSize:9,color:T.t4,marginTop:8,textAlign:"right"}}>Researched {new Date(drIntel.searchedAt).toLocaleTimeString()}</div>}
-        </div>}
-        {drState==="done"&&drIntel?.parseError&&<div style={{fontSize:11,color:T.t2,lineHeight:1.6,whiteSpace:"pre-wrap"}}>{drIntel.rawText}</div>}
-      </div>}
-
-      {/* AI BRIEFING CARD */}
-      {(aiState==="loading"||aiState==="done"||aiState==="error")&&<div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(167,139,250,.06))`,border:`1px solid rgba(167,139,250,.2)`,borderRadius:16,padding:16,marginBottom:12}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-          <div style={{display:"flex",alignItems:"center",gap:7}}>
-            <span style={{fontSize:14,color:T.purple}}>✦</span>
-            <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.purple}}>AI Account Briefing</span>
-          </div>
-          <button onClick={()=>{setAiState("idle");setAiText("");}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:16,lineHeight:1}}>✕</button>
-        </div>
-        {aiState==="loading"&&<div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {[100,80,90,60].map((w,i)=><div key={i} style={{height:10,borderRadius:5,background:T.s3,width:`${w}%`,animation:"pulse 1.5s infinite",animationDelay:`${i*150}ms`}}/>)}
-          <div style={{fontSize:11,color:T.t4,marginTop:4}}>Analyzing account data...</div>
-        </div>}
-        {aiState==="done"&&<div style={{fontSize:12,color:T.t2,lineHeight:1.7,whiteSpace:"pre-wrap"}}>{aiText}</div>}
-        {aiState==="error"&&<div style={{fontSize:12,color:T.red}}>{aiText}</div>}
-      </div>}
-
-      {/* ACCOUNT HEADER */}
-      <div className="anim" style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+      {/* ── HERO ── */}
+      <div className="anim" style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:10}}>
+        {/* Name + health + move/reorder */}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
           <div style={{flex:1,minWidth:0,paddingRight:8}}><AccountId name={acct.name} gName={acct.gName} size="lg" locs={parentGroup?.locs}/></div>
-          <button onClick={()=>setShowMoveModal(true)} style={{flexShrink:0,background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.18)",borderRadius:8,padding:"4px 9px",fontSize:10,fontWeight:600,color:T.blue,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>Move →</button>
-          <button onClick={()=>setShowReorder(true)} style={{flexShrink:0,background:"rgba(52,211,153,.08)",border:"1px solid rgba(52,211,153,.2)",borderRadius:8,padding:"4px 9px",fontSize:10,fontWeight:600,color:T.green,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>🧾 Reorder</button>
+          <div style={{display:"flex",gap:4,flexShrink:0}}>
+            <button onClick={()=>setShowMoveModal(true)} style={{background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.18)",borderRadius:7,padding:"4px 8px",fontSize:10,fontWeight:600,color:T.blue,cursor:"pointer",fontFamily:"inherit"}}>Move</button>
+            <button onClick={()=>setShowReorder(true)} style={{background:"rgba(52,211,153,.08)",border:"1px solid rgba(52,211,153,.2)",borderRadius:7,padding:"4px 8px",fontSize:10,fontWeight:600,color:T.green,cursor:"pointer",fontFamily:"inherit"}}>🧾</button>
+          </div>
         </div>
-        <div style={{fontSize:11,color:T.t3,marginTop:2}}>{acct.city}, {acct.st} · <span style={{color:isAccel?T.amber:T.t3}}>{acctType}</span> · Last {acct.last}d ago</div>
-        {(acct.addr||acct.address)&&<div style={{fontSize:10,color:T.t4,marginTop:1}}>📍 {acct.addr||acct.address}{acct.zip?", "+acct.zip:""}</div>}
-        {groupOverride&&<div style={{marginTop:4,fontSize:10,color:T.amber,display:"flex",alignItems:"center",gap:4}}>
-          <span>⚠ Overridden → {groupOverride.targetGroupName}</span>
-          <button onClick={()=>{try { localStorage.removeItem(overrideKey); } catch {} setGroupOverride(null);}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:11,padding:"0 2px"}}>✕</button>
-        </div>}
-        {(()=>{const h=getHealthStatus(ret,gap,cyVal,pyVal);return <div style={{display:"inline-flex",alignItems:"center",marginTop:6,fontSize:10,fontWeight:700,color:h.color,background:h.bg,border:`1px solid ${h.border}`,borderRadius:999,padding:"3px 10px",letterSpacing:".2px"}}>{h.label}</div>;})()}
-        {parentGroup&&(parentGroup.locs||(parentGroup.children?.length)||0)>=3&&<div style={{marginTop:6}}><GroupBadge gName={fixGroupName(parentGroup)} gId={parentGroup.id} locs={parentGroup.locs||(parentGroup.children?.length)||0} goGroup={(id)=>goGroup&&goGroup((groups||[]).find((g:any)=>g.id===id))}/></div>}
-        <div style={{fontSize:10,color:T.t4,marginTop:2,display:"flex",gap:8,flexWrap:"wrap"}}>
-          {acct.gName&&<span>Group: {groupOverride?groupOverride.targetGroupName:acct.gName}</span>}
-          {acct.dealer&&acct.dealer!=="All Other"&&<span style={{color:T.cyan}}>Dealer: {acct.dealer}{acct.dealerFlag&&<span title="Dealer assignment flagged for review — rep data conflicts with Tableau export" style={{marginLeft:4,fontSize:9,color:T.amber,fontWeight:700,cursor:"help"}}>⚠?</span>}</span>}
+        {/* Subtitle: city + tier + last seen */}
+        <div style={{fontSize:10,color:T.t3,marginBottom:4}}>
+          {acct.city}, {acct.st}
+          {acct.last!=null&&<span> · Last {acct.last}d ago</span>}
+          <span style={{color:isAccel?T.amber:T.t3}}> · {acctType}</span>
+          {acct.dealer&&acct.dealer!=="All Other"&&<span style={{color:T.cyan}}> · {acct.dealer}{acct.dealerFlag&&<span style={{color:T.amber,marginLeft:3}}>⚠</span>}</span>}
         </div>
-
-        {/* QUARTER SELECTOR */}
-        <div style={{display:"flex",gap:4,marginTop:12,marginBottom:12}}>
+        {/* Health badge + group badge */}
+        <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center",marginBottom:8}}>
+          {(()=>{const h=getHealthStatus(ret,gap,cyVal,pyVal);return <div style={{display:"inline-flex",alignItems:"center",fontSize:9,fontWeight:700,color:h.color,background:h.bg,border:`1px solid ${h.border}`,borderRadius:999,padding:"2px 8px"}}>{h.label}</div>;})()}
+          {groupOverride&&<span style={{fontSize:9,color:T.amber}}>⚠ → {groupOverride.targetGroupName} <button onClick={()=>setGroupOverride(null)} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:10,padding:"0 2px"}}>✕</button></span>}
+          {parentGroup&&(parentGroup.locs||(parentGroup.children?.length)||0)>=3&&<GroupBadge gName={fixGroupName(parentGroup)} gId={parentGroup.id} locs={parentGroup.locs||(parentGroup.children?.length)||0} goGroup={(id)=>goGroup&&goGroup((groups||[]).find((g:any)=>g.id===id))}/>}
+        </div>
+        {/* Q selector */}
+        <div style={{display:"flex",gap:3,marginBottom:8}}>
           {["1","2","3","4","FY"].map(qr=>(
-            <button key={qr} onClick={()=>setQ(qr)} style={{flex:1,padding:"6px 0",borderRadius:8,fontSize:11,fontWeight:600,cursor:"pointer",border:`1px solid ${q===qr?"rgba(79,142,247,.25)":T.b2}`,background:q===qr?"rgba(79,142,247,.12)":T.s2,color:q===qr?T.blue:T.t3,fontFamily:"inherit"}}>{qr==="FY"?"FY":`Q${qr}`}</button>
+            <button key={qr} onClick={()=>setQ(qr)} style={{flex:1,padding:"5px 0",borderRadius:7,fontSize:10,fontWeight:600,cursor:"pointer",border:`1px solid ${q===qr?"rgba(79,142,247,.25)":T.b2}`,background:q===qr?"rgba(79,142,247,.12)":T.s2,color:q===qr?T.blue:T.t3,fontFamily:"inherit"}}>{qr==="FY"?"FY":`Q${qr}`}</button>
           ))}
         </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}>
+        {/* Stats */}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6}}>
           <Stat l="PY" v={$$(pyVal)} c={T.t2}/>
           <Stat l="CY" v={$$(cyVal)} c={T.blue}/>
           <Stat l="Gap" v={gap<=0?`+${$$(Math.abs(gap))}`:$$(gap)} c={gap<=0?T.green:T.red}/>
           <Stat l="Ret" v={pc(ret)} c={ret>.3?T.green:ret>.15?T.amber:T.red}/>
         </div>
-        {qk!=="1"&&<div style={{marginTop:6,fontSize:10,color:T.t4,textAlign:"center"}}>Showing {qk==="FY"?"Full Year":`Q${qk}`}. Manual adjustments apply to Q1.</div>}
-        {myAdj.length>0&&qk==="1"&&<div style={{marginTop:8,borderRadius:8,background:"rgba(52,211,153,.06)",border:"1px solid rgba(52,211,153,.12)",padding:"8px 10px"}}>
-          <div style={{fontSize:10,fontWeight:600,color:T.green,marginBottom:4}}>Adjustments ({myAdj.length})</div>
-          {myAdj.map(a=><div key={a.id} style={{fontSize:10,color:T.t3,display:"flex",justifyContent:"space-between",marginBottom:2}}><span>{a.desc||"Manual"}</span><span className="m" style={{color:T.green,fontWeight:600}}>+{$f(a.credited)}</span></div>)}
+        {qk!=="1"&&<div style={{marginTop:5,fontSize:9,color:T.t4,textAlign:"center"}}>Showing {qk==="FY"?"Full Year":`Q${qk}`}. Adjustments apply to Q1.</div>}
+        {myAdj.length>0&&qk==="1"&&<div style={{marginTop:7,borderRadius:7,background:"rgba(52,211,153,.06)",border:"1px solid rgba(52,211,153,.12)",padding:"6px 9px"}}>
+          <div style={{fontSize:9,fontWeight:600,color:T.green,marginBottom:3}}>Adjustments ({myAdj.length})</div>
+          {myAdj.map((a:any)=><div key={a.id} style={{fontSize:9,color:T.t3,display:"flex",justifyContent:"space-between",marginBottom:1}}><span>{a.desc||"Manual"}</span><span className="m" style={{color:T.green,fontWeight:600}}>+{$f(a.credited)}</span></div>)}
         </div>}
       </div>
 
-      {/* MULTI-DEALER COMBINED VIEW */}
-      <MultiDealerView acct={acct}/>
-
-      {/* MOVE TO GROUP MODAL — outside account header card */}
-      {showMoveModal&&<div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.7)",backdropFilter:"blur(8px)",display:"flex",flexDirection:"column",justifyContent:"flex-end"}} onClick={()=>{setShowMoveModal(false);setMoveSearch("");setMoveTarget(null);}}>
-        <div style={{background:T.s1,borderRadius:"20px 20px 0 0",padding:20,maxHeight:"70vh",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-            <div style={{fontSize:13,fontWeight:700}}>{moveTarget?"Confirm Move":"Move to Group"}</div>
-            <button onClick={()=>{setShowMoveModal(false);setMoveSearch("");setMoveTarget(null);}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:18}}>✕</button>
-          </div>
-
-          {moveTarget ? (
-            /* ── Confirmation view — FROM → TO ── */
-            <div>
-              <div style={{marginBottom:12}}>
-                <div style={{fontSize:9,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:"1px",marginBottom:6}}>From</div>
-                <div style={{background:T.s2,border:`1px solid ${T.b1}`,borderRadius:10,padding:"10px 14px"}}>
-                  <div style={{fontSize:13,fontWeight:600,color:T.t2}}>{acct.gName||"Standalone"}</div>
-                  <div style={{fontSize:10,color:T.t4,marginTop:2}}>{acct.name}</div>
-                </div>
-              </div>
-              <div style={{textAlign:"center",fontSize:20,color:T.t4,margin:"4px 0 10px"}}>↓</div>
-              <div style={{marginBottom:20}}>
-                <div style={{fontSize:9,fontWeight:700,color:T.blue,textTransform:"uppercase",letterSpacing:"1px",marginBottom:6}}>To</div>
-                <div style={{background:"rgba(79,142,247,.08)",border:`1px solid rgba(79,142,247,.25)`,borderRadius:10,padding:"10px 14px"}}>
-                  <div style={{fontSize:13,fontWeight:700,color:T.blue}}>{fixGroupName(moveTarget)}</div>
-                  <div style={{fontSize:10,color:T.t4,marginTop:2}}>{moveTarget.locs} location{moveTarget.locs!==1?"s":""} · {getTierLabel(moveTarget.tier,moveTarget.class2)}</div>
-                </div>
-              </div>
-              <div style={{display:"flex",gap:10}}>
-                <button onClick={()=>setMoveTarget(null)}
-                  style={{flex:1,padding:"11px 0",borderRadius:10,border:`1px solid ${T.b1}`,background:"transparent",color:T.t3,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
-                  Back
-                </button>
-                <button onClick={()=>{applyGroupOverride(moveTarget);setMoveTarget(null);}}
-                  style={{flex:2,padding:"11px 0",borderRadius:10,border:"none",background:T.blue,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-                  Confirm Move
-                </button>
-              </div>
-            </div>
-          ) : (
-            /* ── Search view ── */
-            <>
-              <div style={{fontSize:11,color:T.t3,marginBottom:10}}>
-                Account: <strong style={{color:T.t1}}>{acct.name}</strong>
-                {acct.gName&&<span style={{color:T.t4}}> · currently in <strong style={{color:T.t3}}>{acct.gName}</strong></span>}
-              </div>
-              <input autoFocus type="search" value={moveSearch} onChange={e=>setMoveSearch(e.target.value)}
-                placeholder="Search groups…"
-                style={{width:"100%",height:40,borderRadius:10,border:`1px solid ${T.b1}`,background:T.s2,color:T.t1,fontSize:13,padding:"0 12px",outline:"none",fontFamily:"inherit",marginBottom:12}}/>
-              <div style={{overflowY:"auto",flex:1}}>
-                {moveSearch.trim()&&moveResults.length===0&&<div style={{padding:"20px 0",textAlign:"center",color:T.t4,fontSize:12}}>No groups found</div>}
-                {moveResults.map(g=>(
-                  <button key={g.id} onClick={()=>setMoveTarget(g)}
-                    style={{width:"100%",textAlign:"left",background:T.s2,border:`1px solid ${T.b1}`,borderRadius:12,padding:"10px 14px",marginBottom:8,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                    <div>
-                      <div style={{fontSize:13,fontWeight:600}}>{fixGroupName(g)}</div>
-                      <div style={{fontSize:10,color:T.t3,marginTop:2}}>{g.locs} location{g.locs!==1?"s":""} · {getTierLabel(g.tier,g.class2)}</div>
-                    </div>
-                    <Chev/>
-                  </button>
-                ))}
-                {!moveSearch.trim()&&<div style={{padding:"20px 0",textAlign:"center",color:T.t4,fontSize:12}}>Type a group name to search</div>}
-              </div>
-            </>
-          )}
-        </div>
-      </div>}
-
-      {/* BADGER INTEL CARD */}
-      {badger&&(badger.doctor||badger.orders||badger.dealerRep||badger.notes||badger.visitNotes||badger.feel)&&<div className="anim" style={{animationDelay:"50ms",background:T.s1,border:`1px solid rgba(34,211,238,.15)`,borderRadius:16,padding:16,marginBottom:12}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-          <div style={{display:"flex",alignItems:"center",gap:6}}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={T.cyan} strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan}}>Field Intel</span>
-          </div>
-          {badger.feel&&<div style={{display:"flex",gap:2}}>{[1,2,3,4,5].map(i=><div key={i} style={{width:8,height:8,borderRadius:"50%",background:i<=parseFloat(badger.feel)?T.amber:"rgba(255,255,255,.1)"}}/>)}</div>}
-        {/* ROOT DEPTH — STEMM relationship strength */}
-        <div style={{marginTop:10,paddingTop:8,borderTop:"1px solid rgba(255,255,255,.05)"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
-            <span style={{fontSize:9,textTransform:"uppercase",color:"var(--t3)",letterSpacing:"1px"}}>Root Depth</span>
-            <span style={{fontSize:9,fontWeight:700,fontFamily:"JetBrains Mono,monospace",color:rootStrength>=60?"var(--root)":rootStrength>=30?"rgba(200,147,58,.7)":"var(--t4)"}}>
-              {rootStrength>=70?"Deep":rootStrength>=45?"Established":rootStrength>=25?"Developing":"Uncharted"}
-            </span>
-          </div>
-          <div className="root-track">
-            <div className={"root-fill " + (rootStrength>=60?"root-fill-deep":rootStrength>=30?"root-fill-mid":"root-fill-shallow")}
-              style={{width:rootStrength+"%"}}/>
-          </div>
-        </div>
-        </div>
-        <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:badger.notes||badger.visitNotes?10:0}}>
-          {badger.doctor&&<div style={{minWidth:0}}>
-            <div style={{fontSize:9,textTransform:"uppercase",color:T.t3,marginBottom:1}}>Doctor</div>
-            <div style={{fontSize:11,fontWeight:600,color:T.t1}}>{badger.doctor}</div>
-          </div>}
-          {badger.orders&&<div style={{minWidth:0}}>
-            <div style={{fontSize:9,textTransform:"uppercase",color:T.t3,marginBottom:1}}>Orders</div>
-            <div style={{fontSize:11,fontWeight:600,color:T.t1}}>{badger.orders}</div>
-          </div>}
-          {badger.dealerRep&&<div style={{minWidth:0}}>
-            <div style={{fontSize:9,textTransform:"uppercase",color:T.t3,marginBottom:1}}>Dealer Rep</div>
-            <div style={{fontSize:11,fontWeight:600,color:T.cyan}}>{badger.dealerRep}</div>
-          </div>}
-          {badger.accelLevel&&<div style={{minWidth:0}}>
-            <div style={{fontSize:9,textTransform:"uppercase",color:T.t3,marginBottom:1}}>Accel Level</div>
-            <div style={{fontSize:11,fontWeight:600,color:T.amber}}>{badger.accelLevel}</div>
-          </div>}
-        </div>
-        {badger.notes&&<div style={{fontSize:11,color:T.t2,lineHeight:1.5,background:T.s2,borderRadius:8,padding:"8px 10px",marginBottom:badger.visitNotes?8:0,whiteSpace:"pre-wrap"}}>{badger.notes.replace(/\\n/g,'\n')}</div>}
-        {badger.visitNotes&&<div>
-          <div style={{fontSize:9,textTransform:"uppercase",color:T.t3,marginBottom:3}}>Last Visit{badger.lastVisit?` · ${badger.lastVisit}`:""}</div>
-          <div style={{fontSize:11,color:T.t3,lineHeight:1.5,fontStyle:"italic"}}>"{badger.visitNotes}"</div>
-        </div>}
-        {badger.phone&&<div style={{marginTop:10}}>
-          <a href={`tel:${badger.phone}`} style={{display:"inline-flex",alignItems:"center",gap:5,fontSize:10,color:T.cyan,textDecoration:"none",background:"rgba(34,211,238,.06)",border:"1px solid rgba(34,211,238,.12)",borderRadius:8,padding:"4px 10px"}}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.5 19.79 19.79 0 0 1 1.58 4.92 2 2 0 0 1 3.55 2.73h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10a16 16 0 0 0 6 6l.87-.87a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 17.5z"/></svg>
-            {badger.phone}
-          </a>
-        </div>}
-        {/* Saved Research Contacts — with hierarchy */}
-        {savedContacts&&(savedContacts.contactName||savedContacts.contacts?.length>0)&&<div style={{marginTop:12,paddingTop:10,borderTop:`1px solid ${T.b2}`}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-            <div style={{fontSize:9,textTransform:"uppercase",color:T.t3,letterSpacing:"1px"}}>Contacts</div>
-            <div style={{fontSize:8,color:T.t4}}>{savedContacts.savedAt?new Date(savedContacts.savedAt).toLocaleDateString():""}</div>
-          </div>
-          {/* Primary contact always visible */}
-          {(savedContacts.contacts?.length>0?savedContacts.contacts:[{name:savedContacts.contactName,email:savedContacts.email,phone:savedContacts.phone,role:"",tier:1}]).slice(0,1).map((c:any,i:number)=>(
-            <div key={i} style={{marginBottom:4}}>
-              <div style={{fontSize:11,fontWeight:700,color:T.t1}}>{c.name}</div>
-              {c.role&&<div style={{fontSize:9,color:T.t4,marginBottom:2}}>{c.role}</div>}
-              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                {c.email&&<a href={`mailto:${c.email}`} style={{fontSize:10,color:T.cyan,textDecoration:"none"}}>{c.email}</a>}
-                {c.phone&&<a href={`tel:${c.phone}`} style={{fontSize:10,color:T.green,textDecoration:"none"}}>{c.phone}</a>}
-              </div>
+      {/* ── NEXT BEST MOVE ── */}
+      {(()=>{
+        const moves:any[]=[];
+        const topStopped=[...stopped].sort((a,b)=>(b[`py${qk}`]||0)-(a[`py${qk}`]||0));
+        if(topStopped.length===1) moves.push({icon:"🎯",color:T.red,text:`Re-engage on ${topStopped[0].n} — was ${$$(topStopped[0][`py${qk}`]||0)} last year, nothing this quarter.`});
+        else if(topStopped.length>1) moves.push({icon:"🎯",color:T.red,text:`${topStopped.length} products stopped. Lead with ${topStopped[0].n} (was ${$$(topStopped[0][`py${qk}`]||0)}) — ask what changed.`});
+        const nt=normalizeTier(acctTier);
+        if(nt==="Silver") moves.push({icon:"⬆️",color:T.amber,text:`Gold upgrade saves doctor ~6% vs Silver MSRP. At ${$$(cyVal)} spend, that's meaningful — worth the conversation.`});
+        else if(nt==="Standard"&&pyVal>1000) moves.push({icon:"⬆️",color:T.amber,text:`Not on Accelerate. At ${$$(pyVal)} PY spend, Silver tier would lower their cost. Pitch the program.`});
+        if(xsell.length>0) moves.push({icon:"💡",color:T.purple,text:`Not buying ${xsell.slice(0,2).map((o:any)=>o.label).join(" or ")}. ${xsell[0].pitch}`});
+        if(moves.length<2&&ret<0.5&&gap>500) moves.push({icon:"📞",color:T.blue,text:`Retention at ${Math.round(ret*100)}% — ${$$(gap)} gap. Check in on supply chain, competitor activity, or budget cycle.`});
+        if(cyVal>pyVal) moves.push({icon:"✅",color:T.green,text:`Up ${$$(cyVal-pyVal)} vs last year. Reinforce — ask about upcoming procedures to lock in Q2.`});
+        if(moves.length===0) return null;
+        return <div className="anim" style={{animationDelay:"8ms",background:T.s1,border:`1px solid rgba(79,142,247,.2)`,borderLeft:`3px solid ${T.blue}`,borderRadius:14,padding:"12px 14px",marginBottom:10}}>
+          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue,marginBottom:10}}>Next Best Move</div>
+          {moves.slice(0,3).map((m:any,i:number)=>(
+            <div key={i} style={{display:"flex",gap:10,marginBottom:i<Math.min(moves.length,3)-1?8:0}}>
+              <span style={{fontSize:13,flexShrink:0,lineHeight:1.4}}>{m.icon}</span>
+              <div style={{fontSize:12,color:T.t2,lineHeight:1.5,borderLeft:`2px solid ${m.color}`,paddingLeft:9}}>{m.text}</div>
             </div>
           ))}
-          {/* Additional contacts collapsed */}
-          {savedContacts.contacts?.length>1&&savedContacts.contacts.slice(1).map((c:any,i:number)=>(
-            <div key={i} style={{borderTop:`1px solid ${T.b3}`,paddingTop:4,marginTop:4}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
-                <div style={{fontSize:10,fontWeight:600,color:T.t2}}>{c.name}</div>
-                <div style={{fontSize:9,color:T.t4}}>{c.role}</div>
+        </div>;
+      })()}
+
+      {/* ── WHO MATTERS ── */}
+      {(badger||(savedContacts&&(savedContacts.contactName||savedContacts.contacts?.length>0)))&&(()=>{
+        const allContacts:any[] = savedContacts?.contacts?.length>0
+          ? savedContacts.contacts
+          : savedContacts?.contactName
+            ? [{name:savedContacts.contactName,email:savedContacts.email,phone:savedContacts.phone,role:"",tier:1}]
+            : [];
+        const hasDoctor = badger?.doctor;
+        const hasFeel = badger?.feel;
+        const hasRep = badger?.dealerRep;
+        const hasPhone = badger?.phone;
+        const hasNotes = badger?.notes||badger?.visitNotes;
+        return <div className="anim" style={{animationDelay:"12ms",background:T.s1,border:`1px solid rgba(34,211,238,.18)`,borderRadius:14,padding:"12px 14px",marginBottom:10}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+            <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan}}>Who Matters</div>
+            {hasFeel&&<div style={{display:"flex",gap:2}}>{[1,2,3,4,5].map(i=><div key={i} style={{width:7,height:7,borderRadius:"50%",background:i<=parseFloat(badger.feel)?T.amber:"rgba(255,255,255,.1)"}}/>)}</div>}
+          </div>
+          {/* Doctor + dealer rep */}
+          {(hasDoctor||hasRep)&&<div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:hasPhone||allContacts.length>0||hasNotes?10:0}}>
+            {hasDoctor&&<div>
+              <div style={{fontSize:9,textTransform:"uppercase",color:T.t3,marginBottom:1}}>Doctor</div>
+              <div style={{fontSize:12,fontWeight:700,color:T.t1}}>{badger.doctor}</div>
+            </div>}
+            {badger?.orders&&<div>
+              <div style={{fontSize:9,textTransform:"uppercase",color:T.t3,marginBottom:1}}>Orders</div>
+              <div style={{fontSize:11,fontWeight:600,color:T.t1}}>{badger.orders}</div>
+            </div>}
+            {hasRep&&<div>
+              <div style={{fontSize:9,textTransform:"uppercase",color:T.t3,marginBottom:1}}>Dealer Rep</div>
+              <div style={{fontSize:11,fontWeight:600,color:T.cyan}}>{badger.dealerRep}</div>
+            </div>}
+            {badger?.accelLevel&&<div>
+              <div style={{fontSize:9,textTransform:"uppercase",color:T.t3,marginBottom:1}}>Accel Level</div>
+              <div style={{fontSize:11,fontWeight:600,color:T.amber}}>{badger.accelLevel}</div>
+            </div>}
+          </div>}
+          {/* Direct phone from badger */}
+          {hasPhone&&<div style={{marginBottom:allContacts.length>0||hasNotes?8:0}}>
+            <a href={`tel:${badger.phone}`} style={{display:"inline-flex",alignItems:"center",gap:5,fontSize:11,color:T.cyan,textDecoration:"none",background:"rgba(34,211,238,.06)",border:"1px solid rgba(34,211,238,.12)",borderRadius:7,padding:"4px 10px"}}>
+              📞 {badger.phone}
+            </a>
+          </div>}
+          {/* Research-saved contacts */}
+          {allContacts.length>0&&<div style={{borderTop:hasDoctor||hasPhone?`1px solid ${T.b2}`:"none",paddingTop:hasDoctor||hasPhone?8:0,marginBottom:hasNotes?8:0}}>
+            {allContacts.slice(0,3).map((c:any,i:number)=>(
+              <div key={i} style={{marginBottom:i<allContacts.length-1&&i<2?7:0}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
+                  <div style={{fontSize:12,fontWeight:i===0?700:600,color:i===0?T.t1:T.t2}}>{c.name}</div>
+                  {c.role&&<div style={{fontSize:9,color:T.t4,background:T.s2,borderRadius:3,padding:"1px 5px"}}>{c.role}</div>}
+                </div>
+                <div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:2}}>
+                  {c.email&&<a href={`mailto:${c.email}`} style={{fontSize:10,color:T.cyan,textDecoration:"none"}}>{c.email}</a>}
+                  {c.phone&&<a href={`tel:${c.phone}`} style={{fontSize:10,color:T.green,textDecoration:"none"}}>{c.phone}</a>}
+                </div>
               </div>
-              <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:1}}>
-                {c.email&&<a href={`mailto:${c.email}`} style={{fontSize:9,color:T.cyan,textDecoration:"none"}}>{c.email}</a>}
-                {c.phone&&<a href={`tel:${c.phone}`} style={{fontSize:9,color:T.green,textDecoration:"none"}}>{c.phone}</a>}
+            ))}
+            {savedContacts?.website&&<div style={{marginTop:5}}><a href={savedContacts.website} target="_blank" rel="noreferrer" style={{fontSize:9,color:T.blue,textDecoration:"none"}}>🌐 {savedContacts.website.replace(/^https?:\/\//,"")}</a></div>}
+          </div>}
+          {/* Notes from Badger */}
+          {hasNotes&&<div style={{borderTop:`1px solid ${T.b2}`,paddingTop:8}}>
+            {badger.notes&&<div style={{fontSize:11,color:T.t2,lineHeight:1.5,background:T.s2,borderRadius:7,padding:"7px 9px",marginBottom:badger.visitNotes?6:0,whiteSpace:"pre-wrap"}}>{badger.notes.replace(/\\n/g,'\n')}</div>}
+            {badger.visitNotes&&<div>
+              <div style={{fontSize:9,textTransform:"uppercase",color:T.t3,marginBottom:2}}>Last Visit{badger.lastVisit?` · ${badger.lastVisit}`:""}</div>
+              <div style={{fontSize:11,color:T.t3,lineHeight:1.5,fontStyle:"italic"}}>"{badger.visitNotes}"</div>
+            </div>}
+          </div>}
+        </div>;
+      })()}
+
+      {/* ── ACTIVITY LOG (Last Activity + Log form) ── */}
+      {(()=>{
+        const ACT_ICONS:Record<string,string>={visit:"🚗",call:"📞",email:"📧",event:"🎓"};
+        const saveEntry=()=>{
+          if(!actNotes.trim()&&!actContact.trim())return;
+          const entry={id:Date.now(),type:actType,contact:actContact.trim(),notes:actNotes.trim(),followUp:actFollowUp.trim(),ts:new Date().toISOString()};
+          const updated=[entry,...actLog];
+          setActLog(updated);
+          try{localStorage.setItem(actLogKey,JSON.stringify(updated.slice(0,50)));}catch{}
+          if(patchOverlay){patchOverlay([{op:"set",path:`activityLogs.${acct.id}`,value:updated.slice(0,50)}]);}
+          setActContact("");setActNotes("");setActFollowUp("");setShowActForm(false);
+        };
+        // Surface next follow-up due
+        const nextFollowUp=actLog.find((e:any)=>e.followUp);
+        return <div className="anim" style={{animationDelay:"16ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:10}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:showActForm||actLog.length>0?8:0}}>
+            <div style={{display:"flex",alignItems:"center",gap:6}}>
+              <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan}}>Activity</span>
+              {actLog.length>0&&<span style={{fontSize:9,color:T.t4,background:T.s2,borderRadius:10,padding:"1px 6px"}}>{actLog.length}</span>}
+            </div>
+            <button onClick={()=>setShowActForm(!showActForm)} style={{background:"rgba(34,211,238,.08)",border:"1px solid rgba(34,211,238,.18)",borderRadius:7,color:T.cyan,cursor:"pointer",fontSize:11,fontWeight:600,padding:"4px 10px",fontFamily:"inherit"}}>{showActForm?"Cancel":"+ Log"}</button>
+          </div>
+          {/* Next follow-up callout */}
+          {!showActForm&&nextFollowUp&&<div style={{marginBottom:8,padding:"7px 10px",borderRadius:8,background:"rgba(251,191,36,.06)",border:"1px solid rgba(251,191,36,.2)",display:"flex",alignItems:"center",gap:8}}>
+            <span style={{fontSize:11,color:T.amber,flexShrink:0}}>→</span>
+            <span style={{fontSize:11,color:T.t2}}>{nextFollowUp.followUp}</span>
+            <span style={{fontSize:9,color:T.t4,flexShrink:0,marginLeft:"auto"}}>{new Date(nextFollowUp.ts).toLocaleDateString("en-US",{month:"short",day:"numeric"})}</span>
+          </div>}
+          {/* Log form */}
+          {showActForm&&<div style={{marginBottom:10}}>
+            <div style={{display:"flex",gap:4,marginBottom:8}}>
+              {([["visit","🚗 Visit"],["call","📞 Call"],["email","📧 Email"],["event","🎓 Event"]] as [string,string][]).map(([v,l])=>(
+                <button key={v} onClick={()=>setActType(v)} style={{flex:1,padding:"5px 0",borderRadius:7,fontSize:9,cursor:"pointer",border:`1px solid ${actType===v?"rgba(34,211,238,.4)":T.b2}`,background:actType===v?"rgba(34,211,238,.12)":T.s2,color:actType===v?T.cyan:T.t3,fontFamily:"inherit",fontWeight:600}}>{l}</button>
+              ))}
+            </div>
+            <input type="text" value={actContact} onChange={e=>setActContact(e.target.value)} placeholder="Contact name (optional)"
+              style={{width:"100%",height:34,borderRadius:7,border:`1px solid ${T.b1}`,background:T.s2,color:T.t1,fontSize:12,padding:"0 9px",outline:"none",fontFamily:"inherit",marginBottom:6,boxSizing:"border-box"}}/>
+            <textarea value={actNotes} onChange={e=>setActNotes(e.target.value)} placeholder="Notes from this visit / call…" rows={3}
+              style={{width:"100%",borderRadius:7,border:`1px solid ${T.b1}`,background:T.s2,color:T.t1,fontSize:12,padding:"7px 9px",outline:"none",fontFamily:"inherit",marginBottom:6,resize:"none",boxSizing:"border-box",lineHeight:1.5}}/>
+            <input type="text" value={actFollowUp} onChange={e=>setActFollowUp(e.target.value)} onKeyDown={e=>e.key==="Enter"&&saveEntry()} placeholder="Follow-up action (optional)"
+              style={{width:"100%",height:34,borderRadius:7,border:`1px solid ${T.b1}`,background:T.s2,color:T.t1,fontSize:12,padding:"0 9px",outline:"none",fontFamily:"inherit",marginBottom:8,boxSizing:"border-box"}}/>
+            <button onClick={saveEntry} style={{width:"100%",background:`linear-gradient(90deg,${T.cyan},${T.blue})`,border:"none",borderRadius:8,padding:"9px 0",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer",fontFamily:"inherit"}}>Save Activity</button>
+          </div>}
+          {/* Recent entries */}
+          {actLog.length===0&&!showActForm&&<div style={{fontSize:11,color:T.t4,textAlign:"center",padding:"4px 0"}}>No activity logged. Tap + Log after visits, calls, or emails.</div>}
+          {actLog.slice(0,5).map((entry:any,i:number)=>{
+            const d=new Date(entry.ts);
+            return <div key={entry.id} style={{borderTop:`1px solid ${T.b1}`,paddingTop:8,marginTop:i===0?0:0,paddingBottom:i<Math.min(actLog.length,5)-1?8:0}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:2}}>
+                <div style={{display:"flex",alignItems:"center",gap:5}}>
+                  <span style={{fontSize:11}}>{ACT_ICONS[entry.type]||"📋"}</span>
+                  <span style={{fontSize:10,fontWeight:700,color:T.t1,textTransform:"capitalize"}}>{entry.type}</span>
+                  {entry.contact&&<span style={{fontSize:9,color:T.cyan}}>· {entry.contact}</span>}
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <span style={{fontSize:9,color:T.t4}}>{d.toLocaleDateString("en-US",{month:"short",day:"numeric"})}</span>
+                  <button onClick={()=>{const upd=actLog.filter((e:any)=>e.id!==entry.id);setActLog(upd);try{localStorage.setItem(actLogKey,JSON.stringify(upd));}catch{}}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:10,padding:0,lineHeight:1}}>✕</button>
+                </div>
               </div>
+              {entry.notes&&<div style={{fontSize:11,color:T.t2,lineHeight:1.5,paddingLeft:20,marginBottom:entry.followUp?2:0}}>{entry.notes}</div>}
+              {entry.followUp&&<div style={{fontSize:10,color:T.amber,paddingLeft:20,display:"flex",alignItems:"center",gap:3}}><span>→</span>{entry.followUp}</div>}
+            </div>;
+          })}
+          {actLog.length>5&&<div style={{fontSize:9,color:T.t4,textAlign:"center",paddingTop:6}}>+{actLog.length-5} older entries</div>}
+        </div>;
+      })()}
+
+      {/* ── PRODUCT STORY ── */}
+      {(buying.length>0||stopped.length>0||xsell.length>0)&&<div className="anim" style={{animationDelay:"20ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:10}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3}}>Product Story</div>
+          {/* Branch spread pills */}
+          <div style={{display:"flex",gap:3,flexWrap:"wrap",justifyContent:"flex-end"}}>
+            {spread.branches.map((b:any)=>(
+              <span key={b.key} style={{fontSize:8,fontWeight:600,borderRadius:3,padding:"2px 5px",
+                color:b.active?"#f0f0fa":b.hadPY?"rgba(248,113,113,.7)":"rgba(92,92,122,.5)",
+                background:b.active?"rgba(79,142,247,.10)":b.hadPY?"rgba(248,113,113,.06)":"rgba(255,255,255,.03)",
+                border:`1px solid ${b.active?"rgba(79,142,247,.22)":b.hadPY?"rgba(248,113,113,.15)":"rgba(255,255,255,.06)"}`}}>
+                {b.label}{b.hadPY&&!b.active?" ↓":""}
+              </span>
+            ))}
+          </div>
+        </div>
+        {/* Stopped — win-backs first */}
+        {stopped.length>0&&<div style={{marginBottom:buying.length>0||xsell.length>0?12:0}}>
+          <div style={{fontSize:10,fontWeight:600,color:T.red,marginBottom:6}}>Stopped ({stopped.length})</div>
+          {stopped.slice(0,5).map((p:any,i:number)=>(
+            <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"6px 8px",borderRadius:6,background:"rgba(248,113,113,.04)",border:"1px solid rgba(248,113,113,.08)",marginBottom:4}}>
+              <span style={{fontSize:11,color:T.t1}}>{p.n}</span>
+              <span className="m" style={{fontSize:10,color:T.red}}>Was {$$(p[`py${qk}`]||0)} → $0</span>
             </div>
           ))}
-          {savedContacts.website&&<div style={{marginTop:4}}><a href={savedContacts.website} target="_blank" rel="noreferrer" style={{fontSize:9,color:T.blue,textDecoration:"none"}}>🌐 {savedContacts.website.replace(/^https?:\/\//,"")}</a></div>}
+          {stopped.length>0&&<div style={{marginTop:5,fontSize:10,color:T.t3,fontStyle:"italic",paddingLeft:2}}>"I noticed {stopped[0]?.n} dropped off. Supply issue or switch? We have new promos..."</div>}
         </div>}
+        {/* Currently buying */}
+        {buying.length>0&&<div style={{marginBottom:xsell.length>0?12:0}}>
+          <div style={{fontSize:10,fontWeight:600,color:T.green,marginBottom:6}}>Buying ({buying.length})</div>
+          {buying.slice(0,7).map((p:any,i:number)=>{
+            const pPy=p[`py${qk}`]||0;const pCy=p[`cy${qk}`]||0;
+            return <div key={i} style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+              <span style={{fontSize:11,color:T.t2,flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.n}</span>
+              <span className="m" style={{fontSize:9,color:T.t4,width:46,textAlign:"right",flexShrink:0}}>{$$(pPy)}</span>
+              <span style={{fontSize:8,color:T.t4}}>→</span>
+              <span className="m" style={{fontSize:10,color:T.blue,width:46,textAlign:"right",flexShrink:0}}>{$$(pCy)}</span>
+              <div style={{width:44,height:3,borderRadius:2,background:T.s3,overflow:"hidden",flexShrink:0}}><div className="bar-g" style={{height:"100%",borderRadius:2,width:`${Math.min(pPy>0?pCy/pPy*100:0,100)}%`,background:pPy>0&&pCy/pPy>.3?T.green:T.amber}}/></div>
+            </div>;
+          })}
+        </div>}
+        {/* Cross-sell white space */}
+        {xsell.length>0&&<>
+          <div style={{fontSize:10,fontWeight:600,color:T.purple,marginBottom:6}}>White Space ({xsell.length})</div>
+          <div style={{display:"flex",flexDirection:"column",gap:5}}>
+            {xsell.slice(0,3).map((o:any,i:number)=>(
+              <div key={i} style={{borderRadius:7,background:"rgba(167,139,250,.05)",border:"1px solid rgba(167,139,250,.12)",padding:"6px 9px"}}>
+                <div style={{fontSize:10,fontWeight:700,color:T.purple,marginBottom:1}}>{o.label}</div>
+                <div style={{fontSize:10,color:T.t3,lineHeight:1.4}}>{o.pitch}</div>
+              </div>
+            ))}
+          </div>
+        </>}
       </div>}
 
-      {/* SAVED CONTACTS — standalone card when no Badger data */}
-      {!badger&&savedContacts&&(savedContacts.contactName||savedContacts.contacts?.length>0)&&<div className="anim" style={{animationDelay:"50ms",background:T.s1,border:`1px solid rgba(34,211,238,.15)`,borderRadius:16,padding:16,marginBottom:12}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-          <div style={{display:"flex",alignItems:"center",gap:6}}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={T.cyan} strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan}}>Contacts</span>
-          </div>
-          <div style={{display:"flex",alignItems:"center",gap:8}}>
-            <div style={{fontSize:9,color:T.t4}}>{savedContacts.savedAt?new Date(savedContacts.savedAt).toLocaleDateString():""}</div>
-            <button onClick={()=>{try { localStorage.removeItem(storageKey); } catch {} setSavedContacts(null);}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:13,lineHeight:1,padding:2}}>✕</button>
-          </div>
+      {/* ── PARENT GROUP ── */}
+      {parentGroup&&(parentGroup.locs||1)>1&&<div className="anim" style={{animationDelay:"24ms",background:T.s1,border:`1px solid rgba(79,142,247,.18)`,borderRadius:14,padding:"12px 14px",marginBottom:10}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue}}>Group</div>
+          <button onClick={()=>goGroup(parentGroup)} style={{background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.15)",borderRadius:7,padding:"3px 9px",fontSize:10,fontWeight:600,color:T.blue,cursor:"pointer",fontFamily:"inherit"}}>View →</button>
         </div>
-        {/* All contacts in hierarchy order */}
-        {(savedContacts.contacts?.length>0?savedContacts.contacts:[{name:savedContacts.contactName,email:savedContacts.email,phone:savedContacts.phone,role:"",tier:1}]).map((c:any,i:number)=>(
-          <div key={i} style={{borderTop:i>0?`1px solid ${T.b2}`:"none",paddingTop:i>0?8:0,marginTop:i>0?8:0}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:2}}>
-              <div style={{fontSize:12,fontWeight:700,color:i===0?T.t1:T.t2}}>{c.name}</div>
-              {c.role&&<div style={{fontSize:9,color:T.t4,background:T.s2,borderRadius:4,padding:"1px 6px"}}>{c.role}</div>}
-            </div>
-            <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-              {c.email&&<a href={`mailto:${c.email}`} style={{fontSize:11,color:T.cyan,textDecoration:"none"}}>{c.email}</a>}
-              {c.phone&&<a href={`tel:${c.phone}`} style={{fontSize:11,color:T.green,textDecoration:"none"}}>{c.phone}</a>}
-            </div>
-          </div>
-        ))}
-        {savedContacts.website&&<div style={{marginTop:8,paddingTop:8,borderTop:`1px solid ${T.b2}`}}>
-          <a href={savedContacts.website} target="_blank" rel="noreferrer" style={{fontSize:11,color:T.blue,textDecoration:"none"}}>🌐 {savedContacts.website.replace(/^https?:\/\//,"")}</a>
-        </div>}
-      </div>}
-
-      {/* PARENT GROUP SUMMARY */}
-      {parentGroup&&(parentGroup.locs||1)>1&&<div className="anim" style={{animationDelay:"60ms",background:T.s1,border:`1px solid rgba(79,142,247,.18)`,borderRadius:16,padding:16,marginBottom:12}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue}}>Parent Group</div>
-          <button onClick={()=>goGroup(parentGroup)} style={{background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.15)",borderRadius:8,padding:"3px 10px",fontSize:10,fontWeight:600,color:T.blue,cursor:"pointer",fontFamily:"inherit"}}>View Group →</button>
-        </div>
-        <div style={{fontSize:14,fontWeight:700,marginBottom:2}}>{fixGroupName(parentGroup)}</div>
-        <div style={{fontSize:10,color:T.t3,marginBottom:10}}>{parentGroup.locs} location{parentGroup.locs>1?"s":""} · {getTierLabel(parentGroup.tier,parentGroup.class2)}</div>
+        <div style={{fontSize:13,fontWeight:700,marginBottom:1}}>{fixGroupName(parentGroup)}</div>
+        <div style={{fontSize:10,color:T.t3,marginBottom:8}}>{parentGroup.locs} locations · {getTierLabel(parentGroup.tier,parentGroup.class2)}</div>
         {(()=>{
-          const gPy=parentGroup.pyQ?.["1"]||0;
-          const gCy=parentGroup.cyQ?.["1"]||0;
-          const gGap=gPy-gCy;
-          const gRet=gPy>0?gCy/gPy:0;
+          const gPy=parentGroup.pyQ?.["1"]||0;const gCy=parentGroup.cyQ?.["1"]||0;const gGap=gPy-gCy;const gRet=gPy>0?gCy/gPy:0;
           const thisLocPct=gCy>0?(acct.cyQ?.["1"]||0)/gCy:0;
           return <>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6,marginBottom:10}}>
-              <Stat l="PY" v={$$(gPy)} c={T.t2}/>
-              <Stat l="CY" v={$$(gCy)} c={T.blue}/>
-              <Stat l="Gap" v={gGap<=0?`+${$$(Math.abs(gGap))}`:$$(gGap)} c={gGap<=0?T.green:T.red}/>
-              <Stat l="Ret" v={Math.round(gRet*100)+"%"} c={gRet>.5?T.green:gRet>.25?T.amber:T.red}/>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:5,marginBottom:7}}>
+              <Stat l="PY" v={$$(gPy)} c={T.t2}/><Stat l="CY" v={$$(gCy)} c={T.blue}/><Stat l="Gap" v={gGap<=0?`+${$$(Math.abs(gGap))}`:$$(gGap)} c={gGap<=0?T.green:T.red}/><Stat l="Ret" v={Math.round(gRet*100)+"%"} c={gRet>.5?T.green:gRet>.25?T.amber:T.red}/>
             </div>
-            <div style={{fontSize:10,color:T.t4}}>This location = <span style={{color:T.cyan,fontWeight:700}}>{Math.round(thisLocPct*100)}%</span> of group's Q1 CY spend</div>
+            <div style={{fontSize:9,color:T.t4}}>This location = <span style={{color:T.cyan,fontWeight:700}}>{Math.round(thisLocPct*100)}%</span> of group Q1 CY</div>
           </>;
         })()}
-
-        {/* SIBLING LOCATIONS */}
         {siblings.length>0&&<>
-          <div style={{borderTop:`1px solid ${T.b1}`,marginTop:12,paddingTop:12,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3,marginBottom:8}}>Other Locations ({siblings.length})</div>
-          {siblings.slice(0,6).map((s,i)=>{
-            const sPy=s.pyQ?.["1"]||0;const sCy=s.cyQ?.["1"]||0;
-            const sGap=sPy-sCy;const sRet=sPy>0?Math.round(sCy/sPy*100):0;
-            const isDown=sGap>0&&sRet<50;
-            return <button key={s.id} className="anim" onClick={()=>goAcct?.(s)}
-              style={{animationDelay:`${i*20}ms`,display:"flex",alignItems:"center",justifyContent:"space-between",
-                width:"100%",textAlign:"left",padding:"8px 10px",borderRadius:10,
-                background:isDown?"rgba(248,113,113,.04)":T.s2,
-                border:`1px solid ${isDown?"rgba(248,113,113,.15)":T.b2}`,
-                marginBottom:6,cursor:"pointer"}}>
+          <div style={{borderTop:`1px solid ${T.b1}`,marginTop:10,paddingTop:10,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3,marginBottom:7}}>Other Locations ({siblings.length})</div>
+          {siblings.slice(0,5).map((s:any,i:number)=>{
+            const sPy=s.pyQ?.["1"]||0;const sCy=s.cyQ?.["1"]||0;const sGap=sPy-sCy;const sRet=sPy>0?Math.round(sCy/sPy*100):0;const isDown=sGap>0&&sRet<50;
+            return <button key={s.id} className="anim" onClick={()=>goAcct?.(s)} style={{animationDelay:`${i*20}ms`,display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",textAlign:"left",padding:"7px 9px",borderRadius:9,background:isDown?"rgba(248,113,113,.04)":T.s2,border:`1px solid ${isDown?"rgba(248,113,113,.15)":T.b2}`,marginBottom:5,cursor:"pointer"}}>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:11,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.name}</div>
                 <div style={{fontSize:9,color:T.t4,marginTop:1}}>{s.city}, {s.st}{s.dealer&&s.dealer!=="All Other"?<span style={{color:T.cyan}}> · {s.dealer}</span>:""}</div>
               </div>
-              <div style={{display:"flex",gap:6,alignItems:"center",flexShrink:0,marginLeft:8}}>
+              <div style={{display:"flex",gap:5,alignItems:"center",flexShrink:0,marginLeft:8}}>
                 <Pill l="CY" v={$$(sCy)} c={T.blue}/>
                 <Pill l="Gap" v={sGap<=0?`+${$$(Math.abs(sGap))}`:$$(sGap)} c={sGap<=0?T.green:T.red}/>
-                <Pill l="Ret" v={sRet+"%"} c={sRet>50?T.green:sRet>25?T.amber:T.red}/>
                 <Chev/>
               </div>
             </button>;
           })}
-          {siblings.length>6&&<div style={{fontSize:10,color:T.t4,textAlign:"center",padding:"4px 0"}}>+{siblings.length-6} more locations — tap View Group</div>}
+          {siblings.length>5&&<div style={{fontSize:9,color:T.t4,textAlign:"center",padding:"3px 0"}}>+{siblings.length-5} more — tap View Group</div>}
         </>}
       </div>}
 
-      {/* VISIT PREP */}
-      <div className="anim" style={{animationDelay:"80ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12}}>
-        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue,marginBottom:10}}>Account Intel</div>
-        {/* BRANCH SPREAD — STEMM product category penetration */}
-        <div style={{marginBottom:14}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-            <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3}}>Branch Spread</span>
-            <span style={{fontSize:9,fontWeight:700,color:spread.labelColor,
-              background:"rgba(255,255,255,.04)",borderRadius:4,padding:"2px 7px",
-              border:"1px solid rgba(255,255,255,.08)"}}>{spread.activeCount}/6 · {spread.label}</span>
-          </div>
-          <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
-            {spread.branches.map(b => (
-              <span key={b.key} style={{
-                fontSize:9,fontWeight:600,
-                borderRadius:4,padding:"3px 8px",
-                color:b.active?"#f0f0fa":b.hadPY?"rgba(248,113,113,.7)":"rgba(92,92,122,.6)",
-                background:b.active?"rgba(79,142,247,.10)":b.hadPY?"rgba(248,113,113,.06)":"rgba(255,255,255,.03)",
-                border:`1px solid ${b.active?"rgba(79,142,247,.22)":b.hadPY?"rgba(248,113,113,.15)":"rgba(255,255,255,.06)"}`,
-              }}>{b.label}{b.hadPY&&!b.active?" ↓":""}</span>
-            ))}
-          </div>
-        </div>
-                {buying.length>0&&<div style={{marginBottom:12}}>
-          <div style={{fontSize:10,fontWeight:600,color:T.green,marginBottom:6}}>Currently Buying ({buying.length})</div>
-          {buying.slice(0,8).map((p,i)=>{
-            const pPy=p[`py${qk}`]||0;const pCy=p[`cy${qk}`]||0;
-            return <div key={i} style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
-              <span style={{fontSize:11,color:T.t2,flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.n}</span>
-              <span className="m" style={{fontSize:10,color:T.t4,width:50,textAlign:"right"}}>{$$(pPy)}</span>
-              <span style={{fontSize:8,color:T.t4}}>→</span>
-              <span className="m" style={{fontSize:10,color:T.blue,width:50,textAlign:"right"}}>{$$(pCy)}</span>
-              <div style={{width:50,height:4,borderRadius:2,background:T.s3,overflow:"hidden"}}><div className="bar-g" style={{height:"100%",borderRadius:2,width:`${Math.min(pPy>0?pCy/pPy*100:0,100)}%`,background:pPy>0&&pCy/pPy>.3?T.green:T.amber}}/></div>
-            </div>;
-          })}
-        </div>}
-        {stopped.length>0&&<div style={{marginBottom:12}}>
-          <div style={{fontSize:10,fontWeight:600,color:T.red,marginBottom:6}}>Stopped Buying ({stopped.length})</div>
-          {stopped.slice(0,6).map((p,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"6px 8px",borderRadius:6,background:"rgba(248,113,113,.04)",border:"1px solid rgba(248,113,113,.08)",marginBottom:4}}>
-            <span style={{fontSize:11}}>{p.n}</span>
-            <span className="m" style={{fontSize:10,color:T.red}}>Was {$$(p[`py${qk}`]||0)} → $0</span>
-          </div>)}
-          {stopped.length>0&&<div style={{marginTop:6,fontSize:10,color:T.t3,fontStyle:"italic"}}>"I noticed {stopped[0]?.n} dropped off. Supply issue or switch? We have new promos..."</div>}
-        </div>}
-        {xsell.length>0&&<div>
-          <div style={{fontSize:10,fontWeight:600,color:T.purple,marginBottom:6}}>Cross-Sell White Space</div>
-          <div style={{display:"flex",flexDirection:"column",gap:5}}>
-            {xsell.slice(0,4).map((o,i)=><div key={i} style={{borderRadius:7,background:"rgba(167,139,250,.05)",border:"1px solid rgba(167,139,250,.12)",padding:"6px 10px"}}>
-              <div style={{fontSize:10,fontWeight:700,color:T.purple,marginBottom:2}}>{o.label}</div>
-              <div style={{fontSize:10,color:T.t3,lineHeight:1.4}}>{o.pitch}</div>
-            </div>)}
-          </div>
-        </div>}
-      </div>
+      {/* ── MULTI-DEALER ── */}
+      <MultiDealerView acct={acct}/>
 
-      {/* NEXT BEST MOVE */}
-      {(()=>{
-        const moves = [];
-        // 1. Stopped products — highest value first
-        const topStopped = [...stopped].sort((a,b)=>(b[`py${qk}`]||0)-(a[`py${qk}`]||0));
-        if (topStopped.length === 1) moves.push({icon:"🎯", color:T.red, text:`Re-engage on ${topStopped[0].n} — was ${$$(topStopped[0][`py${qk}`]||0)} last year, nothing this quarter.`});
-        else if (topStopped.length > 1) moves.push({icon:"🎯", color:T.red, text:`${topStopped.length} products stopped. Lead with ${topStopped[0].n} (was ${$$(topStopped[0][`py${qk}`]||0)}) — ask what changed.`});
-        // 2. Tier upsell
-        const nt = normalizeTier(acctTier);
-        if (nt === "Silver") moves.push({icon:"⬆️", color:T.amber, text:`Gold upgrade saves doctor ~6% vs Silver MSRP. At ${$$(cyVal)} spend, that's a meaningful difference — worth the conversation.`});
-        else if (nt === "Standard" && pyVal > 1000) moves.push({icon:"⬆️", color:T.amber, text:`Not on Accelerate. At ${$$(pyVal)} PY spend, Silver tier would meaningfully lower their cost. Pitch the program.`});
-        // 3. Cross-sell white space
-        if (xsell.length > 0) moves.push({icon:"💡", color:T.purple, text:`Not buying ${xsell.slice(0,2).map(o=>o.label).join(" or ")}. ${xsell[0].pitch}`});
-        // 4. Retention recovery if no stopped products
-        if (moves.length < 2 && ret < 0.5 && gap > 500) moves.push({icon:"📞", color:T.blue, text:`Retention at ${Math.round(ret*100)}% — ${$$(gap)} gap to close. Check in on supply chain, competitor activity, or budget cycle.`});
-        // 5. Growing — reinforce
-        if (cyVal > pyVal) moves.push({icon:"✅", color:T.green, text:`Up ${$$(cyVal-pyVal)} vs last year. Reinforce the relationship — ask about upcoming procedures to lock in Q2.`});
-        if (moves.length === 0) return null;
-        return <div className="anim" style={{animationDelay:"120ms",background:`linear-gradient(135deg,${T.s1},rgba(79,142,247,.04))`,border:`1px solid rgba(79,142,247,.15)`,borderRadius:16,padding:16,marginBottom:12}}>
-          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.blue,marginBottom:12}}>Next Best Move</div>
-          {moves.slice(0,3).map((m,i)=><div key={i} style={{display:"flex",gap:10,marginBottom:i<moves.slice(0,3).length-1?10:0}}>
-            <span style={{fontSize:14,flexShrink:0,lineHeight:1.4}}>{m.icon}</span>
-            <div style={{fontSize:12,color:T.t2,lineHeight:1.5,borderLeft:`2px solid ${m.color}`,paddingLeft:10}}>{m.text}</div>
-          </div>)}
-        </div>;
-      })()}
-
-      {/* PRODUCT BREAKDOWN BARS */}
-      <div className="anim" style={{animationDelay:"160ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12}}>
-        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3,marginBottom:10}}>Product Breakdown — {qk==="FY"?"Full Year":`Q${qk}`}</div>
-        {products.sort((a,b)=>Math.abs(b[`py${qk}`]||0)-Math.abs(a[`py${qk}`]||0)).slice(0,10).map((p,i)=>{
+      {/* ── PRODUCT BREAKDOWN (detail) ── */}
+      <div className="anim" style={{animationDelay:"28ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:10}}>
+        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3,marginBottom:9}}>Product Breakdown — {qk==="FY"?"Full Year":`Q${qk}`}</div>
+        {products.sort((a:any,b:any)=>Math.abs(b[`py${qk}`]||0)-Math.abs(a[`py${qk}`]||0)).slice(0,10).map((p:any,i:number)=>{
           const pPy=Math.abs(p[`py${qk}`]||0);const pCy=Math.abs(p[`cy${qk}`]||0);
-          const mx=Math.max(...products.map(x=>Math.abs(x[`py${qk}`]||0)),1);
-          const isExpanded = expandedProduct === p.n;
-          // Filter salesStore records for this product on this account
-          const prodRecords = salesStore?.records
-            ? Object.values(salesStore.records).filter((r:any) => r.childId === acct.id && r.l3 === p.n)
-            : [];
-          prodRecords.sort((a:any,b:any) => b.year!==a.year ? b.year-a.year : b.month-a.month);
-          const MONTHS_P = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-          return <div key={i} style={{marginBottom:10}}>
-            {/* Tappable header row */}
-            <div onClick={()=>setExpandedProduct(isExpanded ? null : p.n)}
-              style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3,cursor:"pointer",borderRadius:6,padding:"2px 0",userSelect:"none"}}>
-              <div style={{display:"flex",alignItems:"center",gap:5,flex:1,minWidth:0}}>
+          const mx=Math.max(...products.map((x:any)=>Math.abs(x[`py${qk}`]||0)),1);
+          const isExpanded=expandedProduct===p.n;
+          const prodRecords=salesStore?.records?Object.values(salesStore.records).filter((r:any)=>r.childId===acct.id&&r.l3===p.n):[];
+          prodRecords.sort((a:any,b:any)=>b.year!==a.year?b.year-a.year:b.month-a.month);
+          const MONTHS_P=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+          return <div key={i} style={{marginBottom:9}}>
+            <div onClick={()=>setExpandedProduct(isExpanded?null:p.n)} style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3,cursor:"pointer",borderRadius:5,padding:"2px 0",userSelect:"none"}}>
+              <div style={{display:"flex",alignItems:"center",gap:4,flex:1,minWidth:0}}>
                 <span style={{fontSize:9,color:T.t4,transition:"transform .15s",display:"inline-block",transform:isExpanded?"rotate(90deg)":"rotate(0deg)"}}>▶</span>
                 <span style={{fontSize:11,color:T.t2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.n}</span>
               </div>
               <span className="m" style={{fontSize:10,color:pCy===0&&pPy>100?T.red:T.t3,flexShrink:0,marginLeft:8}}>{$$(pPy)} / {$$(pCy)}</span>
             </div>
-            <div style={{position:"relative",height:12,borderRadius:3,background:T.s3,overflow:"hidden"}}>
+            <div style={{position:"relative",height:11,borderRadius:3,background:T.s3,overflow:"hidden"}}>
               <div style={{position:"absolute",top:0,left:0,height:"50%",width:`${pPy/mx*100}%`,background:"rgba(255,255,255,.08)"}}/>
               <div className="bar-g" style={{animationDelay:`${i*60}ms`,position:"absolute",bottom:0,left:0,height:"50%",width:`${pCy/mx*100}%`,background:pCy===0?T.red:`linear-gradient(90deg,${T.blue},${T.cyan})`}}/>
             </div>
-            {/* Inline month-by-month expansion */}
-            {isExpanded&&<div style={{marginTop:8,background:T.s2,borderRadius:10,padding:"10px 12px",border:`1px solid ${T.b1}`}}>
+            {isExpanded&&<div style={{marginTop:7,background:T.s2,borderRadius:9,padding:"9px 10px",border:`1px solid ${T.b1}`}}>
               {prodRecords.length===0
-                ? <div style={{fontSize:10,color:T.t4,textAlign:"center",padding:"2px 0"}}>No monthly history — upload a CSV to populate</div>
-                : (()=>{
-                    const maxProdVal = Math.max(...(prodRecords as any[]).map((r:any)=>Math.max(r.py||0,r.cy||0)),1);
+                ?<div style={{fontSize:10,color:T.t4,textAlign:"center",padding:"2px 0"}}>No monthly history — upload a CSV to populate</div>
+                :(()=>{
+                    const maxProdVal=Math.max(...(prodRecords as any[]).map((r:any)=>Math.max(r.py||0,r.cy||0)),1);
                     return <>
-                      <div style={{display:"grid",gridTemplateColumns:"76px 40px 1fr 1fr",gap:4,marginBottom:6,paddingBottom:5,borderBottom:`1px solid ${T.b1}`}}>
-                        <span style={{fontSize:9,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:.5}}>Month</span>
-                        <span style={{fontSize:9,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:.5}}>Q</span>
-                        <span style={{fontSize:9,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:.5,textAlign:"right"}}>PY</span>
-                        <span style={{fontSize:9,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:.5,textAlign:"right"}}>CY</span>
+                      <div style={{display:"grid",gridTemplateColumns:"76px 40px 1fr 1fr",gap:4,marginBottom:5,paddingBottom:4,borderBottom:`1px solid ${T.b1}`}}>
+                        {["Month","Q","PY","CY"].map(h=><span key={h} style={{fontSize:8,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:.5,textAlign:h==="PY"||h==="CY"?"right":"left"}}>{h}</span>)}
                       </div>
                       {(prodRecords as any[]).map((r:any,ri:number)=>(
-                        <div key={r.txKey} style={{marginBottom:ri<prodRecords.length-1?5:0}}>
-                          <div style={{display:"grid",gridTemplateColumns:"76px 40px 1fr 1fr",gap:4,padding:"3px 0",alignItems:"center"}}>
+                        <div key={r.txKey} style={{marginBottom:ri<prodRecords.length-1?4:0}}>
+                          <div style={{display:"grid",gridTemplateColumns:"76px 40px 1fr 1fr",gap:4,padding:"2px 0",alignItems:"center"}}>
                             <span style={{fontSize:10,color:T.t2}}>{MONTHS_P[(r.month||1)-1]} {r.year}</span>
                             <span style={{fontSize:10,color:T.t3}}>Q{r.quarter}</span>
-                            <span style={{fontSize:10,fontFamily:"'JetBrains Mono',monospace",color:r.py>0?T.t2:T.t4,textAlign:"right"}}>{r.py>0?`$${r.py.toLocaleString()}`:"—"}</span>
-                            <span style={{fontSize:10,fontFamily:"'JetBrains Mono',monospace",color:r.cy>0?T.cyan:T.t4,textAlign:"right"}}>{r.cy>0?`$${r.cy.toLocaleString()}`:"—"}</span>
+                            <span style={{fontSize:10,fontFamily:"monospace",color:r.py>0?T.t2:T.t4,textAlign:"right"}}>{r.py>0?`$${r.py.toLocaleString()}`:"—"}</span>
+                            <span style={{fontSize:10,fontFamily:"monospace",color:r.cy>0?T.cyan:T.t4,textAlign:"right"}}>{r.cy>0?`$${r.cy.toLocaleString()}`:"—"}</span>
                           </div>
                           <div style={{position:"relative",height:3,borderRadius:2,background:T.s3,overflow:"hidden",marginTop:2}}>
                             <div style={{position:"absolute",top:0,left:0,height:"100%",borderRadius:2,width:`${(r.py||0)/maxProdVal*100}%`,background:"rgba(120,120,160,.3)"}}/>
@@ -924,204 +758,187 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
             </div>}
           </div>;
         })}
-        <div style={{display:"flex",gap:12,marginTop:8,fontSize:9,color:T.t4}}><span>▬ PY</span><span style={{color:T.blue}}>▬ CY</span></div>
+        <div style={{display:"flex",gap:12,marginTop:6,fontSize:9,color:T.t4}}><span>▬ PY</span><span style={{color:T.blue}}>▬ CY</span></div>
       </div>
 
-      {/* MANUAL SALE */}
-      <div className="anim" style={{animationDelay:"240ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.amber}}>Add Manual Sale</div>
-          <button onClick={()=>setShowForm(!showForm)} style={{background:"rgba(251,191,36,.08)",border:"1px solid rgba(251,191,36,.15)",borderRadius:8,color:T.amber,cursor:"pointer",fontSize:11,fontWeight:600,padding:"4px 10px",fontFamily:"inherit"}}>{showForm?"Cancel":"+ Add"}</button>
+      {/* ── MANUAL SALE ── */}
+      <div className="anim" style={{animationDelay:"32ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:10}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:showForm?10:0}}>
+          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.amber}}>Log a Sale</div>
+          <button onClick={()=>setShowForm(!showForm)} style={{background:"rgba(251,191,36,.08)",border:"1px solid rgba(251,191,36,.15)",borderRadius:7,color:T.amber,cursor:"pointer",fontSize:11,fontWeight:600,padding:"4px 9px",fontFamily:"inherit"}}>{showForm?"Cancel":"+ Add"}</button>
         </div>
-        {showForm&&<SaleCalculator acctTier={acctTier} tierRate={tierRate} isAccel={isAccel} acctType={acctType} onAdd={(credited,detail)=>{
-          setAdjs(prev=>[...prev,{id:Date.now(),acctId:acct.id,acctName:acct.name,...detail,credited}]);
+        {showForm&&<SaleCalculator acctTier={acctTier} tierRate={tierRate} isAccel={isAccel} acctType={acctType} onAdd={(credited:number,detail:any)=>{
+          setAdjs((prev:any)=>[...prev,{id:Date.now(),acctId:acct.id,acctName:acct.name,...detail,credited}]);
           setToast(credited);setShowForm(false);
           setTimeout(()=>setToast(null),4000);
         }}/>}
-        {!showForm&&myAdj.length===0&&<div style={{fontSize:11,color:T.t4,textAlign:"center",padding:8}}>Search product by name or SKU#, enter doctor spend → auto-calculates credited revenue.</div>}
+        {!showForm&&myAdj.length===0&&<div style={{fontSize:11,color:T.t4,textAlign:"center",padding:"6px 0"}}>Search product by name or SKU#, enter doctor spend → auto-calculates credited revenue.</div>}
       </div>
 
-      {/* ACTIVITY LOG */}
-      {(()=>{
-        const ACT_ICONS:Record<string,string>={visit:"🚗",call:"📞",email:"📧",event:"🎓"};
-        const saveEntry = () => {
-          if(!actNotes.trim()&&!actContact.trim()) return;
-          const entry={id:Date.now(),type:actType,contact:actContact.trim(),notes:actNotes.trim(),followUp:actFollowUp.trim(),ts:new Date().toISOString()};
-          const updated=[entry,...actLog];
-          setActLog(updated);
-          try{localStorage.setItem(actLogKey,JSON.stringify(updated.slice(0,50)));}catch{}
-          // Persist to overlays durably
-          if (patchOverlay) {
-            patchOverlay([{ op: "set", path: `activityLogs.${acct.id}`, value: updated.slice(0,50) }]);
-          }
-          setActContact("");setActNotes("");setActFollowUp("");setShowActForm(false);
-        };
-        return <div className="anim" style={{animationDelay:"280ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:showActForm||actLog.length>0?10:0}}>
-            <div style={{display:"flex",alignItems:"center",gap:6}}>
-              <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan}}>Activity Log</span>
-              {actLog.length>0&&<span style={{fontSize:9,color:T.t4,background:T.s2,borderRadius:10,padding:"1px 6px"}}>{actLog.length}</span>}
-            </div>
-            <button onClick={()=>setShowActForm(!showActForm)} style={{background:"rgba(34,211,238,.08)",border:"1px solid rgba(34,211,238,.18)",borderRadius:8,color:T.cyan,cursor:"pointer",fontSize:11,fontWeight:600,padding:"4px 10px",fontFamily:"inherit"}}>{showActForm?"Cancel":"+ Log"}</button>
+      {/* ── RESEARCH RESULTS (below fold — on-demand) ── */}
+      {(drState==="loading"||drState==="done"||drState==="error")&&<div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(34,211,238,.05))`,border:`1px solid rgba(34,211,238,.25)`,borderRadius:14,padding:"12px 14px",marginBottom:10}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+            <span style={{fontSize:12}}>🔍</span>
+            <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan}}>Live Practice Intel</span>
           </div>
-          {showActForm&&<div style={{marginBottom:12}}>
-            <div style={{display:"flex",gap:5,marginBottom:10}}>
-              {([["visit","🚗 Visit"],["call","📞 Call"],["email","📧 Email"],["event","🎓 Event"]] as [string,string][]).map(([v,l])=>(
-                <button key={v} onClick={()=>setActType(v)} style={{flex:1,padding:"6px 0",borderRadius:8,fontSize:10,cursor:"pointer",border:`1px solid ${actType===v?"rgba(34,211,238,.4)":T.b2}`,background:actType===v?"rgba(34,211,238,.12)":T.s2,color:actType===v?T.cyan:T.t3,fontFamily:"inherit",fontWeight:600}}>{l}</button>
-              ))}
-            </div>
-            <input type="text" value={actContact} onChange={e=>setActContact(e.target.value)}
-              placeholder="Contact name (optional)"
-              style={{width:"100%",height:36,borderRadius:8,border:`1px solid ${T.b1}`,background:T.s2,color:T.t1,fontSize:12,padding:"0 10px",outline:"none",fontFamily:"inherit",marginBottom:7,boxSizing:"border-box"}}/>
-            <textarea value={actNotes} onChange={e=>setActNotes(e.target.value)}
-              placeholder="Notes from this visit / call…"
-              rows={3}
-              style={{width:"100%",borderRadius:8,border:`1px solid ${T.b1}`,background:T.s2,color:T.t1,fontSize:12,padding:"8px 10px",outline:"none",fontFamily:"inherit",marginBottom:7,resize:"none",boxSizing:"border-box",lineHeight:1.5}}/>
-            <input type="text" value={actFollowUp} onChange={e=>setActFollowUp(e.target.value)}
-              onKeyDown={e=>e.key==="Enter"&&saveEntry()}
-              placeholder="Follow-up action (optional)"
-              style={{width:"100%",height:36,borderRadius:8,border:`1px solid ${T.b1}`,background:T.s2,color:T.t1,fontSize:12,padding:"0 10px",outline:"none",fontFamily:"inherit",marginBottom:10,boxSizing:"border-box"}}/>
-            <button onClick={saveEntry} style={{width:"100%",background:`linear-gradient(90deg,${T.cyan},${T.blue})`,border:"none",borderRadius:8,padding:"10px 0",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer",fontFamily:"inherit"}}>Save Activity</button>
+          <button onClick={()=>{setDrState("idle");setDrIntel(null);}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:15,lineHeight:1}}>✕</button>
+        </div>
+        {drState==="loading"&&<div style={{display:"flex",flexDirection:"column",gap:7}}>{[90,70,80,50,85].map((w,i)=><div key={i} style={{height:10,borderRadius:5,background:T.s3,width:`${w}%`,animation:"pulse 1.5s infinite",animationDelay:`${i*200}ms`}}/>)}<div style={{fontSize:11,color:T.t4,marginTop:3}}>Searching the web for practice intel...</div></div>}
+        {drState==="error"&&<div style={{fontSize:12,color:T.red}}>{drIntel?.error||"Research failed."}</div>}
+        {drState==="done"&&drIntel&&!drIntel.parseError&&<div>
+          {drIntel.statusNote&&<div style={{marginBottom:9,padding:"7px 9px",borderRadius:7,background:drIntel.status==="open"?"rgba(52,211,153,.06)":"rgba(248,113,113,.08)",border:`1px solid ${drIntel.status==="open"?"rgba(52,211,153,.15)":"rgba(248,113,113,.15)"}`}}>
+            <div style={{fontSize:9,textTransform:"uppercase",color:T.t4,marginBottom:2}}>Practice Status</div>
+            <div style={{fontSize:11,fontWeight:600,color:drIntel.status==="open"?T.green:drIntel.status==="closed"?T.red:T.amber}}>{drIntel.statusNote}</div>
           </div>}
-          {actLog.length===0&&!showActForm&&<div style={{fontSize:11,color:T.t4,textAlign:"center",padding:"6px 0"}}>No activity logged. Tap + Log after visits, calls, or emails.</div>}
-          {actLog.slice(0,8).map((entry,i)=>{
-            const d=new Date(entry.ts);
-            const dateStr=d.toLocaleDateString("en-US",{month:"short",day:"numeric"});
-            const timeStr=d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
-            return <div key={entry.id} style={{borderTop:`1px solid ${T.b1}`,paddingTop:10,marginTop:i>0?0:2,paddingBottom:i<Math.min(actLog.length,8)-1?10:0}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:3}}>
-                <div style={{display:"flex",alignItems:"center",gap:6}}>
-                  <span style={{fontSize:12}}>{ACT_ICONS[entry.type]||"📋"}</span>
-                  <span style={{fontSize:11,fontWeight:700,color:T.t1,textTransform:"capitalize"}}>{entry.type}</span>
-                  {entry.contact&&<span style={{fontSize:10,color:T.cyan}}>· {entry.contact}</span>}
-                </div>
-                <div style={{display:"flex",alignItems:"center",gap:8}}>
-                  <span style={{fontSize:9,color:T.t4}}>{dateStr} {timeStr}</span>
-                  <button onClick={()=>{const upd=actLog.filter(e=>e.id!==entry.id);setActLog(upd);try{localStorage.setItem(actLogKey,JSON.stringify(upd));}catch{}}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:11,padding:0,lineHeight:1}}>✕</button>
-                </div>
-              </div>
-              {entry.notes&&<div style={{fontSize:11,color:T.t2,lineHeight:1.5,paddingLeft:22,marginBottom:entry.followUp?3:0}}>{entry.notes}</div>}
-              {entry.followUp&&<div style={{fontSize:10,color:T.amber,paddingLeft:22,display:"flex",alignItems:"center",gap:4}}><span>→</span>{entry.followUp}</div>}
-            </div>;
-          })}
-          {actLog.length>8&&<div style={{fontSize:10,color:T.t4,textAlign:"center",paddingTop:8}}>+{actLog.length-8} older entries</div>}
-        </div>;
-      })()}
-    </div>
+          {(drIntel.phone||drIntel.email||drIntel.contactName||drIntel.website)&&<div style={{marginBottom:9,display:"flex",flexWrap:"wrap",gap:8}}>
+            {drIntel.contactName&&<div><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:1}}>Contact</div><div style={{fontSize:11,fontWeight:600}}>{drIntel.contactName}</div></div>}
+            {drIntel.phone&&<div><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:1}}>Phone</div><a href={`tel:${drIntel.phone}`} style={{fontSize:11,fontWeight:600,color:T.cyan,textDecoration:"none"}}>{drIntel.phone}</a></div>}
+            {drIntel.email&&<div><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:1}}>Email</div><div style={{fontSize:11,fontWeight:600,color:T.cyan}}>{drIntel.email}</div></div>}
+            {drIntel.website&&<div><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:1}}>Website</div><a href={drIntel.website} target="_blank" rel="noreferrer" style={{fontSize:11,fontWeight:600,color:T.blue,textDecoration:"none"}}>Visit →</a></div>}
+          </div>}
+          {drIntel.ownershipNote&&<div style={{marginBottom:9}}><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:2}}>Ownership</div><div style={{fontSize:11,color:T.t2}}>{drIntel.ownershipNote}</div></div>}
+          {drIntel.hooks?.length>0&&<div style={{marginBottom:9}}><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:5}}>Relationship Hooks</div>
+            {drIntel.hooks.map((h:any,i:number)=><div key={i} style={{display:"flex",gap:5,alignItems:"flex-start",marginBottom:4}}><span style={{color:T.amber,marginTop:1,fontSize:9}}>◆</span><span style={{fontSize:11,color:T.t2,lineHeight:1.5}}>{h}</span></div>)}</div>}
+          {drIntel.competitive&&<div style={{marginBottom:9,padding:"7px 9px",borderRadius:7,background:"rgba(248,113,113,.05)",border:"1px solid rgba(248,113,113,.1)"}}><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:2}}>Competitive Signal</div><div style={{fontSize:11,color:T.t2}}>{drIntel.competitive}</div></div>}
+          {drIntel.talkingPoints?.length>0&&<div><div style={{fontSize:9,color:T.t3,textTransform:"uppercase",marginBottom:5}}>Talking Points</div>
+            {drIntel.talkingPoints.map((p:any,i:number)=><div key={i} style={{display:"flex",gap:5,alignItems:"flex-start",marginBottom:5,padding:"5px 7px",borderRadius:6,background:"rgba(79,142,247,.05)",border:"1px solid rgba(79,142,247,.1)"}}><span style={{color:T.blue,fontWeight:700,fontSize:9,marginTop:1,flexShrink:0}}>{i+1}.</span><span style={{fontSize:11,color:T.t1,lineHeight:1.5}}>{p}</span></div>)}</div>}
+          {groupSuggestions.length>0&&groupSuggestions[0]?.id==="__searching__"&&<div style={{marginTop:10,padding:"9px 11px",borderRadius:9,background:"rgba(79,142,247,.05)",border:"1px solid rgba(79,142,247,.15)",display:"flex",alignItems:"center",gap:7}}><div style={{width:11,height:11,borderRadius:"50%",border:"2px solid rgba(79,142,247,.3)",borderTopColor:T.blue,animation:"spin 0.8s linear infinite",flexShrink:0}}/><div style={{fontSize:11,color:T.t3}}>Searching for related accounts…</div></div>}
+          {groupSuggestions.length>0&&groupSuggestions[0]?.id!=="__searching__"&&<div style={{marginTop:10,padding:"9px 11px",borderRadius:9,background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.2)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
+              <div><div style={{fontSize:10,fontWeight:700,color:T.blue}}>🔗 Related Accounts Found</div><div style={{fontSize:9,color:T.t4,marginTop:1}}>May be a multi-location group</div></div>
+              <button onClick={()=>{setSuggestSelected(new Set(groupSuggestions.map((s:any)=>s.id)));setSuggestModal(true);}} style={{background:"rgba(79,142,247,.15)",border:"1px solid rgba(79,142,247,.3)",borderRadius:7,padding:"3px 9px",fontSize:10,fontWeight:700,color:T.blue,cursor:"pointer",fontFamily:"inherit"}}>Link</button>
+            </div>
+            {groupSuggestions.slice(0,3).map((s:any)=>(<div key={s.id} style={{marginTop:3,paddingLeft:3}}><div style={{fontSize:11,color:T.t1,fontWeight:600}}>· {s.name} — {s.city}, {s.st}</div>{s.matchReason&&<div style={{fontSize:9,color:T.t4,paddingLeft:8,marginTop:1,fontStyle:"italic"}}>{s.matchReason}</div>}</div>))}
+            {groupSuggestions.length>3&&<div style={{fontSize:9,color:T.t4,marginTop:2,paddingLeft:3}}>+{groupSuggestions.length-3} more</div>}
+          </div>}
+          {drIntel.searchedAt&&<div style={{fontSize:9,color:T.t4,marginTop:7,textAlign:"right"}}>Researched {new Date(drIntel.searchedAt).toLocaleTimeString()}</div>}
+        </div>}
+        {drState==="done"&&drIntel?.parseError&&<div style={{fontSize:11,color:T.t2,lineHeight:1.6,whiteSpace:"pre-wrap"}}>{drIntel.rawText}</div>}
+      </div>}
 
-    {/* SALES HISTORY CARD */}
-    {(()=>{
-      const records = salesStore?.records ? Object.values(salesStore.records).filter((r:any) => r.childId === acct.id) : [];
-      // Sort newest-first: year desc, month desc
-      records.sort((a:any,b:any) => b.year!==a.year ? b.year-a.year : b.month-a.month);
-      const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-      return (
-        <div className="anim" style={{animationDelay:"300ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:16,padding:16,marginBottom:12}}>
-          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3,marginBottom:10}}>Sales History</div>
+      {/* ── AI BRIEFING ── */}
+      {(aiState==="loading"||aiState==="done"||aiState==="error")&&<div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(167,139,250,.06))`,border:`1px solid rgba(167,139,250,.2)`,borderRadius:14,padding:"12px 14px",marginBottom:10}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+          <div style={{display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:13,color:T.purple}}>✦</span><span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.purple}}>AI Briefing</span></div>
+          <button onClick={()=>{setAiState("idle");setAiText("");}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:15,lineHeight:1}}>✕</button>
+        </div>
+        {aiState==="loading"&&<div style={{display:"flex",flexDirection:"column",gap:7}}>{[100,80,90,60].map((w,i)=><div key={i} style={{height:10,borderRadius:5,background:T.s3,width:`${w}%`,animation:"pulse 1.5s infinite",animationDelay:`${i*150}ms`}}/>)}<div style={{fontSize:11,color:T.t4,marginTop:3}}>Analyzing account data...</div></div>}
+        {aiState==="done"&&<div style={{fontSize:12,color:T.t2,lineHeight:1.7,whiteSpace:"pre-wrap"}}>{aiText}</div>}
+        {aiState==="error"&&<div style={{fontSize:12,color:T.red}}>{aiText}</div>}
+      </div>}
+
+      {/* ── SALES HISTORY ── */}
+      {(()=>{
+        const records=salesStore?.records?Object.values(salesStore.records).filter((r:any)=>r.childId===acct.id):[];
+        records.sort((a:any,b:any)=>b.year!==a.year?b.year-a.year:b.month-a.month);
+        const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+        return <div className="anim" style={{animationDelay:"36ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:10}}>
+          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.t3,marginBottom:9}}>Sales History</div>
           {records.length===0
-            ? <div style={{fontSize:11,color:T.t4,textAlign:"center",padding:"6px 0"}}>No history on record — upload a CSV to populate.</div>
-            : <>
-                {/* Table header */}
-                <div style={{display:"grid",gridTemplateColumns:"80px 48px 1fr 1fr",gap:4,marginBottom:6,paddingBottom:6,borderBottom:`1px solid ${T.b1}`}}>
-                  <span style={{fontSize:9,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:.5}}>Month</span>
-                  <span style={{fontSize:9,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:.5}}>Q</span>
-                  <span style={{fontSize:9,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:.5,textAlign:"right"}}>PY</span>
-                  <span style={{fontSize:9,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:.5,textAlign:"right"}}>CY</span>
+            ?<div style={{fontSize:11,color:T.t4,textAlign:"center",padding:"5px 0"}}>No history on record — upload a CSV to populate.</div>
+            :<>
+                <div style={{display:"grid",gridTemplateColumns:"80px 48px 1fr 1fr",gap:4,marginBottom:5,paddingBottom:5,borderBottom:`1px solid ${T.b1}`}}>
+                  {["Month","Q","PY","CY"].map(h=><span key={h} style={{fontSize:9,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:.5,textAlign:h==="PY"||h==="CY"?"right":"left"}}>{h}</span>)}
                 </div>
-                {/* Table rows */}
-                {records.map((r:any,i:number)=>(
-                  <div key={r.txKey} style={{display:"grid",gridTemplateColumns:"80px 48px 1fr 1fr",gap:4,padding:"5px 0",borderBottom:i<records.length-1?`1px solid ${T.b1}`:"none",alignItems:"center"}}>
+                {(records as any[]).map((r:any,i:number)=>(
+                  <div key={r.txKey} style={{display:"grid",gridTemplateColumns:"80px 48px 1fr 1fr",gap:4,padding:"4px 0",borderBottom:i<records.length-1?`1px solid ${T.b1}`:"none",alignItems:"center"}}>
                     <span style={{fontSize:11,color:T.t2}}>{MONTHS[(r.month||1)-1]} {r.year}</span>
                     <span style={{fontSize:11,color:T.t3}}>Q{r.quarter}</span>
-                    <span style={{fontSize:11,fontFamily:"'JetBrains Mono',monospace",color:r.py>0?T.t2:T.t4,textAlign:"right"}}>{r.py>0?`$${r.py.toLocaleString()}`:"—"}</span>
-                    <span style={{fontSize:11,fontFamily:"'JetBrains Mono',monospace",color:r.cy>0?T.cyan:T.t4,textAlign:"right"}}>{r.cy>0?`$${r.cy.toLocaleString()}`:"—"}</span>
+                    <span style={{fontSize:11,fontFamily:"monospace",color:r.py>0?T.t2:T.t4,textAlign:"right"}}>{r.py>0?`$${r.py.toLocaleString()}`:"—"}</span>
+                    <span style={{fontSize:11,fontFamily:"monospace",color:r.cy>0?T.cyan:T.t4,textAlign:"right"}}>{r.cy>0?`$${r.cy.toLocaleString()}`:"—"}</span>
                   </div>
                 ))}
-                <div style={{fontSize:9,color:T.t4,marginTop:8,textAlign:"right"}}>{records.length} record{records.length!==1?"s":""}</div>
+                <div style={{fontSize:9,color:T.t4,marginTop:6,textAlign:"right"}}>{records.length} record{records.length!==1?"s":""}</div>
               </>
           }
-        </div>
-      );
-    })()}
+        </div>;
+      })()}
 
-    {/* GROUP LINK MODAL */}
-    {suggestModal&&<div style={{position:"fixed",inset:0,zIndex:210,background:"rgba(0,0,0,.75)",backdropFilter:"blur(8px)",display:"flex",alignItems:"flex-end"}} onClick={()=>setSuggestModal(false)}>
-      <div style={{width:"100%",background:T.s1,borderRadius:"20px 20px 0 0",padding:20,maxHeight:"80vh",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+    </div>
+
+    {/* ── MOVE TO GROUP MODAL ── */}
+    {showMoveModal&&<div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.7)",backdropFilter:"blur(8px)",display:"flex",flexDirection:"column",justifyContent:"flex-end"}} onClick={()=>{setShowMoveModal(false);setMoveSearch("");setMoveTarget(null);}}>
+      <div style={{background:T.s1,borderRadius:"20px 20px 0 0",padding:20,maxHeight:"70vh",display:"flex",flexDirection:"column"}} onClick={(e:any)=>e.stopPropagation()}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+          <div style={{fontSize:13,fontWeight:700}}>{moveTarget?"Confirm Move":"Move to Group"}</div>
+          <button onClick={()=>{setShowMoveModal(false);setMoveSearch("");setMoveTarget(null);}} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:18}}>✕</button>
+        </div>
+        {moveTarget?(
           <div>
-            <div style={{fontSize:14,fontWeight:700}}>Link into a Group</div>
-            <div style={{fontSize:10,color:T.t4,marginTop:2}}>Select accounts to merge with <strong style={{color:T.t1}}>{acct.name}</strong></div>
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:9,fontWeight:700,color:T.t4,textTransform:"uppercase",letterSpacing:"1px",marginBottom:6}}>From</div>
+              <div style={{background:T.s2,border:`1px solid ${T.b1}`,borderRadius:10,padding:"10px 14px"}}><div style={{fontSize:13,fontWeight:600,color:T.t2}}>{acct.gName||"Standalone"}</div><div style={{fontSize:10,color:T.t4,marginTop:2}}>{acct.name}</div></div>
+            </div>
+            <div style={{textAlign:"center",fontSize:18,color:T.t4,margin:"4px 0 10px"}}>↓</div>
+            <div style={{marginBottom:20}}>
+              <div style={{fontSize:9,fontWeight:700,color:T.blue,textTransform:"uppercase",letterSpacing:"1px",marginBottom:6}}>To</div>
+              <div style={{background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.25)",borderRadius:10,padding:"10px 14px"}}><div style={{fontSize:13,fontWeight:700,color:T.blue}}>{fixGroupName(moveTarget)}</div><div style={{fontSize:10,color:T.t4,marginTop:2}}>{moveTarget.locs} location{moveTarget.locs!==1?"s":""} · {getTierLabel(moveTarget.tier,moveTarget.class2)}</div></div>
+            </div>
+            <div style={{display:"flex",gap:10}}>
+              <button onClick={()=>setMoveTarget(null)} style={{flex:1,padding:"11px 0",borderRadius:10,border:`1px solid ${T.b1}`,background:"transparent",color:T.t3,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Back</button>
+              <button onClick={()=>{applyGroupOverride(moveTarget);setMoveTarget(null);}} style={{flex:2,padding:"11px 0",borderRadius:10,border:"none",background:T.blue,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Confirm Move</button>
+            </div>
           </div>
+        ):(
+          <>
+            <div style={{fontSize:11,color:T.t3,marginBottom:10}}>Account: <strong style={{color:T.t1}}>{acct.name}</strong>{acct.gName&&<span style={{color:T.t4}}> · currently in <strong style={{color:T.t3}}>{acct.gName}</strong></span>}</div>
+            <input autoFocus type="search" value={moveSearch} onChange={(e:any)=>setMoveSearch(e.target.value)} placeholder="Search groups…"
+              style={{width:"100%",height:40,borderRadius:10,border:`1px solid ${T.b1}`,background:T.s2,color:T.t1,fontSize:13,padding:"0 12px",outline:"none",fontFamily:"inherit",marginBottom:12}}/>
+            <div style={{overflowY:"auto",flex:1}}>
+              {moveSearch.trim()&&moveResults.length===0&&<div style={{padding:"20px 0",textAlign:"center",color:T.t4,fontSize:12}}>No groups found</div>}
+              {moveResults.map((g:any)=>(
+                <button key={g.id} onClick={()=>setMoveTarget(g)}
+                  style={{width:"100%",textAlign:"left",background:T.s2,border:`1px solid ${T.b1}`,borderRadius:12,padding:"10px 14px",marginBottom:8,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <div><div style={{fontSize:13,fontWeight:600}}>{fixGroupName(g)}</div><div style={{fontSize:10,color:T.t3,marginTop:2}}>{g.locs} location{g.locs!==1?"s":""} · {getTierLabel(g.tier,g.class2)}</div></div>
+                  <Chev/>
+                </button>
+              ))}
+              {!moveSearch.trim()&&<div style={{padding:"20px 0",textAlign:"center",color:T.t4,fontSize:12}}>Type a group name to search</div>}
+            </div>
+          </>
+        )}
+      </div>
+    </div>}
+
+    {/* ── GROUP LINK MODAL ── */}
+    {suggestModal&&<div style={{position:"fixed",inset:0,zIndex:210,background:"rgba(0,0,0,.75)",backdropFilter:"blur(8px)",display:"flex",alignItems:"flex-end"}} onClick={()=>setSuggestModal(false)}>
+      <div style={{width:"100%",background:T.s1,borderRadius:"20px 20px 0 0",padding:20,maxHeight:"80vh",display:"flex",flexDirection:"column"}} onClick={(e:any)=>e.stopPropagation()}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+          <div><div style={{fontSize:14,fontWeight:700}}>Link into a Group</div><div style={{fontSize:10,color:T.t4,marginTop:2}}>Select accounts to merge with <strong style={{color:T.t1}}>{acct.name}</strong></div></div>
           <button onClick={()=>setSuggestModal(false)} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:18}}>✕</button>
         </div>
         <div style={{overflowY:"auto",flex:1,margin:"12px 0"}}>
-          {/* Current account — always included */}
           <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:10,background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.2)",marginBottom:6}}>
-            <div style={{width:18,height:18,borderRadius:4,background:T.blue,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-              <span style={{fontSize:11,color:"#fff",fontWeight:700}}>✓</span>
-            </div>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:12,fontWeight:700,color:T.blue}}>{acct.name}</div>
-              <div style={{fontSize:10,color:T.t4}}>{acct.city}, {acct.st} · this account</div>
-            </div>
+            <div style={{width:18,height:18,borderRadius:4,background:T.blue,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><span style={{fontSize:11,color:"#fff",fontWeight:700}}>✓</span></div>
+            <div style={{flex:1,minWidth:0}}><div style={{fontSize:12,fontWeight:700,color:T.blue}}>{acct.name}</div><div style={{fontSize:10,color:T.t4}}>{acct.city}, {acct.st} · this account</div></div>
           </div>
           {groupSuggestions.map((s:any)=>{
-            const sel = suggestSelected.has(s.id);
-            return <div key={s.id} onClick={()=>{
-              const next = new Set(suggestSelected);
-              sel ? next.delete(s.id) : next.add(s.id);
-              setSuggestSelected(next);
-            }} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:10,
-              background:sel?"rgba(52,211,153,.06)":T.s2,
-              border:"1px solid "+(sel?"rgba(52,211,153,.25)":T.b2),
-              marginBottom:6,cursor:"pointer"}}>
-              <div style={{width:18,height:18,borderRadius:4,background:sel?T.green:T.s3,border:"1px solid "+(sel?"rgba(52,211,153,.4)":T.b1),display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                {sel&&<span style={{fontSize:11,color:"#fff",fontWeight:700}}>✓</span>}
-              </div>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:12,fontWeight:600,color:T.t1}}>{s.name}</div>
-                <div style={{fontSize:10,color:T.t4}}>{s.city}, {s.st}{s.dealer&&s.dealer!=="All Other"?" · "+s.dealer:""}</div>
-              </div>
+            const sel=suggestSelected.has(s.id);
+            return <div key={s.id} onClick={()=>{const next=new Set(suggestSelected);sel?next.delete(s.id):next.add(s.id);setSuggestSelected(next);}} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:10,background:sel?"rgba(52,211,153,.06)":T.s2,border:"1px solid "+(sel?"rgba(52,211,153,.25)":T.b2),marginBottom:6,cursor:"pointer"}}>
+              <div style={{width:18,height:18,borderRadius:4,background:sel?T.green:T.s3,border:"1px solid "+(sel?"rgba(52,211,153,.4)":T.b1),display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{sel&&<span style={{fontSize:11,color:"#fff",fontWeight:700}}>✓</span>}</div>
+              <div style={{flex:1,minWidth:0}}><div style={{fontSize:12,fontWeight:600,color:T.t1}}>{s.name}</div><div style={{fontSize:10,color:T.t4}}>{s.city}, {s.st}{s.dealer&&s.dealer!=="All Other"?" · "+s.dealer:""}</div></div>
               <div style={{fontSize:11,fontFamily:"monospace",color:T.t3,flexShrink:0}}>{$$(s.pyQ?.["1"]||0)}</div>
             </div>;
           })}
         </div>
-        <div style={{fontSize:10,color:T.t4,marginBottom:10}}>
-          {suggestSelected.size} of {groupSuggestions.length} related accounts selected · will be grouped with this account
-        </div>
-        <button
-          disabled={suggestSelected.size===0}
-          onClick={()=>{
-            if(suggestSelected.size===0) return;
-            const newGroupId = "Master-MERGE-"+acct.id;
-            // Derive a clean group name from the account name
-            const baseName = acct.name.replace(/\s+(dental|dentistry|associates|dds|dmd|llc|pc|pllc).*/i,"").trim();
-            const childIds = [acct.id, ...Array.from(suggestSelected)];
-            if(patchOverlay){
-              const groupEntry = {
-                id: newGroupId,
-                name: baseName,
-                tier: acct.gTier||acct.tier||"Standard",
-                class2: "Private Practice",
-                childIds,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-              };
-              patchOverlay([{ op: "set", path: `groups.${newGroupId}`, value: groupEntry }]);
-            }
-            setSuggestModal(false);
-            setGroupSuggestions([]);
-            setToast(99);
-            setTimeout(()=>setToast(null),4000);
-          }}
-          style={{width:"100%",background:suggestSelected.size>0?"linear-gradient(90deg,"+T.blue+","+T.cyan+")":"rgba(79,142,247,.3)",border:"none",borderRadius:10,padding:"12px 0",fontSize:13,fontWeight:700,color:"#fff",cursor:suggestSelected.size>0?"pointer":"not-allowed",fontFamily:"inherit"}}>
-          Create Group ({suggestSelected.size + 1} accounts)
+        <div style={{fontSize:10,color:T.t4,marginBottom:10}}>{suggestSelected.size} of {groupSuggestions.length} selected · will be grouped with this account</div>
+        <button disabled={suggestSelected.size===0} onClick={()=>{
+          if(suggestSelected.size===0)return;
+          const newGroupId="Master-MERGE-"+acct.id;
+          const baseName=acct.name.replace(/\s+(dental|dentistry|associates|dds|dmd|llc|pc|pllc)\b.*/i,"").trim();
+          const childIds=[acct.id,...Array.from(suggestSelected)];
+          if(patchOverlay){const groupEntry={id:newGroupId,name:baseName,tier:acct.gTier||acct.tier||"Standard",class2:"Private Practice",childIds,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};patchOverlay([{op:"set",path:`groups.${newGroupId}`,value:groupEntry}]);}
+          setSuggestModal(false);setGroupSuggestions([]);setToast(99);setTimeout(()=>setToast(null),4000);
+        }} style={{width:"100%",background:suggestSelected.size>0?"linear-gradient(90deg,"+T.blue+","+T.cyan+")":"rgba(79,142,247,.3)",border:"none",borderRadius:10,padding:"12px 0",fontSize:13,fontWeight:700,color:"#fff",cursor:suggestSelected.size>0?"pointer":"not-allowed",fontFamily:"inherit"}}>
+          Create Group ({suggestSelected.size+1} accounts)
         </button>
       </div>
     </div>}
-      {showReorder&&<ReorderInvoice acct={acct} activeQ={q||"1"} salesStore={salesStore} onClose={()=>setShowReorder(false)}/>}
+    {showReorder&&<ReorderInvoice acct={acct} activeQ={q||"1"} salesStore={salesStore} onClose={()=>setShowReorder(false)}/>}
   </div>;
 }
+
 
 // ─── SALE CALCULATOR ─────────────────────────────────────────────
 function SaleCalculator({acctTier,tierRate,isAccel,acctType,onAdd}) {
