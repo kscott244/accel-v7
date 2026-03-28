@@ -5,7 +5,7 @@ import { T } from "@/lib/tokens";
 import { normalizeTier, getTierRate, getTierLabel, isAccelTier } from "@/lib/tier";
 import { $$, $f, pc, getHealthStatus } from "@/lib/format";
 import { SKU } from "@/data/sku-data";
-import { BADGER, OVERLAYS_REF, resolveOfficeFeel } from "@/lib/data";
+import { BADGER, OVERLAYS_REF, resolveOfficeFeel, normOfficeAddr } from "@/lib/data";
 import { Back, Chev, Pill, Stat, Bar, AccountId, GroupBadge, fixGroupName } from "@/components/primitives";
 import { scorePriority } from "@/lib/priority";
 import { branchSpread } from "@/lib/stemm";
@@ -486,14 +486,14 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
             ? [{name:savedContacts.contactName,email:savedContacts.email,phone:savedContacts.phone,role:"",tier:1}]
             : [];
         const hasDoctor = badger?.doctor || officeFeel?.doctor;
-        const hasFeel   = officeFeel != null;
+const hasFeel   = true;
         const hasRep    = badger?.dealerRep || officeFeel?.dealerRep;
         const hasPhone  = badger?.phone || officeFeel?.phone;
         const hasNotes  = badger?.notes||badger?.visitNotes||officeFeel?.notes||officeFeel?.visitNotes;
         return <div className="anim" style={{animationDelay:"12ms",background:T.s1,border:`1px solid rgba(34,211,238,.18)`,borderRadius:14,padding:"12px 14px",marginBottom:10}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
             <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan}}>Who Matters</div>
-            {hasFeel&&(()=>{const fc=officeFeel.label==="Hot"?T.green:officeFeel.label==="Warm"?T.amber:T.t4;return <div style={{display:"flex",alignItems:"center",gap:5}}><span style={{fontSize:10,fontWeight:700,color:fc,background:`${fc}18`,border:`1px solid ${fc}30`,borderRadius:5,padding:"2px 9px"}}>{officeFeel.label}</span><span style={{fontSize:9,color:T.t4}}>{officeFeel.feel}/5</span></div>;})()}
+            {officeFeel&&(()=>{const fc=officeFeel.label==="Hot"?T.green:officeFeel.label==="Warm"?T.amber:T.t4;return <div style={{display:"flex",alignItems:"center",gap:5}}><span style={{fontSize:10,fontWeight:700,color:fc,background:`${fc}18`,border:`1px solid ${fc}30`,borderRadius:5,padding:"2px 9px"}}>{officeFeel.label}</span><span style={{fontSize:9,color:T.t4}}>{officeFeel.feel}/5</span></div>;})()}
           </div>
           {/* Doctor + dealer rep */}
           {(hasDoctor||hasRep)&&<div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:hasPhone||allContacts.length>0||hasNotes?10:0}}>
@@ -546,7 +546,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
           </div>}
           {/* ── Feel Factor: inline update ── */}
           {(()=>{
-            const officeKey=(acct.addr||acct.address||"").trim();
+const officeKey=normOfficeAddr(acct.addr||acct.address||"");
             if(!officeKey||!patchOverlay)return null;
             const cur=overlays?.feelFactor?.[officeKey];
             const curFeel=cur?.feel??officeFeel?.feel??null;
