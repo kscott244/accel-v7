@@ -5,7 +5,7 @@ import { T } from "@/lib/tokens";
 import { normalizeTier, getTierRate, getTierLabel, isAccelTier } from "@/lib/tier";
 import { $$, $f, pc, getHealthStatus } from "@/lib/format";
 import { SKU } from "@/data/sku-data";
-import { BADGER, OVERLAYS_REF } from "@/lib/data";
+import { BADGER, OVERLAYS_REF, resolveOfficeFeel } from "@/lib/data";
 import { Back, Chev, Pill, Stat, Bar, AccountId, GroupBadge, fixGroupName } from "@/components/primitives";
 import { scorePriority } from "@/lib/priority";
 import { branchSpread } from "@/lib/stemm";
@@ -191,6 +191,7 @@ function AcctDetail({acct,goBack,adjs,setAdjs,groups,goGroup,overlays,patchOverl
 
   // Badger Maps intel — keyed by Master-CM id
   const badger = useMemo(()=> BADGER[acct.id] || BADGER[acct.gId] || null, [acct.id, acct.gId]);
+  const officeFeel = useMemo(() => resolveOfficeFeel(acct, overlays?.feelFactor), [acct.id, overlays?.feelFactor]);
 
   const { rootStrength } = useMemo(() => scorePriority(acct, "1"), [acct.id]);
   const spread = useMemo(() => branchSpread(acct.products ?? [], qk), [acct.id, qk]);
@@ -483,21 +484,21 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
           : savedContacts?.contactName
             ? [{name:savedContacts.contactName,email:savedContacts.email,phone:savedContacts.phone,role:"",tier:1}]
             : [];
-        const hasDoctor = badger?.doctor;
-        const hasFeel = badger?.feel;
-        const hasRep = badger?.dealerRep;
-        const hasPhone = badger?.phone;
-        const hasNotes = badger?.notes||badger?.visitNotes;
+        const hasDoctor = badger?.doctor || officeFeel?.doctor;
+        const hasFeel   = officeFeel != null;
+        const hasRep    = badger?.dealerRep || officeFeel?.dealerRep;
+        const hasPhone  = badger?.phone || officeFeel?.phone;
+        const hasNotes  = badger?.notes||badger?.visitNotes||officeFeel?.notes||officeFeel?.visitNotes;
         return <div className="anim" style={{animationDelay:"12ms",background:T.s1,border:`1px solid rgba(34,211,238,.18)`,borderRadius:14,padding:"12px 14px",marginBottom:10}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
             <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan}}>Who Matters</div>
-            {hasFeel&&<div style={{display:"flex",gap:2}}>{[1,2,3,4,5].map(i=><div key={i} style={{width:7,height:7,borderRadius:"50%",background:i<=parseFloat(badger.feel)?T.amber:"rgba(255,255,255,.1)"}}/>)}</div>}
+            {hasFeel&&(()=>{const fc=officeFeel.label==="Hot"?T.green:officeFeel.label==="Warm"?T.amber:T.t4;return <div style={{display:"flex",alignItems:"center",gap:5}}><span style={{fontSize:10,fontWeight:700,color:fc,background:`${fc}18`,border:`1px solid ${fc}30`,borderRadius:5,padding:"2px 9px"}}>{officeFeel.label}</span><span style={{fontSize:9,color:T.t4}}>{officeFeel.feel}/5</span></div>;})()}
           </div>
           {/* Doctor + dealer rep */}
           {(hasDoctor||hasRep)&&<div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:hasPhone||allContacts.length>0||hasNotes?10:0}}>
             {hasDoctor&&<div>
               <div style={{fontSize:9,textTransform:"uppercase",color:T.t3,marginBottom:1}}>Doctor</div>
-              <div style={{fontSize:12,fontWeight:700,color:T.t1}}>{badger.doctor}</div>
+              <div style={{fontSize:12,fontWeight:700,color:T.t1}}>{badger?.doctor||officeFeel?.doctor}</div>
             </div>}
             {badger?.orders&&<div>
               <div style={{fontSize:9,textTransform:"uppercase",color:T.t3,marginBottom:1}}>Orders</div>
@@ -505,7 +506,7 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
             </div>}
             {hasRep&&<div>
               <div style={{fontSize:9,textTransform:"uppercase",color:T.t3,marginBottom:1}}>Dealer Rep</div>
-              <div style={{fontSize:11,fontWeight:600,color:T.cyan}}>{badger.dealerRep}</div>
+              <div style={{fontSize:11,fontWeight:600,color:T.cyan}}>{badger?.dealerRep||officeFeel?.dealerRep}</div>
             </div>}
             {badger?.accelLevel&&<div>
               <div style={{fontSize:9,textTransform:"uppercase",color:T.t3,marginBottom:1}}>Accel Level</div>
@@ -514,8 +515,8 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
           </div>}
           {/* Direct phone from badger */}
           {hasPhone&&<div style={{marginBottom:allContacts.length>0||hasNotes?8:0}}>
-            <a href={`tel:${badger.phone}`} style={{display:"inline-flex",alignItems:"center",gap:5,fontSize:11,color:T.cyan,textDecoration:"none",background:"rgba(34,211,238,.06)",border:"1px solid rgba(34,211,238,.12)",borderRadius:7,padding:"4px 10px"}}>
-              📞 {badger.phone}
+            <a href={`tel:${badger?.phone||officeFeel?.phone}`} style={{display:"inline-flex",alignItems:"center",gap:5,fontSize:11,color:T.cyan,textDecoration:"none",background:"rgba(34,211,238,.06)",border:"1px solid rgba(34,211,238,.12)",borderRadius:7,padding:"4px 10px"}}>
+              📞 {badger?.phone||officeFeel?.phone}
             </a>
           </div>}
           {/* Research-saved contacts */}
@@ -536,12 +537,35 @@ Be direct, specific, and helpful. Write like a smart sales coach, not a chatbot.
           </div>}
           {/* Notes from Badger */}
           {hasNotes&&<div style={{borderTop:`1px solid ${T.b2}`,paddingTop:8}}>
-            {badger.notes&&<div style={{fontSize:11,color:T.t2,lineHeight:1.5,background:T.s2,borderRadius:7,padding:"7px 9px",marginBottom:badger.visitNotes?6:0,whiteSpace:"pre-wrap"}}>{badger.notes.replace(/\\n/g,'\n')}</div>}
-            {badger.visitNotes&&<div>
-              <div style={{fontSize:9,textTransform:"uppercase",color:T.t3,marginBottom:2}}>Last Visit{badger.lastVisit?` · ${badger.lastVisit}`:""}</div>
-              <div style={{fontSize:11,color:T.t3,lineHeight:1.5,fontStyle:"italic"}}>"{badger.visitNotes}"</div>
+            {(badger?.notes||officeFeel?.notes)&&<div style={{fontSize:11,color:T.t2,lineHeight:1.5,background:T.s2,borderRadius:7,padding:"7px 9px",marginBottom:(badger?.visitNotes||officeFeel?.visitNotes)?6:0,whiteSpace:"pre-wrap"}}>{(badger?.notes||officeFeel?.notes||"").replace(/\\n/g,'\n')}</div>}
+            {(badger?.visitNotes||officeFeel?.visitNotes)&&<div>
+              <div style={{fontSize:9,textTransform:"uppercase",color:T.t3,marginBottom:2}}>Last Visit{(badger?.lastVisit||officeFeel?.lastVisit)?` · ${badger?.lastVisit||officeFeel?.lastVisit}`:""}</div>
+              <div style={{fontSize:11,color:T.t3,lineHeight:1.5,fontStyle:"italic"}}>"{badger?.visitNotes||officeFeel?.visitNotes}"</div>
             </div>}
           </div>}
+          {/* ── Feel Factor: inline update ── */}
+          {(()=>{
+            const officeKey=(acct.addr||acct.address||"").trim();
+            if(!officeKey||!patchOverlay)return null;
+            const cur=overlays?.feelFactor?.[officeKey];
+            const curFeel=cur?.feel??officeFeel?.feel??null;
+            const saveFF=(feel:number)=>{
+              if(patchOverlay) patchOverlay([{op:"set",path:`feelFactor.${officeKey}`,value:{feel,updatedAt:new Date().toISOString()}}]);
+            };
+            return <div style={{borderTop:`1px solid ${T.b2}`,paddingTop:8,marginTop:hasNotes?8:0}}>
+              <div style={{fontSize:9,textTransform:"uppercase",color:T.t4,letterSpacing:"1px",marginBottom:6}}>Feel</div>
+              <div style={{display:"flex",gap:5}}>
+                {([{v:1,l:"Cold",c:T.t4},{v:3,l:"Warm",c:T.amber},{v:5,l:"Hot",c:T.green}] as any[]).map((opt:any)=>{
+                  const active=curFeel!=null&&(opt.v===1?curFeel<3:opt.v===3?(curFeel>=3&&curFeel<4):curFeel>=4);
+                  return <button key={opt.v} onClick={()=>saveFF(opt.v)}
+                    style={{flex:1,padding:"5px 0",borderRadius:7,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit",
+                      background:active?`${opt.c}20`:T.s2,border:`1px solid ${active?opt.c+"40":T.b2}`,color:active?opt.c:T.t3}}>
+                    {opt.l}
+                  </button>;
+                })}
+              </div>
+            </div>;
+          })()}
         </div>;
       })()}
 
@@ -1019,5 +1043,4 @@ function SaleCalculator({acctTier,tierRate,isAccel,acctType,onAdd}) {
 }
 
 export default AcctDetail;
-
 
