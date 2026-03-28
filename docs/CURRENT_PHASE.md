@@ -1,50 +1,62 @@
 # CURRENT PHASE -- accel-v7
 
-## Status: Channel Console live. Ready to build.
+## Status: Route with Intent live. Ready to build.
 
-### Phase 6: DealersTab → Channel Influence Console — March 28, 2026
+### Phase 7: MapTab → Route with Intent — March 28, 2026
 
-Restructured the Dealers tab around action, not information.
+Made the route tab useful for daily execution, not just geography.
 
-**Commit:** `5ff70583`
+**Commits:**
+- `cbacb4d2` — AccelerateApp: pass `scored` + `goAcct` to MapTab
+- `1b4d26ef` — MapTab: mission lines, stop list, intent icons, Account → nav
+
 **Deploy:** HTTP 200 ✅
-**Lines:** 834 → 812 (−22)
+**Lines:** 189 → 381 (+192)
 
 **What changed:**
 
-**Sticky header with tab toggle on all views**
-The Dealers/Roster toggle was a big two-button row at the top of the main view only. Now it lives in the sticky header across all views (main, distributor drill-down, rep drill-down, group children). No more losing your place to switch to roster.
+**Mission line per stop**
+Every stop now shows a one-line purpose derived from existing route data:
+- Gone dark → "Win-back · was $1,752 Q1 last year"
+- Active but down → "Recover · $890 gap vs Q1 last year"
+- Has doctor + intel → "Meet Dr. Wu · Two locations: Avon and West Hartford..."
+- Prior visit note → "Follow-up · [visitNote snippet]"
+- Flagged → flag text stripped of emoji/whitespace
+- Generic fallback by vp → "Priority stop · $11K PY spend"
 
-**Co-Call Planner always visible**
-The most action-oriented feature was buried inside a collapsible card, closed by default. It's now a permanent section below the dealer cards — always open, distributor picker always visible. Tap a dealer, see the ranked co-call list immediately. No extra tap required.
+**Purpose icons**
+🎯 win-back · ⚠️ flag · 📈 recovery · 🤝 relationship · 📋 follow-up · 🔴/🟡 priority
 
-**Gap concentration signal on dealer cards**
-Each dealer card now shows what percentage of Ken's total territory gap lives there when it's ≥20%. "Schein: 47% of gap" tells him where dealer leverage will have the biggest payoff. Previously there was no way to know this at a glance.
+**Stop list below the map**
+Collapsible panel showing all stops with: stop number (when day selected), name + vp badge, mission line + icon, city/doctor, gap on the right. Tapping expands phone + Navigate + Account → buttons.
 
-**Flagged account count on dealer cards**
-Accounts with `dealerFlag=true` (dealer assignment flagged for review) now surface as "N ⚠ verify" on the dealer card. Previously these only appeared when drilling all the way into an individual account.
+**Account → navigation**
+Each stop now links to the full AcctDetail via fuzzy match against `scored` accounts (name exact match, then city + PY proximity). Requires `goAcct` prop passed from App — added in cbacb4d2.
 
-**Account type toggle removed from top level**
-The All/Private/Groups filter was a full-width row that didn't add much — the rep drill-down already filters by dealer effectively. Removed from top level.
+**Day pills show gap and NOW count**
+Pills now show: `Tuesday (5) ·3🔴` and the stop list header shows total gap for that day. Ken knows what he's walking into before selecting a day.
+
+**Unplaced accounts surfaced**
+Accounts in `week-routes.unplaced` (no GPS, can't be mapped) now appear at the bottom of the stop list with a Call button. Previously invisible.
 
 **What was NOT changed:**
-- Full drill-down navigation (Dealers → Dist → Rep → Group → Account) — identical
-- `repGroups` useMemo — identical (FSC/rep assignment logic untouched)
-- `distStats` useMemo — identical
-- Co-call scoring and copy/Maps route — identical
-- Add Rep form — identical
-- Roster view — identical
-- All patchOverlay saves — identical
+- Map rendering (Leaflet, tile layer, polyline, pin colors) — identical
+- `openGoogleMaps()` multi-stop URL builder — identical
+- `onPinClickRef` pattern (prevents stale closure on pin click) — identical
+- `useEffect` dependency on `selDay` only (prevents map rebuild on popover open) — identical
+- Account popover on pin tap — kept, still works
+- Day filter pills (All Days + named days) — same, now with extra signals
 
 ---
 
 ## Previously Completed
-- Phase 5 — Groups Territory Navigator
-- Phase 4 — AcctDetail Second Brain
-- Phase 3 — GroupDetail War Room
-- Phase 2 — Today Mission Control
+- Phase 6 — DealersTab Channel Console (surfaced co-call, gap%, sticky toggle)
+- Phase 5 — GroupsTab Territory Navigator (snapshot bar, compact cards, Strategic+Cleanup views)
+- Phase 4 — AcctDetail Second Brain (Next Best Move up top, Who Matters, Activity first)
+- Phase 3 — GroupDetail War Room (section reorder, distributor+FSC merged)
+- Phase 2 — Today Tab Mission Control (5 action buckets)
 - Phase 1 — Data Boundary Hardening
-- patchOverlay Migration
+- patchOverlay Migration — SHA conflict bug eliminated
 
 ## Last Updated
 March 28, 2026
