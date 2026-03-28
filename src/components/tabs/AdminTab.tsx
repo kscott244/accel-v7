@@ -7,6 +7,7 @@ import { $$ } from "@/lib/format";
 // They are never written to and never constitute source of truth.
 // Source of truth: overlays.groups (applied) + overlays.skippedCpidIds (dismissed)
 import CPID_MERGES from "@/data/cpid-pending-merges.json";
+import MANUAL_PARENTS_STATIC from "@/data/manual-parents.json";
 import CPID_REVIEW from "@/data/cpid-review-queue.json";
 // Anchor-orphan suggestions — static snapshot, never written to
 import DATA_DISCOVERIES from "@/data/data_discoveries.json";
@@ -75,6 +76,15 @@ function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:a
     } catch { return {}; }
   });
   const [contactSearch, setContactSearch] = useState("");
+
+  // Multi-practice (manual parents) editor
+  const [mpView, setMpView] = useState<"list"|"edit">("list");
+  const [mpEditing, setMpEditing] = useState<any>(null); // {id, name, class2, childIds[]}
+  const [mpSearch, setMpSearch] = useState("");
+  const [mpName, setMpName] = useState("");
+  const [mpChildSearch, setMpChildSearch] = useState("");
+  const [mpChildIds, setMpChildIds] = useState<string[]>([]);
+  const [mpSaving, setMpSaving] = useState(false);
 
   // Quarter target overrides — localStorage only, no GitHub write needed
   const [targetInputs, setTargetInputs] = useState<Record<string,string>>(() => {
@@ -168,6 +178,7 @@ function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:a
       {sectionBtn("data","💾 Data")}
       {sectionBtn("history","📜 History")}
       {sectionBtn("settings","⚙️ Settings")}
+      {sectionBtn("practices","🏥 Practices")}
     </div>
 
     {/* ── GROUPS SECTION ── */}
@@ -849,6 +860,183 @@ function AdminTab({groups, scored, overlays, saveOverlays, salesStore}:{groups:a
         </div>;
       })()}
     </div>}
+    {/* ── PRACTICES SECTION ── */}
+    {section==="practices"&&(()=>{
+      const allPractices = MANUAL_PARENTS_STATIC as Record<string,any>;
+      const practiceList = Object.entries(allPractices);
+
+      // Account search for adding children
+      const mpQ = mpChildSearch.trim().toLowerCase();
+      const mpResults = mpQ.length >= 2
+        ? (scored||[]).filter((a:any) =>
+            !mpChildIds.includes(a.id) &&
+            (a.name?.toLowerCase().includes(mpQ) || a.city?.toLowerCase().includes(mpQ) || a.addr?.toLowerCase().includes(mpQ))
+          ).slice(0, 6)
+        : [];
+
+      const startNew = () => {
+        setMpEditing(null);
+        setMpName("");
+        setMpChildIds([]);
+        setMpChildSearch("");
+        setMpView("edit");
+      };
+
+      const startEdit = (id:string, def:any) => {
+        setMpEditing({id, ...def});
+        setMpName(def.name || "");
+        setMpChildIds([...(def.childIds||[])]);
+        setMpChildSearch("");
+        setMpView("edit");
+      };
+
+      const savePractice = async () => {
+        if (!mpName.trim() || mpChildIds.length < 2) return;
+        setMpSaving(true);
+        const id = mpEditing?.id || ("Master-MP-" + mpName.trim().toUpperCase().replace(/[^A-Z0-9]/g,"-").slice(0,30));
+        const entry = {
+          name: mpName.trim(),
+          class2: mpChildIds.length >= 3 ? "DSO" : "Emerging DSO",
+          tier: "Standard",
+          childIds: mpChildIds,
+          updatedAt: new Date().toISOString(),
+          createdAt: mpEditing?.createdAt || new Date().toISOString(),
+        };
+        // Save via API — writes to src/data/manual-parents.json in GitHub
+        try {
+          const res = await fetch("/api/save-manual-parents", {
+            method: "POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({id, entry}),
+          });
+          if (res.ok) {
+            showToast("✅ Practice saved — takes effect on next CSV upload");
+            setMpView("list");
+          } else {
+            showToast("❌ Save failed", false);
+          }
+        } catch {
+          showToast("❌ Save failed", false);
+        }
+        setMpSaving(false);
+      };
+
+      if (mpView === "edit") return <div>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+          <button onClick={()=>setMpView("list")} style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:18,lineHeight:1}}>←</button>
+          <div style={{fontSize:14,fontWeight:700,color:T.t1}}>{mpEditing?"Edit Practice":"New Practice"}</div>
+        </div>
+        <div style={{fontSize:11,color:T.t3,marginBottom:14}}>
+          Search and add all accounts that belong to this practice. Changes take effect on next CSV upload.
+        </div>
+
+        {/* Practice name */}
+        <div style={{fontSize:11,fontWeight:600,color:T.t2,marginBottom:5}}>Practice Name</div>
+        <input type="text" value={mpName} onChange={e=>setMpName(e.target.value)}
+          placeholder="e.g. Downtown DDS"
+          style={{width:"100%",height:40,borderRadius:10,border:`1px solid ${T.b1}`,background:T.s2,
+            color:T.t1,fontSize:13,padding:"0 12px",outline:"none",fontFamily:"inherit",
+            marginBottom:14,boxSizing:"border-box"}}/>
+
+        {/* Selected accounts */}
+        {mpChildIds.length > 0 && <div style={{marginBottom:10}}>
+          <div style={{fontSize:11,fontWeight:600,color:T.t2,marginBottom:6}}>{mpChildIds.length} accounts linked</div>
+          {mpChildIds.map((cid:string) => {
+            const acct = (scored||[]).find((a:any) => a.id === cid);
+            return <div key={cid} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",
+              background:T.s2,border:`1px solid ${T.b1}`,borderRadius:8,marginBottom:5}}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:11,fontWeight:600,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                  {acct?.name || cid}
+                </div>
+                {acct && <div style={{fontSize:9,color:T.t4}}>{acct.city}, {acct.st} · {acct.dealer||"All Other"}</div>}
+              </div>
+              <button onClick={()=>setMpChildIds(prev=>prev.filter(id=>id!==cid))}
+                style={{background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:14}}>✕</button>
+            </div>;
+          })}
+        </div>}
+
+        {/* Search to add */}
+        <div style={{fontSize:11,fontWeight:600,color:T.t2,marginBottom:5}}>Add Accounts</div>
+        <input type="search" value={mpChildSearch} onChange={e=>setMpChildSearch(e.target.value)}
+          placeholder="Search by name, city, or address…"
+          style={{width:"100%",height:40,borderRadius:10,border:`1px solid ${T.b1}`,background:T.s2,
+            color:T.t1,fontSize:13,padding:"0 12px",outline:"none",fontFamily:"inherit",
+            marginBottom:8,boxSizing:"border-box"}}/>
+        {mpResults.map((a:any) => (
+          <button key={a.id} onClick={()=>{setMpChildIds(prev=>[...prev,a.id]);setMpChildSearch("");}}
+            style={{width:"100%",textAlign:"left",background:T.s2,border:`1px solid ${T.b1}`,
+              borderRadius:10,padding:"9px 12px",marginBottom:6,cursor:"pointer",fontFamily:"inherit",
+              display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:11,fontWeight:600,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
+              <div style={{fontSize:9,color:T.t4}}>{a.city}, {a.st} · {a.dealer||"All Other"} · PY {$$(a.pyQ?.["1"]||0)}</div>
+            </div>
+            <span style={{fontSize:12,color:T.green,flexShrink:0,marginLeft:8}}>＋</span>
+          </button>
+        ))}
+        {mpChildSearch.length >= 2 && mpResults.length === 0 && (
+          <div style={{fontSize:11,color:T.t4,textAlign:"center",padding:"12px 0"}}>No accounts found</div>
+        )}
+
+        {/* Save */}
+        <button onClick={savePractice} disabled={mpSaving||!mpName.trim()||mpChildIds.length<2}
+          style={{width:"100%",padding:"11px 0",borderRadius:10,border:"none",marginTop:12,
+            background:mpName.trim()&&mpChildIds.length>=2?T.blue:"rgba(79,142,247,.3)",
+            color:"#fff",fontSize:13,fontWeight:700,cursor:mpName.trim()&&mpChildIds.length>=2?"pointer":"not-allowed",
+            fontFamily:"inherit"}}>
+          {mpSaving?"Saving…":`Save Practice (${mpChildIds.length} accounts)`}
+        </button>
+        <div style={{fontSize:10,color:T.t4,textAlign:"center",marginTop:8}}>
+          Takes effect on next CSV upload — permanently baked into grouping logic.
+        </div>
+      </div>;
+
+      // List view
+      return <div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+          <div>
+            <div style={{fontSize:14,fontWeight:700,color:T.t1}}>Multi-Practice Groups</div>
+            <div style={{fontSize:11,color:T.t3,marginTop:2}}>Permanently baked in — survives every CSV upload</div>
+          </div>
+          <button onClick={startNew} style={{background:"rgba(79,142,247,.1)",border:"1px solid rgba(79,142,247,.25)",
+            borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:700,color:T.blue,cursor:"pointer",fontFamily:"inherit"}}>
+            + New
+          </button>
+        </div>
+
+        {practiceList.length === 0 && (
+          <div style={{fontSize:12,color:T.t4,textAlign:"center",padding:"30px 0"}}>
+            No practices defined yet. Tap + New to create one.
+          </div>
+        )}
+
+        {practiceList.map(([id, def]:any) => (
+          <div key={id} style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,
+            padding:"12px 14px",marginBottom:8}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:13,fontWeight:700,color:T.t1}}>{def.name}</div>
+                <div style={{fontSize:10,color:T.t3,marginTop:2}}>
+                  {(def.childIds||[]).length} accounts · {def.class2||"DSO"}
+                </div>
+                {def.notes && <div style={{fontSize:9,color:T.t4,marginTop:2}}>{def.notes}</div>}
+              </div>
+              <button onClick={()=>startEdit(id,def)}
+                style={{background:"rgba(79,142,247,.08)",border:"1px solid rgba(79,142,247,.15)",
+                  borderRadius:7,padding:"3px 10px",fontSize:10,fontWeight:600,color:T.blue,
+                  cursor:"pointer",fontFamily:"inherit",flexShrink:0,marginLeft:8}}>Edit</button>
+            </div>
+          </div>
+        ))}
+
+        <div style={{fontSize:10,color:T.t4,marginTop:8,textAlign:"center",lineHeight:1.5}}>
+          Changes saved here write directly to the codebase and take effect on the next CSV upload.
+        </div>
+      </div>;
+    })()}
+
     {/* ── SETTINGS SECTION ── */}
     {section==="settings"&&<div>
       <div style={{fontSize:14,fontWeight:700,color:T.t1,marginBottom:4}}>Quarter Targets</div>

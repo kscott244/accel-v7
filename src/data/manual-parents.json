@@ -1,0 +1,19 @@
+{
+  "Master-MP-DOWNTOWN-DDS": {
+    "name": "Downtown DDS",
+    "class2": "DSO",
+    "tier": "Standard",
+    "notes": "3 locations: Bridgeport (1023 Main St), Norwalk (205 Main St), West Haven (145 Boston Post Rd)",
+    "childIds": [
+      "Master-CM9835082",
+      "Master-CM633822",
+      "Master-CM262372",
+      "Master-CM17706065",
+      "Master-CM585014",
+      "Master-CM1757799",
+      "Master-CM215822"
+    ],
+    "createdAt": "2026-03-27T00:00:00.000Z",
+    "updatedAt": "2026-03-27T00:00:00.000Z"
+  }
+}

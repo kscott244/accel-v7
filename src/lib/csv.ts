@@ -7,6 +7,17 @@
 // Used by: AdminTab (CSV upload), preloaded-data.ts generation
 
 import { normalizeTier, isTop100, normalizePracticeType, extractGroupName } from "./tier";
+import MANUAL_PARENTS from "@/data/manual-parents.json";
+
+// Build childId → manualParentId lookup once at module load
+const MANUAL_PARENT_MAP: Record<string, string> = {};
+const MANUAL_PARENT_INFO: Record<string, any> = {};
+for (const [pid, def] of Object.entries(MANUAL_PARENTS as Record<string, any>)) {
+  MANUAL_PARENT_INFO[pid] = def;
+  for (const cid of (def.childIds || [])) {
+    MANUAL_PARENT_MAP[cid] = pid;
+  }
+}
 import type { RawSalesRow } from "./sales";
 
 // DEALERS is loaded at call time via the caller passing it in,
@@ -382,6 +393,34 @@ export function processCSVData(
     parentChildren[parentId].add(childId);
 
     cleanRowsProcessed++;
+  }
+
+  // ── Apply manual parent remaps ──────────────────────────────────
+  // If a childId belongs to a manual parent group, reassign it from its
+  // Tableau parentId to the manual parent. This survives every CSV upload.
+  for (const cid of Array.from(allChildIds)) {
+    const manualPid = MANUAL_PARENT_MAP[cid];
+    if (!manualPid) continue;
+    const originalPid = childInfo[cid]?.parentId;
+    if (!originalPid || originalPid === manualPid) continue;
+
+    // Move child from original parent to manual parent
+    if (parentChildren[originalPid]) {
+      parentChildren[originalPid].delete(cid);
+      if (parentChildren[originalPid].size === 0) delete parentChildren[originalPid];
+    }
+    if (!parentChildren[manualPid]) parentChildren[manualPid] = new Set();
+    parentChildren[manualPid].add(cid);
+
+    // Set manual parent info if not already set
+    if (!parentInfo[manualPid]) {
+      const mp = MANUAL_PARENT_INFO[manualPid];
+      parentInfo[manualPid] = {
+        name: mp.name,
+        tier: mp.tier || "Standard",
+        class2: mp.class2 || "DSO",
+      };
+    }
   }
 
   // ── Build groups ──────────────────────────────────────────────
