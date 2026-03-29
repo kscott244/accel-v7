@@ -1323,7 +1323,13 @@ Also:
           <div key={c.id} style={{borderTop:i>0?`1px solid ${T.b2}`:"none",paddingTop:i>0?9:0,marginTop:i>0?9:0}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
               <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:12,fontWeight:700,color:T.t1}}>{c.name}</div>
+                <div style={{display:"flex",alignItems:"center",gap:5,flexWrap:"wrap",marginBottom:1}}>
+                  <div style={{fontSize:12,fontWeight:700,color:T.t1}}>{c.name}</div>
+                  {c.isPrimary&&<span style={{fontSize:7,fontWeight:800,color:T.amber,background:"rgba(251,191,36,.15)",borderRadius:3,padding:"1px 5px",border:"1px solid rgba(251,191,36,.3)"}}>★ PRIMARY</span>}
+                  {c.confidence==="verified"&&<span style={{fontSize:7,fontWeight:700,color:T.green,background:"rgba(52,211,153,.12)",borderRadius:3,padding:"1px 5px"}}>✓ Verified</span>}
+                  {c.confidence==="stale"&&<span style={{fontSize:7,fontWeight:700,color:T.amber,background:"rgba(251,191,36,.1)",borderRadius:3,padding:"1px 5px"}}>Stale</span>}
+                  {c.source==="research"&&<span style={{fontSize:7,color:T.cyan,background:"rgba(34,211,238,.08)",borderRadius:3,padding:"1px 5px"}}>AI</span>}
+                </div>
                 {c.role&&<div style={{fontSize:10,color:T.purple,marginTop:1}}>{c.role}</div>}
                 <div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:4}}>
                   {c.phone&&<a href={`tel:${c.phone.replace(/\D/g,"")}`} style={{fontSize:10,color:T.cyan,textDecoration:"none"}}>{c.phone}</a>}
@@ -1372,7 +1378,7 @@ Also:
           })}
         </>}
 
-        {groupContacts.length===0&&(!resResult||resDismissed||(resResult.contacts||[]).length===0)&&<div style={{fontSize:11,color:T.t4,paddingTop:6}}>No contacts yet. Hit Research to find contacts, or add manually.</div>}
+        {groupContacts.length===0&&(!resResult||resDismissed||(resResult.contacts||[]).length===0)&&<div style={{fontSize:11,color:T.t4,paddingTop:6}}>No contacts yet — tap Research to find contacts, or add manually.</div>}
       </div>
 
       {/* ── TASKS ── */}
@@ -1502,6 +1508,32 @@ Also:
         <div style={{marginBottom:16}}>
           <div style={{fontSize:10,color:T.t3,marginBottom:4,fontWeight:600}}>Notes</div>
           <textarea value={cNotes} onChange={e=>setCNotes(e.target.value)} placeholder="Relationship context, best time to reach..." rows={3} style={{width:"100%",background:T.s2,border:`1px solid ${T.b1}`,borderRadius:8,padding:"8px 10px",fontSize:12,color:T.t1,fontFamily:"inherit",resize:"none"}}/>
+        </div>
+        {/* Confidence */}
+        <div style={{marginBottom:10}}>
+          <div style={{fontSize:10,color:T.t3,marginBottom:6,fontWeight:600}}>Confidence</div>
+          <div style={{display:"flex",gap:5}}>
+            {(["unverified","likely","verified","stale"] as const).map(conf=>{
+              const col=conf==="verified"?T.green:conf==="likely"?T.cyan:conf==="stale"?T.amber:T.t4;
+              return <button key={conf} onClick={()=>setCConfidence(conf)}
+                style={{flex:1,padding:"5px 0",borderRadius:7,fontSize:9,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
+                  background:cConfidence===conf?col+"20":T.s2,border:`1px solid ${cConfidence===conf?col+"44":T.b2}`,color:cConfidence===conf?col:T.t3}}>
+                {conf.charAt(0).toUpperCase()+conf.slice(1)}
+              </button>;
+            })}
+          </div>
+        </div>
+        {/* Primary toggle */}
+        <div style={{marginBottom:16,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 10px",background:T.s2,borderRadius:8,border:`1px solid ${cIsPrimary?"rgba(251,191,36,.3)":T.b2}`}}>
+          <div>
+            <div style={{fontSize:11,fontWeight:600,color:cIsPrimary?T.amber:T.t2}}>★ Primary contact</div>
+            <div style={{fontSize:9,color:T.t4}}>Best known path into this account</div>
+          </div>
+          <button onClick={()=>setCIsPrimary((v:boolean)=>!v)}
+            style={{padding:"4px 12px",borderRadius:7,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit",
+              background:cIsPrimary?"rgba(251,191,36,.15)":T.s1,border:`1px solid ${cIsPrimary?"rgba(251,191,36,.4)":T.b1}`,color:cIsPrimary?T.amber:T.t3}}>
+            {cIsPrimary?"✓ Primary":"Set Primary"}
+          </button>
         </div>
         <div style={{display:"flex",gap:10}}>
           <button onClick={()=>setShowContactForm(false)} style={{flex:1,padding:"10px 0",borderRadius:10,fontSize:13,fontWeight:600,cursor:"pointer",border:`1px solid ${T.b1}`,background:T.s2,color:T.t3,fontFamily:"inherit"}}>Cancel</button>
