@@ -963,7 +963,7 @@ const [showCopilot, setShowCopilot] = useState(false);
         const goGroupFn = (g:any) => { window.scrollTo(0,0); setView({type:"group", data:g}); };
         return <>
           {!view && tab==="today" && <DashboardTab scored={scored} goAcct={goSmartFn} q1CY={q1CY} q1Gap={q1Gap} q1Att={q1Att} adjCount={adjs.length} totalAdj={totalAdjQ1} groups={groups||[]} goGroup={goGroupFn} activeQ={activeQ||"1"} weeklyDelta={weeklyDelta} tasks={tasks} onCompleteTask={completeTask} onGoTasks={()=>{setTab("tasks");setView(null);}}/> }
-          {!view && tab==="groups" && <GroupsTab groups={groups||[]} goGroup={goGroupFn} filt={gFilt} setFilt={setGFilt} search={gSearch} setSearch={setGSearch} groupedPrivates={groupedPrivates}/>}
+          {!view && tab==="groups" && <GroupsTab groups={groups||[]} goGroup={goGroupFn} filt={gFilt} setFilt={setGFilt} search={gSearch} setSearch={setGSearch} groupedPrivates={groupedPrivates} overlays={overlays}/>}
           {!view && tab==="map" && <MapTab scored={scored||[]} goAcct={goSmartFn}/>}
           {!view && tab==="calc" && <DashTab/>}
 {!view && tab==="territory" && <TerritoryTab groups={groups||[]} q1CY={q1CY} q1Att={q1Att} q1Gap={q1Gap} scored={scored} goAcct={goSmartFn} activeQ={activeQ||"1"}/>}
@@ -1017,6 +1017,7 @@ const [showCopilot, setShowCopilot] = useState(false);
     </div>
   );
 }
+
 
 
 
