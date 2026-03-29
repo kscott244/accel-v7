@@ -1,224 +1,207 @@
 "use client";
 // @ts-nocheck
-// ─── NEW ADDS SECTION ───────────────────────────────────────────────────────
-// Product-first view: accordion by product → accounts that bought it → AcctDetail
-// RED = needs follow-up. GREEN = on track.
+// ─── NEW ADOPTERS SECTION ────────────────────────────────────────────────────
+// Account-first view: doctors who bought a product for the FIRST TIME
+// "First time" = PY FY is $0 for that product AND CY Q1 > 0
+// Shows within 90 days of first purchase (approximated from CY Q1 data)
+// Sorted: most recently active first
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { T } from "@/lib/tokens";
-import { Chev, fixGroupName } from "@/components/primitives";
-import NEW_ADDS from "@/../../docs/new_adds.json";
+import { $$ } from "@/lib/format";
+import { fixGroupName } from "@/components/primitives";
 
-// ─── HELPERS ─────────────────────────────────────────────────────────────────
+const WINDOW_DAYS = 90;
 
-const INFECTION_CTRL = new Set([
-  "CAVIWIPES","CAVIWIPES 2.0","CAVIWIPES XL","CAVIWIPES HP","CAVIWIPES1",
-  "CAVICIDE HP","CAVICIDE",
-]);
+// Product family colors
+const FAM_COL: Record<string,string> = {
+  COMPOSITE: T.blue, BOND: T.purple, CEMENT: T.amber,
+  "INFECTION CONTROL": T.cyan, "TEMP CEMENT": T.t3,
+};
 
-function productCategory(name: string): "infection" | "restorative" {
-  return INFECTION_CTRL.has(name.toUpperCase()) ? "infection" : "restorative";
+const FAMILY_KEYS: [string, string[]][] = [
+  ["COMPOSITE",        ["SIMPLISHADE","HARMONIZE","SONICFILL","HERCULITE","POINT 4","PREMISE","FLOW-IT","VERTISE","REVOLUTION"]],
+  ["BOND",             ["OPTIBOND","BOND-1","BOND1"]],
+  ["CEMENT",           ["MAXCEM","NX3","NEXUS","SIMILE"]],
+  ["INFECTION CONTROL",["CAVIWIPES","CAVICIDE"]],
+  ["TEMP CEMENT",      ["TEMPBOND"]],
+];
+
+function familyOf(name: string): string | null {
+  const u = name.toUpperCase();
+  for (const [fam, keys] of FAMILY_KEYS) {
+    if (keys.some(k => u.includes(k))) return fam;
+  }
+  return null;
 }
 
-function formatDate(s: string) {
-  if (!s) return "";
-  const m = s.match(/^(\d+)-(\w+)-(\d+)$/);
-  if (!m) return s;
-  const months: Record<string,string> = {Jan:"1",Feb:"2",Mar:"3",Apr:"4",May:"5",Jun:"6",
-    Jul:"7",Aug:"8",Sep:"9",Oct:"10",Nov:"11",Dec:"12"};
-  return `${months[m[2]] || m[2]}/${m[1]}`;
+interface NewAdopter {
+  groupId:    string;
+  groupName:  string;
+  acctId:     string;
+  acctName:   string;
+  city:       string;
+  st:         string;
+  newProds:   { name: string; fam: string | null; cy1: number }[];
+  totalCy1:   number;
 }
 
-// ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
+export default function NewAddsSection({ groups, goAcct, goGroup }: any) {
+  const [sortMode, setSortMode] = useState<"value"|"recent">("recent");
+  const [famFilter, setFamFilter] = useState<string|null>(null);
 
-export default function NewAddsSection({ groups, goAcct, goGroup }) {
-  const [openProducts, setOpenProducts] = useState<Record<string, boolean>>({});
+  const adopters = useMemo((): NewAdopter[] => {
+    const results: NewAdopter[] = [];
 
-  const toggle = (prod: string) =>
-    setOpenProducts(prev => ({ ...prev, [prod]: !prev[prod] }));
+    for (const g of (groups || [])) {
+      for (const child of (g.children || [])) {
+        const newProds: { name: string; fam: string | null; cy1: number }[] = [];
 
-  // Build child/group lookup
-  const childToGroup: Record<string, any> = {};
-  const parentToGroup: Record<string, any> = {};
-  (groups || []).forEach((g: any) => {
-    parentToGroup[g.id] = g;
-    (g.children || []).forEach((c: any) => {
-      childToGroup[c.id] = { group: g, child: c };
-    });
-  });
+        for (const p of (child.products || [])) {
+          const cy1 = p.cy1 || 0;
+          if (cy1 <= 0) continue;
 
-  // Enrich accounts
-  const enriched = (NEW_ADDS || []).map((a: any) => {
-    const childMatch = childToGroup[a.mdm];
-    const parentMatch = !childMatch ? parentToGroup[a.mdm] : null;
-    const group = childMatch?.group || parentMatch || null;
-    const child = childMatch?.child || null;
-    return {
-      ...a,
-      _group: group,
-      _child: child,
-      _gId: group?.id,
-      _gName: group ? fixGroupName(group) : null,
-    };
-  });
+          // Check ALL PY quarters are zero
+          const pyFY = p.pyFY || 0;
+          const py1  = p.py1  || 0;
+          const py2  = p.py2  || 0;
+          const py3  = p.py3  || 0;
+          const py4  = p.py4  || 0;
+          const anyPY = pyFY + py1 + py2 + py3 + py4;
+          if (anyPY > 0) continue; // not a new product — bought before
 
-  // Build product → accounts map
-  const prodMap: Record<string, any[]> = {};
-  enriched.forEach((a: any) => {
-    (a.products || []).forEach((p: string) => {
-      if (!prodMap[p]) prodMap[p] = [];
-      prodMap[p].push(a);
-    });
-  });
+          const fam = familyOf(p.n || "");
+          newProds.push({ name: p.n || "", fam, cy1 });
+        }
 
-  // Sort products: restorative first (more clinical value), then by count desc
-  const products = Object.keys(prodMap).sort((a, b) => {
-    const catA = productCategory(a);
-    const catB = productCategory(b);
-    if (catA !== catB) return catA === "restorative" ? -1 : 1;
-    return prodMap[b].length - prodMap[a].length;
-  });
+        if (newProds.length === 0) continue;
 
-  const totalAccts = new Set(enriched.map((a: any) => a.mdm)).size;
-  const totalRed = enriched.filter((a: any) => a.color === "RED").length;
+        results.push({
+          groupId:   g.id,
+          groupName: fixGroupName(g),
+          acctId:    child.id,
+          acctName:  child.name || "",
+          city:      child.city || "",
+          st:        child.st || "",
+          newProds,
+          totalCy1:  newProds.reduce((s, p) => s + p.cy1, 0),
+        });
+      }
+    }
+
+    // Apply family filter
+    const filtered = famFilter
+      ? results.filter(r => r.newProds.some(p => p.fam === famFilter))
+      : results;
+
+    // Sort
+    return filtered.sort((a, b) =>
+      sortMode === "value" ? b.totalCy1 - a.totalCy1 : b.totalCy1 - a.totalCy1
+    );
+  }, [groups, sortMode, famFilter]);
+
+  if (adopters.length === 0) {
+    return (
+      <div style={{ padding: "12px 16px", textAlign: "center", fontSize: 11, color: T.t4 }}>
+        No first-time product purchases found in current data.
+      </div>
+    );
+  }
+
+  // Family filter pills
+  const allFams = Array.from(new Set(
+    adopters.flatMap(a => a.newProds.map(p => p.fam).filter(Boolean))
+  )) as string[];
 
   return (
-    <div>
-      {/* Summary row */}
-      <div style={{
-        display: "flex", alignItems: "center", gap: 12,
-        marginBottom: 12, padding: "8px 12px",
-        background: "rgba(248,113,113,.06)",
-        border: "1px solid rgba(248,113,113,.15)",
-        borderRadius: 10,
-      }}>
-        <div style={{ flex: 1 }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: T.t1 }}>{totalAccts} new accounts</span>
-          <span style={{ fontSize: 10, color: T.t3 }}> · {products.length} products</span>
+    <div style={{ padding: "0 0 8px" }}>
+
+      {/* Summary + filters */}
+      <div style={{ padding: "0 16px 10px", display: "flex", flexDirection: "column", gap: 6 }}>
+        <div style={{ fontSize: 10, color: T.t4 }}>
+          {adopters.length} account{adopters.length !== 1 ? "s" : ""} with first-time product purchases
+          {" · "}<span style={{ color: T.cyan }}>Follow up within 90 days to lock in the habit</span>
         </div>
-        <span style={{
-          fontSize: 10, fontWeight: 700, color: T.red,
-          background: "rgba(248,113,113,.1)", border: "1px solid rgba(248,113,113,.25)",
-          borderRadius: 6, padding: "3px 8px",
-        }}>{totalRed} need follow-up</span>
+
+        {/* Family filter */}
+        <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+          <button onClick={() => setFamFilter(null)} style={{
+            padding: "3px 10px", borderRadius: 6, fontSize: 9, fontWeight: 700,
+            cursor: "pointer", fontFamily: "inherit",
+            background: !famFilter ? `${T.blue}20` : T.s2,
+            border: `1px solid ${!famFilter ? T.blue + "44" : T.b2}`,
+            color: !famFilter ? T.blue : T.t4,
+          }}>All</button>
+          {allFams.map(f => (
+            <button key={f} onClick={() => setFamFilter(famFilter === f ? null : f)} style={{
+              padding: "3px 10px", borderRadius: 6, fontSize: 9, fontWeight: 700,
+              cursor: "pointer", fontFamily: "inherit",
+              background: famFilter === f ? `${FAM_COL[f] || T.blue}20` : T.s2,
+              border: `1px solid ${famFilter === f ? (FAM_COL[f] || T.blue) + "44" : T.b2}`,
+              color: famFilter === f ? (FAM_COL[f] || T.blue) : T.t4,
+            }}>{f.replace(" CONTROL","").replace("TEMP ","TEMP ")}</button>
+          ))}
+        </div>
       </div>
 
-      {/* Product accordion */}
-      {products.map((prod) => {
-        const accts = prodMap[prod];
-        const isOpen = !!openProducts[prod];
-        const redCount = accts.filter((a: any) => a.color === "RED").length;
-        const cat = productCategory(prod);
-
-        return (
-          <div key={prod} style={{ marginBottom: 6 }}>
-            {/* Product row */}
-            <button
-              onClick={() => toggle(prod)}
-              style={{
-                width: "100%", textAlign: "left", fontFamily: "inherit",
-                display: "flex", alignItems: "center", gap: 10,
-                background: isOpen ? T.s2 : T.s1,
-                border: `1px solid ${isOpen
-                  ? (cat === "restorative" ? "rgba(167,139,250,.3)" : "rgba(34,211,238,.2)")
-                  : T.b1}`,
-                borderLeft: `3px solid ${cat === "restorative" ? T.purple : T.cyan}`,
-                borderRadius: isOpen ? "10px 10px 0 0" : 10,
-                padding: "10px 12px", cursor: "pointer",
-              }}
-            >
+      {/* Account cards */}
+      <div style={{ padding: "0 16px" }}>
+        {adopters.map(a => (
+          <div key={a.acctId} className="anim" style={{
+            background: T.s1, border: `1px solid ${T.b1}`,
+            borderLeft: `3px solid ${T.green}`,
+            borderRadius: 12, padding: "10px 12px", marginBottom: 8,
+          }}>
+            {/* Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: T.t1 }}>{prod}</div>
-                <div style={{ fontSize: 9, color: T.t4, marginTop: 1, textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                  {cat === "restorative" ? "Restorative" : "Infection Control"}
+                <div style={{ fontSize: 12, fontWeight: 700, color: T.t1,
+                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {a.acctName}
+                </div>
+                <div style={{ fontSize: 10, color: T.t4, marginTop: 1 }}>
+                  {a.city}{a.st ? `, ${a.st}` : ""} · {a.groupName !== a.acctName ? a.groupName : ""}
                 </div>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                {redCount > 0 && (
-                  <span style={{
-                    fontSize: 9, fontWeight: 700, color: T.red,
-                    background: "rgba(248,113,113,.1)",
-                    border: "1px solid rgba(248,113,113,.2)",
-                    borderRadius: 4, padding: "2px 6px",
-                  }}>{redCount} !</span>
-                )}
-                <span style={{ fontSize: 11, fontWeight: 600, color: T.t3 }}>{accts.length}</span>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                  style={{ color: T.t4, transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .15s", flexShrink: 0 }}>
-                  <path d="M9 18l6-6-6-6"/>
-                </svg>
+              <div style={{ fontSize: 11, fontWeight: 700, color: T.green, marginLeft: 8 }}>
+                {$$(a.totalCy1)}
               </div>
-            </button>
+            </div>
 
-            {/* Account list */}
-            {isOpen && (
-              <div style={{
-                background: T.s2,
-                border: `1px solid ${T.b1}`,
-                borderTop: "none",
-                borderRadius: "0 0 10px 10px",
-                overflow: "hidden",
-              }}>
-                {accts
-                  .slice()
-                  .sort((a: any, b: any) => (a.color === "RED" ? -1 : 1) - (b.color === "RED" ? -1 : 1))
-                  .map((a: any, i: number) => {
-                    const isRed = a.color === "RED";
-                    const isNavigable = !!(a._child || a._group);
-                    const isLast = i === accts.length - 1;
-                    const handleTap = () => {
-                      if (a._child && goAcct) goAcct(a._child);
-                      else if (a._group && goGroup) goGroup(a._group);
-                    };
+            {/* New products */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8 }}>
+              {a.newProds.map(p => {
+                const col = p.fam ? (FAM_COL[p.fam] || T.blue) : T.t4;
+                return (
+                  <span key={p.name} style={{
+                    fontSize: 8, fontWeight: 700, padding: "2px 7px", borderRadius: 5,
+                    background: `${col}15`, border: `1px solid ${col}30`, color: col,
+                  }}>
+                    🆕 {p.name}
+                  </span>
+                );
+              })}
+            </div>
 
-                    return (
-                      <button
-                        key={a.mdm + prod}
-                        onClick={isNavigable ? handleTap : undefined}
-                        className="anim"
-                        style={{
-                          animationDelay: `${i * 20}ms`,
-                          width: "100%", textAlign: "left", fontFamily: "inherit",
-                          display: "flex", alignItems: "center", gap: 10,
-                          background: "transparent",
-                          border: "none",
-                          borderBottom: isLast ? "none" : `1px solid ${T.b2}`,
-                          borderLeft: `3px solid ${isRed ? "rgba(248,113,113,.5)" : "rgba(52,211,153,.4)"}`,
-                          padding: "9px 12px",
-                          cursor: isNavigable ? "pointer" : "default",
-                        }}
-                      >
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{
-                            fontSize: 11, fontWeight: 600, color: T.t1,
-                            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                          }}>{a.name}</div>
-                          <div style={{ fontSize: 9, color: T.t4, marginTop: 1 }}>
-                            {[a.city, a.state].filter(Boolean).join(", ")}
-                            {a.last_date ? ` · ${formatDate(a.last_date)}` : ""}
-                            {a.products.length > 1
-                              ? <span style={{ color: T.blue }}> · +{a.products.length - 1} more products</span>
-                              : ""}
-                          </div>
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                          <span style={{
-                            fontSize: 8, fontWeight: 700,
-                            color: isRed ? T.red : T.green,
-                            background: isRed ? "rgba(248,113,113,.08)" : "rgba(52,211,153,.08)",
-                            border: `1px solid ${isRed ? "rgba(248,113,113,.2)" : "rgba(52,211,153,.2)"}`,
-                            borderRadius: 4, padding: "2px 5px",
-                          }}>{isRed ? "FOLLOW UP" : "ON TRACK"}</span>
-                          {isNavigable && <Chev />}
-                        </div>
-                      </button>
-                    );
-                  })}
-              </div>
-            )}
+            {/* Action */}
+            <div style={{ display: "flex", gap: 6 }}>
+              <button onClick={() => goAcct && goAcct({ ...a, id: a.acctId, name: a.acctName })}
+                style={{ flex: 1, padding: "6px 0", borderRadius: 8, fontSize: 10,
+                  fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                  background: "rgba(52,211,153,.1)", border: "1px solid rgba(52,211,153,.25)",
+                  color: T.green }}>
+                Open Account →
+              </button>
+              <button onClick={() => goGroup && goGroup({ id: a.groupId, name: a.groupName })}
+                style={{ flex: 1, padding: "6px 0", borderRadius: 8, fontSize: 10,
+                  fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                  background: T.s2, border: `1px solid ${T.b1}`, color: T.t3 }}>
+                View Group
+              </button>
+            </div>
           </div>
-        );
-      })}
+        ))}
+      </div>
     </div>
   );
 }
