@@ -4,6 +4,8 @@ import { useState, useMemo } from "react";
 import { T } from "@/lib/tokens";
 import { $$ } from "@/lib/format";
 import { fixGroupName } from "@/components/primitives";
+import { logEvent } from "@/lib/eventLog";
+import { memoryPatchOp } from "@/lib/accountMemory";
 import {
   buildDsoCard, sortCards, shouldInclude,
   BENCH_AVG, BENCH_TOP, WR_THRESHOLDS,
@@ -302,13 +304,21 @@ export default function DsoWarRoomTab({ groups, overlays, patchOverlay, goGroup,
   const intel: Record<string, DsoIntel> = overlays?.dsoIntel || {};
 
   const saveIntel = async (groupId: string, data: DsoIntel) => {
+    const card = cards.find(c => c.group.id === groupId);
+    logEvent("intel:updated", { groupId, groupName: card ? fixGroupName(card.group) : groupId });
     if (patchOverlay) {
-      await patchOverlay([{ op: "set", path: `dsoIntel.${groupId}`, value: data }]);
+      await patchOverlay([
+        { op: "set", path: `dsoIntel.${groupId}`, value: data },
+        memoryPatchOp(groupId, { lastActionAt: new Date().toISOString(), lastMeaningfulChangeAt: new Date().toISOString() }),
+      ]);
     }
   };
 
   const togglePin = async (groupId: string) => {
     const cur = intel[groupId] || {};
+    const card = cards.find(c => c.group.id === groupId);
+    logEvent("pin:toggled", { groupId, groupName: card ? fixGroupName(card.group) : groupId });
+    if (patchOverlay) patchOverlay([memoryPatchOp(groupId, { lastActionAt: new Date().toISOString() })]);
     await saveIntel(groupId, { ...cur, pinned: !cur.pinned });
   };
 
@@ -414,3 +424,4 @@ export default function DsoWarRoomTab({ groups, overlays, patchOverlay, goGroup,
     </div>
   );
 }
+
