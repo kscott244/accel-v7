@@ -3,16 +3,11 @@
 import { useState } from "react";
 import { T } from "@/lib/tokens";
 import {
-  type Notice, type NoticeSeverity,
   NOTICE_SEVERITY_COLOR, NOTICE_SEVERITY_BG, NOTICE_TYPE_ICON,
 } from "@/lib/notices";
 
 // ── Individual notice card ────────────────────────────────────────
-function NoticeCard({ notice, onDismiss, onOpen }: {
-  notice: Notice;
-  onDismiss: (id: string) => void;
-  onOpen: (groupId: string) => void;
-}) {
+function NoticeCard({ notice, onDismiss, onOpen }) {
   const [expanded, setExpanded] = useState(false);
   const sc = NOTICE_SEVERITY_COLOR[notice.severity];
   const sb = NOTICE_SEVERITY_BG[notice.severity];
@@ -102,11 +97,7 @@ function NoticeCard({ notice, onDismiss, onOpen }: {
 }
 
 // ── Notices panel ─────────────────────────────────────────────────
-export default function NoticesPanel({ notices, onDismiss, onOpen }: {
-  notices: Notice[];
-  onDismiss: (id: string) => void;
-  onOpen: (groupId: string) => void;
-}) {
+export default function NoticesPanel({ notices, onDismiss, onOpen }) {
   const [collapsed, setCollapsed] = useState(false);
 
   if (notices.length === 0) return null;
