@@ -569,7 +569,10 @@ const [showCopilot, setShowCopilot] = useState(false);
         const { PRELOADED } = require("@/data/preloaded-data");
         const preloadedGroups = applyGroupOverrides(applyOverlays(rollupGroupTotals(hydrateDealer(applyManualParents(PRELOADED.groups)))));
         setGroups(preloadedGroups);
-        setDataSource(`Pre-loaded ${PRELOADED.generated} · upload CSV to refresh`);
+        const _genDate = new Date(PRELOADED.generated);
+        const _daysDiff = Math.floor((Date.now() - _genDate.getTime()) / 86400000);
+        const _staleMsg = _daysDiff > 10 ? ` · upload CSV to refresh` : "";
+        setDataSource(`Updated ${PRELOADED.generated}${_staleMsg}`);
         // Auto-detect activeQ from data if not already set
         setActiveQState(prev => {
           if (prev) return prev;
