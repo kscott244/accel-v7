@@ -12,16 +12,7 @@ import {
   type InboxStatus,
 } from "@/lib/assistantInbox";
 
-// ── Props ─────────────────────────────────────────────────────────
-interface InboxTabProps {
-  groups: any[];
-  overlays: any;
-  patchOverlay: (ops: any[]) => Promise<boolean>;
-  tasks: any[];
-  goGroup: (id: string) => void;
-  onAddTask: (data: any, acct?: any, grp?: any) => void;
-  activeQ?: string;
-}
+// Props: groups, overlays, patchOverlay, tasks, goGroup, onAddTask, activeQ
 
 // ── Status badge ─────────────────────────────────────────────────
 function StatusBadge({ status }: { status }) {
@@ -255,7 +246,7 @@ export default function InboxTab({
   const updateStatus = async (item, status) => {
     setSaving(item.id);
     const current = overlays?.inboxItems || [];
-    const updated = current.filter((i: any) => i.id !== item.id);
+    const updated = current.filter((i) => i.id !== item.id);
     updated.push({ id: item.id, status, updatedAt: new Date().toISOString() });
     await patchOverlay([{ op: "set", path: "inboxItems", value: updated }]);
     setSaving(null);
