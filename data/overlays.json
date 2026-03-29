@@ -131,7 +131,7 @@
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-29T04:59:41.996Z",
+  "lastUpdated": "2026-03-29T05:00:22.184Z",
   "tasks": [
     {
       "id": 1774682049928,
@@ -253,6 +253,13 @@
       "pinned": true,
       "notes": "HQ: 3333 New Hyde Park Rd Suite 304, New Hyde Park NY 11042. Website: godental365.com. CEO: Dr. Scott Asnis — sasnis@godental365.com (standard format, unverified direct). COO: Jonathan (last name not public) — came from Henry Schein NY sales & ops. Best contact for vendor conversations. VP Marketing: Lauren Baron — lbaron@godental365.com (confirmed in press release). SVP Operations: Noel Komatz — supported DSO offices NY to MA before joining Dental365. VP Acquisitions: David Rudy — previously Regional Mgr at 42 North Dental (small world). 100+ locations NY/CT/NJ/PA/NH/MA/RI. Diamond tier. Growing aggressively. $1,944/office annually — strong account, above benchmark. NEXT MOVE: Email Dr. Asnis at sasnis@godental365.com or call HQ and ask for Jonathan in operations. The COO's Henry Schein background means he speaks your language — lead with the data, mention you noticed strong growth in their NE locations and want to discuss how Kerr can support continued expansion. This is a growth conversation not a gap conversation.",
       "teamOppQ": null
+    }
+  },
+  "accountMemory": {
+    "Master-MP-DOWNTOWN-DDS": {
+      "groupId": "Master-MP-DOWNTOWN-DDS",
+      "lastViewedAt": "2026-03-29T05:00:19.842Z",
+      "updatedAt": "2026-03-29T05:00:19.842Z"
     }
   }
 }
