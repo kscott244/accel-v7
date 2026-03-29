@@ -209,3 +209,36 @@ export interface TerritoryStats {
   signalCounts: Record<Q1Signal, number>;
   bucketCounts: Record<Bucket, number>;
 }
+
+// ── Contact ──
+// Structured contact for a group or office.
+// source: how we got this contact
+// confidence: how reliable is this contact
+// isPrimary: the best known path into this account
+export type ContactSource =
+  | 'manual'       // Ken entered it
+  | 'research'     // From AI deep research
+  | 'badger'       // From Badger Maps CRM data
+  | 'csv'          // Populated from CSV upload
+  | 'unknown';
+
+export type ContactConfidence =
+  | 'verified'     // Ken confirmed this is accurate
+  | 'likely'       // Research-found, plausible
+  | 'unverified'   // Added but not confirmed
+  | 'stale';       // May be outdated
+
+export interface Contact {
+  id: number;
+  linkedGroupId: string;   // Parent group Master-CM# this contact belongs to
+  name: string;
+  role: string;
+  phone: string;
+  email: string;
+  notes: string;
+  source: ContactSource;
+  confidence: ContactConfidence;
+  isPrimary: boolean;      // Best known path into this account
+  savedAt: string;         // ISO date
+  verifiedAt?: string;     // ISO date — when Ken last confirmed this is current
+}
