@@ -510,6 +510,8 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
           <span>Logged today</span><span className="m" style={{fontWeight:700}}>+{$f(overdrive.doneTotal)}</span>
         </div>}
       </div>
+      </>
+    )
 
       {/* ── FORECAST (inline) ── */}
       {showForecast&&<div style={{marginBottom:10}}>
