@@ -8,8 +8,6 @@ import {
   INBOX_PRIORITY_BG,
   INBOX_ACTION_ICON,
   INBOX_ACTION_LABEL,
-  type InboxItem,
-  type InboxStatus,
 } from "@/lib/assistantInbox";
 
 // Props: groups, overlays, patchOverlay, tasks, goGroup, onAddTask, activeQ
@@ -48,7 +46,6 @@ function InboxCard({
   onReview: () => void;
   onOpenGroup: () => void;
   onCreateTask: () => void;
-  expanded: boolean;
   onToggle: () => void;
 }) {
   const priColor = INBOX_PRIORITY_COLOR[item.priority];
