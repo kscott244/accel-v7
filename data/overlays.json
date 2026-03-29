@@ -126,12 +126,27 @@
         "notes": "From AI research",
         "savedAt": "2026-03-27T22:54:37.655Z"
       }
+    ],
+    "Master-CM216446": [
+      {
+        "id": 1774765272520,
+        "linkedGroupId": "Master-CM216446",
+        "name": "Dr. William Herr",
+        "role": "Owner/Founder",
+        "phone": "(774) 331-0260",
+        "email": "",
+        "notes": "From AI research",
+        "source": "research",
+        "confidence": "likely",
+        "isPrimary": false,
+        "savedAt": "2026-03-29T06:21:12.520Z"
+      }
     ]
   },
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-29T06:20:45.404Z",
+  "lastUpdated": "2026-03-29T06:21:13.008Z",
   "tasks": [
     {
       "id": 1774682049928,
