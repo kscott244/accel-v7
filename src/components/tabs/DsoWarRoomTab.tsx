@@ -11,33 +11,32 @@ import {
   BENCH_AVG, BENCH_TOP, WR_THRESHOLDS,
   STATUS_OPTS, STRATEGY_OPTS,
   DSO_FAMILIES,
-  type BenchMode, type SortMode, type DsoCard, type DsoIntel, type IncludeReason,
 } from "@/lib/dsoWarRoom";
 
 // ── Helpers ───────────────────────────────────────────────────────
-function fmt(n: number): string {
+function fmt(n) {
   if (n >= 1000000) return `$${(n/1000000).toFixed(1)}M`;
   if (n >= 1000)    return `$${Math.round(n/1000)}K`;
   return `$${Math.round(n)}`;
 }
-function fmtFull(n: number): string { return $$(n); }
+function fmtFull(n) { return $$(n); }
 
-const CONF_COL: Record<string,string> = { Observed: T.green, Partial: T.amber, Estimated: T.t4 };
-const REASON_COL: Record<string,string> = {
+const CONF_COL = { Observed: T.green, Partial: T.amber, Estimated: T.t4 };
+const REASON_COL = {
   DSO: T.t4, "Multi-site": T.cyan, "Large gap": T.orange, Strategic: T.purple, Pinned: T.amber
 };
-const STATUS_COL: Record<string,string> = {
+const STATUS_COL = {
   "No Contact": T.t4, "In Progress": T.blue,
   "Meeting Set": T.amber, "Active Push": T.green,
 };
-const SORT_LABELS: Record<string,string> = {
+const SORT_LABELS = {
   gap: "Largest Gap", perOffice: "Lowest $/Office",
   momentum: "Momentum", pinned: "Pinned First",
 };
 
 // ── Intel edit drawer ─────────────────────────────────────────────
 function IntelDrawer({ groupId, groupName, intel, onSave, onClose }: any) {
-  const [v, setV] = useState<DsoIntel>({ ...intel });
+  const [v, setV] = useState({ ...intel });
   const field = (key: string, label: string, type = "text") => (
     <div style={{ marginBottom: 10 }}>
       <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", color: T.t4, marginBottom: 4 }}>{label}</div>
@@ -46,7 +45,7 @@ function IntelDrawer({ groupId, groupName, intel, onSave, onClose }: any) {
           padding: "8px 10px", fontSize: 12, color: T.t1, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
     </div>
   );
-  const pills = (key: string, label: string, opts: readonly string[], colFn?: (o: string) => string) => (
+  const pills = (key, label, opts, colFn) => (
     <div style={{ marginBottom: 10 }}>
       <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", color: T.t4, marginBottom: 6 }}>{label}</div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
@@ -119,7 +118,7 @@ function DsoCardView({ card, intel, benchMode, onPin, onIntel, onTask, onOpen }:
   const name     = fixGroupName(group);
   const pinned   = intel?.pinned;
   const accelTier = intel?.accelTier || "Private";
-  const ACCEL_CREDIT: Record<string,number> = { Private:0.601,Silver:0.508,Gold:0.476,Platinum:0.437,Diamond:0.403 };
+  const ACCEL_CREDIT = { Private:0.601,Silver:0.508,Gold:0.476,Platinum:0.437,Diamond:0.403 };
   const creditRate = ACCEL_CREDIT[accelTier] || 0.601;
   const repCreditAnn = Math.round(benchGapAnn * (creditRate / 0.601));
   const status   = intel?.status;
@@ -296,12 +295,12 @@ function DsoCardView({ card, intel, benchMode, onPin, onIntel, onTask, onOpen }:
 
 // ── Main screen ───────────────────────────────────────────────────
 export default function DsoWarRoomTab({ groups, overlays, patchOverlay, goGroup, onAddTask }: any) {
-  const [benchMode, setBenchMode] = useState<BenchMode>("avg");
-  const [sortMode,  setSortMode]  = useState<SortMode>("gap");
-  const [editId,    setEditId]    = useState<string | null>(null);
+  const [benchMode, setBenchMode] = useState("avg");
+  const [sortMode,  setSortMode]  = useState("gap");
+  const [editId,    setEditId]    = useState(null);
 
   // Local intel mirror for fast UI — patchOverlay writes to durable store
-  const intel: Record<string, DsoIntel> = overlays?.dsoIntel || {};
+  const intel = overlays?.dsoIntel || {};
 
   const saveIntel = async (groupId: string, data: DsoIntel) => {
     const card = cards.find(c => c.group.id === groupId);
@@ -314,7 +313,7 @@ export default function DsoWarRoomTab({ groups, overlays, patchOverlay, goGroup,
     }
   };
 
-  const togglePin = async (groupId: string) => {
+  const togglePin = async (groupId) => {
     const cur = intel[groupId] || {};
     const card = cards.find(c => c.group.id === groupId);
     logEvent("pin:toggled", { groupId, groupName: card ? fixGroupName(card.group) : groupId });
