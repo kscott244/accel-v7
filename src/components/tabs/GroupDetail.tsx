@@ -9,6 +9,8 @@ import { Back, Chev, Pill, Stat, Bar, AccountId, GroupBadge, fixGroupName } from
 import { TaskWidget } from "@/components/tabs/TasksTab";
 import { buildDsoCard, BENCH_AVG, type BenchMode } from "@/lib/dsoWarRoom";
 import { bestContact, contactGaps, bestPathIn, migrateLegacyContact, buildContact, PATH_IN_LABEL, PATH_IN_COLOR } from "@/lib/contacts";
+import { logEvent } from "@/lib/eventLog";
+import { readMemory, memoryPatchOp, lastTouchedLabel, attentionLabel, mergeMemory } from "@/lib/accountMemory";
 import type { Contact } from "@/types";
 
 let SCHEIN_REPS: {fsc:any[], es:any[]} = {fsc:[], es:[]};
@@ -41,6 +43,22 @@ const STATUS_PILL: Record<string,{label:string,color:string}> = {
 function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesStore=null,onAddTask=null}) {
   const [q,setQ]=useState("1");
   const [showAllLocs,setShowAllLocs]=useState(false);
+
+  // ── Event logging + memory on mount ──────────────────────────────
+  // Log group view and update lastViewedAt in memory (localStorage only for views)
+  const [_memLogged] = useState(()=>{
+    if (typeof window !== "undefined") {
+      logEvent("group:viewed", { groupId: group.id, groupName: fixGroupName(group) });
+      // Update lastViewedAt in memory via overlay (only if patchOverlay is available)
+      // We use a short timeout so the component renders first
+      if (patchOverlay) {
+        const existing = readMemory(null, group.id);
+        const op = memoryPatchOp(group.id, { lastViewedAt: new Date().toISOString() });
+        setTimeout(() => patchOverlay([op]), 1500);
+      }
+    }
+    return true;
+  });
   const qk=q;
 
   // ── Merge group state ──
@@ -185,7 +203,14 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
     }
     setGroupContacts(updated);
     try { localStorage.setItem(`grpContacts:${group.id}`, JSON.stringify(updated)); } catch {}
-    if (patchOverlay) { patchOverlay([{ op: "set", path: `groupContacts.${group.id}`, value: updated }]); }
+    const contactEventType = editContact ? "contact:edited" : (cIsPrimary ? "contact:marked_primary" : "contact:added");
+    logEvent(contactEventType, { groupId: group.id, groupName: fixGroupName(group), detail: cName.trim() });
+    if (patchOverlay) {
+      patchOverlay([
+        { op: "set", path: `groupContacts.${group.id}`, value: updated },
+        memoryPatchOp(group.id, { lastActionAt: new Date().toISOString(), lastMeaningfulChangeAt: new Date().toISOString() }),
+      ]);
+    }
     setShowContactForm(false);
   };
   const deleteContact = (id:number) => {
@@ -207,8 +232,12 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
   const saveNote = (val:string) => {
     setGroupNote(val);
     try { localStorage.setItem(`grpNote:${group.id}`, val); } catch {}
+    logEvent("note:updated", { groupId: group.id, groupName: fixGroupName(group) });
     if (patchOverlay) {
-      patchOverlay([{ op: "set", path: `groupNotes.${group.id}`, value: val }]);
+      patchOverlay([
+        { op: "set", path: `groupNotes.${group.id}`, value: val },
+        memoryPatchOp(group.id, { lastActionAt: new Date().toISOString() }),
+      ]);
     }
     setNoteSaved(true);
     setTimeout(()=>setNoteSaved(false), 2000);
@@ -508,6 +537,10 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
         talkingPoints: intel.talkingPoints || [],
       };
       setResResult(intelResult);
+      logEvent("group:researched", { groupId: group.id, groupName: fixGroupName(group), detail: intelResult.status?.slice(0,80) });
+      if (patchOverlay) {
+        patchOverlay([memoryPatchOp(group.id, { lastActionAt: new Date().toISOString(), lastMeaningfulChangeAt: new Date().toISOString() })]);
+      }
       // Cross-reference research locations against existing children — add unknowns as ghost locations
       const resLocations: any[] = intel.locations || [];
       if (resLocations.length > 0) {
@@ -1647,3 +1680,4 @@ Also:
 
 
 export default GroupDetail;
+
