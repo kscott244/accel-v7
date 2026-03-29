@@ -8,6 +8,8 @@ import { BADGER, OVERLAYS_REF } from "@/lib/data";
 import { Back, Chev, Pill, Stat, Bar, AccountId, GroupBadge, fixGroupName } from "@/components/primitives";
 import { TaskWidget } from "@/components/tabs/TasksTab";
 import { buildDsoCard, BENCH_AVG, type BenchMode } from "@/lib/dsoWarRoom";
+import { bestContact, contactGaps, bestPathIn, migrateLegacyContact, buildContact, PATH_IN_LABEL, PATH_IN_COLOR } from "@/lib/contacts";
+import type { Contact } from "@/types";
 
 let SCHEIN_REPS: {fsc:any[], es:any[]} = {fsc:[], es:[]};
 try {
@@ -143,11 +145,10 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
   };
 
   // ── Group-level contacts (not tied to distributor) ──
-  const [groupContacts, setGroupContacts] = useState<any[]>(()=>{
-    // Load from overlays (durable) or localStorage fallback
-    const fromOverlay = overlays?.groupContacts?.[group.id];
-    if (fromOverlay?.length) return fromOverlay;
-    try { return JSON.parse(localStorage.getItem(`grpContacts:${group.id}`)||"[]"); } catch { return []; }
+  const [groupContacts, setGroupContacts] = useState<Contact[]>(()=>{
+    const raw = overlays?.groupContacts?.[group.id]
+      || (() => { try { return JSON.parse(localStorage.getItem(`grpContacts:${group.id}`)||"[]"); } catch { return []; } })();
+    return (raw as any[]).map((c: any) => migrateLegacyContact(c, group.id));
   });
   const [showContactForm, setShowContactForm] = useState(false);
   const [editContact, setEditContact] = useState<any>(null);
@@ -156,24 +157,35 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
   const [cPhone, setCPhone] = useState("");
   const [cEmail, setCEmail] = useState("");
   const [cNotes, setCNotes] = useState("");
+  const [cIsPrimary, setCIsPrimary] = useState(false);
+  const [cSource, setCSource] = useState<"manual"|"research"|"badger"|"csv"|"unknown">("manual");
+  const [cConfidence, setCConfidence] = useState<"verified"|"likely"|"unverified"|"stale">("unverified");
 
-  const openContactForm = (c?:any) => {
+  const openContactForm = (c?:Contact) => {
     setEditContact(c||null);
     setCName(c?.name||""); setCRole(c?.role||""); setCPhone(c?.phone||"");
     setCEmail(c?.email||""); setCNotes(c?.notes||"");
+    setCIsPrimary(c?.isPrimary||false);
+    setCSource((c?.source)||"manual");
+    setCConfidence((c?.confidence)||"unverified");
     setShowContactForm(true);
   };
   const saveContact = () => {
     if (!cName.trim()) return;
-    const entry = { id: editContact?.id||Date.now(), name:cName.trim(), role:cRole.trim(), phone:cPhone.trim(), email:cEmail.trim(), notes:cNotes.trim(), savedAt:new Date().toISOString() };
-    const updated = editContact
-      ? groupContacts.map(c => c.id===editContact.id ? entry : c)
-      : [...groupContacts, entry];
+    const entry = buildContact(
+      { name:cName, role:cRole, phone:cPhone, email:cEmail, notes:cNotes, isPrimary:cIsPrimary, source:cSource, confidence:cConfidence },
+      group.id, editContact?.id
+    );
+    let updated: Contact[];
+    if (cIsPrimary) {
+      const demoted = groupContacts.map(c => ({ ...c, isPrimary: false }));
+      updated = editContact ? demoted.map(c => c.id===editContact.id ? entry : c) : [...demoted, entry];
+    } else {
+      updated = editContact ? groupContacts.map(c => c.id===editContact.id ? entry : c) : [...groupContacts, entry];
+    }
     setGroupContacts(updated);
     try { localStorage.setItem(`grpContacts:${group.id}`, JSON.stringify(updated)); } catch {}
-    if (patchOverlay) {
-      patchOverlay([{ op: "set", path: `groupContacts.${group.id}`, value: updated }]);
-    }
+    if (patchOverlay) { patchOverlay([{ op: "set", path: `groupContacts.${group.id}`, value: updated }]); }
     setShowContactForm(false);
   };
   const deleteContact = (id:number) => {
@@ -594,15 +606,11 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
   };
 
   const saveResContact = (c:any, idx:number) => {
-    const entry = {
-      id: Date.now() + idx,
-      name: c.name,
-      role: c.role || "",
-      phone: c.phone || "",
-      email: c.email || "",
-      notes: "From AI research",
-      savedAt: new Date().toISOString(),
-    };
+    const entry = buildContact(
+      { name:c.name||"Unknown", role:c.role||"", phone:c.phone||"", email:c.email||"",
+        notes:"From AI research", isPrimary:false, source:"research", confidence:"likely" },
+      group.id, Date.now() + idx
+    );
     const updated = [...groupContacts, entry];
     setGroupContacts(updated);
     try { localStorage.setItem("grpContacts:" + group.id, JSON.stringify(updated)); } catch {}
@@ -614,11 +622,19 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
 
   const saveResNotes = () => {
     if (!resResult) return;
-    const pts = (resResult.talkingPoints||[]).map((p:string,i:number) => `${i+1}. ${p}`).join("\n");
-    const hooks = (resResult.hooks||[]).map((h:string) => `· ${h}`).join("\n");
-    const comp = resResult.competitive ? `\nCompetitive: ${resResult.competitive}` : "";
-    const lines = ["[AI Call Prep]", pts, hooks ? "\nAlso:\n"+hooks : "", comp].filter(Boolean).join("\n");
-    const newNote = groupNote ? groupNote + "\n\n" + lines : lines;
+    const pts = (resResult.talkingPoints||[]).map((p:string,i:number) => `${i+1}. ${p}`).join("
+");
+    const hooks = (resResult.hooks||[]).map((h:string) => `· ${h}`).join("
+");
+    const comp = resResult.competitive ? `
+Competitive: ${resResult.competitive}` : "";
+    const lines = ["[AI Call Prep]", pts, hooks ? "
+Also:
+"+hooks : "", comp].filter(Boolean).join("
+");
+    const newNote = groupNote ? groupNote + "
+
+" + lines : lines;
     saveNote(newNote);
   };
 
@@ -1599,5 +1615,3 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
 
 
 export default GroupDetail;
-
-
