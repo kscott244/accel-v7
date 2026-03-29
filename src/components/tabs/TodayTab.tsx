@@ -238,12 +238,12 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
           if(d<30)prob+=0.08;else if(d<60)prob+=0.05;else if(d<90)prob+=0.02;else if(d>180)prob-=0.04;}
       }
       const products=a.products||[];
-      const buying=products.filter((p:any)=>(p.cy1||0)>0).map((p:any)=>p.n?.toLowerCase()||"");
+      const buying=products.filter((p)=>(p.cy1||0)>0).map((p)=>p.n?.toLowerCase()||"");
       const hasXsell=(
-        (!buying.some((p:any)=>p.includes("simplishade"))&&buying.some((p:any)=>p.includes("harmonize")||p.includes("herculite")))||
-        (!buying.some((p:any)=>p.includes("optibond 360"))&&buying.some((p:any)=>p.includes("optibond")))||
-        (!buying.some((p:any)=>p.includes("sonicfill"))&&buying.some((p:any)=>p.includes("composite")||p.includes("herculite")))||
-        (!buying.some((p:any)=>p.includes("maxcem"))&&buying.some((p:any)=>p.includes("cement")||p.includes("rely")))
+        (!buying.some((p)=>p.includes("simplishade"))&&buying.some((p)=>p.includes("harmonize")||p.includes("herculite")))||
+        (!buying.some((p)=>p.includes("optibond 360"))&&buying.some((p)=>p.includes("optibond")))||
+        (!buying.some((p)=>p.includes("sonicfill"))&&buying.some((p)=>p.includes("composite")||p.includes("herculite")))||
+        (!buying.some((p)=>p.includes("maxcem"))&&buying.some((p)=>p.includes("cement")||p.includes("rely")))
       );
       if(hasXsell)prob+=0.04;
       const lat=badger?.lat||a.lat, lng2=badger?.lng||a.lng;
@@ -271,31 +271,31 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
     };
 
     const darkMaxPY=isEndgame?800:isSprint?2000:999999;
-    const upliftRaw=scored.filter((a:any)=>(a.cyQ?.[activeQ]||0)>0&&(a.pyQ?.[activeQ]||0)>(a.cyQ?.[activeQ]||0)).map((a:any)=>scoreAccount(a,"uplift"));
-    const darkRaw=scored.filter((a:any)=>(a.cyQ?.[activeQ]||0)===0&&(a.pyQ?.[activeQ]||0)>500&&(a.pyQ?.[activeQ]||0)<=darkMaxPY).map((a:any)=>scoreAccount(a,"dark"));
-    const allCandidates=[...new Map([...upliftRaw,...darkRaw].map((a:any)=>[a.id,a])).values()];
+    const upliftRaw=scored.filter((a)=>(a.cyQ?.[activeQ]||0)>0&&(a.pyQ?.[activeQ]||0)>(a.cyQ?.[activeQ]||0)).map((a)=>scoreAccount(a,"uplift"));
+    const darkRaw=scored.filter((a)=>(a.cyQ?.[activeQ]||0)===0&&(a.pyQ?.[activeQ]||0)>500&&(a.pyQ?.[activeQ]||0)<=darkMaxPY).map((a)=>scoreAccount(a,"dark"));
+    const allCandidates=[...new Map([...upliftRaw,...darkRaw].map((a)=>[a.id,a])).values()];
 
-    const withCoords=allCandidates.filter((a:any)=>{const b=BADGER[a.id]||BADGER[a.gId];return(b?.lat&&b?.lng)||(a.lat&&a.lng);}).map((a:any)=>{const b=BADGER[a.id]||BADGER[a.gId];return{...a,_lat:b?.lat||a.lat,_lng:b?.lng||a.lng};});
-    const clustered=allCandidates.map((a:any)=>{
+    const withCoords=allCandidates.filter((a)=>{const b=BADGER[a.id]||BADGER[a.gId];return(b?.lat&&b?.lng)||(a.lat&&a.lng);}).map((a)=>{const b=BADGER[a.id]||BADGER[a.gId];return{...a,_lat:b?.lat||a.lat,_lng:b?.lng||a.lng};});
+    const clustered=allCandidates.map((a)=>{
       const b=BADGER[a.id]||BADGER[a.gId];const aLat=b?.lat||a.lat;const aLng=b?.lng||a.lng;
-      const nearbyAccounts=withCoords.filter((nb:any)=>{if(nb.id===a.id)return false;const d=distMiles(aLat,aLng);const dB=distMiles(nb._lat,nb._lng);return Math.abs(d-dB)<20&&nb.ask>200;});
+      const nearbyAccounts=withCoords.filter((nb)=>{if(nb.id===a.id)return false;const d=distMiles(aLat,aLng);const dB=distMiles(nb._lat,nb._lng);return Math.abs(d-dB)<20&&nb.ask>200;});
       const clusterCount=nearbyAccounts.length;
       const solo=a.miles<75;const clusteredVisit=a.miles<120&&clusterCount>=2;const visitEligible=solo||clusteredVisit;
       let adjVS=a.visitScore;if(!visitEligible)adjVS=0;else if(a.miles>60&&clusterCount>=2)adjVS*=1.2;
       return{...a,clusterCount,visitEligible,adjustedVisitScore:adjVS,
-        nearbyAccounts:nearbyAccounts.slice(0,8),nearbyNames:nearbyAccounts.slice(0,3).map((nb:any)=>nb.name),
+        nearbyAccounts:nearbyAccounts.slice(0,8),nearbyNames:nearbyAccounts.slice(0,3).map((nb)=>nb.name),
         signals:[...(a.signals||[]),clusterCount>=2?`${clusterCount} nearby accts`:null,!visitEligible&&a.miles>75?`${Math.round(a.miles)}mi — call instead`:null].filter(Boolean),
       };
     });
 
-    const visitList=clustered.filter((a:any)=>a.visitEligible&&a.track==="uplift").sort((a:any,b:any)=>b.adjustedVisitScore-a.adjustedVisitScore).slice(0,5);
-    const visitIds=new Set(visitList.map((a:any)=>a.id));
-    const callList=clustered.filter((a:any)=>!visitIds.has(a.id)).sort((a:any,b:any)=>b.callScore-a.callScore).slice(0,8);
+    const visitList=clustered.filter((a)=>a.visitEligible&&a.track==="uplift").sort((a,b)=>b.adjustedVisitScore-a.adjustedVisitScore).slice(0,5);
+    const visitIds=new Set(visitList.map((a)=>a.id));
+    const callList=clustered.filter((a)=>!visitIds.has(a.id)).sort((a,b)=>b.callScore-a.callScore).slice(0,8);
     const dealerGroups={};
-    clustered.forEach((a:any)=>{if(a.dealer&&a.dealer!=="All Other"){dealerGroups[a.dealer]=dealerGroups[a.dealer]||[];dealerGroups[a.dealer].push(a);}});
-    const dealerActions=Object.entries(dealerGroups).map(([dealer,accts])=>{const top=(accts).sort((a:any,b:any)=>b.callScore-a.callScore).slice(0,3);return{dealer,accts:top,totalAsk:top.reduce((s,a)=>s+a.ask,0)};}).sort((a,b)=>b.totalAsk-a.totalAsk).slice(0,3);
+    clustered.forEach((a)=>{if(a.dealer&&a.dealer!=="All Other"){dealerGroups[a.dealer]=dealerGroups[a.dealer]||[];dealerGroups[a.dealer].push(a);}});
+    const dealerActions=Object.entries(dealerGroups).map(([dealer,accts])=>{const top=(accts).sort((a,b)=>b.callScore-a.callScore).slice(0,3);return{dealer,accts:top,totalAsk:top.reduce((s,a)=>s+a.ask,0)};}).sort((a,b)=>b.totalAsk-a.totalAsk).slice(0,3);
     const doneTotal=Object.values(odDone).reduce((s,v)=>s+(v.amt||0),0);
-    const pending=clustered.filter((a:any)=>!odDone[a.id]);
+    const pending=clustered.filter((a)=>!odDone[a.id]);
     const conservative=doneTotal+pending.reduce((s,a)=>s+a.ask*Math.min(a.prob*0.65,1),0);
     const base=doneTotal+pending.reduce((s,a)=>s+a.ask*a.prob,0);
     const aggressive=doneTotal+pending.reduce((s,a)=>s+a.ask*Math.min(a.prob*1.35,1),0);
@@ -304,7 +304,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
   },[scored,odDone,activeQ]);
 
   // ── Mission buckets ──────────────────────────────────────────────────────
-  const visitIds = useMemo(()=>new Set((overdrive?.visitList||[]).map((a:any)=>a.id)),[overdrive]);
+  const visitIds = useMemo(()=>new Set((overdrive?.visitList||[]).map((a)=>a.id)),[overdrive]);
 
   // HIT LIST: top 6 pending — visits first, then calls
   const hitList = useMemo(()=>{
@@ -319,23 +319,23 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
   // EASY WINS: uplift accounts with high prob (>0.65) and gap < $1500 — quick reorders
   const easyWins = useMemo(()=>{
     if(!overdrive)return[];
-    const hitIds=new Set(hitList.map((a:any)=>a.id));
+    const hitIds=new Set(hitList.map((a)=>a.id));
     return(overdrive.allCandidates||[])
-      .filter((a:any)=>!hitIds.has(a.id)&&!odDone[a.id]&&a.track==="uplift"&&a.prob>=0.65&&(a.ask||0)<1500&&(a.ask||0)>=150)
-      .sort((a:any,b:any)=>b.prob-a.prob)
+      .filter((a)=>!hitIds.has(a.id)&&!odDone[a.id]&&a.track==="uplift"&&a.prob>=0.65&&(a.ask||0)<1500&&(a.ask||0)>=150)
+      .sort((a,b)=>b.prob-a.prob)
       .slice(0,5);
   },[overdrive,hitList,odDone]);
 
   // AT RISK: active accounts declining fast (cyQ > 0, ret < 55%, py > 800) — not already hit
   const atRisk = useMemo(()=>{
-    const hitIds=new Set(hitList.map((a:any)=>a.id));
-    const easyIds=new Set(easyWins.map((a:any)=>a.id));
+    const hitIds=new Set(hitList.map((a)=>a.id));
+    const easyIds=new Set(easyWins.map((a)=>a.id));
     return scored
-      .filter((a:any)=>{
+      .filter((a)=>{
         const cy=a.cyQ?.[activeQ]||0,py=a.pyQ?.[activeQ]||0;
         return cy>0&&py>800&&cy/py<0.55&&!hitIds.has(a.id)&&!easyIds.has(a.id)&&!odDone[a.id];
       })
-      .sort((a:any,b:any)=>{
+      .sort((a,b)=>{
         const gapA=(a.pyQ?.[activeQ]||0)-(a.cyQ?.[activeQ]||0);
         const gapB=(b.pyQ?.[activeQ]||0)-(b.cyQ?.[activeQ]||0);
         return gapB-gapA;
@@ -346,9 +346,9 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
   // FOLLOW UP: due tasks + protect accounts (≥85% ret) that haven't been visited in 60+ days
   const followUp = useMemo(()=>{
     const todayStr=new Date().toISOString().slice(0,10);
-    const dueTasks=(tasks||[]).filter((t:any)=>!t.completed&&t.dueDate<=todayStr);
+    const dueTasks=(tasks||[]).filter((t)=>!t.completed&&t.dueDate<=todayStr);
     const protectAccts=scored
-      .filter((a:any)=>{
+      .filter((a)=>{
         const cy=a.cyQ?.[activeQ]||0,py=a.pyQ?.[activeQ]||0;
         if(cy<py*0.85||py<500||cy<=0)return false;
         const b=BADGER[a.id]||BADGER[a.gId];
@@ -356,44 +356,44 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
         const days=(Date.now()-new Date(b.lastVisit).getTime())/86400000;
         return days>60;
       })
-      .sort((a:any,b:any)=>(b.cyQ?.[activeQ]||0)-(a.cyQ?.[activeQ]||0))
+      .sort((a,b)=>(b.cyQ?.[activeQ]||0)-(a.cyQ?.[activeQ]||0))
       .slice(0,5);
     return{tasks:dueTasks,accounts:protectAccts};
   },[scored,tasks,activeQ]);
 
   // DEAD WEIGHT: low value, low probability — skip for now
   const deadWeight = useMemo(()=>{
-    const hitIds=new Set(hitList.map((a:any)=>a.id));
-    const easyIds=new Set(easyWins.map((a:any)=>a.id));
-    const riskIds=new Set(atRisk.map((a:any)=>a.id));
+    const hitIds=new Set(hitList.map((a)=>a.id));
+    const easyIds=new Set(easyWins.map((a)=>a.id));
+    const riskIds=new Set(atRisk.map((a)=>a.id));
     return scored
-      .filter((a:any)=>{
+      .filter((a)=>{
         const py=a.pyQ?.[activeQ]||0,cy=a.cyQ?.[activeQ]||0;
         if(hitIds.has(a.id)||easyIds.has(a.id)||riskIds.has(a.id))return false;
         if(py<200&&cy<200)return true; // tiny account
         if(py>0&&cy>0&&cy/py>=0.85&&py<500)return true; // stable but tiny
         return false;
       })
-      .sort((a:any,b:any)=>(a.pyQ?.[activeQ]||0)-(b.pyQ?.[activeQ]||0))
+      .sort((a,b)=>(a.pyQ?.[activeQ]||0)-(b.pyQ?.[activeQ]||0))
       .slice(0,8);
   },[scored,hitList,easyWins,atRisk,activeQ]);
 
   // ── Search ───────────────────────────────────────────────────────────────
-  const groupLocsMap = useMemo(()=>{const m={};(groups||[]).forEach((g:any)=>{m[g.id]=g.locs||1;});return m;},[groups]);
+  const groupLocsMap = useMemo(()=>{const m={};(groups||[]).forEach((g)=>{m[g.id]=g.locs||1;});return m;},[groups]);
   const q = search.trim().toLowerCase();
   const searchResults = useMemo(()=>{
     if(!q)return[];
-    const matches=scored.filter((a:any)=>a.name?.toLowerCase().includes(q)||a.city?.toLowerCase().includes(q)||a.addr?.toLowerCase().includes(q)||a.gName?.toLowerCase().includes(q));
+    const matches=scored.filter((a)=>a.name?.toLowerCase().includes(q)||a.city?.toLowerCase().includes(q)||a.addr?.toLowerCase().includes(q)||a.gName?.toLowerCase().includes(q));
     const parentIds=new Set();const childOnly=[];
-    matches.forEach((a:any)=>{
+    matches.forEach((a)=>{
       const gNameMatch=a.gName?.toLowerCase().includes(q);
       const childMatch=a.name?.toLowerCase().includes(q)||a.city?.toLowerCase().includes(q)||a.addr?.toLowerCase().includes(q);
-      const pg=(groups||[]).find((g:any)=>g.id===a.gId);
+      const pg=(groups||[]).find((g)=>g.id===a.gId);
       if(gNameMatch&&pg&&pg.locs>1)parentIds.add(a.gId);
       else if(childMatch)childOnly.push(a);
     });
     const results=[];
-    parentIds.forEach(gId=>{const pg=(groups||[]).find((g:any)=>g.id===gId);if(pg)results.push({_isParent:true,_group:pg});});
+    parentIds.forEach(gId=>{const pg=(groups||[]).find((g)=>g.id===gId);if(pg)results.push({_isParent:true,_group:pg});});
     childOnly.forEach(a=>{if(!parentIds.has(a.gId))results.push(a);});
     return results.slice(0,30);
   },[q,scored,groups]);
@@ -634,15 +634,15 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
           </button>
           {deltaOpen&&<div style={{padding:"0 14px 12px"}}>
             {reactivated.length>0&&<><div style={{fontSize:8,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.green,marginBottom:5}}>Back from $0</div>
-              {reactivated.map((item:any)=>(
-                <button key={item.id} onClick={()=>goAcct(scored.find((a:any)=>a.id===item.id)||item)} style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",padding:"6px 0",background:"none",border:"none",borderBottom:`1px solid ${T.b2}`,cursor:"pointer",fontFamily:"inherit"}}>
+              {reactivated.map((item)=>(
+                <button key={item.id} onClick={()=>goAcct(scored.find((a)=>a.id===item.id)||item)} style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",padding:"6px 0",background:"none",border:"none",borderBottom:`1px solid ${T.b2}`,cursor:"pointer",fontFamily:"inherit"}}>
                   <div style={{textAlign:"left"}}><div style={{fontSize:11,fontWeight:600,color:T.t1}}>{item.name}</div><div style={{fontSize:9,color:T.t4}}>{item.city}, {item.st}</div></div>
                   <div className="m" style={{fontSize:11,fontWeight:700,color:T.green}}>+{$$(item.currCY)}</div>
                 </button>
               ))}<div style={{marginBottom:8}}/></>}
             {wentDark.length>0&&<><div style={{fontSize:8,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.red,marginBottom:5}}>Went dark</div>
-              {wentDark.map((item:any)=>(
-                <button key={item.id} onClick={()=>goAcct(scored.find((a:any)=>a.id===item.id)||item)} style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",padding:"6px 0",background:"none",border:"none",borderBottom:`1px solid ${T.b2}`,cursor:"pointer",fontFamily:"inherit"}}>
+              {wentDark.map((item)=>(
+                <button key={item.id} onClick={()=>goAcct(scored.find((a)=>a.id===item.id)||item)} style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",padding:"6px 0",background:"none",border:"none",borderBottom:`1px solid ${T.b2}`,cursor:"pointer",fontFamily:"inherit"}}>
                   <div style={{textAlign:"left"}}><div style={{fontSize:11,fontWeight:600,color:T.t1}}>{item.name}</div><div style={{fontSize:9,color:T.t4}}>{item.city}, {item.st}</div></div>
                   <div className="m" style={{fontSize:11,fontWeight:700,color:T.red}}>-{$$(item.prevCY)}</div>
                 </button>
@@ -655,8 +655,8 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
 
       {/* HIT LIST */}
       {hitList.length>0&&<>
-        <BucketHeader bucket="hitList" count={`${hitList.filter((a:any)=>!odDone[a.id]).length} pending`} open={openBuckets.hitList} onToggle={()=>toggleBucket("hitList")}/>
-        {openBuckets.hitList&&hitList.map((a:any)=>(
+        <BucketHeader bucket="hitList" count={`${hitList.filter((a)=>!odDone[a.id]).length} pending`} open={openBuckets.hitList} onToggle={()=>toggleBucket("hitList")}/>
+        {openBuckets.hitList&&hitList.map((a)=>(
           <ActionCard key={a.id} a={a} bucket="hitList" done={odDone[a.id]} isVisit={visitIds.has(a.id)}
             onTap={goAcct} groupLocsMap={groupLocsMap} groups={groups} goGroup={goGroup}
             onWin={promptOutcome} onHalf={promptOutcome} onLoss={promptOutcome} onUndo={clearDone}/>
@@ -667,7 +667,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
       {/* EASY WINS */}
       {easyWins.length>0&&<>
         <BucketHeader bucket="easyWin" count={`${easyWins.length}`} open={openBuckets.easyWin} onToggle={()=>toggleBucket("easyWin")}/>
-        {openBuckets.easyWin&&easyWins.map((a:any)=>(
+        {openBuckets.easyWin&&easyWins.map((a)=>(
           <ActionCard key={a.id} a={a} bucket="easyWin" done={odDone[a.id]}
             onTap={goAcct} groupLocsMap={groupLocsMap} groups={groups} goGroup={goGroup}
             onWin={promptOutcome} onHalf={promptOutcome} onLoss={promptOutcome} onUndo={clearDone}/>
@@ -679,7 +679,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
       {atRisk.length>0&&<>
         <BucketHeader bucket="atRisk" count={`${atRisk.length}`} open={openBuckets.atRisk} onToggle={()=>toggleBucket("atRisk")}/>
         {openBuckets.atRisk&&<div style={{background:T.s1,border:`1px solid ${BUCKETS.atRisk.border}`,borderRadius:12,overflow:"hidden",marginBottom:0}}>
-          {atRisk.map((a:any,i:number)=>{
+          {atRisk.map((a,i)=>{
             const py=a.pyQ?.[activeQ]||0,cy=a.cyQ?.[activeQ]||0,gap=py-cy;
             const isLast=i===atRisk.length-1;
             return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
@@ -702,7 +702,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
       {(followUp.tasks.length>0||followUp.accounts.length>0)&&<>
         <BucketHeader bucket="followUp" count={`${followUp.tasks.length+followUp.accounts.length}`} open={openBuckets.followUp} onToggle={()=>toggleBucket("followUp")}/>
         {openBuckets.followUp&&<div style={{background:T.s1,border:`1px solid ${BUCKETS.followUp.border}`,borderRadius:12,overflow:"hidden"}}>
-          {followUp.tasks.map((t:any,i:number)=>{
+          {followUp.tasks.map((t,i)=>{
             const isLast=i===followUp.tasks.length-1&&followUp.accounts.length===0;
             const overdue=t.dueDate<new Date().toISOString().slice(0,10);
             return <div key={t.id} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderBottom:isLast?"none":`1px solid ${T.b2}`,borderLeft:`3px solid ${BUCKETS.followUp.color}`}}>
@@ -714,7 +714,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
               <span style={{fontSize:9,fontWeight:700,color:overdue?T.red:T.amber,flexShrink:0}}>{overdue?"Overdue":"Today"}</span>
             </div>;
           })}
-          {followUp.accounts.map((a:any,i:number)=>{
+          {followUp.accounts.map((a,i)=>{
             const isLast=i===followUp.accounts.length-1;
             const cy=a.cyQ?.[activeQ]||0,py=a.pyQ?.[activeQ]||0;
             return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
@@ -737,7 +737,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
       {deadWeight.length>0&&<>
         <BucketHeader bucket="deadWeight" count={`${deadWeight.length}`} open={openBuckets.deadWeight} onToggle={()=>toggleBucket("deadWeight")}/>
         {openBuckets.deadWeight&&<div style={{background:T.s1,border:`1px solid ${BUCKETS.deadWeight.border}`,borderRadius:12,overflow:"hidden"}}>
-          {deadWeight.map((a:any,i:number)=>{
+          {deadWeight.map((a,i)=>{
             const py=a.pyQ?.[activeQ]||0,cy=a.cyQ?.[activeQ]||0;
             const isLast=i===deadWeight.length-1;
             return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
@@ -766,7 +766,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
       const totalAsk=allStops.reduce((s,a)=>s+(a.ask||0),0);
       const totalExp=allStops.reduce((s,a)=>s+(a.ask||0)*(a.prob||0),0);
       const buildRoute=()=>{
-        const stops=allStops.map((a:any)=>{const b=BADGER[a.id]||BADGER[a.gId];return b?.address||a.addr||`${a.name}, ${a.city}, ${a.st}`;});
+        const stops=allStops.map((a)=>{const b=BADGER[a.id]||BADGER[a.gId];return b?.address||a.addr||`${a.name}, ${a.city}, ${a.st}`;});
         const origin=encodeURIComponent("Thomaston, CT");const dest=encodeURIComponent(stops[stops.length-1]);
         const wp=stops.slice(0,-1).map((s)=>encodeURIComponent(s)).join("|");
         window.open(`https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}${wp?`&waypoints=${wp}`:""}&travelmode=driving`,"_blank");
@@ -779,7 +779,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
           </div>
           <button onClick={buildRoute} style={{width:"100%",background:`linear-gradient(90deg,${T.blue},${T.cyan})`,border:"none",borderRadius:10,padding:"10px 0",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer",fontFamily:"inherit",marginBottom:14,marginTop:8}}>🗺 Open Route in Maps</button>
           <div style={{overflowY:"auto",flex:1}}>
-            {allStops.map((a:any,i:number)=>{
+            {allStops.map((a,i)=>{
               const done=odDone[a.id];const isAnchor=i===0;
               return <div key={a.id} style={{background:isAnchor?"rgba(251,191,36,.06)":T.s2,border:`1px solid ${isAnchor?"rgba(251,191,36,.25)":T.b1}`,borderRadius:12,padding:"10px 12px",marginBottom:8}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
