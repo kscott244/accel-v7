@@ -8,6 +8,8 @@ import { Bar, Chev, AccountId, GroupBadge, fixGroupName } from "@/components/pri
 import NewAddsSection from "@/components/tabs/NewAddsSection";
 import { BADGER } from "@/lib/data";
 import { buildDailyPlan, ACTION_LABEL, ACTION_COLOR, type PlanItem } from "@/lib/dailyPlan";
+import { buildNotices, type Notice } from "@/lib/notices";
+import NoticesPanel from "@/components/tabs/NoticesPanel";
 
 // ── Bucket config ────────────────────────────────────────────────────────────
 const BUCKETS = {
@@ -126,12 +128,22 @@ function BucketHeader({bucket, count, subtitle, open, onToggle}:any) {
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGroup,activeQ:activeQProp,weeklyDelta,tasks=[],onCompleteTask,onGoTasks,overlays}) {
+function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGroup,activeQ:activeQProp,weeklyDelta,tasks=[],onCompleteTask,onGoTasks,overlays,patchOverlay}) {
   const activeQ = activeQProp || "1";
 
   // ── Daily Success Plan ─────────────────────────────────────────────────────
   const dailyPlan = useMemo(() => buildDailyPlan(groups, overlays, tasks, { qk: activeQ, maxItems: 5 }),
     [groups, overlays, tasks, activeQ]);
+
+  // ── Assistant Notices ──────────────────────────────────────────────────────
+  const notices = useMemo(() => buildNotices(groups, overlays, { qk: activeQ, maxItems: 6 }),
+    [groups, overlays, activeQ]);
+
+  const dismissNotice = (id) => {
+    const current = overlays?.noticeDismissals || [];
+    if (current.includes(id)) return;
+    if (patchOverlay) patchOverlay([{ op: "set", path: "noticeDismissals", value: [...current, id] }]);
+  };
 
   const [search, setSearch]           = useState("");
   const [odDone, setOdDone]           = useState<Record<string,any>>(() => {
@@ -390,6 +402,13 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
   const statusLabel=ahead?(isFY?"Ahead of FY":"Ahead"):onTrack?"On Track":"Behind";
 
   return <div style={{padding:"0 0 80px"}}>
+
+      {/* ── ASSISTANT NOTICES ── */}
+      <NoticesPanel
+        notices={notices}
+        onDismiss={dismissNotice}
+        onOpen={(groupId) => { const g = (groups||[]).find((gr) => gr.id === groupId); if(g) goGroup(g); }}
+      />
 
       {/* ── DAILY SUCCESS PLAN ── */}
       {dailyPlan.length > 0 && (
