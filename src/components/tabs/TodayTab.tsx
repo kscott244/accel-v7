@@ -7,8 +7,8 @@ import { $$, $f, pc } from "@/lib/format";
 import { Bar, Chev, AccountId, GroupBadge, fixGroupName } from "@/components/primitives";
 import NewAddsSection from "@/components/tabs/NewAddsSection";
 import { BADGER } from "@/lib/data";
-import { buildDailyPlan, ACTION_LABEL, ACTION_COLOR, type PlanItem } from "@/lib/dailyPlan";
-import { buildNotices, type Notice } from "@/lib/notices";
+import { buildDailyPlan, ACTION_LABEL, ACTION_COLOR } from "@/lib/dailyPlan";
+import { buildNotices } from "@/lib/notices";
 import NoticesPanel from "@/components/tabs/NoticesPanel";
 import EstTab from "@/components/tabs/EstTab";
 import EstTab from "@/components/tabs/EstTab";
@@ -148,23 +148,21 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
   };
 
   const [search, setSearch]           = useState("");
-  const [odDone, setOdDone]           = useState<Record<string,any>>(() => {
+  const [odDone, setOdDone]           = useState(() => {
     try { return JSON.parse(localStorage.getItem("overdrive_done") || "{}"); } catch { return {}; }
   });
-  const [odNotePrompt, setOdNotePrompt] = useState<any>(null);
+  const [odNotePrompt, setOdNotePrompt] = useState(null);
   const [odNoteText, setOdNoteText]     = useState("");
-  const [tripAnchor, setTripAnchor]     = useState<any>(null);
+  const [tripAnchor, setTripAnchor]     = useState(null);
   const [deltaOpen, setDeltaOpen]       = useState(true);
   const [showNewAdds, setShowNewAdds]   = useState(false);
-  const [openBuckets, setOpenBuckets]   = useState<Record<string,boolean>>({
+  const [openBuckets, setOpenBuckets]   = useState({
     hitList:true, easyWin:true, atRisk:true, followUp:true, deadWeight:false,
   });
   const [showForecast, setShowForecast] = useState(false);
   const [noticesOpen, setNoticesOpen]   = useState(false);
-  const [showForecast, setShowForecast] = useState(false);
-  const [noticesOpen, setNoticesOpen]   = useState(false);
 
-  const [kpiScopePref, setKpiScopePref] = useState<string>(() => {
+  const [kpiScopePref, setKpiScopePref] = useState(() => {
     try { return localStorage.getItem("kpi_scope_v1") || ""; } catch { return ""; }
   });
   const kpiScope = kpiScopePref || activeQ;
@@ -294,7 +292,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
     const visitList=clustered.filter((a:any)=>a.visitEligible&&a.track==="uplift").sort((a:any,b:any)=>b.adjustedVisitScore-a.adjustedVisitScore).slice(0,5);
     const visitIds=new Set(visitList.map((a:any)=>a.id));
     const callList=clustered.filter((a:any)=>!visitIds.has(a.id)).sort((a:any,b:any)=>b.callScore-a.callScore).slice(0,8);
-    const dealerGroups:Record<string,any[]>={};
+    const dealerGroups={};
     clustered.forEach((a:any)=>{if(a.dealer&&a.dealer!=="All Other"){dealerGroups[a.dealer]=dealerGroups[a.dealer]||[];dealerGroups[a.dealer].push(a);}});
     const dealerActions=Object.entries(dealerGroups).map(([dealer,accts])=>{const top=(accts as any[]).sort((a:any,b:any)=>b.callScore-a.callScore).slice(0,3);return{dealer,accts:top,totalAsk:top.reduce((s:number,a:any)=>s+a.ask,0)};}).sort((a,b)=>b.totalAsk-a.totalAsk).slice(0,3);
     const doneTotal=Object.values(odDone).reduce((s,v:any)=>s+(v.amt||0),0);
@@ -382,7 +380,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
   },[scored,hitList,easyWins,atRisk,activeQ]);
 
   // ── Search ───────────────────────────────────────────────────────────────
-  const groupLocsMap = useMemo(()=>{const m:Record<string,number>={};(groups||[]).forEach((g:any)=>{m[g.id]=g.locs||1;});return m;},[groups]);
+  const groupLocsMap = useMemo(()=>{const m={};(groups||[]).forEach((g:any)=>{m[g.id]=g.locs||1;});return m;},[groups]);
   const q = search.trim().toLowerCase();
   const searchResults = useMemo(()=>{
     if(!q)return[];
@@ -551,7 +549,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
           <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:"#4f8ef7",marginBottom:8}}>
             Today's Plan
           </div>
-          {dailyPlan.map((item: PlanItem, i: number) => {
+          {dailyPlan.map((item, i) => {
             const ac = ACTION_COLOR[item.actionType];
             const al = ACTION_LABEL[item.actionType];
             return (
