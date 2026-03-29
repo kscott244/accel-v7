@@ -201,18 +201,11 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
     if (patchOverlay) patchOverlay([{ op: "set", path: "noticeDismissals", value: [...current, id] }]);
   };
 
-  // ── Context-scored accounts (full territory filtered for area view) ────
-  const contextScored = useMemo(() => {
-    if (!contextFilter) return null; // null = use regular buckets
-    return scored.filter(contextFilter)
-      .map(a => {
-        const py = a.pyQ?.[activeQ] || 0;
-        const cy = a.cyQ?.[activeQ] || 0;
-        return { ...a, _gap: py - cy, _py: py, _cy: cy, _ret: py > 0 ? cy / py : 0 };
-      })
-      .sort((a, b) => b._gap - a._gap)
-      .slice(0, 25);
-  }, [scored, contextFilter, activeQ]);
+  // ── Effective scored list (context-filtered input to ALL intelligence) ───
+  const effectiveScored = useMemo(() => {
+    if (!contextFilter) return scored;
+    return scored.filter(contextFilter);
+  }, [scored, contextFilter]);
 
 
 
@@ -262,7 +255,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
 
   // ── Scoring engine (preserved entirely) ─────────────────────────────────
   const overdrive = useMemo(() => {
-    if (!scored.length) return null;
+    if (!effectiveScored.length) return null;
     const dLeft = daysLeftInQuarter(activeQ);
     const isEndgame = dLeft <= 5;
     const isSprint  = dLeft <= 14;
@@ -326,8 +319,8 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
     };
 
     const darkMaxPY=isEndgame?800:isSprint?2000:999999;
-    const upliftRaw=scored.filter((a)=>(a.cyQ?.[activeQ]||0)>0&&(a.pyQ?.[activeQ]||0)>(a.cyQ?.[activeQ]||0)).map((a)=>scoreAccount(a,"uplift"));
-    const darkRaw=scored.filter((a)=>(a.cyQ?.[activeQ]||0)===0&&(a.pyQ?.[activeQ]||0)>500&&(a.pyQ?.[activeQ]||0)<=darkMaxPY).map((a)=>scoreAccount(a,"dark"));
+    const upliftRaw=effectiveScored.filter((a)=>(a.cyQ?.[activeQ]||0)>0&&(a.pyQ?.[activeQ]||0)>(a.cyQ?.[activeQ]||0)).map((a)=>scoreAccount(a,"uplift"));
+    const darkRaw=effectiveScored.filter((a)=>(a.cyQ?.[activeQ]||0)===0&&(a.pyQ?.[activeQ]||0)>500&&(a.pyQ?.[activeQ]||0)<=darkMaxPY).map((a)=>scoreAccount(a,"dark"));
     const allCandidates=[...new Map([...upliftRaw,...darkRaw].map((a)=>[a.id,a])).values()];
 
     const withCoords=allCandidates.filter((a)=>{const b=BADGER[a.id]||BADGER[a.gId];return(b?.lat&&b?.lng)||(a.lat&&a.lng);}).map((a)=>{const b=BADGER[a.id]||BADGER[a.gId];return{...a,_lat:b?.lat||a.lat,_lng:b?.lng||a.lng};});
@@ -356,7 +349,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
     const aggressive=doneTotal+pending.reduce((s,a)=>s+a.ask*Math.min(a.prob*1.35,1),0);
     return{visitList,callList,dealerActions,conservative,base,aggressive,doneTotal,
       totalTargets:clustered.length,modeLabel,isEndgame,isSprint,allCandidates:clustered};
-  },[scored,odDone,activeQ]);
+  },[effectiveScored,odDone,activeQ]);
 
   // ── Mission buckets ──────────────────────────────────────────────────────
   const visitIds = useMemo(()=>new Set((overdrive?.visitList||[]).map((a)=>a.id)),[overdrive]);
@@ -385,7 +378,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
   const atRisk = useMemo(()=>{
     const hitIds=new Set(hitList.map((a)=>a.id));
     const easyIds=new Set(easyWins.map((a)=>a.id));
-    return scored
+    return effectiveScored
       .filter((a)=>{
         const cy=a.cyQ?.[activeQ]||0,py=a.pyQ?.[activeQ]||0;
         return cy>0&&py>800&&cy/py<0.55&&!hitIds.has(a.id)&&!easyIds.has(a.id)&&!odDone[a.id];
@@ -396,13 +389,13 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
         return gapB-gapA;
       })
       .slice(0,6);
-  },[scored,hitList,easyWins,activeQ,odDone]);
+  },[effectiveScored,hitList,easyWins,activeQ,odDone]);
 
   // FOLLOW UP: due tasks + protect accounts (≥85% ret) that haven't been visited in 60+ days
   const followUp = useMemo(()=>{
     const todayStr=new Date().toISOString().slice(0,10);
     const dueTasks=(tasks||[]).filter((t)=>!t.completed&&t.dueDate<=todayStr);
-    const protectAccts=scored
+    const protectAccts=effectiveScored
       .filter((a)=>{
         const cy=a.cyQ?.[activeQ]||0,py=a.pyQ?.[activeQ]||0;
         if(cy<py*0.85||py<500||cy<=0)return false;
@@ -414,14 +407,14 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
       .sort((a,b)=>(b.cyQ?.[activeQ]||0)-(a.cyQ?.[activeQ]||0))
       .slice(0,5);
     return{tasks:dueTasks,accounts:protectAccts};
-  },[scored,tasks,activeQ]);
+  },[effectiveScored,tasks,activeQ]);
 
   // DEAD WEIGHT: low value, low probability — skip for now
   const deadWeight = useMemo(()=>{
     const hitIds=new Set(hitList.map((a)=>a.id));
     const easyIds=new Set(easyWins.map((a)=>a.id));
     const riskIds=new Set(atRisk.map((a)=>a.id));
-    return scored
+    return effectiveScored
       .filter((a)=>{
         const py=a.pyQ?.[activeQ]||0,cy=a.cyQ?.[activeQ]||0;
         if(hitIds.has(a.id)||easyIds.has(a.id)||riskIds.has(a.id))return false;
@@ -431,7 +424,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
       })
       .sort((a,b)=>(a.pyQ?.[activeQ]||0)-(b.pyQ?.[activeQ]||0))
       .slice(0,8);
-  },[scored,hitList,easyWins,atRisk,activeQ]);
+  },[effectiveScored,hitList,easyWins,atRisk,activeQ]);
 
   // ── Search ───────────────────────────────────────────────────────────────
   const groupLocsMap = useMemo(()=>{const m={};(groups||[]).forEach((g)=>{m[g.id]=g.locs||1;});return m;},[groups]);
@@ -550,7 +543,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
         style={{flex:1,minWidth:120,height:30,borderRadius:8,border:`1px solid ${contextCity?T.blue+"44":T.b1}`,
           background:T.s1,color:T.t1,fontSize:11,padding:"0 10px",outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}/>}
       {todayContext!=="territory"&&<span style={{fontSize:9,color:T.t4}}>
-        {contextScored ? `${contextScored.length} accts` : ""}
+        {effectiveScored.length} accts
       </span>}
     </div>
 
@@ -741,33 +734,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
         </div>;
       })()}
 
-      {/* ── MISSION BUCKETS / CONTEXT ACCOUNTS ── */}
-
-      {/* When context is active, show focused area account list instead of buckets */}
-      {contextScored ? <>
-        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan,marginBottom:6}}>
-          {todayContext==="home"?"Near Home":contextCity||"Area"} Accounts · {contextScored.length}
-        </div>
-        {contextScored.length===0&&<div style={{padding:"24px 0",textAlign:"center",color:T.t4,fontSize:12}}>No accounts in this area.</div>}
-        {contextScored.map((a,i)=>{
-          const gap=a._gap;const py=a._py;const cy=a._cy;
-          return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
-            style={{animationDelay:`${i*15}ms`,width:"100%",textAlign:"left",background:T.s1,
-              border:`1px solid ${T.b1}`,borderLeft:`3px solid ${gap>0?T.red:T.green}`,
-              borderRadius:12,padding:"10px 12px",marginBottom:6,cursor:"pointer",
-              display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <div style={{flex:1,minWidth:0}}>
-              <AccountId name={a.name} gName={a.gName} size="md" locs={groupLocsMap[a.gId]}/>
-              <div style={{fontSize:9,color:T.t4,marginTop:1}}>
-                {[a.city,a.st].filter(Boolean).join(", ")}
-                {gap>0?<span style={{color:T.red}}> · {$$(gap)} gap</span>:<span style={{color:T.green}}> · +{$$(-gap)}</span>}
-                {py>0&&<span> · {Math.round(a._ret*100)}% ret</span>}
-              </div>
-            </div>
-            <Chev/>
-          </button>;
-        })}
-      </> : <>
+      {/* ── MISSION BUCKETS ── */}
 
       {/* HIT LIST */}
       {hitList.length>0&&<>
@@ -873,8 +840,6 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
       </>}
 
       {scored.length===0&&<div style={{padding:"40px 0",textAlign:"center",color:T.t4,fontSize:12}}>Upload a CSV to get started.</div>}
-
-      </>}
 
     </div>}
 
