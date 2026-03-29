@@ -131,7 +131,7 @@
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-29T06:19:33.565Z",
+  "lastUpdated": "2026-03-29T06:20:42.374Z",
   "tasks": [
     {
       "id": 1774682049928,
@@ -268,9 +268,11 @@
     },
     "Master-CM216446": {
       "groupId": "Master-CM216446",
-      "lastActionAt": "2026-03-29T06:19:33.159Z",
-      "lastMeaningfulChangeAt": "2026-03-29T06:19:33.159Z",
-      "updatedAt": "2026-03-29T06:19:33.159Z"
+      "lastActionAt": "2026-03-29T06:20:41.917Z",
+      "updatedAt": "2026-03-29T06:20:41.917Z"
     }
+  },
+  "groupNotes": {
+    "Master-CM216446": "[AI Call Prep]\n1. Your Attleboro Dental Group location opened in September 2022 with over 5,000 square feet—that's a major expansion that positioned you to handle complex cases in-house; how is that new facility supporting your full-arch implant and periodontal work?\n2. I noticed you're the Massachusetts Vice President of the Academy of General Dentistry and heavily involved in continuing education on implants and oral surgery—are your team's supply needs keeping pace with the advanced procedures you're now offering under one roof?\n3. Your practice is now recognized as the top-rated dental office in Massachusetts on Google; with that kind of patient growth and demand, let's make sure your inventory planning for restoratives and implant materials is optimized.\n\nAlso:\n· Named top-rated dental office in Massachusetts on Google\n· Built multi-location practice model with 25+ clinical staff\n· Advanced specialization in dental implants, periodontics, and full-arch restorations\n· Aggressive expansion with new 5,000 sq ft state-of-the-art facility in 2022"
   }
 }
