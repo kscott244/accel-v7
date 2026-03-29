@@ -1,64 +1,74 @@
 # CURRENT PHASE -- accel-v7
 
-## Active: Phase 5 -- Assistant Notices
+## Active: Phase 6 -- Assistant Inbox COMPLETE
 
 ### What Was Done
 
-**Goal**: Make the app proactive — surface important findings without waiting for Ken to dig.
-
-**Approach**: Deterministic notice generation. Every notice is grounded in real data signals.
-No AI. No hallucinations. If the signal isn't there, the notice doesn't fire.
+**Goal**: Add an Assistant Inbox that queues high-value proposed actions so the app behaves like an actual assistant, but keeps Ken in control (approval-first).
 
 ### Files Changed
+- `src/lib/assistantInbox.ts` — action model + deterministic generator (6 rules, 7 action types)
+- `src/components/tabs/InboxTab.tsx` — full inbox UI with card expand/collapse + approval flow
+- `src/lib/data.ts` — added `inboxItems: []` and `noticeDismissals: []` to EMPTY_OVERLAYS
+- `src/components/AccelerateApp.tsx` — InboxTab wired in; Dealers moved to More; Inbox added to bottom nav
 
-**`src/lib/notices.ts`** (new)
-- `Notice` interface: id, type, severity, area, title, summary, whyItMatters, suggestedAction, confidence, source, createdAt, groupId, groupName, status
-- `NoticeType`: missing-contact | stale-high-value | weak-path | viewed-no-action | contact-stale-only
-- `NoticeSeverity`: high | medium | low
-- `buildNotices(groups, overlays, opts)` — runs all 5 generators, applies dismissals, returns top N sorted by severity then type
+### Assistant Action Model
+Each InboxItem has: id, type, priority, status, groupId, groupName, title, summary, rationale, suggestedPayload, confidence, requiresApproval, createdAt, source.
 
-**5 Notice generators:**
-1. `missing-contact` — py ≥ $1500, zero contacts on file → severity high (>$5K) or medium
-2. `stale-high-value` — FY revenue ≥ $3K, no action in 45+ days → severity high (>$8K) or medium
-3. `weak-path` — contact exists but no phone AND no email (walk-in only) → medium
-4. `viewed-no-action` — opened 3+ times in 14 days (from localStorage event log), zero open tasks → low
-5. `contact-stale-only` — contacts exist but ALL marked stale on a $1500+ account → medium
+### Action Types Implemented
+- `draft_email` — account going cold, email contact on file
+- `create_task` — high-value account, no open next step
+- `schedule_followup_block` — large gap + 45d+ dormant
+- `research_contact` — high-gap account, no contact at all
+- `dealer_followup` — multi-loc group, no FSC assigned
+- `account_review` — high-PY account, viewed but no action taken
 
-**`src/components/tabs/NoticesPanel.tsx`** (new)
-- Collapsible panel with count badge (red if any high-severity, amber otherwise)
-- Each notice is a tap-to-expand card: title + group name visible always
-- Expanded: whyItMatters + suggestedAction + "Open Account →" + "Dismiss" buttons
-- Zero modals, zero extra navigation layers
+### Deterministic Rules (6 active)
+1. Gap > K + zero contacts → research_contact
+2. PY > .5K + email on file + 30d stale + gap > 00 → draft_email
+3. PY > K + no open tasks + 21d stale → create_task
+4. Gap > K + 45d dormant + no tasks → schedule_followup_block
+5. 3+ locs + no FSC + PY > K → dealer_followup
+6. PY > K + <30% retention + viewed <14d + no action 30d → account_review
 
-**`src/components/tabs/TodayTab.tsx`** (edited)
-- Added imports: `buildNotices`, `NoticesPanel`
-- Added `patchOverlay` to DashboardTab props
-- Added `notices` useMemo + `dismissNotice` handler
-- NoticesPanel renders above Daily Success Plan section
+### Inbox UI
+- Appears as Inbox in bottom nav (replaced Dealers; Dealers moved to More)
+- Pending count badge on nav button
+- Filter: Pending / All / Done
+- Each card: title, summary, priority badge, action type, confidence
+- Expanded: rationale, pre-filled payload, source signals, action buttons
+- Actions: Approve / Create Task / Open Account / Mark Reviewed / Dismiss / Restore
 
-**`src/components/AccelerateApp.tsx`** (edited)
-- Added `patchOverlay={patchOverlay}` to DashboardTab call
+### Approval Flow
+- Nothing happens automatically
+- Approve → marks item approved in overlays, user takes action manually
+- Create Task → calls onAddTask with pre-filled data, marks approved
+- Dismiss → hides item (restorable)
+- Mark Reviewed → notes it was seen, no further action
 
 ### Persistence
+- Item status (approved/dismissed/reviewed) stored in `overlays.inboxItems` array via patchOverlay
+- Action generation is stateless/deterministic — recomputed fresh each render from live data
+- Only status overrides are persisted (same pattern as noticeDismissals)
 
-- Notice generation: **stateless** — computed fresh each render from live data
-- Dismissals: **durable** — stored in `overlays.noticeDismissals[]` via `patchOverlay`
-- No new GitHub data file. Dismissals ride in existing overlays.json.
-- localStorage untouched (event log for viewed-no-action notice read-only)
+### Commits
+- `98e3632` — assistantInbox.ts model + generator
+- `71cfa51` — InboxTab.tsx UI
+- `0989c65` — EMPTY_OVERLAYS updated
+- `f12ca12` — AccelerateApp wired (production commit — triggers deploy)
 
 ### Build
-All 4 files pass brace/paren balance validation.
-
-### Deploy
-See commit hash below.
+Deploying to Vercel from f12ca12. No broad rewrites. All existing tabs preserved.
 
 ---
 
 ## Previously Completed
-- Phase 4 — Daily Success Plan (fb4db979)
-- A16.5 — Full Workflow Smoke Test Harness (eb0e71a308)
+- A16.5 -- Full Workflow Smoke Test Harness (eb0e71a / 6e8cfaf)
 - A16.4 -- Merge self-test harness, applyGroupCreates extraction (4bcdb28dfe)
-- A16.3 -- Merge direction + source card elimination (0b348f4fc7 / 60c95ff27f)
+- A16.3 -- Merge direction + source card elimination
+- A16.2 -- Build fix + initial merge direction
+- A16.1 -- AI Intel Stabilization
+- A15.7 -- Overlay Write Guard
 
 ## Last Updated
 March 29, 2026
