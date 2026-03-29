@@ -309,7 +309,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
   // HIT LIST: top 6 pending — visits first, then calls
   const hitList = useMemo(()=>{
     if(!overdrive)return[];
-    const seen=new Set<string>(),list:any[]=[];
+    const seen=new Set(),list=[];
     for(const a of [...overdrive.visitList,...overdrive.callList,...(overdrive.allCandidates||[])]){
       if(!seen.has(a.id)&&!odDone[a.id]&&list.length<6){seen.add(a.id);list.push(a);}
     }
@@ -384,7 +384,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
   const searchResults = useMemo(()=>{
     if(!q)return[];
     const matches=scored.filter((a:any)=>a.name?.toLowerCase().includes(q)||a.city?.toLowerCase().includes(q)||a.addr?.toLowerCase().includes(q)||a.gName?.toLowerCase().includes(q));
-    const parentIds=new Set<string>();const childOnly:any[]=[];
+    const parentIds=new Set();const childOnly=[];
     matches.forEach((a:any)=>{
       const gNameMatch=a.gName?.toLowerCase().includes(q);
       const childMatch=a.name?.toLowerCase().includes(q)||a.city?.toLowerCase().includes(q)||a.addr?.toLowerCase().includes(q);
@@ -392,7 +392,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
       if(gNameMatch&&pg&&pg.locs>1)parentIds.add(a.gId);
       else if(childMatch)childOnly.push(a);
     });
-    const results:any[]=[];
+    const results=[];
     parentIds.forEach(gId=>{const pg=(groups||[]).find((g:any)=>g.id===gId);if(pg)results.push({_isParent:true,_group:pg});});
     childOnly.forEach(a=>{if(!parentIds.has(a.gId))results.push(a);});
     return results.slice(0,30);
