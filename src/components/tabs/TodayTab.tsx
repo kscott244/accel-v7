@@ -11,7 +11,6 @@ import { buildDailyPlan, ACTION_LABEL, ACTION_COLOR } from "@/lib/dailyPlan";
 import { buildNotices } from "@/lib/notices";
 import NoticesPanel from "@/components/tabs/NoticesPanel";
 import EstTab from "@/components/tabs/EstTab";
-import EstTab from "@/components/tabs/EstTab";
 
 // ── Bucket config ────────────────────────────────────────────────────────────
 const BUCKETS = {
@@ -166,24 +165,24 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
     try { return localStorage.getItem("kpi_scope_v1") || ""; } catch { return ""; }
   });
   const kpiScope = kpiScopePref || activeQ;
-  const setKpiScope = (v:string) => {
+  const setKpiScope = (v) => {
     setKpiScopePref(v);
     try { localStorage.setItem("kpi_scope_v1", v); } catch {}
   };
 
-  const toggleBucket = (k:string) => setOpenBuckets(p => ({...p,[k]:!p[k]}));
+  const toggleBucket = (k) => setOpenBuckets(p => ({...p,[k]:!p[k]}));
 
-  const saveDone = (id:string, outcome:string, amt:number, note?:string) => {
+  const saveDone = (id, outcome, amt, note) => {
     const updated = {...odDone, [id]:{outcome,amt,...(note?{note}:{})}};
     setOdDone(updated);
     try { localStorage.setItem("overdrive_done", JSON.stringify(updated)); } catch {}
   };
-  const clearDone = (id:string) => {
+  const clearDone = (id) => {
     const next = {...odDone}; delete next[id];
     setOdDone(next);
     try { localStorage.setItem("overdrive_done", JSON.stringify(next)); } catch {}
   };
-  const promptOutcome = (e:any, id:string, outcome:string, amt:number) => {
+  const promptOutcome = (e, id, outcome, amt) => {
     e.stopPropagation();
     setOdNotePrompt({id, outcome, amt});
     setOdNoteText("");
@@ -214,14 +213,14 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
     const isSprint  = dLeft <= 14;
     const modeLabel = dLeft === 0 ? "✅ Q1 Complete" : isEndgame ? "🔴 Endgame" : isSprint ? "🟡 Sprint" : dLeft > 30 ? "🟢 Pipeline" : "🟠 Push";
 
-    const distMiles = (lat?:number, lng?:number):number => {
+    const distMiles = (lat, lng) => {
       if (!lat || !lng) return 999;
       const R=3958.8, dLat=(lat-HOME_LAT)*Math.PI/180, dLng=(lng-HOME_LNG)*Math.PI/180;
       const a=Math.sin(dLat/2)**2+Math.cos(HOME_LAT*Math.PI/180)*Math.cos(lat*Math.PI/180)*Math.sin(dLng/2)**2;
       return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
     };
 
-    const scoreAccount = (a:any, track:string) => {
+    const scoreAccount = (a, track) => {
       const py=a.pyQ?.[activeQ]||0, cy=a.cyQ?.[activeQ]||0, gap=py-cy;
       const retPct=py>0?cy/py:0;
       const badger=BADGER[a.id]||BADGER[a.gId]||null;
