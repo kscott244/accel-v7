@@ -7,6 +7,7 @@ import { $$, $f, pc } from "@/lib/format";
 import { Bar, Chev, AccountId, GroupBadge, fixGroupName } from "@/components/primitives";
 import NewAddsSection from "@/components/tabs/NewAddsSection";
 import { BADGER } from "@/lib/data";
+import { buildDailyPlan, ACTION_LABEL, ACTION_COLOR, type PlanItem } from "@/lib/dailyPlan";
 
 // ── Bucket config ────────────────────────────────────────────────────────────
 const BUCKETS = {
@@ -125,8 +126,12 @@ function BucketHeader({bucket, count, subtitle, open, onToggle}:any) {
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGroup,activeQ:activeQProp,weeklyDelta,tasks=[],onCompleteTask,onGoTasks}) {
+function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGroup,activeQ:activeQProp,weeklyDelta,tasks=[],onCompleteTask,onGoTasks,overlays}) {
   const activeQ = activeQProp || "1";
+
+  // ── Daily Success Plan ─────────────────────────────────────────────────────
+  const dailyPlan = useMemo(() => buildDailyPlan(groups, overlays, tasks, { qk: activeQ, maxItems: 5 }),
+    [groups, overlays, tasks, activeQ]);
 
   const [search, setSearch]           = useState("");
   const [odDone, setOdDone]           = useState<Record<string,any>>(() => {
@@ -385,6 +390,70 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
   const statusLabel=ahead?(isFY?"Ahead of FY":"Ahead"):onTrack?"On Track":"Behind";
 
   return <div style={{padding:"0 0 80px"}}>
+
+      {/* ── DAILY SUCCESS PLAN ── */}
+      {dailyPlan.length > 0 && (
+        <div style={{padding:"12px 16px 0"}}>
+          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:"#4f8ef7",marginBottom:8}}>
+            Today's Plan
+          </div>
+          {dailyPlan.map((item: PlanItem, i: number) => {
+            const ac = ACTION_COLOR[item.actionType];
+            const al = ACTION_LABEL[item.actionType];
+            return (
+              <div key={item.groupId} className="anim" style={{
+                animationDelay:`${i*30}ms`,
+                background:"rgba(10,10,15,.95)",
+                border:`1px solid ${ac}30`,
+                borderLeft:`3px solid ${ac}`,
+                borderRadius:12, padding:"10px 13px", marginBottom:7,
+              }}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:5}}>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:3,flexWrap:"wrap"}}>
+                      <span style={{fontSize:9,fontWeight:700,color:ac,background:`${ac}18`,borderRadius:4,padding:"1px 7px",border:`1px solid ${ac}30`}}>
+                        {al}
+                      </span>
+                      {item.signals.map((s:string,j:number) => (
+                        <span key={j} style={{fontSize:8,color:"#7878a0",background:"rgba(255,255,255,.04)",borderRadius:3,padding:"1px 5px"}}>
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                    <div style={{fontSize:13,fontWeight:700,color:"#e2e2ea",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                      {item.groupName}
+                    </div>
+                    <div style={{fontSize:10,color:"#9090a8",marginTop:2,lineHeight:1.4}}>
+                      {item.why}
+                    </div>
+                    {item.contactName && (
+                      <div style={{display:"flex",alignItems:"center",gap:6,marginTop:4,flexWrap:"wrap"}}>
+                        <span style={{fontSize:9,color:item.pathColor}}>{item.pathLabel}</span>
+                        <span style={{fontSize:10,fontWeight:600,color:"#c0c0d8"}}>{item.contactName}</span>
+                        {item.contactPhone && (
+                          <a href={`tel:${item.contactPhone.replace(/\D/g,"")}`}
+                            style={{fontSize:9,color:"#22d3ee",textDecoration:"none"}}>
+                            {item.contactPhone}
+                          </a>
+                        )}
+                      </div>
+                    )}
+                    {!item.contactName && (
+                      <div style={{fontSize:9,color:item.pathColor,marginTop:4}}>{item.pathLabel}</div>
+                    )}
+                  </div>
+                  {/* Go button */}
+                  <button onClick={() => { const g = (groups||[]).find((gr:any) => gr.id === item.groupId); if(g) goGroup(g); }}
+                    style={{flexShrink:0,marginLeft:10,padding:"5px 10px",borderRadius:8,fontSize:10,fontWeight:700,
+                      background:`${ac}15`,border:`1px solid ${ac}30`,color:ac,cursor:"pointer",fontFamily:"inherit"}}>
+                    Go →
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
     {/* ── SEARCH BAR ── */}
     <div style={{position:"relative",margin:"12px 16px 10px"}}>
