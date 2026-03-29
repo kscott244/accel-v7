@@ -140,13 +140,26 @@
         "confidence": "likely",
         "isPrimary": false,
         "savedAt": "2026-03-29T06:21:12.520Z"
+      },
+      {
+        "id": 1774765273991,
+        "linkedGroupId": "Master-CM216446",
+        "name": "Dr. Bonnie Louise Bower",
+        "role": "Owner/DDS",
+        "phone": "(508) 997-1030",
+        "email": "",
+        "notes": "From AI research",
+        "source": "research",
+        "confidence": "likely",
+        "isPrimary": false,
+        "savedAt": "2026-03-29T06:21:13.990Z"
       }
     ]
   },
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-29T06:21:13.008Z",
+  "lastUpdated": "2026-03-29T06:21:14.452Z",
   "tasks": [
     {
       "id": 1774682049928,
