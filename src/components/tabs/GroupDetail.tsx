@@ -7,11 +7,10 @@ import { getTierLabel } from "@/lib/tier";
 import { BADGER, OVERLAYS_REF } from "@/lib/data";
 import { Back, Chev, Pill, Stat, Bar, AccountId, GroupBadge, fixGroupName } from "@/components/primitives";
 import { TaskWidget } from "@/components/tabs/TasksTab";
-import { buildDsoCard, BENCH_AVG, type BenchMode } from "@/lib/dsoWarRoom";
+import { buildDsoCard, BENCH_AVG } from "@/lib/dsoWarRoom";
 import { bestContact, contactGaps, bestPathIn, migrateLegacyContact, buildContact, PATH_IN_LABEL, PATH_IN_COLOR } from "@/lib/contacts";
 import { logEvent } from "@/lib/eventLog";
 import { readMemory, memoryPatchOp, lastTouchedLabel, attentionLabel, mergeMemory } from "@/lib/accountMemory";
-import type { Contact } from "@/types";
 
 let SCHEIN_REPS: {fsc:any[], es:any[]} = {fsc:[], es:[]};
 try {
@@ -33,7 +32,7 @@ try {
 
 const SCOPE_LABELS = ["Decision Maker","Practice Manager","Regional / DSO","Coordinator"];
 const SCOPE_COLORS_KEYS = ["cyan","blue","purple","t4"];
-const STATUS_PILL: Record<string,{label:string,color:string}> = {
+const STATUS_PILL = {
   open:    {label:"Open",    color:"#34d399"},
   closed:  {label:"Closed",  color:"#f87171"},
   changed: {label:"Changed", color:"#fbbf24"},
@@ -64,9 +63,9 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
   // ── Merge group state ──
   const [showMerge, setShowMerge] = useState(false);
   const [mergeSearch, setMergeSearch] = useState("");
-  const [mergeTarget, setMergeTarget] = useState<any>(null);
+  const [mergeTarget, setMergeTarget] = useState(null);
   const [mergeSaving, setMergeSaving] = useState(false);
-  const [mergeToast, setMergeToast] = useState<string|null>(null);
+  const [mergeToast, setMergeToast] = useState(null);
   const py=group.pyQ?.[qk]||0;const cy=group.cyQ?.[qk]||0;
   const gap=py-cy;const ret=py>0?Math.round(cy/py*100):0;
 
@@ -104,8 +103,8 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
   },[group]);
 
   // Build FSC map: dist → {name, phone, notes, source:"badger"|"manual"}
-  const [fscMap, setFscMap] = useState<Record<string,any>>(()=>{
-    const m:Record<string,any> = {};
+  const [fscMap, setFscMap] = useState(()=>{
+    const m = {};
     groupDists.forEach(d => {
       // Priority 1: overlays.fscReps (durable — survives cache clear)
       const fromOverlay = overlays?.fscReps?.[group.id]?.[d];
@@ -120,11 +119,11 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
     return m;
   });
 
-  const [selProduct, setSelProduct] = useState<string|null>(null);
-  const [prodView, setProdView] = useState<string>("location");
+  const [selProduct, setSelProduct] = useState(null);
+  const [prodView, setProdView] = useState("location");
   // Inline month expansion — separate from full-screen selProduct drill
-  const [expandedProduct, setExpandedProduct] = useState<string|null>(null);
-  const [editDist, setEditDist] = useState<string|null>(null);
+  const [expandedProduct, setExpandedProduct] = useState(null);
+  const [editDist, setEditDist] = useState(null);
   const [editName, setEditName] = useState("");
   const [editPhone, setEditPhone] = useState("");
   const [editNotes, setEditNotes] = useState("");
@@ -163,21 +162,21 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
   };
 
   // ── Group-level contacts (not tied to distributor) ──
-  const [groupContacts, setGroupContacts] = useState<Contact[]>(()=>{
+  const [groupContacts, setGroupContacts] = useState(()=>{
     const raw = overlays?.groupContacts?.[group.id]
       || (() => { try { return JSON.parse(localStorage.getItem(`grpContacts:${group.id}`)||"[]"); } catch { return []; } })();
     return (raw as any[]).map((c: any) => migrateLegacyContact(c, group.id));
   });
   const [showContactForm, setShowContactForm] = useState(false);
-  const [editContact, setEditContact] = useState<any>(null);
+  const [editContact, setEditContact] = useState(null);
   const [cName, setCName] = useState("");
   const [cRole, setCRole] = useState("");
   const [cPhone, setCPhone] = useState("");
   const [cEmail, setCEmail] = useState("");
   const [cNotes, setCNotes] = useState("");
   const [cIsPrimary, setCIsPrimary] = useState(false);
-  const [cSource, setCSource] = useState<"manual"|"research"|"badger"|"csv"|"unknown">("manual");
-  const [cConfidence, setCConfidence] = useState<"verified"|"likely"|"unverified"|"stale">("unverified");
+  const [cSource, setCSource] = useState("manual");
+  const [cConfidence, setCConfidence] = useState("unverified");
 
   const openContactForm = (c?:Contact) => {
     setEditContact(c||null);
@@ -223,7 +222,7 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
   };
 
   // ── Group-level notes ──
-  const [groupNote, setGroupNote] = useState<string>(()=>{
+  const [groupNote, setGroupNote] = useState(()=>{
     const fromOverlay = overlays?.groupNotes?.[group.id];
     if (fromOverlay) return fromOverlay;
     try { return localStorage.getItem(`grpNote:${group.id}`)||""; } catch { return ""; }
@@ -245,7 +244,7 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
 
   // Distributor revenue breakdown for this group
   const distBreakdown = useMemo(()=>{
-    const map: Record<string,{cy:number,py:number,locs:number}> = {};
+    const map = {};
     (group.children||[]).forEach((c:any)=>{
       const d = c.dealer || "All Other";
       if(!map[d]) map[d]={cy:0,py:0,locs:0};
@@ -269,7 +268,7 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
 
   // Roll up products across all children
   const {groupBuying, groupStopped} = useMemo(()=>{
-    const prodMap: Record<string,{py:number,cy:number,locsPY:string[],locsCY:string[],locsDown:string[]}> = {};
+    const prodMap = {};
     (group.children||[]).forEach((c:any)=>{
       (c.products||[]).forEach((p:any)=>{
         const pPy = p[`py${qk}`]||0;
@@ -454,15 +453,15 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
 
   // ── Group AI Research (A15) ──
   const [resLoading, setResLoading] = useState(false);
-  const [resResult, setResResult] = useState<any>(null);
+  const [resResult, setResResult] = useState(null);
   const [resDismissed, setResDismissed] = useState(false);
-  const [suggestedMerges, setSuggestedMerges] = useState<any[]>([]);
-  const [ghostLocations, setGhostLocations] = useState<any[]>(() => {
+  const [suggestedMerges, setSuggestedMerges] = useState([]);
+  const [ghostLocations, setGhostLocations] = useState(() => {
     try { return JSON.parse(localStorage.getItem(`ghost_locs:${group.id}`) || "[]"); } catch { return []; }
   });
   const [mergeMatchLoading, setMergeMatchLoading] = useState(false);
-  const [dismissedSuggestions, setDismissedSuggestions] = useState<Set<string>>(()=>new Set());
-  const [savedResContacts, setSavedResContacts] = useState<Set<number>>(()=>new Set());
+  const [dismissedSuggestions, setDismissedSuggestions] = useState(()=>new Set());
+  const [savedResContacts, setSavedResContacts] = useState(()=>new Set());
   const [resWebsiteSaved, setResWebsiteSaved] = useState(false);
 
   const runGroupResearch = async () => {
@@ -787,8 +786,8 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
       : [];
     const hasRealMonthData = allGroupProdRecs.length > 0;
     const salesStoreLoading = !salesStore || Object.keys(salesStore.records||{}).length === 0;
-    const Q_TO_MONTHS: Record<number,number[]> = {1:[1,2,3],2:[4,5,6],3:[7,8,9],4:[10,11,12]};
-    const staticBuckets: Record<number,{py:number,cy:number}> = {};
+    const Q_TO_MONTHS = {1:[1,2,3],2:[4,5,6],3:[7,8,9],4:[10,11,12]};
+    const staticBuckets = {};
     for (let m=1; m<=12; m++) staticBuckets[m]={py:0,cy:0};
     if (!hasRealMonthData && prod) {
       ([1,2,3,4] as number[]).forEach((q:number) => {
@@ -800,8 +799,8 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
         staticBuckets[Q_TO_MONTHS[q][2]].cy += ((prod as any)[`cy${q}`]||0)/3;
       });
     }
-    const monthBuckets: Record<number,{py:number,cy:number}> = hasRealMonthData
-      ? (() => { const b: Record<number,{py:number,cy:number}>={};for(let m=1;m<=12;m++)b[m]={py:0,cy:0};allGroupProdRecs.forEach((r:any)=>{const m=r.month||1;if(m>=1&&m<=12){b[m].py+=r.py||0;b[m].cy+=r.cy||0;}});return b;})()
+    const monthBuckets = hasRealMonthData
+      ? (() => { const b ={};for(let m=1;m<=12;m++)b[m]={py:0,cy:0};allGroupProdRecs.forEach((r:any)=>{const m=r.month||1;if(m>=1&&m<=12){b[m].py+=r.py||0;b[m].cy+=r.cy||0;}});return b;})()
       : staticBuckets;
     const hasMonthData = hasRealMonthData || (!!prod && ([1,2,3,4] as number[]).some((q:number)=>((prod as any)[`py${q}`]||0)+((prod as any)[`cy${q}`]||0)>0));
     const maxMonthVal = Math.max(...Object.values(monthBuckets).flatMap(v=>[v.py,v.cy]),1);
@@ -824,7 +823,7 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
         </div>
         {/* View toggle */}
         <div style={{display:"flex",gap:6,marginBottom:12}}>
-          {(["location","month"] as const).map(v=>(
+          {["location","month"].map(v=>(
             <button key={v} onClick={()=>setProdView(v)}
               style={{flex:1,padding:"7px 0",borderRadius:8,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
                 border:`1px solid ${prodView===v?"rgba(79,142,247,.25)":T.b2}`,
@@ -1163,11 +1162,11 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
       {/* ── PRODUCTS ── */}
       {hasProducts&&(()=>{
         const MONTHS_S=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-        const QMAP:Record<number,string>={1:"Q1",2:"Q1",3:"Q1",4:"Q2",5:"Q2",6:"Q2",7:"Q3",8:"Q3",9:"Q3",10:"Q4",11:"Q4",12:"Q4"};
+        const QMAP ={1:"Q1",2:"Q1",3:"Q1",4:"Q2",5:"Q2",6:"Q2",7:"Q3",8:"Q3",9:"Q3",10:"Q4",11:"Q4",12:"Q4"};
         const childIdSet=new Set((group.children||[]).map((c:any)=>c.id));
         const monthData=(prodName:string)=>{
           const recs=salesStore?.records?(Object.values(salesStore.records) as any[]).filter((r:any)=>childIdSet.has(r.childId)&&r.l3===prodName):[];
-          const mb:Record<number,{py:number,cy:number}>={};
+          const mb ={};
           for(let m=1;m<=12;m++)mb[m]={py:0,cy:0};
           recs.forEach((r:any)=>{const m=r.month||1;if(m>=1&&m<=12){mb[m].py+=r.py||0;mb[m].cy+=r.cy||0;}});
           return [12,11,10,9,8,7,6,5,4,3,2,1].filter(m=>mb[m].py>0||mb[m].cy>0).map(m=>({m,label:MONTHS_S[m-1],q:QMAP[m],py:mb[m].py,cy:mb[m].cy}));
@@ -1248,7 +1247,7 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
       {distBreakdown.rows.length>0&&<div className="anim" style={{animationDelay:"24ms",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:10}}>
         <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.orange,marginBottom:10}}>Distributor Leverage</div>
         {distBreakdown.rows.map((row,i)=>{
-          const DIST_COLOR:Record<string,string>={Schein:"#4f8ef7",Patterson:"#a78bfa",Benco:"#22d3ee",Darby:"#fbbf24","DDS Dental":"#f97316","Dental City":"#10b981","All Other":"#7878a0"};
+          const DIST_COLOR ={Schein:"#4f8ef7",Patterson:"#a78bfa",Benco:"#22d3ee",Darby:"#fbbf24","DDS Dental":"#f97316","Dental City":"#10b981","All Other":"#7878a0"};
           const dc=DIST_COLOR[row.dist]||"#7878a0";
           const shareDelta=row.cyPct-row.pyPct;
           const trend=row.py>0?row.cy/row.py:null;
@@ -1539,7 +1538,7 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
         <div style={{marginBottom:10}}>
           <div style={{fontSize:10,color:T.t3,marginBottom:6,fontWeight:600}}>Confidence</div>
           <div style={{display:"flex",gap:5}}>
-            {(["unverified","likely","verified","stale"] as const).map(conf=>{
+            {["unverified","likely","verified","stale"].map(conf=>{
               const col=conf==="verified"?T.green:conf==="likely"?T.cyan:conf==="stale"?T.amber:T.t4;
               return <button key={conf} onClick={()=>setCConfidence(conf)}
                 style={{flex:1,padding:"5px 0",borderRadius:7,fontSize:9,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
@@ -1592,7 +1591,7 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
               const gpy=g.pyQ?.["1"]||0; const gcy=g.cyQ?.["1"]||0; const ggap=gpy-gcy;
               const topDealer = (g.children||[]).reduce((acc:any,c:any) => {
                 const d=c.dealer||"All Other"; acc[d]=(acc[d]||0)+1; return acc;
-              }, {} as Record<string,number>);
+              }, {});
               const dealerStr = Object.entries(topDealer).sort((a:any,b:any)=>b[1]-a[1]).slice(0,2).map(([d,n])=>`${d} ${n}`).join(", ");
               const childNames = (g.children||[]).slice(0,2).map((c:any) => c.name).filter(Boolean);
               const cityStr = g.children?.[0]?.city && g.children?.[0]?.st ? `${g.children[0].city}, ${g.children[0].st}` : "";
