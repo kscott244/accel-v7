@@ -34,9 +34,12 @@ export function shouldInclude(
   if (gIntel.forceInclude || gIntel.pinned) return "Pinned";
   const c2 = (group.class2 || "").toUpperCase();
   if (c2 === "DSO" || c2 === "EMERGING DSO" || c2.includes("DSO")) return "DSO";
-  if (card.locs >= WR_THRESHOLDS.minLocs && card.cy1 >= WR_THRESHOLDS.minCyQ1) return "Multi-site";
+  // Multi-site: noise suppression — must have cy1 >= $2K OR gap >= $10K to avoid tiny low-value accounts
+  if (card.locs >= WR_THRESHOLDS.minLocs) {
+    const qualifies = card.cy1 >= 2000 || card.benchGapAnn >= 10000;
+    if (qualifies) return "Multi-site";
+  }
   if (card.benchGapAnn >= WR_THRESHOLDS.minBenchGapAnn) return "Large gap";
-  if (card.locs >= WR_THRESHOLDS.minLocs) return "Multi-site";
   return null;
 }
 
