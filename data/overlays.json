@@ -47,6 +47,44 @@
       ],
       "savedAt": "2026-03-27T16:54:30.637Z",
       "practiceName": "DR. HELENE STRAZZA"
+    },
+    "Master-CM1495113": {
+      "contactName": "Dr. Lauren Mentasti",
+      "phone": "(860) 678-1140",
+      "email": null,
+      "website": "https://www.smileavon.com/",
+      "contacts": [
+        {
+          "name": "Dr. Lauren Mentasti",
+          "role": "Owner/President, DMD",
+          "email": null,
+          "phone": "(860) 678-1140",
+          "tier": 1
+        },
+        {
+          "name": "Dr. Ann Sagalyn",
+          "role": "Founding Owner/Senior Dentist, DMD",
+          "email": null,
+          "phone": "(860) 678-1140",
+          "tier": 1
+        },
+        {
+          "name": "Nick Consonni",
+          "role": "Office Manager",
+          "email": null,
+          "phone": "(860) 678-1140",
+          "tier": 2
+        },
+        {
+          "name": "Dr. Samantha Weston",
+          "role": "Associate Dentist, DMD",
+          "email": null,
+          "phone": "(860) 678-1140",
+          "tier": 2
+        }
+      ],
+      "savedAt": "2026-03-29T00:17:05.434Z",
+      "practiceName": "AVON VILLAGE FMLY DNTSTRY"
     }
   },
   "fscReps": {},
@@ -93,7 +131,7 @@
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-29T00:17:06.215Z",
+  "lastUpdated": "2026-03-29T00:17:06.771Z",
   "tasks": [
     {
       "id": 1774682049928,
