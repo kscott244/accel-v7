@@ -12,6 +12,22 @@ import { buildNotices } from "@/lib/notices";
 import NoticesPanel from "@/components/tabs/NoticesPanel";
 import EstTab from "@/components/tabs/EstTab";
 
+
+// ── Distance helper (module-level for context filtering) ─────────────────────
+function distMilesGlobal(lat1, lng1, lat2, lng2) {
+  if (!lat1 || !lng1 || !lat2 || !lng2) return 999;
+  const R=3958.8, dLat=(lat2-lat1)*Math.PI/180, dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+// ── Context options ──────────────────────────────────────────────────────────
+const CONTEXTS = [
+  { key: "territory", label: "All", icon: "🌐" },
+  { key: "home",      label: "Near Home", icon: "🏠" },
+  { key: "city",      label: "City / Area", icon: "📍" },
+];
+
 // ── Bucket config ────────────────────────────────────────────────────────────
 const BUCKETS = {
   hitList:   { label: "Hit List",    emoji: "🎯", color: "#f87171", bg: "rgba(248,113,113,.08)",  border: "rgba(248,113,113,.25)"  },
@@ -160,6 +176,12 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
   });
   const [showForecast, setShowForecast] = useState(false);
   const [noticesOpen, setNoticesOpen]   = useState(false);
+
+  // ── Today context ──────────────────────────────────────────────────────
+  const [todayContext, setTodayContext] = useState("territory");
+  const [contextCity, setContextCity]   = useState("");
+
+
 
   const [kpiScopePref, setKpiScopePref] = useState(() => {
     try { return localStorage.getItem("kpi_scope_v1") || ""; } catch { return ""; }
@@ -404,10 +426,231 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
   const statusColor=ahead?T.green:onTrack?T.amber:T.red;
   const statusLabel=ahead?(isFY?"Ahead of FY":"Ahead"):onTrack?"On Track":"Behind";
 
+  // ── Context filter ───────────────────────────────────────────────────
+  const contextFilter = useMemo(() => {
+    if (todayContext === "territory") return null;
+    if (todayContext === "home") return (a) => {
+      const b = BADGER[a.id] || BADGER[a.gId];
+      return distMilesGlobal(b?.lat||a.lat, b?.lng||a.lng, HOME_LAT, HOME_LNG) < 35;
+    };
+    if (todayContext === "city" && contextCity.trim()) {
+      const c = contextCity.trim().toLowerCase();
+      return (a) => (a.city?.toLowerCase().includes(c)) || (a.st?.toLowerCase() === c);
+    }
+    return null;
+  }, [todayContext, contextCity]);
+
+  // filter helper for groups: true if any child matches context
+  const groupMatchesContext = (g) => {
+    if (!contextFilter) return true;
+    return (g.children || []).some(contextFilter);
+  };
+
+  // ── Filtered daily plan (by context) ────────────────────────────────
+  const filteredPlan = useMemo(() => {
+    if (!contextFilter) return dailyPlan;
+    return dailyPlan.filter(item => {
+      const g = (groups || []).find(gr => gr.id === item.groupId);
+      return g ? groupMatchesContext(g) : false;
+    });
+  }, [dailyPlan, contextFilter, groups]);
+
+  // ── Deduped notices (remove if same group already in daily plan) ─────
+  const dedupedNotices = useMemo(() => {
+    const planGroupIds = new Set(filteredPlan.map(p => p.groupId));
+    return notices.filter(n => !planGroupIds.has(n.groupId));
+  }, [notices, filteredPlan]);
+
+  // ── Context-filtered buckets ────────────────────────────────────────
+  const fHitList = contextFilter ? hitList.filter(contextFilter) : hitList;
+  const fEasyWins = contextFilter ? easyWins.filter(contextFilter) : easyWins;
+  const fAtRisk = contextFilter ? atRisk.filter(contextFilter) : atRisk;
+  const fDeadWeight = contextFilter ? deadWeight.filter(contextFilter) : deadWeight;
+  const fFollowUp = contextFilter ? {
+    tasks: followUp.tasks,
+    accounts: followUp.accounts.filter(contextFilter)
+  } : followUp;
+
+
   return <div style={{padding:"0 0 80px"}}>
 
+    {/* ══════════════════════════════════════════════════════════════════════ */}
+    {/* ALWAYS-VISIBLE SECTIONS: KPI → Context → Plan → Notices → Search    */}
+    {/* ══════════════════════════════════════════════════════════════════════ */}
+
+    {/* ── KPI STRIP ── */}
+    <div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(79,142,247,.04))`,border:`1px solid ${T.b1}`,borderRadius:14,padding:"12px 14px",margin:"12px 0 10px"}}> 
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+        <div style={{display:"flex",alignItems:"center",gap:6}}>
+          <span style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color:T.t3}}>
+            {isFY?"Full Year":`Q${kpiScope} Pace`}
+          </span>
+          {adjCount>0&&<span style={{fontSize:8,color:T.green,background:"rgba(52,211,153,.08)",borderRadius:3,padding:"1px 5px"}}>+{adjCount} adj</span>}
+        </div>
+        <div style={{display:"flex",gap:4,alignItems:"center"}}>
+          {[activeQ,"FY"].map(s=>(
+            <button key={s} onClick={()=>setKpiScope(s)} style={{
+              padding:"3px 9px",borderRadius:6,fontSize:9,fontWeight:700,cursor:"pointer",fontFamily:"inherit",
+              border:`1px solid ${kpiScope===s?"rgba(79,142,247,.4)":T.b2}`,
+              background:kpiScope===s?"rgba(79,142,247,.18)":T.s2,
+              color:kpiScope===s?T.blue:T.t3}}>
+              {s==="FY"?"FY":`Q${s}`}
+            </button>
+          ))}
+          <button onClick={()=>setShowForecast(p=>!p)} style={{
+            padding:"3px 9px",borderRadius:6,fontSize:9,fontWeight:700,cursor:"pointer",fontFamily:"inherit",
+            border:`1px solid ${showForecast?"rgba(251,191,36,.4)":T.b2}`,
+            background:showForecast?"rgba(251,191,36,.15)":T.s2,
+            color:showForecast?T.amber:T.t3}}>
+            Forecast
+          </button>
+        </div>
+      </div>
+      <div style={{display:"flex",alignItems:"baseline",gap:10,marginBottom:6}}>
+        <span className="m" style={{fontSize:28,fontWeight:800,color:statusColor}}>{pc(att)}</span>
+        <span style={{fontSize:11,color:T.t3}}>{$$(cy)} / {$$(target)}</span>
+        <span style={{fontSize:9,fontWeight:700,color:statusColor,borderRadius:999,padding:"2px 8px",
+          background:ahead?"rgba(52,211,153,.1)":onTrack?"rgba(251,191,36,.1)":"rgba(248,113,113,.1)",
+          border:`1px solid ${statusColor}44`,marginLeft:"auto"}}>{statusLabel}</span>
+      </div>
+      <Bar pct={att*100} color={`linear-gradient(90deg,${statusColor},${ahead?T.cyan:onTrack?T.orange:T.red})`}/>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginTop:8}}>
+        <div style={{borderRadius:7,background:"rgba(248,113,113,.06)",border:"1px solid rgba(248,113,113,.12)",padding:"7px 8px"}}>
+          <div style={{fontSize:8,color:T.t3}}>Gap</div>
+          <div className="m" style={{fontSize:13,fontWeight:700,color:gap<=0?T.green:T.red}}>{gap<=0?`+${$$(-gap)}`:$$(gap)}</div>
+        </div>
+        <div style={{borderRadius:7,background:"rgba(79,142,247,.06)",border:"1px solid rgba(79,142,247,.12)",padding:"7px 8px"}}>
+          <div style={{fontSize:8,color:T.t3}}>$/day</div>
+          <div className="m" style={{fontSize:13,fontWeight:700,color:T.blue}}>{$f(perDay)}</div>
+        </div>
+        {overdrive&&<div style={{borderRadius:7,background:"rgba(167,139,250,.06)",border:"1px solid rgba(167,139,250,.12)",padding:"7px 8px"}}>
+          <div style={{fontSize:8,color:T.t3}}>Pipeline</div>
+          <div className="m" style={{fontSize:13,fontWeight:700,color:T.purple}}>{$f(overdrive.base)}</div>
+        </div>}
+      </div>
+      {overdrive?.modeLabel&&<div style={{marginTop:6,fontSize:9,color:T.t4,textAlign:"center"}}>{overdrive.modeLabel}{DAYS_LEFT>0?` · ${DAYS_LEFT}d left`:""}</div>}
+      {overdrive?.doneTotal>0&&<div style={{marginTop:6,padding:"4px 8px",borderRadius:6,background:"rgba(52,211,153,.06)",border:"1px solid rgba(52,211,153,.12)",fontSize:9,color:T.green,display:"flex",justifyContent:"space-between"}}>
+        <span>Logged today</span><span className="m" style={{fontWeight:700}}>+{$f(overdrive.doneTotal)}</span>
+      </div>}
+    </div>
+
+    {/* ── FORECAST (inline) ── */}
+    {showForecast&&<div style={{marginBottom:10}}>
+      <EstTab pct={estPct} setPct={setEstPct} q1CY={q1CY} groups={groups} goAcct={goAcct}/>
+    </div>}
+
+    {/* ── CONTEXT SELECTOR ── */}
+    <div style={{display:"flex",gap:6,alignItems:"center",marginBottom:10,flexWrap:"wrap"}}>
+      {CONTEXTS.map(ctx=>(
+        <button key={ctx.key} onClick={()=>{setTodayContext(ctx.key);if(ctx.key!=="city")setContextCity("");}}
+          style={{padding:"4px 10px",borderRadius:8,fontSize:10,fontWeight:600,cursor:"pointer",fontFamily:"inherit",
+            border:`1px solid ${todayContext===ctx.key?"rgba(79,142,247,.45)":T.b2}`,
+            background:todayContext===ctx.key?"rgba(79,142,247,.15)":T.s2,
+            color:todayContext===ctx.key?T.blue:T.t3}}>
+          {ctx.icon} {ctx.label}
+        </button>
+      ))}
+      {todayContext==="city"&&<input type="text" value={contextCity} onChange={e=>setContextCity(e.target.value)}
+        placeholder="Hartford, New Haven…"
+        autoFocus
+        style={{flex:1,minWidth:120,height:30,borderRadius:8,border:`1px solid ${contextCity?T.blue+"44":T.b1}`,
+          background:T.s1,color:T.t1,fontSize:11,padding:"0 10px",outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}/>}
+      {todayContext!=="territory"&&<span style={{fontSize:9,color:T.t4}}>
+        {contextFilter ? `${(contextFilter ? scored.filter(contextFilter).length : scored.length)} accts` : ""}
+      </span>}
+    </div>
+
+    {/* ── DAILY SUCCESS PLAN ── */}
+    {filteredPlan.length > 0 && (
+      <div style={{marginBottom:10}}>
+        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:"#4f8ef7",marginBottom:8}}>
+          Today&#39;s Plan{todayContext!=="territory"?` · ${todayContext==="home"?"Near Home":contextCity||"Filtered"}`:""}
+        </div>
+        {filteredPlan.map((item, i) => {
+          const ac = ACTION_COLOR[item.actionType];
+          const al = ACTION_LABEL[item.actionType];
+          return (
+            <div key={item.groupId} className="anim" style={{
+              animationDelay:`${i*30}ms`,
+              background:"rgba(10,10,15,.95)",
+              border:`1px solid ${ac}30`,
+              borderLeft:`3px solid ${ac}`,
+              borderRadius:12, padding:"10px 13px", marginBottom:7,
+            }}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:5}}>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:3,flexWrap:"wrap"}}>
+                    <span style={{fontSize:9,fontWeight:700,color:ac,background:`${ac}18`,borderRadius:4,padding:"1px 7px",border:`1px solid ${ac}30`}}>
+                      {al}
+                    </span>
+                    {item.signals.map((s,j) => (
+                      <span key={j} style={{fontSize:8,color:"#7878a0",background:"rgba(255,255,255,.04)",borderRadius:3,padding:"1px 5px"}}>
+                        {s}
+                      </span>
+                    ))}
+                  </div>
+                  <div style={{fontSize:13,fontWeight:700,color:"#e2e2ea",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                    {item.groupName}
+                  </div>
+                  <div style={{fontSize:10,color:"#9090a8",marginTop:2,lineHeight:1.4}}>
+                    {item.why}
+                  </div>
+                  {item.contactName && (
+                    <div style={{display:"flex",alignItems:"center",gap:6,marginTop:4,flexWrap:"wrap"}}>
+                      <span style={{fontSize:9,color:item.pathColor}}>{item.pathLabel}</span>
+                      <span style={{fontSize:10,fontWeight:600,color:"#c0c0d8"}}>{item.contactName}</span>
+                      {item.contactPhone && (
+                        <a href={`tel:${item.contactPhone.replace(/\D/g,"")}`}
+                          style={{fontSize:9,color:"#22d3ee",textDecoration:"none"}}>
+                          {item.contactPhone}
+                        </a>
+                      )}
+                    </div>
+                  )}
+                  {!item.contactName && (
+                    <div style={{fontSize:9,color:item.pathColor,marginTop:4}}>{item.pathLabel}</div>
+                  )}
+                </div>
+                <button onClick={() => { const g = (groups||[]).find((gr) => gr.id === item.groupId); if(g) goGroup(g); }}
+                  style={{flexShrink:0,marginLeft:10,padding:"5px 10px",borderRadius:8,fontSize:10,fontWeight:700,
+                    background:`${ac}15`,border:`1px solid ${ac}30`,color:ac,cursor:"pointer",fontFamily:"inherit"}}>
+                  Go →
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    )}
+
+    {/* ── NOTICES (deduped — only shows items not already in daily plan) ── */}
+    {dedupedNotices.length>0&&<button onClick={()=>setNoticesOpen(p=>!p)} className="anim" style={{
+      width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",
+      background:noticesOpen?"rgba(248,113,113,.06)":T.s1,
+      border:`1px solid ${noticesOpen?"rgba(248,113,113,.2)":T.b1}`,
+      borderRadius:10,padding:"9px 12px",marginBottom:noticesOpen?6:10,cursor:"pointer",fontFamily:"inherit"}}>
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
+        <span style={{fontSize:14}}>🔔</span>
+        <div style={{textAlign:"left"}}>
+          <div style={{fontSize:11,fontWeight:700,color:T.t1}}>
+            {dedupedNotices.filter(n=>n.severity==="high").length>0
+              ? <span style={{color:T.red}}>{dedupedNotices.filter(n=>n.severity==="high").length} urgent</span>
+              : <span style={{color:T.amber}}>{dedupedNotices.length} notice{dedupedNotices.length!==1?"s":""}</span>}
+            {dedupedNotices.filter(n=>n.severity!=="high").length>0&&dedupedNotices.filter(n=>n.severity==="high").length>0&&
+              <span style={{color:T.t3,fontWeight:400}}> · {dedupedNotices.filter(n=>n.severity!=="high").length} more</span>}
+          </div>
+          <div style={{fontSize:9,color:T.t4}}>Accounts needing attention</div>
+        </div>
+      </div>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{transform:noticesOpen?"rotate(90deg)":"none",transition:"transform .2s"}}><path d="M9 18l6-6-6-6"/></svg>
+    </button>}
+    {noticesOpen&&<div style={{marginBottom:10}}>
+      <NoticesPanel notices={dedupedNotices} onDismiss={dismissNotice}
+        onOpen={(groupId) => { const g=(groups||[]).find((gr)=>gr.id===groupId); if(g)goGroup(g); }}/>
+    </div>}
+
     {/* ── SEARCH BAR ── */}
-    <div style={{position:"relative",margin:"12px 16px 10px"}}>
+    <div style={{position:"relative",margin:"0 0 10px"}}>
       <svg style={{position:"absolute",left:11,top:"50%",transform:"translateY(-50%)",width:14,height:14,color:T.t4}} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
       <input type="search" value={search} onChange={e=>setSearch(e.target.value)}
         placeholder="Search offices or cities…"
@@ -415,9 +658,12 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
       {search&&<button onClick={()=>setSearch("")} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:15,lineHeight:1}}>✕</button>}
     </div>
 
-    {/* ── SEARCH RESULTS ── */}
-    {q ? <div style={{padding:"0 16px"}}>
-      <div style={{fontSize:10,color:T.t4,marginBottom:8}}>{searchResults.length} result{searchResults.length!==1?"s":""} for "{search}"</div>
+    {/* ══════════════════════════════════════════════════════════════════════ */}
+    {/* BELOW SEARCH: results replace the work sections                     */}
+    {/* ══════════════════════════════════════════════════════════════════════ */}
+
+    {q ? <div style={{padding:"0 0px"}}>
+      <div style={{fontSize:10,color:T.t4,marginBottom:8}}>{searchResults.length} result{searchResults.length!==1?"s":""} for \"{search}\"</div>
       {searchResults.length===0&&<div style={{padding:"24px 0",textAlign:"center",color:T.t4,fontSize:12}}>No accounts found.</div>}
       {searchResults.map((r,i)=>{
         if(r._isParent){
@@ -455,156 +701,6 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
       })}
     </div> :
       <div>
-      {/* ── KPI STRIP ── */}
-      <div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(79,142,247,.04))`,border:`1px solid ${T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:14}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-          <div style={{display:"flex",alignItems:"center",gap:6}}>
-            <span style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color:T.t3}}>
-              {isFY?"Full Year":`Q${kpiScope} Pace`}
-            </span>
-            {adjCount>0&&<span style={{fontSize:8,color:T.green,background:"rgba(52,211,153,.08)",borderRadius:3,padding:"1px 5px"}}>+{adjCount} adj</span>}
-          </div>
-          <div style={{display:"flex",gap:4,alignItems:"center"}}>
-            {[activeQ,"FY"].map(s=>(
-              <button key={s} onClick={()=>setKpiScope(s)} style={{
-                padding:"3px 9px",borderRadius:6,fontSize:9,fontWeight:700,cursor:"pointer",fontFamily:"inherit",
-                border:`1px solid ${kpiScope===s?"rgba(79,142,247,.4)":T.b2}`,
-                background:kpiScope===s?"rgba(79,142,247,.18)":T.s2,
-                color:kpiScope===s?T.blue:T.t3}}>
-                {s==="FY"?"FY":`Q${s}`}
-              </button>
-            ))}
-            <button onClick={()=>setShowForecast(p=>!p)} style={{
-              padding:"3px 9px",borderRadius:6,fontSize:9,fontWeight:700,cursor:"pointer",fontFamily:"inherit",
-              border:`1px solid ${showForecast?"rgba(251,191,36,.4)":T.b2}`,
-              background:showForecast?"rgba(251,191,36,.15)":T.s2,
-              color:showForecast?T.amber:T.t3}}>
-              Forecast
-            </button>
-          </div>
-        </div>
-        <div style={{display:"flex",alignItems:"baseline",gap:10,marginBottom:6}}>
-          <span className="m" style={{fontSize:28,fontWeight:800,color:statusColor}}>{pc(att)}</span>
-          <span style={{fontSize:11,color:T.t3}}>{$$(cy)} / {$$(target)}</span>
-          <span style={{fontSize:9,fontWeight:700,color:statusColor,borderRadius:999,padding:"2px 8px",
-            background:ahead?"rgba(52,211,153,.1)":onTrack?"rgba(251,191,36,.1)":"rgba(248,113,113,.1)",
-            border:`1px solid ${statusColor}44`,marginLeft:"auto"}}>{statusLabel}</span>
-        </div>
-        <Bar pct={att*100} color={`linear-gradient(90deg,${statusColor},${ahead?T.cyan:onTrack?T.orange:T.red})`}/>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginTop:8}}>
-          <div style={{borderRadius:7,background:"rgba(248,113,113,.06)",border:"1px solid rgba(248,113,113,.12)",padding:"7px 8px"}}>
-            <div style={{fontSize:8,color:T.t3}}>Gap</div>
-            <div className="m" style={{fontSize:13,fontWeight:700,color:gap<=0?T.green:T.red}}>{gap<=0?`+${$$(-gap)}`:$$(gap)}</div>
-          </div>
-          <div style={{borderRadius:7,background:"rgba(79,142,247,.06)",border:"1px solid rgba(79,142,247,.12)",padding:"7px 8px"}}>
-            <div style={{fontSize:8,color:T.t3}}>$/day</div>
-            <div className="m" style={{fontSize:13,fontWeight:700,color:T.blue}}>{$f(perDay)}</div>
-          </div>
-          {overdrive&&<div style={{borderRadius:7,background:"rgba(167,139,250,.06)",border:"1px solid rgba(167,139,250,.12)",padding:"7px 8px"}}>
-            <div style={{fontSize:8,color:T.t3}}>Pipeline</div>
-            <div className="m" style={{fontSize:13,fontWeight:700,color:T.purple}}>{$f(overdrive.base)}</div>
-          </div>}
-        </div>
-        {overdrive?.modeLabel&&<div style={{marginTop:6,fontSize:9,color:T.t4,textAlign:"center"}}>{overdrive.modeLabel}{DAYS_LEFT>0?` · ${DAYS_LEFT}d left`:""}</div>}
-        {overdrive?.doneTotal>0&&<div style={{marginTop:6,padding:"4px 8px",borderRadius:6,background:"rgba(52,211,153,.06)",border:"1px solid rgba(52,211,153,.12)",fontSize:9,color:T.green,display:"flex",justifyContent:"space-between"}}>
-          <span>Logged today</span><span className="m" style={{fontWeight:700}}>+{$f(overdrive.doneTotal)}</span>
-        </div>}
-      </div>
-
-      {/* ── FORECAST (inline) ── */}
-      {showForecast&&<div style={{marginBottom:10}}>
-        <EstTab pct={estPct} setPct={setEstPct} q1CY={q1CY} groups={groups} goAcct={goAcct}/>
-      </div>}
-
-      {/* ── NOTICES BADGE ── */}
-      {notices.length>0&&<button onClick={()=>setNoticesOpen(p=>!p)} className="anim" style={{
-        width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",
-        background:noticesOpen?"rgba(248,113,113,.06)":T.s1,
-        border:`1px solid ${noticesOpen?"rgba(248,113,113,.2)":T.b1}`,
-        borderRadius:10,padding:"9px 12px",marginBottom:noticesOpen?6:10,cursor:"pointer",fontFamily:"inherit"}}>
-        <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <span style={{fontSize:14}}>🔔</span>
-          <div style={{textAlign:"left"}}>
-            <div style={{fontSize:11,fontWeight:700,color:T.t1}}>
-              {notices.filter(n=>n.severity==="high").length>0
-                ? <span style={{color:T.red}}>{notices.filter(n=>n.severity==="high").length} urgent</span>
-                : <span style={{color:T.amber}}>{notices.length} notice{notices.length!==1?"s":""}</span>}
-              {notices.filter(n=>n.severity!=="high").length>0&&notices.filter(n=>n.severity==="high").length>0&&
-                <span style={{color:T.t3,fontWeight:400}}> · {notices.filter(n=>n.severity!=="high").length} more</span>}
-            </div>
-            <div style={{fontSize:9,color:T.t4}}>Accounts needing attention</div>
-          </div>
-        </div>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{transform:noticesOpen?"rotate(90deg)":"none",transition:"transform .2s"}}><path d="M9 18l6-6-6-6"/></svg>
-      </button>}
-      {noticesOpen&&<div style={{marginBottom:10}}>
-        <NoticesPanel notices={notices} onDismiss={dismissNotice}
-          onOpen={(groupId) => { const g=(groups||[]).find((gr)=>gr.id===groupId); if(g)goGroup(g); }}/>
-      </div>}
-
-      {/* ── DAILY SUCCESS PLAN ── */}
-      {dailyPlan.length > 0 && (
-        <div style={{padding:"12px 16px 0"}}>
-          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:"#4f8ef7",marginBottom:8}}>
-            Today's Plan
-          </div>
-          {dailyPlan.map((item, i) => {
-            const ac = ACTION_COLOR[item.actionType];
-            const al = ACTION_LABEL[item.actionType];
-            return (
-              <div key={item.groupId} className="anim" style={{
-                animationDelay:`${i*30}ms`,
-                background:"rgba(10,10,15,.95)",
-                border:`1px solid ${ac}30`,
-                borderLeft:`3px solid ${ac}`,
-                borderRadius:12, padding:"10px 13px", marginBottom:7,
-              }}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:5}}>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:3,flexWrap:"wrap"}}>
-                      <span style={{fontSize:9,fontWeight:700,color:ac,background:`${ac}18`,borderRadius:4,padding:"1px 7px",border:`1px solid ${ac}30`}}>
-                        {al}
-                      </span>
-                      {item.signals.map((s,j) => (
-                        <span key={j} style={{fontSize:8,color:"#7878a0",background:"rgba(255,255,255,.04)",borderRadius:3,padding:"1px 5px"}}>
-                          {s}
-                        </span>
-                      ))}
-                    </div>
-                    <div style={{fontSize:13,fontWeight:700,color:"#e2e2ea",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-                      {item.groupName}
-                    </div>
-                    <div style={{fontSize:10,color:"#9090a8",marginTop:2,lineHeight:1.4}}>
-                      {item.why}
-                    </div>
-                    {item.contactName && (
-                      <div style={{display:"flex",alignItems:"center",gap:6,marginTop:4,flexWrap:"wrap"}}>
-                        <span style={{fontSize:9,color:item.pathColor}}>{item.pathLabel}</span>
-                        <span style={{fontSize:10,fontWeight:600,color:"#c0c0d8"}}>{item.contactName}</span>
-                        {item.contactPhone && (
-                          <a href={`tel:${item.contactPhone.replace(/\D/g,"")}`}
-                            style={{fontSize:9,color:"#22d3ee",textDecoration:"none"}}>
-                            {item.contactPhone}
-                          </a>
-                        )}
-                      </div>
-                    )}
-                    {!item.contactName && (
-                      <div style={{fontSize:9,color:item.pathColor,marginTop:4}}>{item.pathLabel}</div>
-                    )}
-                  </div>
-                  {/* Go button */}
-                  <button onClick={() => { const g = (groups||[]).find((gr) => gr.id === item.groupId); if(g) goGroup(g); }}
-                    style={{flexShrink:0,marginLeft:10,padding:"5px 10px",borderRadius:8,fontSize:10,fontWeight:700,
-                      background:`${ac}15`,border:`1px solid ${ac}30`,color:ac,cursor:"pointer",fontFamily:"inherit"}}>
-                    Go →
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
 
       {/* ── NEW ADDS BANNER ── */}
       <button onClick={()=>setShowNewAdds(!showNewAdds)} className="anim" style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",background:showNewAdds?"rgba(248,113,113,.06)":T.s1,border:`1px solid ${showNewAdds?"rgba(248,113,113,.2)":T.b1}`,borderRadius:10,padding:"9px 12px",marginBottom:10,cursor:"pointer",fontFamily:"inherit"}}>
@@ -651,12 +747,12 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
         </div>;
       })()}
 
-      {/* ── MISSION BUCKETS ── */}
+      {/* ── MISSION BUCKETS (context-filtered) ── */}
 
       {/* HIT LIST */}
-      {hitList.length>0&&<>
-        <BucketHeader bucket="hitList" count={`${hitList.filter((a)=>!odDone[a.id]).length} pending`} open={openBuckets.hitList} onToggle={()=>toggleBucket("hitList")}/>
-        {openBuckets.hitList&&hitList.map((a)=>(
+      {fHitList.length>0&&<>
+        <BucketHeader bucket="hitList" count={`${fHitList.filter((a)=>!odDone[a.id]).length} pending`} open={openBuckets.hitList} onToggle={()=>toggleBucket("hitList")}/>
+        {openBuckets.hitList&&fHitList.map((a)=>(
           <ActionCard key={a.id} a={a} bucket="hitList" done={odDone[a.id]} isVisit={visitIds.has(a.id)}
             onTap={goAcct} groupLocsMap={groupLocsMap} groups={groups} goGroup={goGroup}
             onWin={promptOutcome} onHalf={promptOutcome} onLoss={promptOutcome} onUndo={clearDone}/>
@@ -665,9 +761,9 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
       </>}
 
       {/* EASY WINS */}
-      {easyWins.length>0&&<>
-        <BucketHeader bucket="easyWin" count={`${easyWins.length}`} open={openBuckets.easyWin} onToggle={()=>toggleBucket("easyWin")}/>
-        {openBuckets.easyWin&&easyWins.map((a)=>(
+      {fEasyWins.length>0&&<>
+        <BucketHeader bucket="easyWin" count={`${fEasyWins.length}`} open={openBuckets.easyWin} onToggle={()=>toggleBucket("easyWin")}/>
+        {openBuckets.easyWin&&fEasyWins.map((a)=>(
           <ActionCard key={a.id} a={a} bucket="easyWin" done={odDone[a.id]}
             onTap={goAcct} groupLocsMap={groupLocsMap} groups={groups} goGroup={goGroup}
             onWin={promptOutcome} onHalf={promptOutcome} onLoss={promptOutcome} onUndo={clearDone}/>
@@ -676,12 +772,12 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
       </>}
 
       {/* AT RISK */}
-      {atRisk.length>0&&<>
-        <BucketHeader bucket="atRisk" count={`${atRisk.length}`} open={openBuckets.atRisk} onToggle={()=>toggleBucket("atRisk")}/>
+      {fAtRisk.length>0&&<>
+        <BucketHeader bucket="atRisk" count={`${fAtRisk.length}`} open={openBuckets.atRisk} onToggle={()=>toggleBucket("atRisk")}/>
         {openBuckets.atRisk&&<div style={{background:T.s1,border:`1px solid ${BUCKETS.atRisk.border}`,borderRadius:12,overflow:"hidden",marginBottom:0}}>
-          {atRisk.map((a,i)=>{
+          {fAtRisk.map((a,i)=>{
             const py=a.pyQ?.[activeQ]||0,cy=a.cyQ?.[activeQ]||0,gap=py-cy;
-            const isLast=i===atRisk.length-1;
+            const isLast=i===fAtRisk.length-1;
             return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
               style={{animationDelay:`${i*15}ms`,width:"100%",textAlign:"left",background:"transparent",
                 border:"none",borderBottom:isLast?"none":`1px solid ${T.b2}`,
@@ -699,11 +795,11 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
       </>}
 
       {/* FOLLOW UP */}
-      {(followUp.tasks.length>0||followUp.accounts.length>0)&&<>
-        <BucketHeader bucket="followUp" count={`${followUp.tasks.length+followUp.accounts.length}`} open={openBuckets.followUp} onToggle={()=>toggleBucket("followUp")}/>
+      {(fFollowUp.tasks.length>0||fFollowUp.accounts.length>0)&&<>
+        <BucketHeader bucket="followUp" count={`${fFollowUp.tasks.length+fFollowUp.accounts.length}`} open={openBuckets.followUp} onToggle={()=>toggleBucket("followUp")}/>
         {openBuckets.followUp&&<div style={{background:T.s1,border:`1px solid ${BUCKETS.followUp.border}`,borderRadius:12,overflow:"hidden"}}>
-          {followUp.tasks.map((t,i)=>{
-            const isLast=i===followUp.tasks.length-1&&followUp.accounts.length===0;
+          {fFollowUp.tasks.map((t,i)=>{
+            const isLast=i===fFollowUp.tasks.length-1&&fFollowUp.accounts.length===0;
             const overdue=t.dueDate<new Date().toISOString().slice(0,10);
             return <div key={t.id} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderBottom:isLast?"none":`1px solid ${T.b2}`,borderLeft:`3px solid ${BUCKETS.followUp.color}`}}>
               <button onClick={()=>onCompleteTask&&onCompleteTask(t.id)} style={{width:16,height:16,borderRadius:4,border:`2px solid ${T.b2}`,background:"none",cursor:"pointer",flexShrink:0}}/>
@@ -714,8 +810,8 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
               <span style={{fontSize:9,fontWeight:700,color:overdue?T.red:T.amber,flexShrink:0}}>{overdue?"Overdue":"Today"}</span>
             </div>;
           })}
-          {followUp.accounts.map((a,i)=>{
-            const isLast=i===followUp.accounts.length-1;
+          {fFollowUp.accounts.map((a,i)=>{
+            const isLast=i===fFollowUp.accounts.length-1;
             const cy=a.cyQ?.[activeQ]||0,py=a.pyQ?.[activeQ]||0;
             return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
               style={{width:"100%",textAlign:"left",background:"transparent",border:"none",
@@ -734,12 +830,12 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
       </>}
 
       {/* DEAD WEIGHT */}
-      {deadWeight.length>0&&<>
-        <BucketHeader bucket="deadWeight" count={`${deadWeight.length}`} open={openBuckets.deadWeight} onToggle={()=>toggleBucket("deadWeight")}/>
+      {fDeadWeight.length>0&&<>
+        <BucketHeader bucket="deadWeight" count={`${fDeadWeight.length}`} open={openBuckets.deadWeight} onToggle={()=>toggleBucket("deadWeight")}/>
         {openBuckets.deadWeight&&<div style={{background:T.s1,border:`1px solid ${BUCKETS.deadWeight.border}`,borderRadius:12,overflow:"hidden"}}>
-          {deadWeight.map((a,i)=>{
+          {fDeadWeight.map((a,i)=>{
             const py=a.pyQ?.[activeQ]||0,cy=a.cyQ?.[activeQ]||0;
-            const isLast=i===deadWeight.length-1;
+            const isLast=i===fDeadWeight.length-1;
             return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
               style={{width:"100%",textAlign:"left",background:"transparent",border:"none",
                 borderBottom:isLast?"none":`1px solid ${T.b2}`,
@@ -831,3 +927,4 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
 }
 
 export default DashboardTab;
+

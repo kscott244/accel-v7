@@ -985,8 +985,20 @@ const [showCopilot, setShowCopilot] = useState(false);
       {/* MORE MENU OVERLAY */}
       {showMore && <div style={{position:"fixed",inset:0,zIndex:90,background:"rgba(0,0,0,.6)",backdropFilter:"blur(4px)"}} onClick={()=>setShowMore(false)}>
         <div style={{position:"absolute",bottom:58,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:928,background:T.s1,border:`1px solid ${T.b2}`,borderRadius:16,padding:"8px 0",boxShadow:"0 -8px 32px rgba(0,0,0,.5)"}} onClick={e=>e.stopPropagation()}>
-          {[{k:"dealers",l:"Dealers",I:IconDealer,desc:"Dealer console & co-call planner"},{k:"tasks",l:"Tasks",I:IconTask,desc:"Follow-ups & reminders"},{k:"calc",l:"Pricing",I:IconChart,desc:"SKU pricing & margin calculator"},{k:"territory",l:"Territory",I:IconChart,desc:"Attainment, tier revenue & gap leaderboard"},{k:"map",l:"Route",I:IconMap,desc:"Map & route planner"},{k:"outreach",l:"Outreach",I:IconMail,desc:"AI email campaigns"},{k:"admin",l:"Admin",I:IconAdmin,desc:"Groups, contacts, data fixes"}].map(t=>(
-            <button key={t.k} onClick={()=>{setTab(t.k);setView(null);setShowMore(false)}} style={{width:"100%",display:"flex",alignItems:"center",gap:12,padding:"12px 16px",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit",color:tab===t.k?T.blue:T.t2}}>
+          {[
+            {section:"Work"},
+            {k:"map",l:"Route",I:IconMap,desc:"Map & route planner"},
+            {k:"tasks",l:"Tasks",I:IconTask,desc:"Follow-ups & reminders"},
+            {k:"dealers",l:"Dealers",I:IconDealer,desc:"Dealer console & co-call planner"},
+            {k:"territory",l:"Forecast",I:IconChart,desc:"Attainment, pipeline & gap leaderboard"},
+            {k:"outreach",l:"Outreach",I:IconMail,desc:"AI email campaigns"},
+            {section:"Tools"},
+            {k:"calc",l:"Pricing",I:IconChart,desc:"SKU pricing & margin calculator"},
+            {section:"System"},
+            {k:"admin",l:"Admin",I:IconAdmin,desc:"Data management & group admin"},
+          ].map((t,i)=>(
+            t.section ? <div key={t.section} style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color:T.t4,padding:i===0?"6px 16px 4px":"10px 16px 4px",borderTop:i>0?`1px solid ${T.b1}`:"none"}}>{t.section}</div> :
+            <button key={t.k} onClick={()=>{setTab(t.k);setView(null);setShowMore(false)}} style={{width:"100%",display:"flex",alignItems:"center",gap:12,padding:"10px 16px",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit",color:tab===t.k?T.blue:T.t2}}>
               <t.I c={tab===t.k?T.blue:T.t3}/>
               <div style={{textAlign:"left"}}><div style={{fontSize:13,fontWeight:600}}>{t.l}</div><div style={{fontSize:10,color:T.t4}}>{t.desc}</div></div>
             </button>
