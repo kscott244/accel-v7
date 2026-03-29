@@ -655,19 +655,12 @@ function GroupDetail({group,groups=[],goMain,goAcct,overlays,patchOverlay,salesS
 
   const saveResNotes = () => {
     if (!resResult) return;
-    const pts = (resResult.talkingPoints||[]).map((p:string,i:number) => `${i+1}. ${p}`).join("
-");
-    const hooks = (resResult.hooks||[]).map((h:string) => `· ${h}`).join("
-");
-    const comp = resResult.competitive ? `
-Competitive: ${resResult.competitive}` : "";
-    const lines = ["[AI Call Prep]", pts, hooks ? "
-Also:
-"+hooks : "", comp].filter(Boolean).join("
-");
-    const newNote = groupNote ? groupNote + "
-
-" + lines : lines;
+    const nl = "\n";
+    const pts = (resResult.talkingPoints||[]).map((p:string,i:number) => `${i+1}. ${p}`).join(nl);
+    const hooks = (resResult.hooks||[]).map((h:string) => `· ${h}`).join(nl);
+    const comp = resResult.competitive ? nl + `Competitive: ${resResult.competitive}` : "";
+    const lines = ["[AI Call Prep]", pts, hooks ? nl+"Also:"+nl+hooks : "", comp].filter(Boolean).join(nl);
+    const newNote = groupNote ? groupNote + nl+nl + lines : lines;
     saveNote(newNote);
   };
 
@@ -1680,4 +1673,5 @@ Also:
 
 
 export default GroupDetail;
+
 
