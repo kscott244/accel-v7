@@ -172,7 +172,7 @@
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-29T09:00:28.125Z",
+  "lastUpdated": "2026-03-29T09:01:22.320Z",
   "tasks": [
     {
       "id": 1774682049928,
@@ -318,6 +318,11 @@
       "lastActionAt": "2026-03-29T08:44:54.293Z",
       "lastMeaningfulChangeAt": "2026-03-29T08:44:54.293Z",
       "updatedAt": "2026-03-29T08:44:54.293Z"
+    },
+    "Master-CM1064374": {
+      "groupId": "Master-CM1064374",
+      "lastViewedAt": "2026-03-29T09:01:20.245Z",
+      "updatedAt": "2026-03-29T09:01:20.245Z"
     }
   },
   "groupNotes": {
