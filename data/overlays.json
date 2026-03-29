@@ -172,7 +172,7 @@
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-29T08:43:28.791Z",
+  "lastUpdated": "2026-03-29T08:44:54.785Z",
   "tasks": [
     {
       "id": 1774682049928,
@@ -242,7 +242,8 @@
       "strategy": "Corporate Procurement",
       "pinned": true,
       "notes": "HQ: 675 Anton Blvd, Costa Mesa CA. Main office: (714) 668-9005. PRIMARY CONTACT: Jon Prod, COO Northeast — jon.prod@smilebrands.com. Based Minneapolis MN. Former CFO Midwest Dental — owns procurement decisions for Northeast. SECONDARY: Steve Bilt, CEO — sbilt@smilebrands.com (standard format, unverified direct). Bill McCarthy, SVP Real Estate & Strategic Sourcing — also relevant for vendor/formulary conversations. KEY INSIGHT: Smile Brands uses a clinical formulary with an online ordering portal. $258/office may be a formulary visibility problem — offices can't easily find Kerr when ordering. 33 offices CT/MA/RI/NY at Standard pricing — full credit. $64K annual gap. NEXT MOVE: Email Jon Prod directly at jon.prod@smilebrands.com. Subject: 'Kerr Partnership Opportunity — Northeast Region.' Keep it short: your 33 NE offices are spending $258/office vs a $747 regional benchmark. You want 20 minutes to discuss formulary positioning and what Kerr can do to drive compliance. DO NOT cold call the main office — email Jon directly.",
-      "teamOppQ": null
+      "teamOppQ": null,
+      "accelTier": "Diamond"
     },
     "Master-CM128801": {
       "procurementContact": "Unknown — call HQ Framingham MA",
@@ -311,6 +312,12 @@
       "groupId": "Master-CM216446",
       "lastViewedAt": "2026-03-29T06:23:07.378Z",
       "updatedAt": "2026-03-29T06:23:07.378Z"
+    },
+    "Master-CM098299": {
+      "groupId": "Master-CM098299",
+      "lastActionAt": "2026-03-29T08:44:54.293Z",
+      "lastMeaningfulChangeAt": "2026-03-29T08:44:54.293Z",
+      "updatedAt": "2026-03-29T08:44:54.293Z"
     }
   },
   "groupNotes": {
