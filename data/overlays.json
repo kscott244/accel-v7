@@ -153,13 +153,26 @@
         "confidence": "likely",
         "isPrimary": false,
         "savedAt": "2026-03-29T06:21:13.990Z"
+      },
+      {
+        "id": 1774765279825,
+        "linkedGroupId": "Master-CM216446",
+        "name": "Christina Powers",
+        "role": "Practice Manager",
+        "phone": "",
+        "email": "",
+        "notes": "From AI research",
+        "source": "research",
+        "confidence": "likely",
+        "isPrimary": false,
+        "savedAt": "2026-03-29T06:21:19.823Z"
       }
     ]
   },
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-29T06:21:14.452Z",
+  "lastUpdated": "2026-03-29T06:21:20.303Z",
   "tasks": [
     {
       "id": 1774682049928,
