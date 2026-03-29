@@ -1,5 +1,5 @@
-"use client";
 // @ts-nocheck
+"use client";
 import { useState, useMemo } from "react";
 import { T } from "@/lib/tokens";
 import {
@@ -13,7 +13,7 @@ import {
 // Props: groups, overlays, patchOverlay, tasks, goGroup, onAddTask, activeQ
 
 // ── Status badge ─────────────────────────────────────────────────
-function StatusBadge({ status }: { status }) {
+function StatusBadge({ status }) {
   const cfg = {
     pending:   { label: "Pending",   bg: "rgba(79,142,247,.12)",   c: "#4f8ef7" },
     approved:  { label: "Approved",  bg: "rgba(52,211,153,.12)",   c: "#34d399" },
@@ -39,14 +39,6 @@ function InboxCard({
   onCreateTask,
   expanded,
   onToggle,
-}: {
-  item;
-  onApprove: () => void;
-  onDismiss: () => void;
-  onReview: () => void;
-  onOpenGroup: () => void;
-  onCreateTask: () => void;
-  onToggle: () => void;
 }) {
   const priColor = INBOX_PRIORITY_COLOR[item.priority];
   const priBg    = INBOX_PRIORITY_BG[item.priority];
@@ -57,8 +49,8 @@ function InboxCard({
   return (
     <div style={{
       background: T.s2,
-      border: `1px solid ${isDone ? T.b1 : T.b2}`,
-      borderLeft: `3px solid ${isDone ? T.b2 : priColor}`,
+      border: "1px solid " + (isDone ? T.b1 : T.b2),
+      borderLeft: "3px solid " + (isDone ? T.b2 : priColor),
       borderRadius: 12,
       marginBottom: 10,
       opacity: isDone ? 0.55 : 1,
@@ -96,7 +88,7 @@ function InboxCard({
 
       {/* Expanded detail */}
       {expanded && (
-        <div style={{ padding: "0 14px 14px", borderTop: `1px solid ${T.b1}` }}>
+        <div style={{ padding: "0 14px 14px", borderTop: "1px solid " + T.b1 }}>
           {/* Rationale */}
           <div style={{ padding: "10px 0 8px" }}>
             <div style={{ fontSize: 10, color: T.t4, fontWeight: 700, letterSpacing: ".5px",
@@ -105,7 +97,7 @@ function InboxCard({
           </div>
 
           {/* Suggested payload */}
-          {item.suggestedPayload && Object.keys(item.suggestedPayload).some(k => item.suggestedPayload[k]) && (
+          {item.suggestedPayload && Object.keys(item.suggestedPayload).some(function(k) { return item.suggestedPayload[k]; }) && (
             <div style={{ background: T.s3, borderRadius: 8, padding: "8px 10px", marginBottom: 10 }}>
               <div style={{ fontSize: 10, color: T.t4, fontWeight: 700, letterSpacing: ".5px",
                 textTransform: "uppercase", marginBottom: 6 }}>Pre-filled data</div>
@@ -163,13 +155,13 @@ function InboxCard({
               )}
               <button onClick={onOpenGroup} style={{
                 padding: "9px 14px", background: T.s3, color: T.t2,
-                border: `1px solid ${T.b2}`, borderRadius: 8, cursor: "pointer",
+                border: "1px solid " + T.b2, borderRadius: 8, cursor: "pointer",
                 fontFamily: "inherit", fontSize: 12, fontWeight: 600 }}>
                 Open Account
               </button>
               <button onClick={onReview} style={{
                 padding: "9px 14px", background: "none", color: T.t3,
-                border: `1px solid ${T.b1}`, borderRadius: 8, cursor: "pointer",
+                border: "1px solid " + T.b1, borderRadius: 8, cursor: "pointer",
                 fontFamily: "inherit", fontSize: 11 }}>
                 Mark Reviewed
               </button>
@@ -186,7 +178,7 @@ function InboxCard({
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={onOpenGroup} style={{
                 padding: "8px 14px", background: T.s3, color: T.t2,
-                border: `1px solid ${T.b2}`, borderRadius: 8, cursor: "pointer",
+                border: "1px solid " + T.b2, borderRadius: 8, cursor: "pointer",
                 fontFamily: "inherit", fontSize: 12 }}>
                 Open Account
               </button>
@@ -202,7 +194,7 @@ function InboxCard({
           {item.status === "dismissed" && (
             <button onClick={onApprove} style={{
               padding: "8px 14px", background: "none", color: T.t4,
-              border: `1px solid ${T.b1}`, borderRadius: 8, cursor: "pointer",
+              border: "1px solid " + T.b1, borderRadius: 8, cursor: "pointer",
               fontFamily: "inherit", fontSize: 11 }}>
               Restore
             </button>
@@ -221,39 +213,40 @@ export default function InboxTab({
   tasks,
   goGroup,
   onAddTask,
-  activeQ = "1",
+  activeQ,
 }) {
+  const qk = activeQ || "1";
   const [filter, setFilter] = useState("pending");
   const [expandedId, setExpandedId] = useState(null);
   const [saving, setSaving] = useState(null);
 
   const allItems = useMemo(
-    () => buildInboxItems(groups, overlays, tasks, { qk: activeQ, maxItems: 10 }),
-    [groups, overlays, tasks, activeQ]
+    function() { return buildInboxItems(groups, overlays, tasks, { qk: qk, maxItems: 10 }); },
+    [groups, overlays, tasks, qk]
   );
 
-  const shown = useMemo(() => {
-    if (filter === "pending") return allItems.filter(i => i.status === "pending");
-    if (filter === "done")    return allItems.filter(i => i.status !== "pending");
+  const shown = useMemo(function() {
+    if (filter === "pending") return allItems.filter(function(i) { return i.status === "pending"; });
+    if (filter === "done")    return allItems.filter(function(i) { return i.status !== "pending"; });
     return allItems;
   }, [allItems, filter]);
 
-  const pendingCount = allItems.filter(i => i.status === "pending").length;
+  const pendingCount = allItems.filter(function(i) { return i.status === "pending"; }).length;
 
-  const updateStatus = async (item, status) => {
+  const updateStatus = async function(item, status) {
     setSaving(item.id);
-    const current = overlays?.inboxItems || [];
-    const updated = current.filter((i) => i.id !== item.id);
-    updated.push({ id: item.id, status, updatedAt: new Date().toISOString() });
+    const current = (overlays && overlays.inboxItems) || [];
+    const updated = current.filter(function(i) { return i.id !== item.id; });
+    updated.push({ id: item.id, status: status, updatedAt: new Date().toISOString() });
     await patchOverlay([{ op: "set", path: "inboxItems", value: updated }]);
     setSaving(null);
   };
 
-  const handleCreateTask = (item) => {
+  const handleCreateTask = function(item) {
     const payload = item.suggestedPayload || {};
-    const group   = groups.find(g => g.id === item.groupId);
+    const group   = groups.find(function(g) { return g.id === item.groupId; });
     onAddTask({
-      title:   payload.taskTitle || `Follow up with ${item.groupName}`,
+      title:   payload.taskTitle || ("Follow up with " + item.groupName),
       dueDate: payload.dueDate || new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
       groupId: item.groupId,
       groupName: item.groupName,
@@ -261,6 +254,8 @@ export default function InboxTab({
     }, null, group);
     updateStatus(item, "approved");
   };
+
+  var FILTER_KEYS = ["pending", "all", "done"];
 
   return (
     <div style={{ padding: "16px 16px 90px" }}>
@@ -284,18 +279,20 @@ export default function InboxTab({
 
       {/* Filter tabs */}
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-        {(["pending", "all", "done"] as const).map(f => (
-          <button key={f} onClick={() => setFilter(f)} style={{
-            padding: "6px 14px", borderRadius: 8, cursor: "pointer",
-            fontFamily: "inherit", fontSize: 11, fontWeight: 700,
-            border: filter === f ? "none" : `1px solid ${T.b2}`,
-            background: filter === f ? T.blue : "none",
-            color: filter === f ? "#fff" : T.t3,
-            textTransform: "capitalize",
-          }}>
-            {f === "pending" ? `Pending (${pendingCount})` : f === "all" ? `All (${allItems.length})` : "Done"}
-          </button>
-        ))}
+        {FILTER_KEYS.map(function(f) {
+          return (
+            <button key={f} onClick={function() { setFilter(f); }} style={{
+              padding: "6px 14px", borderRadius: 8, cursor: "pointer",
+              fontFamily: "inherit", fontSize: 11, fontWeight: 700,
+              border: filter === f ? "none" : ("1px solid " + T.b2),
+              background: filter === f ? T.blue : "none",
+              color: filter === f ? "#fff" : T.t3,
+              textTransform: "capitalize",
+            }}>
+              {f === "pending" ? ("Pending (" + pendingCount + ")") : f === "all" ? ("All (" + allItems.length + ")") : "Done"}
+            </button>
+          );
+        })}
       </div>
 
       {/* Empty state */}
@@ -309,34 +306,36 @@ export default function InboxTab({
           </div>
           <div style={{ fontSize: 12 }}>
             {filter === "pending"
-              ? "All caught up. Switch to "All" to see everything."
+              ? "All caught up. Switch to \u201CAll\u201D to see everything."
               : "Actions will appear here as signals develop."}
           </div>
         </div>
       )}
 
       {/* Items */}
-      {shown.map(item => (
-        <div key={item.id} style={{ position: "relative" }}>
-          {saving === item.id && (
-            <div style={{ position: "absolute", inset: 0, zIndex: 5,
-              background: "rgba(10,10,15,.5)", borderRadius: 12,
-              display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ fontSize: 11, color: T.t3 }}>Saving…</span>
-            </div>
-          )}
-          <InboxCard
-            item={item}
-            expanded={expandedId === item.id}
-            onToggle={() => setExpandedId(expandedId === item.id ? null : item.id)}
-            onApprove={() => updateStatus(item, "approved")}
-            onDismiss={() => updateStatus(item, "dismissed")}
-            onReview={() => updateStatus(item, "reviewed")}
-            onOpenGroup={() => goGroup(item.groupId)}
-            onCreateTask={() => handleCreateTask(item)}
-          />
-        </div>
-      ))}
+      {shown.map(function(item) {
+        return (
+          <div key={item.id} style={{ position: "relative" }}>
+            {saving === item.id && (
+              <div style={{ position: "absolute", inset: 0, zIndex: 5,
+                background: "rgba(10,10,15,.5)", borderRadius: 12,
+                display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <span style={{ fontSize: 11, color: T.t3 }}>Saving…</span>
+              </div>
+            )}
+            <InboxCard
+              item={item}
+              expanded={expandedId === item.id}
+              onToggle={function() { setExpandedId(expandedId === item.id ? null : item.id); }}
+              onApprove={function() { updateStatus(item, "approved"); }}
+              onDismiss={function() { updateStatus(item, "dismissed"); }}
+              onReview={function() { updateStatus(item, "reviewed"); }}
+              onOpenGroup={function() { goGroup(item.groupId); }}
+              onCreateTask={function() { handleCreateTask(item); }}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }
