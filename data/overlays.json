@@ -172,7 +172,7 @@
   "groupDetaches": [],
   "skippedCpidIds": [],
   "adjs": [],
-  "lastUpdated": "2026-03-29T08:58:49.355Z",
+  "lastUpdated": "2026-03-29T09:00:28.125Z",
   "tasks": [
     {
       "id": 1774682049928,
@@ -328,6 +328,109 @@
       "id": "research_contact:Master-CM175757",
       "status": "reviewed",
       "updatedAt": "2026-03-29T08:42:15.999Z"
+    }
+  ],
+  "researchQueue": [
+    {
+      "groupId": "Master-CM1064374",
+      "groupName": "SMILE DOCTORS: Master-CM1064374",
+      "status": "completed",
+      "createdAt": "2026-03-29T08:59:36.877Z",
+      "gapAmount": 655.4100000000008,
+      "pyRevenue": 3579.1600000000008,
+      "cyRevenue": 2923.75,
+      "locs": 21,
+      "hasContact": false,
+      "hasPhone": false,
+      "lastResearchedDays": 999,
+      "id": "strategic-dso:Master-CM1064374",
+      "opportunityType": "strategic-dso",
+      "priority": "critical",
+      "reasonForResearch": "DSO with 21 locations, $16K annual. No contacts — need procurement path.",
+      "completedAt": "2026-03-29T09:00:27.440Z",
+      "confidence": "medium",
+      "findingsSummary": "All identified locations appear active and open; OASECT (Waterford/Norwich) recently updated their website in early 2026, and Drew Orthodontics (West Hartford) is actively accepting new patients. · Grouped under Smile Doctors' distributor account label but no confirmed Smile Doctors DSO acquisition found — these appear to be separate independent private practices (OASECT in Waterford/Norwich and Drew Orthodontics in West Hartford) bundled together by the distributor; no public DSO affiliation confirmed. · No specific competing supply brands (e.g., Dentsply, 3M, Hu-Friedy, Ultradent) were mentioned on practice websites; OASECT promotes Damon System brackets, Invisalign (Platinum Provider), Spark aligners, SureSmile archwires, and Acceledent/Propel/VPro5 — all technology partners worth noting as conversation context, but no direct competitor supply brand signals found.",
+      "suggestedNextMove": "Call Dr. James M. O'Leary at (860) 443-1827.",
+      "contactsFound": [
+        {
+          "name": "Dr. James M. O'Leary",
+          "role": "Owner/DMD – Orthodontic Associates of SE Connecticut (OASECT)",
+          "email": null,
+          "phone": "(860) 443-1827",
+          "website": "https://oasect.com",
+          "source": "deep-research",
+          "confidence": "medium",
+          "linkedGroupId": "Master-CM1064374",
+          "notes": "Tier 1",
+          "savedAt": "2026-03-29T09:00:27.440Z"
+        },
+        {
+          "name": "Dr. Gregory Hack",
+          "role": "Partner/Orthodontist – Orthodontic Associates of SE Connecticut (OASECT)",
+          "email": null,
+          "phone": "(860) 443-1827",
+          "website": "https://oasect.com",
+          "source": "deep-research",
+          "confidence": "medium",
+          "linkedGroupId": "Master-CM1064374",
+          "notes": "Tier 1",
+          "savedAt": "2026-03-29T09:00:27.440Z"
+        },
+        {
+          "name": "Dr. Donald Drew",
+          "role": "Owner/DDS – Drew Orthodontics / West Hartford Orthodontics",
+          "email": null,
+          "phone": "(860) 236-6888",
+          "website": "https://oasect.com",
+          "source": "deep-research",
+          "confidence": "medium",
+          "linkedGroupId": "Master-CM1064374",
+          "notes": "Tier 1",
+          "savedAt": "2026-03-29T09:00:27.440Z"
+        },
+        {
+          "name": "Dr. Natalia Menjivar",
+          "role": "Associate Orthodontist – Drew Orthodontics / West Hartford Orthodontics",
+          "email": null,
+          "phone": "(860) 236-6888",
+          "website": "https://oasect.com",
+          "source": "deep-research",
+          "confidence": "medium",
+          "linkedGroupId": "Master-CM1064374",
+          "notes": "Tier 2",
+          "savedAt": "2026-03-29T09:00:27.440Z"
+        }
+      ],
+      "suggestedLinkages": [
+        {
+          "suggestedGroupName": "Orthodontic Associates of SE Connecticut (OASECT) – Waterford",
+          "suggestedAddress": "196 Waterford Pkwy S, Suite 305A, Waterford, CT, 06385",
+          "reason": "Found via web research on SMILE DOCTORS: Master-CM1064374",
+          "confidence": "medium",
+          "reviewed": false
+        },
+        {
+          "suggestedGroupName": "Orthodontic Associates of SE Connecticut (OASECT) – Norwich/Mystic",
+          "suggestedAddress": "12 Roosevelt Ave #12, Mystic, CT, 06355",
+          "reason": "Found via web research on SMILE DOCTORS: Master-CM1064374",
+          "confidence": "medium",
+          "reviewed": false
+        },
+        {
+          "suggestedGroupName": "Drew Orthodontics / West Hartford Orthodontics",
+          "suggestedAddress": "345 N Main St, Suite 312, West Hartford, CT, 06117",
+          "reason": "Found via web research on SMILE DOCTORS: Master-CM1064374",
+          "confidence": "medium",
+          "reviewed": false
+        },
+        {
+          "suggestedGroupName": "CT Braces / SD Team Demas Orthodontics",
+          "suggestedAddress": "27 Meriden Ave, Suite 2A, Southington, CT, 06489",
+          "reason": "Found via web research on SMILE DOCTORS: Master-CM1064374",
+          "confidence": "medium",
+          "reviewed": false
+        }
+      ]
     }
   ]
 }
