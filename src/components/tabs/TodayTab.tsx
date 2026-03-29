@@ -22,7 +22,7 @@ const BUCKETS = {
 };
 
 // ── Compact action card ───────────────────────────────────────────────────────
-function ActionCard({a, bucket, done, onTap, onWin, onHalf, onLoss, onUndo, isVisit, groupLocsMap, groups, goGroup, showAddress=true}:any) {
+function ActionCard({a, bucket, done, onTap, onWin, onHalf, onLoss, onUndo, isVisit, groupLocsMap, groups, goGroup, showAddress=true}) {
   const bk = BUCKETS[bucket];
   return (
     <div style={{marginBottom:6}}>
@@ -108,7 +108,7 @@ function ActionCard({a, bucket, done, onTap, onWin, onHalf, onLoss, onUndo, isVi
 }
 
 // ── Section header ────────────────────────────────────────────────────────────
-function BucketHeader({bucket, count, subtitle, open, onToggle}:any) {
+function BucketHeader({bucket, count, subtitle, open, onToggle}) {
   const bk = BUCKETS[bucket];
   return (
     <button onClick={onToggle} style={{
