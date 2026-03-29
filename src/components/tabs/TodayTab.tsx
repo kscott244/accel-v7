@@ -61,7 +61,7 @@ function ActionCard({a, bucket, done, onTap, onWin, onHalf, onLoss, onUndo, isVi
           {/* Row 4: signals */}
           {!done && a.signals?.length > 0 && (
             <div style={{display:"flex", flexWrap:"wrap", gap:3, marginTop:4}}>
-              {a.signals.slice(0,2).map((s:string,i:number) => (
+              {a.signals.slice(0,2).map((s,i) => (
                 <span key={i} style={{fontSize:8, color:T.t3,
                   background:"rgba(255,255,255,.05)", borderRadius:3,
                   padding:"1px 5px", border:"1px solid rgba(255,255,255,.08)"}}>
@@ -197,7 +197,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
   const kpiData = useMemo(() => {
     const isFY = kpiScope === "FY";
     const target = isFY ? FY_TARGET : (QUARTER_TARGETS?.[kpiScope] || Q1_TARGET);
-    const cy     = isFY ? (scored.reduce((s:number,a:any)=>s+Object.values(a.cyQ||{}).reduce((x:number,v:any)=>x+(v||0),0),0)) : q1CY;
+    const cy     = isFY ? (scored.reduce((s,a)=>s+Object.values(a.cyQ||{}).reduce((x,v:any)=>x+(v||0),0),0)) : q1CY;
     const gap    = Math.max(0, target - cy);
     const att    = target > 0 ? cy / target : 0;
     const dLeft  = daysLeftInQuarter(isFY ? "4" : kpiScope);
@@ -293,12 +293,12 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
     const callList=clustered.filter((a:any)=>!visitIds.has(a.id)).sort((a:any,b:any)=>b.callScore-a.callScore).slice(0,8);
     const dealerGroups={};
     clustered.forEach((a:any)=>{if(a.dealer&&a.dealer!=="All Other"){dealerGroups[a.dealer]=dealerGroups[a.dealer]||[];dealerGroups[a.dealer].push(a);}});
-    const dealerActions=Object.entries(dealerGroups).map(([dealer,accts])=>{const top=(accts as any[]).sort((a:any,b:any)=>b.callScore-a.callScore).slice(0,3);return{dealer,accts:top,totalAsk:top.reduce((s:number,a:any)=>s+a.ask,0)};}).sort((a,b)=>b.totalAsk-a.totalAsk).slice(0,3);
+    const dealerActions=Object.entries(dealerGroups).map(([dealer,accts])=>{const top=(accts).sort((a:any,b:any)=>b.callScore-a.callScore).slice(0,3);return{dealer,accts:top,totalAsk:top.reduce((s,a)=>s+a.ask,0)};}).sort((a,b)=>b.totalAsk-a.totalAsk).slice(0,3);
     const doneTotal=Object.values(odDone).reduce((s,v:any)=>s+(v.amt||0),0);
     const pending=clustered.filter((a:any)=>!odDone[a.id]);
-    const conservative=doneTotal+pending.reduce((s:number,a:any)=>s+a.ask*Math.min(a.prob*0.65,1),0);
-    const base=doneTotal+pending.reduce((s:number,a:any)=>s+a.ask*a.prob,0);
-    const aggressive=doneTotal+pending.reduce((s:number,a:any)=>s+a.ask*Math.min(a.prob*1.35,1),0);
+    const conservative=doneTotal+pending.reduce((s,a)=>s+a.ask*Math.min(a.prob*0.65,1),0);
+    const base=doneTotal+pending.reduce((s,a)=>s+a.ask*a.prob,0);
+    const aggressive=doneTotal+pending.reduce((s,a)=>s+a.ask*Math.min(a.prob*1.35,1),0);
     return{visitList,callList,dealerActions,conservative,base,aggressive,doneTotal,
       totalTargets:clustered.length,modeLabel,isEndgame,isSprint,allCandidates:clustered};
   },[scored,odDone,activeQ]);
@@ -565,7 +565,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
                       <span style={{fontSize:9,fontWeight:700,color:ac,background:`${ac}18`,borderRadius:4,padding:"1px 7px",border:`1px solid ${ac}30`}}>
                         {al}
                       </span>
-                      {item.signals.map((s:string,j:number) => (
+                      {item.signals.map((s,j) => (
                         <span key={j} style={{fontSize:8,color:"#7878a0",background:"rgba(255,255,255,.04)",borderRadius:3,padding:"1px 5px"}}>
                           {s}
                         </span>
@@ -763,12 +763,12 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
     {/* ── TRIP PLANNER MODAL ── */}
     {tripAnchor&&(()=>{
       const anchor=tripAnchor;const nearby=anchor.nearbyAccounts||[];const allStops=[anchor,...nearby];
-      const totalAsk=allStops.reduce((s:number,a:any)=>s+(a.ask||0),0);
-      const totalExp=allStops.reduce((s:number,a:any)=>s+(a.ask||0)*(a.prob||0),0);
+      const totalAsk=allStops.reduce((s,a)=>s+(a.ask||0),0);
+      const totalExp=allStops.reduce((s,a)=>s+(a.ask||0)*(a.prob||0),0);
       const buildRoute=()=>{
         const stops=allStops.map((a:any)=>{const b=BADGER[a.id]||BADGER[a.gId];return b?.address||a.addr||`${a.name}, ${a.city}, ${a.st}`;});
         const origin=encodeURIComponent("Thomaston, CT");const dest=encodeURIComponent(stops[stops.length-1]);
-        const wp=stops.slice(0,-1).map((s:string)=>encodeURIComponent(s)).join("|");
+        const wp=stops.slice(0,-1).map((s)=>encodeURIComponent(s)).join("|");
         window.open(`https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}${wp?`&waypoints=${wp}`:""}&travelmode=driving`,"_blank");
       };
       return <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.75)",backdropFilter:"blur(8px)",display:"flex",flexDirection:"column",justifyContent:"flex-end"}} onClick={()=>setTripAnchor(null)}>
