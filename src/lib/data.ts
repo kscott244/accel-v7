@@ -22,6 +22,8 @@ export const EMPTY_OVERLAYS: any = {
   groups: {}, groupDetaches: [], groupMoves: {}, nameOverrides: {},
   contacts: {}, fscReps: {}, activityLogs: {}, research: {}, dealerOverrides: {}, dealerManualReps: {}, adjs: [],
   skippedCpidIds: [],
+  inboxItems: [],
+  noticeDismissals: [],
 };
 export let OVERLAYS_REF: any = EMPTY_OVERLAYS;
 
