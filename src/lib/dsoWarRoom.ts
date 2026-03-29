@@ -24,6 +24,11 @@ export function shouldInclude(
   card: DsoCard,
   intel: any,
 ): IncludeReason | null {
+  // Always exclude the data pipeline catch-all bucket — not a real account
+  if (group.id === "Master-Unmatched") return null;
+  // Exclude groups with no real name
+  const rawName = (group.name || "").toUpperCase();
+  if (rawName.startsWith("UNMATCHED")) return null;
   const gIntel = intel?.[group.id] || {};
   if (gIntel.forceExclude) return null;
   if (gIntel.forceInclude || gIntel.pinned) return "Pinned";
