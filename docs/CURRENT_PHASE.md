@@ -1,65 +1,74 @@
 # CURRENT PHASE -- accel-v7
 
-## Active: Strategic Accounts War Room — Consistency Cleanup — March 29, 2026
+## Active: Phase 2 — Contact Intelligence Layer — March 29, 2026
 
 ### What Was Built
 
-**Phase: War Room consistency cleanup (narrow)**
-
-Tightened the War Room to be internally consistent.
-No behavior changes — logic centralization and naming only.
+Contacts are now a first-class intelligence layer. Deterministic only — no fake data.
 
 **Commits:**
-- `ee2a28a3` — dsoWarRoom.ts: absorb noise suppression into shouldInclude(); single source of truth
-- `c72f53ef` — DsoWarRoomTab.tsx: rename title to "Strategic Accounts War Room"; fix Intel drawer display name; remove duplicate noise suppression from tab
+- `a4dece1a` — types/index.ts: Contact type with source, confidence, isPrimary, linkedGroupId
+- `8f592bbf` — lib/contacts.ts: intelligence lib — bestContact(), contactGaps(), bestPathIn(), migrateLegacyContact(), buildContact()
+- `38571696` — GroupDetail.tsx: wire contacts lib — typed Contact[], migrate legacy data on load, buildContact() for saves
+- `a00c7eae` — GroupDetail.tsx: UI — PRIMARY badge, confidence badges (Verified/Stale/AI), confidence picker in modal, Primary toggle in modal
 
-### Exact Inclusion Rules (OR logic, forceExclude overrides all)
+### Contact Model
 
-All logic lives in `src/lib/dsoWarRoom.ts → shouldInclude()`.
-DsoWarRoomTab calls it and does no additional business-rule filtering.
+Overlay path: overlays.groupContacts[groupId] = Contact[]
 
-1. `group.id === "Master-Unmatched"` → always excluded
-2. `group.name` starts with "UNMATCHED" → always excluded
-3. `intel.forceExclude = true` → always excluded (overrides everything)
-4. `intel.forceInclude = true` OR `intel.pinned = true` → **Pinned**
-5. `class2` is DSO, EMERGING DSO, or contains "DSO" → **DSO**
-6. `locs >= 5` AND (`cy1 >= $2,000` OR `benchGapAnn >= $10,000`) → **Multi-site**
-7. `benchGapAnn >= $25,000` → **Large gap**
-8. Otherwise → excluded
+| Field | Type | Notes |
+|---|---|---|
+| id | number | timestamp-based |
+| linkedGroupId | string | Master-CM# |
+| name | string | |
+| role | string | |
+| phone | string | |
+| email | string | |
+| notes | string | |
+| source | ContactSource | manual / research / badger / csv / unknown |
+| confidence | ContactConfidence | verified / likely / unverified / stale |
+| isPrimary | boolean | best known path into account |
+| savedAt | string | ISO date |
+| verifiedAt | string? | ISO date — when Ken last confirmed current |
 
-### Thresholds (centralized in WR_THRESHOLDS)
+### Intelligence Functions (src/lib/contacts.ts)
 
-| Threshold | Value |
-|---|---|
-| minLocs | 5 |
-| minCyQ1 | $10,000 |
-| minBenchGapAnn | $25,000 |
-| Multi-site noise floor | cy1 >= $2K OR gap >= $10K |
+- **bestContact(contacts)** — returns the highest-scored contact (primary first, then conf × source × phone/email)
+- **contactGaps(contacts)** — returns: hasAnyContact, hasPrimaryContact, missingPhone, missingEmail, hasMultiple, staleOnly, unverifiedOnly
+- **bestPathIn(contacts, hasFscRep)** → PathIn enum: direct-phone / direct-email / dealer-led / office-visit / stale-verify
+- **migrateLegacyContact(raw, groupId)** — upgrades old {name,role,phone,email} to full Contact on load
+- **buildContact(fields, groupId, id?)** — constructs a Contact from form data
 
-### UI Naming
+### UI Changes (GroupDetail.tsx)
 
-- Title: **Strategic Accounts War Room** (was: "DSO War Room")
-- Intel drawer: shows real group display name (was: raw Master-CM# string)
-- Reason badges: DSO / Multi-site / Large gap / Pinned (unchanged)
+- Contacts section header now shows best path badge (📞 Direct / ✉ Email / 🤝 Via Rep / 🚪 Walk In / ⚠ Verify)
+- Contact cards: ★ PRIMARY badge, ✓ Verified badge, Stale warning, AI source label
+- Empty state: clear message + icon when no contacts
+- Add/Edit modal: Confidence pill picker (Unverified / Likely / Verified / Stale) + Primary toggle
+- saveContact enforces single primary (demotes all others when isPrimary is set)
+- saveResContact now tags source=research, confidence=likely
+
+### Persistence
+
+- Overlay path unchanged: overlays.groupContacts[groupId]
+- Legacy contact data migrated on load via migrateLegacyContact() — backward compatible
+- No new overlay sections required
 
 ### What Was NOT Changed
 
 - No AccelerateApp.tsx changes
-- No overlay/persistence changes
-- No benchmark math changes
-- No card layout changes
+- No overlay/CSV separation work
+- No event logging
+- No assistant inbox
 
 ---
 
 ## Previously Completed
 
+- Phase 1 — War Room consistency cleanup (March 29, 2026)
 - War Room inclusion expansion (March 28, 2026)
 - DSO War Room baseline (A16)
-- Pricing Tab rebuild (Quick Credit, SKU Lookup, Tier Switch)
-- Phase 12 — Territory Copilot
-- Phase 11 — AI Copilot
 
 ## Last Updated
 
 March 29, 2026
-
