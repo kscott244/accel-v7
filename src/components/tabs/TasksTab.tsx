@@ -6,17 +6,17 @@ import { $$ } from "@/lib/format";
 import { fixGroupName } from "@/components/primitives";
 
 function todayStr() { return new Date().toISOString().slice(0, 10); }
-function daysFromNow(n: number) {
+function daysFromNow(n) {
   const d = new Date(); d.setDate(d.getDate() + n);
   return d.toISOString().slice(0, 10);
 }
-function formatDate(d: string) {
+function formatDate(d) {
   if (!d) return "";
   const [y, m, day] = d.split("-");
   return `${parseInt(m)}/${parseInt(day)}`;
 }
-function isOverdue(d: string) { return d && d < todayStr(); }
-function isToday(d: string)   { return d === todayStr(); }
+function isOverdue(d) { return d && d < todayStr(); }
+function isToday(d)   { return d === todayStr(); }
 
 function gcalUrl(task: any) {
   const title   = encodeURIComponent(`${task.action}${task.accountName ? `: ${task.accountName}` : task.groupName ? `: ${task.groupName}` : ""}`);
@@ -144,7 +144,7 @@ function InlineAddForm({ onSave, onClose, linkedLabel }: any) {
         <input type="date" value={due} onChange={e => setDue(e.target.value)}
           style={{ flex: 1, background: T.s1, border: `1px solid ${T.b1}`, borderRadius: 8,
             padding: "6px 8px", fontSize: 11, color: T.t1, fontFamily: "inherit", outline: "none" }} />
-        {(["High", "Normal", "Low"] as const).map(p => {
+        {["High", "Normal", "Low"].map(p => {
           const c = p === "High" ? T.red : p === "Normal" ? T.blue : T.t4;
           return (
             <button key={p} onClick={() => setPri(p)} style={{
@@ -241,8 +241,8 @@ export default function TasksTab({ tasks, onAddTask, onCompleteTask, onDeleteTas
 }
 
 // ── TASK SUGGESTION ENGINE (exported for AcctDetail + GroupDetail) ─
-export function suggestTasks(acct: any, qk = "1"): Array<{text: string; notes: string; icon: string}> {
-  const suggestions: Array<{text: string; notes: string; icon: string}> = [];
+export function suggestTasks(acct, qk = "1") {
+  const suggestions = [];
   const py  = acct.pyQ?.[qk] || 0;
   const cy  = acct.cyQ?.[qk] || 0;
   const gap = py - cy;
@@ -295,7 +295,7 @@ export function TaskWidget({ acct, group, tasks, onAddTask }: any) {
   // Suggestions — only for accounts, not groups (no pyQ on groups directly)
   const suggestions = acct ? suggestTasks({ ...acct, _$$: $$ }) : [];
 
-  const handleAdd = (text: string, notes: string, icon: string) => {
+  const handleAdd = (text, notes, icon) => {
     onAddTask({ action: `${icon} ${text}`, notes, dueDate: daysFromNow(7), priority: "Normal" });
   };
 
