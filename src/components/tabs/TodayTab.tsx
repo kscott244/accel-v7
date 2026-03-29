@@ -197,7 +197,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
   const kpiData = useMemo(() => {
     const isFY = kpiScope === "FY";
     const target = isFY ? FY_TARGET : (QUARTER_TARGETS?.[kpiScope] || Q1_TARGET);
-    const cy     = isFY ? (scored.reduce((s,a)=>s+Object.values(a.cyQ||{}).reduce((x,v:any)=>x+(v||0),0),0)) : q1CY;
+    const cy     = isFY ? (scored.reduce((s,a)=>s+Object.values(a.cyQ||{}).reduce((x,v)=>x+(v||0),0),0)) : q1CY;
     const gap    = Math.max(0, target - cy);
     const att    = target > 0 ? cy / target : 0;
     const dLeft  = daysLeftInQuarter(isFY ? "4" : kpiScope);
@@ -294,7 +294,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
     const dealerGroups={};
     clustered.forEach((a:any)=>{if(a.dealer&&a.dealer!=="All Other"){dealerGroups[a.dealer]=dealerGroups[a.dealer]||[];dealerGroups[a.dealer].push(a);}});
     const dealerActions=Object.entries(dealerGroups).map(([dealer,accts])=>{const top=(accts).sort((a:any,b:any)=>b.callScore-a.callScore).slice(0,3);return{dealer,accts:top,totalAsk:top.reduce((s,a)=>s+a.ask,0)};}).sort((a,b)=>b.totalAsk-a.totalAsk).slice(0,3);
-    const doneTotal=Object.values(odDone).reduce((s,v:any)=>s+(v.amt||0),0);
+    const doneTotal=Object.values(odDone).reduce((s,v)=>s+(v.amt||0),0);
     const pending=clustered.filter((a:any)=>!odDone[a.id]);
     const conservative=doneTotal+pending.reduce((s,a)=>s+a.ask*Math.min(a.prob*0.65,1),0);
     const base=doneTotal+pending.reduce((s,a)=>s+a.ask*a.prob,0);
@@ -594,7 +594,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
                     )}
                   </div>
                   {/* Go button */}
-                  <button onClick={() => { const g = (groups||[]).find((gr:any) => gr.id === item.groupId); if(g) goGroup(g); }}
+                  <button onClick={() => { const g = (groups||[]).find((gr) => gr.id === item.groupId); if(g) goGroup(g); }}
                     style={{flexShrink:0,marginLeft:10,padding:"5px 10px",borderRadius:8,fontSize:10,fontWeight:700,
                       background:`${ac}15`,border:`1px solid ${ac}30`,color:ac,cursor:"pointer",fontFamily:"inherit"}}>
                     Go →
