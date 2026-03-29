@@ -6,10 +6,6 @@ import { normalizeTier, isAccelTier } from "@/lib/tier";
 import { $$, $f, pc } from "@/lib/format";
 import { Bar, Chev, AccountId, GroupBadge, fixGroupName } from "@/components/primitives";
 import NewAddsSection from "@/components/tabs/NewAddsSection";
-import NEW_ADDS_RAW from "@/../../docs/new_adds.json";
-const NA_TOTAL = (NEW_ADDS_RAW||[]).length;
-const NA_RED = (NEW_ADDS_RAW||[]).filter((a:any)=>a.color==="RED").length;
-const NA_GREEN = (NEW_ADDS_RAW||[]).filter((a:any)=>a.color==="GREEN").length;
 import { BADGER } from "@/lib/data";
 
 // ── Bucket config ────────────────────────────────────────────────────────────
@@ -497,7 +493,7 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
           <span style={{fontSize:14}}>🆕</span>
           <div>
             <div style={{fontSize:11,fontWeight:700,color:T.t1}}>New Adds · Q1</div>
-            {NA_RED>0&&<div style={{fontSize:9,color:T.t3}}>{NA_TOTAL} accts · <span style={{color:T.red,fontWeight:600}}>{NA_RED} need follow-up</span>{NA_GREEN>0&&<span style={{color:T.green,fontWeight:600}}> · {NA_GREEN} on track</span>}</div>}
+            <div style={{fontSize:9,color:T.t3}}>First-time product purchases · follow up within 90 days</div>
           </div>
         </div>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{transform:showNewAdds?"rotate(90deg)":"none",transition:"transform .2s"}}><path d="M9 18l6-6-6-6"/></svg>
