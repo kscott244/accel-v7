@@ -179,6 +179,7 @@ import DealersTab from "@/components/tabs/DealersTab";
 import OutreachTab from "@/components/tabs/OutreachTab";
 import AdminTab from "@/components/tabs/AdminTab";
 import TasksTab from "@/components/tabs/TasksTab";
+import InboxTab from "@/components/tabs/InboxTab";
 import CopilotPanel from "@/components/CopilotPanel";
 // ─── PHASE 5: Tab components extracted to src/components/tabs/ ────
 
@@ -972,6 +973,7 @@ const [showCopilot, setShowCopilot] = useState(false);
           {!view && tab==="dealers" && <DealersTab scored={scored} groups={groups||[]} goAcct={goSmartFn} goGroup={goGroupFn} activeQ={activeQ||"1"} overlays={overlays} patchOverlay={patchOverlay}/>}
           {!view && tab==="outreach" && <OutreachTab scored={scored}/>}
           {!view && tab==="tasks" && <TasksTab tasks={tasks} onAddTask={(data)=>addTask(data)} onCompleteTask={completeTask} onDeleteTask={deleteTask} goAcct={goSmartFn}/>}
+          {!view && tab==="inbox" && <InboxTab groups={groups||[]} overlays={overlays} patchOverlay={patchOverlay} tasks={tasks} goGroup={goGroupFn} onAddTask={addTask} activeQ={activeQ||"1"}/>}
           {!view && tab==="admin" && <AdminTab groups={groups||[]} scored={scored} overlays={overlays} patchOverlay={patchOverlay} salesStore={salesStore}/>}
           {view?.type==="group" && <GroupDetail group={view.data} groups={groups||[]} goMain={()=>setView(null)} overlays={overlays} patchOverlay={patchOverlay} goAcct={(a:any)=>setView({type:"acct",data:{...a,gName:fixGroupName(view.data),gId:view.data.id,gTier:view.data.tier},from:view.data})} salesStore={salesStore} onAddTask={(data:any)=>addTask(data,null,view.data)}/>}
           {view?.type==="acct" && <AcctDetail acct={view.data} goBack={()=>view?.from?setView({type:"group",data:view.from}):setView(null)} adjs={adjs} setAdjs={setAdjs} groups={groups||[]} goGroup={goGroupFn} overlays={overlays} patchOverlay={patchOverlay} reapplyGroupOverrides={reapplyGroupOverrides} goAcct={(s:any)=>setView({type:"acct",data:{...s,gId:view.data.gId,gName:view.data.gName},from:view?.from})} salesStore={salesStore} onAddTask={(data:any)=>addTask(data,view.data,null)}/>}
@@ -983,7 +985,7 @@ const [showCopilot, setShowCopilot] = useState(false);
       {/* MORE MENU OVERLAY */}
       {showMore && <div style={{position:"fixed",inset:0,zIndex:90,background:"rgba(0,0,0,.6)",backdropFilter:"blur(4px)"}} onClick={()=>setShowMore(false)}>
         <div style={{position:"absolute",bottom:58,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:928,background:T.s1,border:`1px solid ${T.b2}`,borderRadius:16,padding:"8px 0",boxShadow:"0 -8px 32px rgba(0,0,0,.5)"}} onClick={e=>e.stopPropagation()}>
-          {[{k:"tasks",l:"Tasks",I:IconTask,desc:"Follow-ups & reminders"},{k:"calc",l:"Pricing",I:IconChart,desc:"SKU pricing & margin calculator"},{k:"territory",l:"Territory",I:IconChart,desc:"Attainment, tier revenue & gap leaderboard"},{k:"map",l:"Route",I:IconMap,desc:"Map & route planner"},{k:"outreach",l:"Outreach",I:IconMail,desc:"AI email campaigns"},{k:"admin",l:"Admin",I:IconAdmin,desc:"Groups, contacts, data fixes"}].map(t=>(
+          {[{k:"dealers",l:"Dealers",I:IconDealer,desc:"Dealer console & co-call planner"},{k:"tasks",l:"Tasks",I:IconTask,desc:"Follow-ups & reminders"},{k:"calc",l:"Pricing",I:IconChart,desc:"SKU pricing & margin calculator"},{k:"territory",l:"Territory",I:IconChart,desc:"Attainment, tier revenue & gap leaderboard"},{k:"map",l:"Route",I:IconMap,desc:"Map & route planner"},{k:"outreach",l:"Outreach",I:IconMail,desc:"AI email campaigns"},{k:"admin",l:"Admin",I:IconAdmin,desc:"Groups, contacts, data fixes"}].map(t=>(
             <button key={t.k} onClick={()=>{setTab(t.k);setView(null);setShowMore(false)}} style={{width:"100%",display:"flex",alignItems:"center",gap:12,padding:"12px 16px",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit",color:tab===t.k?T.blue:T.t2}}>
               <t.I c={tab===t.k?T.blue:T.t3}/>
               <div style={{textAlign:"left"}}><div style={{fontSize:13,fontWeight:600}}>{t.l}</div><div style={{fontSize:10,color:T.t4}}>{t.desc}</div></div>
@@ -998,7 +1000,7 @@ const [showCopilot, setShowCopilot] = useState(false);
       {/* NAV BAR */}
       <nav style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:960,zIndex:100,borderTop:`1px solid ${T.b1}`,background:"rgba(10,10,15,.92)",backdropFilter:"blur(32px)"}}>
         <div style={{display:"flex",height:56,alignItems:"center",justifyContent:"space-around",padding:"0 4px"}}>
-          {[{k:"today",l:"Today",I:IconBolt},{k:"groups",l:"Accounts",I:IconGroup},{k:"dso",l:"War Room",I:IconGroup},{k:"dealers",l:"Dealers",I:IconDealer}].map(t=>(
+          {[{k:"today",l:"Today",I:IconBolt},{k:"groups",l:"Accounts",I:IconGroup},{k:"dso",l:"War Room",I:IconGroup},{k:"inbox",l:"Inbox",I:IconTask}].map(t=>(
             <button key={t.k} onClick={()=>{setTab(t.k);setView(null);setShowMore(false)}} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 16px",cursor:"pointer",color:tab===t.k&&!view&&!showMore?T.blue:T.t4}}>
               <t.I c={tab===t.k&&!view&&!showMore?T.blue:T.t4}/>
               <span style={{fontSize:9,fontWeight:600,letterSpacing:".5px"}}>{t.l}</span>
@@ -1008,8 +1010,8 @@ const [showCopilot, setShowCopilot] = useState(false);
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
             <span style={{fontSize:9,fontWeight:600,letterSpacing:".5px"}}>Ask</span>
           </button>
-          <button onClick={()=>setShowMore(!showMore)} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 12px",cursor:"pointer",color:showMore||["tasks","outreach","admin","calc","territory","map"].includes(tab)?T.blue:T.t4}}>
-            <IconMore c={showMore||["tasks","outreach","admin","calc","map"].includes(tab)?T.blue:T.t4}/>
+          <button onClick={()=>setShowMore(!showMore)} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 12px",cursor:"pointer",color:showMore||["tasks","outreach","admin","calc","territory","map","dealers"].includes(tab)?T.blue:T.t4}}>
+            <IconMore c={showMore||["tasks","outreach","admin","calc","map","dealers"].includes(tab)?T.blue:T.t4}/>
             <span style={{fontSize:9,fontWeight:600,letterSpacing:".5px"}}>More</span>
           </button>
         </div>
