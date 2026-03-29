@@ -148,20 +148,6 @@ function BucketHeader({bucket, count, subtitle, open, onToggle}) {
 function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGroup,activeQ:activeQProp,weeklyDelta,tasks=[],onCompleteTask,onGoTasks,overlays,patchOverlay,estPct=90,setEstPct}) {
   const activeQ = activeQProp || "1";
 
-  // ── Daily Success Plan ─────────────────────────────────────────────────────
-  const dailyPlan = useMemo(() => buildDailyPlan(groups, overlays, tasks, { qk: activeQ, maxItems: 5 }),
-    [groups, overlays, tasks, activeQ]);
-
-  // ── Assistant Notices ──────────────────────────────────────────────────────
-  const notices = useMemo(() => buildNotices(groups, overlays, { qk: activeQ, maxItems: 6 }),
-    [groups, overlays, activeQ]);
-
-  const dismissNotice = (id) => {
-    const current = overlays?.noticeDismissals || [];
-    if (current.includes(id)) return;
-    if (patchOverlay) patchOverlay([{ op: "set", path: "noticeDismissals", value: [...current, id] }]);
-  };
-
   const [search, setSearch]           = useState("");
   const [odDone, setOdDone]           = useState(() => {
     try { return JSON.parse(localStorage.getItem("overdrive_done") || "{}"); } catch { return {}; }
@@ -177,9 +163,56 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
   const [showForecast, setShowForecast] = useState(false);
   const [noticesOpen, setNoticesOpen]   = useState(false);
 
-  // ── Today context ──────────────────────────────────────────────────────
+  // ── Today context (must be before dailyPlan so it can filter groups) ───
   const [todayContext, setTodayContext] = useState("territory");
   const [contextCity, setContextCity]   = useState("");
+
+  // ── Context filter function ────────────────────────────────────────────
+  const contextFilter = useMemo(() => {
+    if (todayContext === "territory") return null;
+    if (todayContext === "home") return (a) => {
+      const b = BADGER[a.id] || BADGER[a.gId];
+      return distMilesGlobal(b?.lat||a.lat, b?.lng||a.lng, HOME_LAT, HOME_LNG) < 35;
+    };
+    if (todayContext === "city" && contextCity.trim()) {
+      const c = contextCity.trim().toLowerCase();
+      return (a) => (a.city?.toLowerCase().includes(c)) || (a.st?.toLowerCase() === c);
+    }
+    return null;
+  }, [todayContext, contextCity]);
+
+  // ── Context-filtered groups (for daily plan + notices) ─────────────────
+  const contextGroups = useMemo(() => {
+    if (!contextFilter) return groups;
+    return (groups || []).filter(g => (g.children || []).some(contextFilter));
+  }, [groups, contextFilter]);
+
+  // ── Daily Success Plan (built from context-filtered groups) ────────────
+  const dailyPlan = useMemo(() => buildDailyPlan(contextGroups, overlays, tasks, { qk: activeQ, maxItems: 8 }),
+    [contextGroups, overlays, tasks, activeQ]);
+
+  // ── Assistant Notices ──────────────────────────────────────────────────
+  const notices = useMemo(() => buildNotices(contextGroups, overlays, { qk: activeQ, maxItems: 6 }),
+    [contextGroups, overlays, activeQ]);
+
+  const dismissNotice = (id) => {
+    const current = overlays?.noticeDismissals || [];
+    if (current.includes(id)) return;
+    if (patchOverlay) patchOverlay([{ op: "set", path: "noticeDismissals", value: [...current, id] }]);
+  };
+
+  // ── Context-scored accounts (full territory filtered for area view) ────
+  const contextScored = useMemo(() => {
+    if (!contextFilter) return null; // null = use regular buckets
+    return scored.filter(contextFilter)
+      .map(a => {
+        const py = a.pyQ?.[activeQ] || 0;
+        const cy = a.cyQ?.[activeQ] || 0;
+        return { ...a, _gap: py - cy, _py: py, _cy: cy, _ret: py > 0 ? cy / py : 0 };
+      })
+      .sort((a, b) => b._gap - a._gap)
+      .slice(0, 25);
+  }, [scored, contextFilter, activeQ]);
 
 
 
@@ -426,50 +459,11 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
   const statusColor=ahead?T.green:onTrack?T.amber:T.red;
   const statusLabel=ahead?(isFY?"Ahead of FY":"Ahead"):onTrack?"On Track":"Behind";
 
-  // ── Context filter ───────────────────────────────────────────────────
-  const contextFilter = useMemo(() => {
-    if (todayContext === "territory") return null;
-    if (todayContext === "home") return (a) => {
-      const b = BADGER[a.id] || BADGER[a.gId];
-      return distMilesGlobal(b?.lat||a.lat, b?.lng||a.lng, HOME_LAT, HOME_LNG) < 35;
-    };
-    if (todayContext === "city" && contextCity.trim()) {
-      const c = contextCity.trim().toLowerCase();
-      return (a) => (a.city?.toLowerCase().includes(c)) || (a.st?.toLowerCase() === c);
-    }
-    return null;
-  }, [todayContext, contextCity]);
-
-  // filter helper for groups: true if any child matches context
-  const groupMatchesContext = (g) => {
-    if (!contextFilter) return true;
-    return (g.children || []).some(contextFilter);
-  };
-
-  // ── Filtered daily plan (by context) ────────────────────────────────
-  const filteredPlan = useMemo(() => {
-    if (!contextFilter) return dailyPlan;
-    return dailyPlan.filter(item => {
-      const g = (groups || []).find(gr => gr.id === item.groupId);
-      return g ? groupMatchesContext(g) : false;
-    });
-  }, [dailyPlan, contextFilter, groups]);
-
   // ── Deduped notices (remove if same group already in daily plan) ─────
   const dedupedNotices = useMemo(() => {
-    const planGroupIds = new Set(filteredPlan.map(p => p.groupId));
+    const planGroupIds = new Set(dailyPlan.map(p => p.groupId));
     return notices.filter(n => !planGroupIds.has(n.groupId));
-  }, [notices, filteredPlan]);
-
-  // ── Context-filtered buckets ────────────────────────────────────────
-  const fHitList = contextFilter ? hitList.filter(contextFilter) : hitList;
-  const fEasyWins = contextFilter ? easyWins.filter(contextFilter) : easyWins;
-  const fAtRisk = contextFilter ? atRisk.filter(contextFilter) : atRisk;
-  const fDeadWeight = contextFilter ? deadWeight.filter(contextFilter) : deadWeight;
-  const fFollowUp = contextFilter ? {
-    tasks: followUp.tasks,
-    accounts: followUp.accounts.filter(contextFilter)
-  } : followUp;
+  }, [notices, dailyPlan]);
 
 
   return <div style={{padding:"0 0 80px"}}>
@@ -556,17 +550,17 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
         style={{flex:1,minWidth:120,height:30,borderRadius:8,border:`1px solid ${contextCity?T.blue+"44":T.b1}`,
           background:T.s1,color:T.t1,fontSize:11,padding:"0 10px",outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}/>}
       {todayContext!=="territory"&&<span style={{fontSize:9,color:T.t4}}>
-        {contextFilter ? `${(contextFilter ? scored.filter(contextFilter).length : scored.length)} accts` : ""}
+        {contextScored ? `${contextScored.length} accts` : ""}
       </span>}
     </div>
 
     {/* ── DAILY SUCCESS PLAN ── */}
-    {filteredPlan.length > 0 && (
+    {dailyPlan.length > 0 && (
       <div style={{marginBottom:10}}>
         <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:"#4f8ef7",marginBottom:8}}>
           Today&#39;s Plan{todayContext!=="territory"?` · ${todayContext==="home"?"Near Home":contextCity||"Filtered"}`:""}
         </div>
-        {filteredPlan.map((item, i) => {
+        {dailyPlan.map((item, i) => {
           const ac = ACTION_COLOR[item.actionType];
           const al = ACTION_LABEL[item.actionType];
           return (
@@ -747,12 +741,38 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
         </div>;
       })()}
 
-      {/* ── MISSION BUCKETS (context-filtered) ── */}
+      {/* ── MISSION BUCKETS / CONTEXT ACCOUNTS ── */}
+
+      {/* When context is active, show focused area account list instead of buckets */}
+      {contextScored ? <>
+        <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:T.cyan,marginBottom:6}}>
+          {todayContext==="home"?"Near Home":contextCity||"Area"} Accounts · {contextScored.length}
+        </div>
+        {contextScored.length===0&&<div style={{padding:"24px 0",textAlign:"center",color:T.t4,fontSize:12}}>No accounts in this area.</div>}
+        {contextScored.map((a,i)=>{
+          const gap=a._gap;const py=a._py;const cy=a._cy;
+          return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
+            style={{animationDelay:`${i*15}ms`,width:"100%",textAlign:"left",background:T.s1,
+              border:`1px solid ${T.b1}`,borderLeft:`3px solid ${gap>0?T.red:T.green}`,
+              borderRadius:12,padding:"10px 12px",marginBottom:6,cursor:"pointer",
+              display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{flex:1,minWidth:0}}>
+              <AccountId name={a.name} gName={a.gName} size="md" locs={groupLocsMap[a.gId]}/>
+              <div style={{fontSize:9,color:T.t4,marginTop:1}}>
+                {[a.city,a.st].filter(Boolean).join(", ")}
+                {gap>0?<span style={{color:T.red}}> · {$$(gap)} gap</span>:<span style={{color:T.green}}> · +{$$(-gap)}</span>}
+                {py>0&&<span> · {Math.round(a._ret*100)}% ret</span>}
+              </div>
+            </div>
+            <Chev/>
+          </button>;
+        })}
+      </> : <>
 
       {/* HIT LIST */}
-      {fHitList.length>0&&<>
-        <BucketHeader bucket="hitList" count={`${fHitList.filter((a)=>!odDone[a.id]).length} pending`} open={openBuckets.hitList} onToggle={()=>toggleBucket("hitList")}/>
-        {openBuckets.hitList&&fHitList.map((a)=>(
+      {hitList.length>0&&<>
+        <BucketHeader bucket="hitList" count={`${hitList.filter((a)=>!odDone[a.id]).length} pending`} open={openBuckets.hitList} onToggle={()=>toggleBucket("hitList")}/>
+        {openBuckets.hitList&&hitList.map((a)=>(
           <ActionCard key={a.id} a={a} bucket="hitList" done={odDone[a.id]} isVisit={visitIds.has(a.id)}
             onTap={goAcct} groupLocsMap={groupLocsMap} groups={groups} goGroup={goGroup}
             onWin={promptOutcome} onHalf={promptOutcome} onLoss={promptOutcome} onUndo={clearDone}/>
@@ -761,9 +781,9 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
       </>}
 
       {/* EASY WINS */}
-      {fEasyWins.length>0&&<>
-        <BucketHeader bucket="easyWin" count={`${fEasyWins.length}`} open={openBuckets.easyWin} onToggle={()=>toggleBucket("easyWin")}/>
-        {openBuckets.easyWin&&fEasyWins.map((a)=>(
+      {easyWins.length>0&&<>
+        <BucketHeader bucket="easyWin" count={`${easyWins.length}`} open={openBuckets.easyWin} onToggle={()=>toggleBucket("easyWin")}/>
+        {openBuckets.easyWin&&easyWins.map((a)=>(
           <ActionCard key={a.id} a={a} bucket="easyWin" done={odDone[a.id]}
             onTap={goAcct} groupLocsMap={groupLocsMap} groups={groups} goGroup={goGroup}
             onWin={promptOutcome} onHalf={promptOutcome} onLoss={promptOutcome} onUndo={clearDone}/>
@@ -772,12 +792,12 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
       </>}
 
       {/* AT RISK */}
-      {fAtRisk.length>0&&<>
-        <BucketHeader bucket="atRisk" count={`${fAtRisk.length}`} open={openBuckets.atRisk} onToggle={()=>toggleBucket("atRisk")}/>
+      {atRisk.length>0&&<>
+        <BucketHeader bucket="atRisk" count={`${atRisk.length}`} open={openBuckets.atRisk} onToggle={()=>toggleBucket("atRisk")}/>
         {openBuckets.atRisk&&<div style={{background:T.s1,border:`1px solid ${BUCKETS.atRisk.border}`,borderRadius:12,overflow:"hidden",marginBottom:0}}>
-          {fAtRisk.map((a,i)=>{
+          {atRisk.map((a,i)=>{
             const py=a.pyQ?.[activeQ]||0,cy=a.cyQ?.[activeQ]||0,gap=py-cy;
-            const isLast=i===fAtRisk.length-1;
+            const isLast=i===atRisk.length-1;
             return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
               style={{animationDelay:`${i*15}ms`,width:"100%",textAlign:"left",background:"transparent",
                 border:"none",borderBottom:isLast?"none":`1px solid ${T.b2}`,
@@ -795,11 +815,11 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
       </>}
 
       {/* FOLLOW UP */}
-      {(fFollowUp.tasks.length>0||fFollowUp.accounts.length>0)&&<>
-        <BucketHeader bucket="followUp" count={`${fFollowUp.tasks.length+fFollowUp.accounts.length}`} open={openBuckets.followUp} onToggle={()=>toggleBucket("followUp")}/>
+      {(followUp.tasks.length>0||followUp.accounts.length>0)&&<>
+        <BucketHeader bucket="followUp" count={`${followUp.tasks.length+followUp.accounts.length}`} open={openBuckets.followUp} onToggle={()=>toggleBucket("followUp")}/>
         {openBuckets.followUp&&<div style={{background:T.s1,border:`1px solid ${BUCKETS.followUp.border}`,borderRadius:12,overflow:"hidden"}}>
-          {fFollowUp.tasks.map((t,i)=>{
-            const isLast=i===fFollowUp.tasks.length-1&&fFollowUp.accounts.length===0;
+          {followUp.tasks.map((t,i)=>{
+            const isLast=i===followUp.tasks.length-1&&followUp.accounts.length===0;
             const overdue=t.dueDate<new Date().toISOString().slice(0,10);
             return <div key={t.id} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderBottom:isLast?"none":`1px solid ${T.b2}`,borderLeft:`3px solid ${BUCKETS.followUp.color}`}}>
               <button onClick={()=>onCompleteTask&&onCompleteTask(t.id)} style={{width:16,height:16,borderRadius:4,border:`2px solid ${T.b2}`,background:"none",cursor:"pointer",flexShrink:0}}/>
@@ -810,8 +830,8 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
               <span style={{fontSize:9,fontWeight:700,color:overdue?T.red:T.amber,flexShrink:0}}>{overdue?"Overdue":"Today"}</span>
             </div>;
           })}
-          {fFollowUp.accounts.map((a,i)=>{
-            const isLast=i===fFollowUp.accounts.length-1;
+          {followUp.accounts.map((a,i)=>{
+            const isLast=i===followUp.accounts.length-1;
             const cy=a.cyQ?.[activeQ]||0,py=a.pyQ?.[activeQ]||0;
             return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
               style={{width:"100%",textAlign:"left",background:"transparent",border:"none",
@@ -830,12 +850,12 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
       </>}
 
       {/* DEAD WEIGHT */}
-      {fDeadWeight.length>0&&<>
-        <BucketHeader bucket="deadWeight" count={`${fDeadWeight.length}`} open={openBuckets.deadWeight} onToggle={()=>toggleBucket("deadWeight")}/>
+      {deadWeight.length>0&&<>
+        <BucketHeader bucket="deadWeight" count={`${deadWeight.length}`} open={openBuckets.deadWeight} onToggle={()=>toggleBucket("deadWeight")}/>
         {openBuckets.deadWeight&&<div style={{background:T.s1,border:`1px solid ${BUCKETS.deadWeight.border}`,borderRadius:12,overflow:"hidden"}}>
-          {fDeadWeight.map((a,i)=>{
+          {deadWeight.map((a,i)=>{
             const py=a.pyQ?.[activeQ]||0,cy=a.cyQ?.[activeQ]||0;
-            const isLast=i===fDeadWeight.length-1;
+            const isLast=i===deadWeight.length-1;
             return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
               style={{width:"100%",textAlign:"left",background:"transparent",border:"none",
                 borderBottom:isLast?"none":`1px solid ${T.b2}`,
@@ -853,6 +873,8 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
       </>}
 
       {scored.length===0&&<div style={{padding:"40px 0",textAlign:"center",color:T.t4,fontSize:12}}>Upload a CSV to get started.</div>}
+
+      </>}
 
     </div>}
 
