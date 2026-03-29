@@ -10,6 +10,8 @@ import { BADGER } from "@/lib/data";
 import { buildDailyPlan, ACTION_LABEL, ACTION_COLOR, type PlanItem } from "@/lib/dailyPlan";
 import { buildNotices, type Notice } from "@/lib/notices";
 import NoticesPanel from "@/components/tabs/NoticesPanel";
+import EstTab from "@/components/tabs/EstTab";
+import EstTab from "@/components/tabs/EstTab";
 
 // ── Bucket config ────────────────────────────────────────────────────────────
 const BUCKETS = {
@@ -128,7 +130,7 @@ function BucketHeader({bucket, count, subtitle, open, onToggle}:any) {
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGroup,activeQ:activeQProp,weeklyDelta,tasks=[],onCompleteTask,onGoTasks,overlays,patchOverlay}) {
+function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,goGroup,activeQ:activeQProp,weeklyDelta,tasks=[],onCompleteTask,onGoTasks,overlays,patchOverlay,estPct=90,setEstPct}) {
   const activeQ = activeQProp || "1";
 
   // ── Daily Success Plan ─────────────────────────────────────────────────────
@@ -157,6 +159,10 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
   const [openBuckets, setOpenBuckets]   = useState<Record<string,boolean>>({
     hitList:true, easyWin:true, atRisk:true, followUp:true, deadWeight:false,
   });
+  const [showForecast, setShowForecast] = useState(false);
+  const [noticesOpen, setNoticesOpen]   = useState(false);
+  const [showForecast, setShowForecast] = useState(false);
+  const [noticesOpen, setNoticesOpen]   = useState(false);
 
   const [kpiScopePref, setKpiScopePref] = useState<string>(() => {
     try { return localStorage.getItem("kpi_scope_v1") || ""; } catch { return ""; }
@@ -403,12 +409,141 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
 
   return <div style={{padding:"0 0 80px"}}>
 
-      {/* ── ASSISTANT NOTICES ── */}
-      <NoticesPanel
-        notices={notices}
-        onDismiss={dismissNotice}
-        onOpen={(groupId) => { const g = (groups||[]).find((gr) => gr.id === groupId); if(g) goGroup(g); }}
-      />
+    {/* ── SEARCH BAR ── */}
+    <div style={{position:"relative",margin:"12px 16px 10px"}}>
+      <svg style={{position:"absolute",left:11,top:"50%",transform:"translateY(-50%)",width:14,height:14,color:T.t4}} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="search" value={search} onChange={e=>setSearch(e.target.value)}
+        placeholder="Search offices or cities…"
+        style={{width:"100%",height:40,borderRadius:10,border:`1px solid ${search?T.blue+"44":T.b1}`,background:T.s1,color:T.t1,fontSize:13,paddingLeft:34,paddingRight:search?34:12,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}/>
+      {search&&<button onClick={()=>setSearch("")} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:15,lineHeight:1}}>✕</button>}
+    </div>
+
+    {/* ── SEARCH RESULTS ── */}
+    {q ? <div style={{padding:"0 16px"}}>
+      <div style={{fontSize:10,color:T.t4,marginBottom:8}}>{searchResults.length} result{searchResults.length!==1?"s":""} for "{search}"</div>
+      {searchResults.length===0&&<div style={{padding:"24px 0",textAlign:"center",color:T.t4,fontSize:12}}>No accounts found.</div>}
+      {searchResults.map((r,i)=>{
+        if(r._isParent){
+          const g=r._group;const gpy=g.pyQ?.[activeQ]||0;const gcy=g.cyQ?.[activeQ]||0;const ggap=gpy-gcy;
+          return <button key={g.id} className="anim" onClick={()=>goGroup(g)}
+            style={{animationDelay:`${i*15}ms`,width:"100%",textAlign:"left",background:T.s1,border:`1px solid rgba(34,211,238,.15)`,borderLeft:`3px solid ${T.cyan}`,borderRadius:12,padding:"11px 14px",marginBottom:8,cursor:"pointer"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:13,fontWeight:700,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fixGroupName(g)}</div>
+                <div style={{fontSize:9,color:T.t3}}>{g.locs} locations{isAccelTier(g.tier)&&<span style={{color:T.amber}}> · {normalizeTier(g.tier)}</span>}</div>
+              </div>
+              <div style={{textAlign:"right",flexShrink:0,marginLeft:12}}>
+                <div className="m" style={{fontSize:12,fontWeight:700,color:ggap>0?T.red:T.green}}>{ggap>0?`-${$$(ggap)}`:`+${$$(-ggap)}`}</div>
+                <div style={{fontSize:9,color:T.t4}}>{Math.round(gpy>0?gcy/gpy*100:0)}% ret</div>
+              </div>
+              <Chev/>
+            </div>
+          </button>;
+        }
+        const a=r;const py=a.pyQ?.[activeQ]||0;const cy=a.cyQ?.[activeQ]||0;const gap=py-cy;
+        return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
+          style={{animationDelay:`${i*15}ms`,width:"100%",textAlign:"left",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:"11px 14px",marginBottom:8,cursor:"pointer"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{flex:1,minWidth:0}}>
+              <AccountId name={a.name} gName={a.gName} size="md" locs={groupLocsMap[a.gId]}/>
+              <div style={{fontSize:9,color:T.t3}}>{[a.city,a.st].filter(Boolean).join(", ")}{isAccelTier(a.gTier||a.tier)&&<span style={{color:T.amber}}> · {normalizeTier(a.gTier||a.tier)}</span>}</div>
+            </div>
+            <div style={{textAlign:"right",flexShrink:0,marginLeft:12}}>
+              <div className="m" style={{fontSize:12,fontWeight:700,color:gap>0?T.red:T.green}}>{gap>0?`-${$$(gap)}`:`+${$$(-gap)}`}</div>
+              <div style={{fontSize:9,color:T.t4}}>{Math.round(py>0?cy/py*100:0)}% ret</div>
+            </div>
+            <Chev/>
+          </div>
+        </button>;
+      })}
+    </div> :
+
+      {/* ── KPI STRIP ── */}
+      <div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(79,142,247,.04))`,border:`1px solid ${T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:14}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+            <span style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color:T.t3}}>
+              {isFY?"Full Year":`Q${kpiScope} Pace`}
+            </span>
+            {adjCount>0&&<span style={{fontSize:8,color:T.green,background:"rgba(52,211,153,.08)",borderRadius:3,padding:"1px 5px"}}>+{adjCount} adj</span>}
+          </div>
+          <div style={{display:"flex",gap:4,alignItems:"center"}}>
+            {[activeQ,"FY"].map(s=>(
+              <button key={s} onClick={()=>setKpiScope(s)} style={{
+                padding:"3px 9px",borderRadius:6,fontSize:9,fontWeight:700,cursor:"pointer",fontFamily:"inherit",
+                border:`1px solid ${kpiScope===s?"rgba(79,142,247,.4)":T.b2}`,
+                background:kpiScope===s?"rgba(79,142,247,.18)":T.s2,
+                color:kpiScope===s?T.blue:T.t3}}>
+                {s==="FY"?"FY":`Q${s}`}
+              </button>
+            ))}
+            <button onClick={()=>setShowForecast(p=>!p)} style={{
+              padding:"3px 9px",borderRadius:6,fontSize:9,fontWeight:700,cursor:"pointer",fontFamily:"inherit",
+              border:`1px solid ${showForecast?"rgba(251,191,36,.4)":T.b2}`,
+              background:showForecast?"rgba(251,191,36,.15)":T.s2,
+              color:showForecast?T.amber:T.t3}}>
+              Forecast
+            </button>
+          </div>
+        </div>
+        <div style={{display:"flex",alignItems:"baseline",gap:10,marginBottom:6}}>
+          <span className="m" style={{fontSize:28,fontWeight:800,color:statusColor}}>{pc(att)}</span>
+          <span style={{fontSize:11,color:T.t3}}>{$$(cy)} / {$$(target)}</span>
+          <span style={{fontSize:9,fontWeight:700,color:statusColor,borderRadius:999,padding:"2px 8px",
+            background:ahead?"rgba(52,211,153,.1)":onTrack?"rgba(251,191,36,.1)":"rgba(248,113,113,.1)",
+            border:`1px solid ${statusColor}44`,marginLeft:"auto"}}>{statusLabel}</span>
+        </div>
+        <Bar pct={att*100} color={`linear-gradient(90deg,${statusColor},${ahead?T.cyan:onTrack?T.orange:T.red})`}/>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginTop:8}}>
+          <div style={{borderRadius:7,background:"rgba(248,113,113,.06)",border:"1px solid rgba(248,113,113,.12)",padding:"7px 8px"}}>
+            <div style={{fontSize:8,color:T.t3}}>Gap</div>
+            <div className="m" style={{fontSize:13,fontWeight:700,color:gap<=0?T.green:T.red}}>{gap<=0?`+${$$(-gap)}`:$$(gap)}</div>
+          </div>
+          <div style={{borderRadius:7,background:"rgba(79,142,247,.06)",border:"1px solid rgba(79,142,247,.12)",padding:"7px 8px"}}>
+            <div style={{fontSize:8,color:T.t3}}>$/day</div>
+            <div className="m" style={{fontSize:13,fontWeight:700,color:T.blue}}>{$f(perDay)}</div>
+          </div>
+          {overdrive&&<div style={{borderRadius:7,background:"rgba(167,139,250,.06)",border:"1px solid rgba(167,139,250,.12)",padding:"7px 8px"}}>
+            <div style={{fontSize:8,color:T.t3}}>Pipeline</div>
+            <div className="m" style={{fontSize:13,fontWeight:700,color:T.purple}}>{$f(overdrive.base)}</div>
+          </div>}
+        </div>
+        {overdrive?.modeLabel&&<div style={{marginTop:6,fontSize:9,color:T.t4,textAlign:"center"}}>{overdrive.modeLabel}{DAYS_LEFT>0?` · ${DAYS_LEFT}d left`:""}</div>}
+        {overdrive?.doneTotal>0&&<div style={{marginTop:6,padding:"4px 8px",borderRadius:6,background:"rgba(52,211,153,.06)",border:"1px solid rgba(52,211,153,.12)",fontSize:9,color:T.green,display:"flex",justifyContent:"space-between"}}>
+          <span>Logged today</span><span className="m" style={{fontWeight:700}}>+{$f(overdrive.doneTotal)}</span>
+        </div>}
+      </div>
+
+      {/* ── FORECAST (inline) ── */}
+      {showForecast&&<div style={{marginBottom:10}}>
+        <EstTab pct={estPct} setPct={setEstPct} q1CY={q1CY} groups={groups} goAcct={goAcct}/>
+      </div>}
+
+      {/* ── NOTICES BADGE ── */}
+      {notices.length>0&&<button onClick={()=>setNoticesOpen(p=>!p)} className="anim" style={{
+        width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",
+        background:noticesOpen?"rgba(248,113,113,.06)":T.s1,
+        border:`1px solid ${noticesOpen?"rgba(248,113,113,.2)":T.b1}`,
+        borderRadius:10,padding:"9px 12px",marginBottom:noticesOpen?6:10,cursor:"pointer",fontFamily:"inherit"}}>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <span style={{fontSize:14}}>🔔</span>
+          <div style={{textAlign:"left"}}>
+            <div style={{fontSize:11,fontWeight:700,color:T.t1}}>
+              {notices.filter(n=>n.severity==="high").length>0
+                ? <span style={{color:T.red}}>{notices.filter(n=>n.severity==="high").length} urgent</span>
+                : <span style={{color:T.amber}}>{notices.length} notice{notices.length!==1?"s":""}</span>}
+              {notices.filter(n=>n.severity!=="high").length>0&&notices.filter(n=>n.severity==="high").length>0&&
+                <span style={{color:T.t3,fontWeight:400}}> · {notices.filter(n=>n.severity!=="high").length} more</span>}
+            </div>
+            <div style={{fontSize:9,color:T.t4}}>Accounts needing attention</div>
+          </div>
+        </div>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{transform:noticesOpen?"rotate(90deg)":"none",transition:"transform .2s"}}><path d="M9 18l6-6-6-6"/></svg>
+      </button>}
+      {noticesOpen&&<div style={{marginBottom:10}}>
+        <NoticesPanel notices={notices} onDismiss={dismissNotice}
+          onOpen={(groupId) => { const g=(groups||[]).find((gr)=>gr.id===groupId); if(g)goGroup(g); }}/>
+      </div>}
 
       {/* ── DAILY SUCCESS PLAN ── */}
       {dailyPlan.length > 0 && (
@@ -473,107 +608,6 @@ function DashboardTab({scored,goAcct,q1CY,q1Gap,q1Att,adjCount,totalAdj,groups,g
           })}
         </div>
       )}
-
-    {/* ── SEARCH BAR ── */}
-    <div style={{position:"relative",margin:"12px 16px 10px"}}>
-      <svg style={{position:"absolute",left:11,top:"50%",transform:"translateY(-50%)",width:14,height:14,color:T.t4}} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input type="search" value={search} onChange={e=>setSearch(e.target.value)}
-        placeholder="Search offices or cities…"
-        style={{width:"100%",height:40,borderRadius:10,border:`1px solid ${search?T.blue+"44":T.b1}`,background:T.s1,color:T.t1,fontSize:13,paddingLeft:34,paddingRight:search?34:12,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}/>
-      {search&&<button onClick={()=>setSearch("")} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:T.t4,cursor:"pointer",fontSize:15,lineHeight:1}}>✕</button>}
-    </div>
-
-    {/* ── SEARCH RESULTS ── */}
-    {q ? <div style={{padding:"0 16px"}}>
-      <div style={{fontSize:10,color:T.t4,marginBottom:8}}>{searchResults.length} result{searchResults.length!==1?"s":""} for "{search}"</div>
-      {searchResults.length===0&&<div style={{padding:"24px 0",textAlign:"center",color:T.t4,fontSize:12}}>No accounts found.</div>}
-      {searchResults.map((r,i)=>{
-        if(r._isParent){
-          const g=r._group;const gpy=g.pyQ?.[activeQ]||0;const gcy=g.cyQ?.[activeQ]||0;const ggap=gpy-gcy;
-          return <button key={g.id} className="anim" onClick={()=>goGroup(g)}
-            style={{animationDelay:`${i*15}ms`,width:"100%",textAlign:"left",background:T.s1,border:`1px solid rgba(34,211,238,.15)`,borderLeft:`3px solid ${T.cyan}`,borderRadius:12,padding:"11px 14px",marginBottom:8,cursor:"pointer"}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:13,fontWeight:700,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fixGroupName(g)}</div>
-                <div style={{fontSize:9,color:T.t3}}>{g.locs} locations{isAccelTier(g.tier)&&<span style={{color:T.amber}}> · {normalizeTier(g.tier)}</span>}</div>
-              </div>
-              <div style={{textAlign:"right",flexShrink:0,marginLeft:12}}>
-                <div className="m" style={{fontSize:12,fontWeight:700,color:ggap>0?T.red:T.green}}>{ggap>0?`-${$$(ggap)}`:`+${$$(-ggap)}`}</div>
-                <div style={{fontSize:9,color:T.t4}}>{Math.round(gpy>0?gcy/gpy*100:0)}% ret</div>
-              </div>
-              <Chev/>
-            </div>
-          </button>;
-        }
-        const a=r;const py=a.pyQ?.[activeQ]||0;const cy=a.cyQ?.[activeQ]||0;const gap=py-cy;
-        return <button key={a.id} className="anim" onClick={()=>goAcct(a)}
-          style={{animationDelay:`${i*15}ms`,width:"100%",textAlign:"left",background:T.s1,border:`1px solid ${T.b1}`,borderRadius:12,padding:"11px 14px",marginBottom:8,cursor:"pointer"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <div style={{flex:1,minWidth:0}}>
-              <AccountId name={a.name} gName={a.gName} size="md" locs={groupLocsMap[a.gId]}/>
-              <div style={{fontSize:9,color:T.t3}}>{[a.city,a.st].filter(Boolean).join(", ")}{isAccelTier(a.gTier||a.tier)&&<span style={{color:T.amber}}> · {normalizeTier(a.gTier||a.tier)}</span>}</div>
-            </div>
-            <div style={{textAlign:"right",flexShrink:0,marginLeft:12}}>
-              <div className="m" style={{fontSize:12,fontWeight:700,color:gap>0?T.red:T.green}}>{gap>0?`-${$$(gap)}`:`+${$$(-gap)}`}</div>
-              <div style={{fontSize:9,color:T.t4}}>{Math.round(py>0?cy/py*100:0)}% ret</div>
-            </div>
-            <Chev/>
-          </div>
-        </button>;
-      })}
-    </div> :
-
-    /* ── MISSION CONTROL ── */
-    <div style={{padding:"0 16px"}}>
-
-      {/* ── KPI STRIP ── */}
-      <div className="anim" style={{background:`linear-gradient(135deg,${T.s1},rgba(79,142,247,.04))`,border:`1px solid ${T.b1}`,borderRadius:14,padding:"12px 14px",marginBottom:14}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-          <div style={{display:"flex",alignItems:"center",gap:6}}>
-            <span style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color:T.t3}}>
-              {isFY?"Full Year":`Q${kpiScope} Pace`}
-            </span>
-            {adjCount>0&&<span style={{fontSize:8,color:T.green,background:"rgba(52,211,153,.08)",borderRadius:3,padding:"1px 5px"}}>+{adjCount} adj</span>}
-          </div>
-          <div style={{display:"flex",gap:2}}>
-            {[activeQ,"FY"].map(s=>(
-              <button key={s} onClick={()=>setKpiScope(s)} style={{
-                padding:"3px 9px",borderRadius:6,fontSize:9,fontWeight:700,cursor:"pointer",fontFamily:"inherit",
-                border:`1px solid ${kpiScope===s?"rgba(79,142,247,.4)":T.b2}`,
-                background:kpiScope===s?"rgba(79,142,247,.18)":T.s2,
-                color:kpiScope===s?T.blue:T.t3}}>
-                {s==="FY"?"FY":`Q${s}`}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div style={{display:"flex",alignItems:"baseline",gap:10,marginBottom:6}}>
-          <span className="m" style={{fontSize:28,fontWeight:800,color:statusColor}}>{pc(att)}</span>
-          <span style={{fontSize:11,color:T.t3}}>{$$(cy)} / {$$(target)}</span>
-          <span style={{fontSize:9,fontWeight:700,color:statusColor,borderRadius:999,padding:"2px 8px",
-            background:ahead?"rgba(52,211,153,.1)":onTrack?"rgba(251,191,36,.1)":"rgba(248,113,113,.1)",
-            border:`1px solid ${statusColor}44`,marginLeft:"auto"}}>{statusLabel}</span>
-        </div>
-        <Bar pct={att*100} color={`linear-gradient(90deg,${statusColor},${ahead?T.cyan:onTrack?T.orange:T.red})`}/>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginTop:8}}>
-          <div style={{borderRadius:7,background:"rgba(248,113,113,.06)",border:"1px solid rgba(248,113,113,.12)",padding:"7px 8px"}}>
-            <div style={{fontSize:8,color:T.t3}}>Gap</div>
-            <div className="m" style={{fontSize:13,fontWeight:700,color:gap<=0?T.green:T.red}}>{gap<=0?`+${$$(-gap)}`:$$(gap)}</div>
-          </div>
-          <div style={{borderRadius:7,background:"rgba(79,142,247,.06)",border:"1px solid rgba(79,142,247,.12)",padding:"7px 8px"}}>
-            <div style={{fontSize:8,color:T.t3}}>$/day</div>
-            <div className="m" style={{fontSize:13,fontWeight:700,color:T.blue}}>{$f(perDay)}</div>
-          </div>
-          {overdrive&&<div style={{borderRadius:7,background:"rgba(167,139,250,.06)",border:"1px solid rgba(167,139,250,.12)",padding:"7px 8px"}}>
-            <div style={{fontSize:8,color:T.t3}}>Pipeline</div>
-            <div className="m" style={{fontSize:13,fontWeight:700,color:T.purple}}>{$f(overdrive.base)}</div>
-          </div>}
-        </div>
-        {overdrive?.modeLabel&&<div style={{marginTop:6,fontSize:9,color:T.t4,textAlign:"center"}}>{overdrive.modeLabel}{DAYS_LEFT>0?` · ${DAYS_LEFT}d left`:""}</div>}
-        {overdrive?.doneTotal>0&&<div style={{marginTop:6,padding:"4px 8px",borderRadius:6,background:"rgba(52,211,153,.06)",border:"1px solid rgba(52,211,153,.12)",fontSize:9,color:T.green,display:"flex",justifyContent:"space-between"}}>
-          <span>Logged today</span><span className="m" style={{fontWeight:700}}>+{$f(overdrive.doneTotal)}</span>
-        </div>}
-      </div>
 
       {/* ── NEW ADDS BANNER ── */}
       <button onClick={()=>setShowNewAdds(!showNewAdds)} className="anim" style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",background:showNewAdds?"rgba(248,113,113,.06)":T.s1,border:`1px solid ${showNewAdds?"rgba(248,113,113,.2)":T.b1}`,borderRadius:10,padding:"9px 12px",marginBottom:10,cursor:"pointer",fontFamily:"inherit"}}>
