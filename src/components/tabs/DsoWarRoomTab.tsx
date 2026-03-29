@@ -34,7 +34,7 @@ const SORT_LABELS: Record<string,string> = {
 };
 
 // ── Intel edit drawer ─────────────────────────────────────────────
-function IntelDrawer({ groupId, intel, onSave, onClose }: any) {
+function IntelDrawer({ groupId, groupName, intel, onSave, onClose }: any) {
   const [v, setV] = useState<DsoIntel>({ ...intel });
   const field = (key: string, label: string, type = "text") => (
     <div style={{ marginBottom: 10 }}>
@@ -66,7 +66,7 @@ function IntelDrawer({ groupId, intel, onSave, onClose }: any) {
         borderRadius: "18px 18px 0 0", padding: "16px 16px 40px", maxHeight: "85vh", overflowY: "auto",
         borderTop: `1px solid ${T.b1}` }} onClick={(e: any) => e.stopPropagation()}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: T.t1 }}>Intel — {fixGroupName({ name: groupId })}</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.t1 }}>Intel — {groupName}</div>
           <button onClick={onClose} style={{ background: "none", border: "none", color: T.t4, fontSize: 20, cursor: "pointer" }}>✕</button>
         </div>
 
@@ -319,9 +319,6 @@ export default function DsoWarRoomTab({ groups, overlays, patchOverlay, goGroup,
       const card = buildDsoCard(g, benchMode);
       const reason = shouldInclude(g, card, intel);
       if (!reason) continue;
-      // Suppress tiny low-value multi-site noise:
-      // Multi-site must have at least $2K CY Q1 or $10K annual gap to show
-      if (reason === "Multi-site" && card.cy1 < 2000 && card.benchGapAnn < 10000) continue;
       (card as any).includeReason = reason;
       built.push(card);
     }
@@ -340,7 +337,7 @@ export default function DsoWarRoomTab({ groups, overlays, patchOverlay, goGroup,
 
       {/* Header */}
       <div style={{ padding: "12px 16px 10px" }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: T.t1 }}>DSO War Room</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: T.t1 }}>Strategic Accounts War Room</div>
         <div style={{ fontSize: 10, color: T.t4, marginTop: 1 }}>
           {cards.length} groups · {totalOffices} offices · {$$(totalGapQ)} quarterly gap · {$$(totalGapAnn)} annual upside
         </div>
@@ -408,6 +405,7 @@ export default function DsoWarRoomTab({ groups, overlays, patchOverlay, goGroup,
       {editId && (
         <IntelDrawer
           groupId={editId}
+          groupName={editId ? fixGroupName(cards.find(c => c.group.id === editId)?.group || { name: editId }) : editId}
           intel={intel[editId] || {}}
           onSave={saveIntel}
           onClose={() => setEditId(null)}
