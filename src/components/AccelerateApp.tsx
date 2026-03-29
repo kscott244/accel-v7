@@ -180,6 +180,7 @@ import OutreachTab from "@/components/tabs/OutreachTab";
 import AdminTab from "@/components/tabs/AdminTab";
 import TasksTab from "@/components/tabs/TasksTab";
 import InboxTab from "@/components/tabs/InboxTab";
+import ResearchTab from "@/components/tabs/ResearchTab";
 import CopilotPanel from "@/components/CopilotPanel";
 // ─── PHASE 5: Tab components extracted to src/components/tabs/ ────
 
@@ -974,6 +975,7 @@ const [showCopilot, setShowCopilot] = useState(false);
           {!view && tab==="outreach" && <OutreachTab scored={scored}/>}
           {!view && tab==="tasks" && <TasksTab tasks={tasks} onAddTask={(data)=>addTask(data)} onCompleteTask={completeTask} onDeleteTask={deleteTask} goAcct={goSmartFn}/>}
           {!view && tab==="inbox" && <InboxTab groups={groups||[]} overlays={overlays} patchOverlay={patchOverlay} tasks={tasks} goGroup={goGroupFn} onAddTask={addTask} activeQ={activeQ||"1"}/>}
+          {!view && tab==="research" && <ResearchTab groups={groups||[]} overlays={overlays} patchOverlay={patchOverlay} goGroup={goGroupFn} activeQ={activeQ||"1"}/>}
           {!view && tab==="admin" && <AdminTab groups={groups||[]} scored={scored} overlays={overlays} patchOverlay={patchOverlay} salesStore={salesStore}/>}
           {view?.type==="group" && <GroupDetail group={view.data} groups={groups||[]} goMain={()=>setView(null)} overlays={overlays} patchOverlay={patchOverlay} goAcct={(a:any)=>setView({type:"acct",data:{...a,gName:fixGroupName(view.data),gId:view.data.id,gTier:view.data.tier},from:view.data})} salesStore={salesStore} onAddTask={(data:any)=>addTask(data,null,view.data)}/>}
           {view?.type==="acct" && <AcctDetail acct={view.data} goBack={()=>view?.from?setView({type:"group",data:view.from}):setView(null)} adjs={adjs} setAdjs={setAdjs} groups={groups||[]} goGroup={goGroupFn} overlays={overlays} patchOverlay={patchOverlay} reapplyGroupOverrides={reapplyGroupOverrides} goAcct={(s:any)=>setView({type:"acct",data:{...s,gId:view.data.gId,gName:view.data.gName},from:view?.from})} salesStore={salesStore} onAddTask={(data:any)=>addTask(data,view.data,null)}/>}
@@ -992,6 +994,7 @@ const [showCopilot, setShowCopilot] = useState(false);
             {k:"dealers",l:"Dealers",I:IconDealer,desc:"Dealer console & co-call planner"},
             {k:"territory",l:"Forecast",I:IconChart,desc:"Attainment, pipeline & gap leaderboard"},
             {k:"outreach",l:"Outreach",I:IconMail,desc:"AI email campaigns"},
+            {k:"research",l:"Research",I:IconSliders,desc:"Targeted contact & intel research"},
             {section:"Tools"},
             {k:"calc",l:"Pricing",I:IconChart,desc:"SKU pricing & margin calculator"},
             {section:"System"},
@@ -1022,8 +1025,8 @@ const [showCopilot, setShowCopilot] = useState(false);
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
             <span style={{fontSize:9,fontWeight:600,letterSpacing:".5px"}}>Ask</span>
           </button>
-          <button onClick={()=>setShowMore(!showMore)} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 12px",cursor:"pointer",color:showMore||["tasks","outreach","admin","calc","territory","map","dealers"].includes(tab)?T.blue:T.t4}}>
-            <IconMore c={showMore||["tasks","outreach","admin","calc","map","dealers"].includes(tab)?T.blue:T.t4}/>
+          <button onClick={()=>setShowMore(!showMore)} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 12px",cursor:"pointer",color:showMore||["tasks","outreach","admin","calc","territory","map","dealers","research"].includes(tab)?T.blue:T.t4}}>
+            <IconMore c={showMore||["tasks","outreach","admin","calc","map","dealers","research"].includes(tab)?T.blue:T.t4}/>
             <span style={{fontSize:9,fontWeight:600,letterSpacing:".5px"}}>More</span>
           </button>
         </div>
