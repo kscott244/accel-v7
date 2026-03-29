@@ -7,6 +7,7 @@ import { getTierLabel } from "@/lib/tier";
 import { $$, pc } from "@/lib/format";
 import { fixGroupName, Chev } from "@/components/primitives";
 import { scorePriority, BUCKET_STYLE } from "@/lib/priority";
+import { lastTouchedLabel, attentionLabel, readMemory } from "@/lib/accountMemory";
 
 // ── Account type classification ───────────────────────────────────
 const TYPE_FILTERS = ["All", "DSO", "Mid-Market", "Private"];
@@ -45,13 +46,17 @@ function isCleanup(g: any): boolean {
 }
 
 // ── Compact account card ──────────────────────────────────────────
-function AccountCard({ g, i, goGroup }: any) {
+function AccountCard({ g, i, goGroup, overlays }: any) {
   const locs    = g._locs ?? g.locs ?? 1;
   const ac      = accent(locs);
   const bStyle  = BUCKET_STYLE[g._priorityBucket ?? "Watch"];
   const gapPos  = (g._gap || 0) > 0;           // true = behind PY
   const retPct  = Math.min(100, Math.round((g._ret ?? 1) * 100));
   const retColor = g._ret >= 0.7 ? T.green : g._ret >= 0.4 ? T.amber : T.red;
+  // Account memory signals
+  const mem = readMemory(overlays, g.id);
+  const lastTouched = lastTouchedLabel(mem);
+  const attnLabel = attentionLabel(mem);
 
   return (
     <button className="anim" onClick={() => goGroup(g)}
@@ -84,6 +89,16 @@ function AccountCard({ g, i, goGroup }: any) {
             border: `1px solid ${bStyle.border}` }}>
             {g._priorityBucket ?? "Watch"}
           </span>
+          {lastTouched && (
+            <span style={{ flexShrink: 0, fontSize: 8, color:
+              attnLabel === "Active" ? "#34d399" :
+              attnLabel === "Recent" ? "#4f8ef7" :
+              attnLabel === "Cooling" ? "#fbbf24" : "#7878a0",
+              background: "rgba(255,255,255,.04)", borderRadius: 3,
+              padding: "1px 5px", border: "1px solid rgba(255,255,255,.06)" }}>
+              {lastTouched}
+            </span>
+          )}
         </div>
         {/* Row 2: PY · CY · ret · reason */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
@@ -140,7 +155,7 @@ function Snapshot({ enriched, setView }: any) {
 }
 
 // ── Main component ────────────────────────────────────────────────
-export default function GroupsTab({ groups, goGroup, filt, setFilt, search, setSearch, groupedPrivates = [] }: any) {
+export default function GroupsTab({ groups, goGroup, filt, setFilt, search, setSearch, groupedPrivates = [], overlays }: any) {
   const [view, setView] = useState("priority");
 
   const typeFilt = ["DSO", "Emerging", "Mid-Market", "Private"].includes(filt) ? filt : "All";
@@ -318,9 +333,10 @@ export default function GroupsTab({ groups, goGroup, filt, setFilt, search, setS
              "No accounts match this filter."}
           </div>
         ) : (
-          list.map((g: any, i: number) => <AccountCard key={g.id} g={g} i={i} goGroup={goGroup} />)
+          list.map((g: any, i: number) => <AccountCard key={g.id} g={g} i={i} goGroup={goGroup} overlays={overlays} />)
         )}
       </div>
     </div>
   );
 }
+
