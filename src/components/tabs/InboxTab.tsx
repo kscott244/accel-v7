@@ -24,7 +24,7 @@ interface InboxTabProps {
 }
 
 // ── Status badge ─────────────────────────────────────────────────
-function StatusBadge({ status }: { status: InboxStatus }) {
+function StatusBadge({ status }: { status }) {
   const cfg = {
     pending:   { label: "Pending",   bg: "rgba(79,142,247,.12)",   c: "#4f8ef7" },
     approved:  { label: "Approved",  bg: "rgba(52,211,153,.12)",   c: "#34d399" },
@@ -51,7 +51,7 @@ function InboxCard({
   expanded,
   onToggle,
 }: {
-  item: InboxItem;
+  item;
   onApprove: () => void;
   onDismiss: () => void;
   onReview: () => void;
@@ -234,10 +234,10 @@ export default function InboxTab({
   goGroup,
   onAddTask,
   activeQ = "1",
-}: InboxTabProps) {
-  const [filter, setFilter] = useState<"all" | "pending" | "done">("pending");
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [saving, setSaving] = useState<string | null>(null);
+}) {
+  const [filter, setFilter] = useState("pending");
+  const [expandedId, setExpandedId] = useState(null);
+  const [saving, setSaving] = useState(null);
 
   const allItems = useMemo(
     () => buildInboxItems(groups, overlays, tasks, { qk: activeQ, maxItems: 10 }),
@@ -252,16 +252,16 @@ export default function InboxTab({
 
   const pendingCount = allItems.filter(i => i.status === "pending").length;
 
-  const updateStatus = async (item: InboxItem, status: InboxStatus) => {
+  const updateStatus = async (item, status) => {
     setSaving(item.id);
-    const current: any[] = overlays?.inboxItems || [];
+    const current = overlays?.inboxItems || [];
     const updated = current.filter((i: any) => i.id !== item.id);
     updated.push({ id: item.id, status, updatedAt: new Date().toISOString() });
     await patchOverlay([{ op: "set", path: "inboxItems", value: updated }]);
     setSaving(null);
   };
 
-  const handleCreateTask = (item: InboxItem) => {
+  const handleCreateTask = (item) => {
     const payload = item.suggestedPayload || {};
     const group   = groups.find(g => g.id === item.groupId);
     onAddTask({
