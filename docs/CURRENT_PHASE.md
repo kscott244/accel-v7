@@ -1,73 +1,82 @@
 # CURRENT PHASE -- accel-v7
 
-## Active: Phase 2 — Contact Intelligence Layer — March 29, 2026
+## Active: Phase 4 — Daily Success Plan — March 29, 2026
 
 ### What Was Built
 
-Contacts are now a first-class intelligence layer. Deterministic only — no fake data.
+A deterministic daily prioritization engine that ranks the best actions for today
+using revenue signals, contact readiness, account memory, and task urgency.
+No AI calls. No hallucinated actions. Every recommendation is grounded in real data.
+
+**Build fix included:** Repaired Phase 3 saveResNotes broken string literals (build was failing).
 
 **Commits:**
-- `a4dece1a` — types/index.ts: Contact type with source, confidence, isPrimary, linkedGroupId
-- `8f592bbf` — lib/contacts.ts: intelligence lib — bestContact(), contactGaps(), bestPathIn(), migrateLegacyContact(), buildContact()
-- `38571696` — GroupDetail.tsx: wire contacts lib — typed Contact[], migrate legacy data on load, buildContact() for saves
-- `a00c7eae` — GroupDetail.tsx: UI — PRIMARY badge, confidence badges (Verified/Stale/AI), confidence picker in modal, Primary toggle in modal
+- `74fd40bf` — fix(build): repair Phase 3 saveResNotes broken string literals
+- `c9642263` — feat(plan): add dailyPlan.ts scoring engine
+- `756514c4` — feat(plan): inject Daily Success Plan section into TodayTab
+- `e8b66ef2` — feat(plan): pass overlays to DashboardTab
 
-### Contact Model
+### Scoring Engine — src/lib/dailyPlan.ts
 
-Overlay path: overlays.groupContacts[groupId] = Contact[]
+**Ranking signals (combined score 0–100):**
 
-| Field | Type | Notes |
+| Signal | Max Points | Notes |
 |---|---|---|
-| id | number | timestamp-based |
-| linkedGroupId | string | Master-CM# |
-| name | string | |
-| role | string | |
-| phone | string | |
-| email | string | |
-| notes | string | |
-| source | ContactSource | manual / research / badger / csv / unknown |
-| confidence | ContactConfidence | verified / likely / unverified / stale |
-| isPrimary | boolean | best known path into account |
-| savedAt | string | ISO date |
-| verifiedAt | string? | ISO date — when Ken last confirmed current |
+| Revenue gap vs PY | 35 | >5K=35, >2K=25, >800=15 |
+| Retention cliff | 20 | <30%=20, <50%=12, <70%=6 |
+| Account size | 15 | PY >10K=15, >5K=10, >2K=5 |
+| Contact readiness | 12 | Has contact+not stale=12, stale=4, none=2 |
+| Overdue task | 15 | Any overdue task on this group |
+| Pinned in War Room | 12 | intel.pinned=true |
+| Going cold | 8 | 14–60 days since last action |
+| DSO multi-site bonus | 8 | class2 DSO + 3+ locations |
+| Never touched | 5 | >60d no action, >30d no view, PY>1K |
+| Dealer-led path | -3 | Slight deprioritize vs direct contact |
 
-### Intelligence Functions (src/lib/contacts.ts)
+**Minimum bar:** Group must have PY >= 00 or CY >= 00 to appear.
 
-- **bestContact(contacts)** — returns the highest-scored contact (primary first, then conf × source × phone/email)
-- **contactGaps(contacts)** — returns: hasAnyContact, hasPrimaryContact, missingPhone, missingEmail, hasMultiple, staleOnly, unverifiedOnly
-- **bestPathIn(contacts, hasFscRep)** → PathIn enum: direct-phone / direct-email / dealer-led / office-visit / stale-verify
-- **migrateLegacyContact(raw, groupId)** — upgrades old {name,role,phone,email} to full Contact on load
-- **buildContact(fields, groupId, id?)** — constructs a Contact from form data
+### Action Types Output
 
-### UI Changes (GroupDetail.tsx)
+| Action | When |
+|---|---|
+| 📞 Call | Direct phone on file, contact not stale |
+| ✉ Email | Email only, no phone |
+| 🚪 Visit | No contact at all |
+| 🤝 Via Rep | No direct contact, FSC rep linked |
+| ⚠ Verify Contact | All contacts are stale |
+| 🔍 Research First | No contact on file at all |
+| 📋 Follow Up | Overdue task exists |
+| 💰 Review Pricing | (reserved for future tier mismatch detection) |
 
-- Contacts section header now shows best path badge (📞 Direct / ✉ Email / 🤝 Via Rep / 🚪 Walk In / ⚠ Verify)
-- Contact cards: ★ PRIMARY badge, ✓ Verified badge, Stale warning, AI source label
-- Empty state: clear message + icon when no contacts
-- Add/Edit modal: Confidence pill picker (Unverified / Likely / Verified / Stale) + Primary toggle
-- saveContact enforces single primary (demotes all others when isPrimary is set)
-- saveResContact now tags source=research, confidence=likely
+### Per-Item Output
 
-### Persistence
+Each plan item shows:
+- Group name
+- Action type badge + why it matters today
+- Best contact name + phone if available
+- Path label (📞 Direct, 🤝 Via Rep, etc.)
+- Signal tags (e.g. "-12K vs PY", "Overdue task", "Going cold")
+- Go → button to open the group directly
 
-- Overlay path unchanged: overlays.groupContacts[groupId]
-- Legacy contact data migrated on load via migrateLegacyContact() — backward compatible
-- No new overlay sections required
+### Where It Appears
+
+Top of TodayTab, above the action lists, below the KPI hero.
+Section label: **Today's Plan** · max 5 items · hidden if no groups qualify.
 
 ### What Was NOT Changed
 
-- No AccelerateApp.tsx changes
-- No overlay/CSV separation work
-- No event logging
-- No assistant inbox
+- No AccelerateApp.tsx broad changes
+- No overlay/CSV persistence changes
+- No autonomous actions
+- No AI calls in the plan engine
 
 ---
 
 ## Previously Completed
 
+- Phase 3 — Event Logging + Account Memory (March 29, 2026)
+- Phase 2 — Contact Intelligence Layer (March 29, 2026)
 - Phase 1 — War Room consistency cleanup (March 29, 2026)
-- War Room inclusion expansion (March 28, 2026)
-- DSO War Room baseline (A16)
 
 ## Last Updated
 
